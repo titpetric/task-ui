@@ -1,5 +1,3 @@
-{* Scheduled: the form that adds a schedule of a job, and what runs on one.
-   The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 

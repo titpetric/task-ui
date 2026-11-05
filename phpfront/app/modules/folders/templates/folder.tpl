@@ -1,4 +1,3 @@
-{* The page of a folder, of the root and of a directory inside one. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 {if $data.findings}{eval $data_findings = $data.findings}{include components/pipeline-alert.tpl}

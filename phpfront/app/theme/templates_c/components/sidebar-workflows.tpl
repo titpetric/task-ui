@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
+<?php $_v=&$this->vars; if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
 					<div class="flow<?php if($_v['flow']['active']){?>
  active<?php }?>">
 						<i class="shebang<?php if($_v['flow']['running']){?>

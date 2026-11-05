@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if($_v['data']['notice']){?>
+<?php $_v=&$this->vars; if($_v['data']['notice']){?>
 
 			<div class="alert ok" role="status"><?php echo htmlspecialchars($_v['data']['notice'], ENT_QUOTES);?>
 </div>

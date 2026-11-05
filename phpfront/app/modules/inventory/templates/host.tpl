@@ -1,4 +1,3 @@
-{* The page of one host. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 <div class="host-detail" data-host-detail="{data.name}">

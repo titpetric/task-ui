@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <span class="cc-slot" data-cc="<?php echo htmlspecialchars($_v['data_cc']['key'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['data_cc']['folder'], ENT_QUOTES);?>
 " data-job="<?php echo htmlspecialchars($_v['data_cc']['job'], ENT_QUOTES);?>

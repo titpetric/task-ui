@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <form class="form" data-api="<?php echo htmlspecialchars($_v['data_wsgen']['api'], ENT_QUOTES);?>
 " data-method="POST" data-next="<?php echo htmlspecialchars($_v['data_wsgen']['next'], ENT_QUOTES);?>
 ">

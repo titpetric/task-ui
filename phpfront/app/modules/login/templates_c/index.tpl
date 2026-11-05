@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <section class="login">
 	<h2>Sign in</h2>
 	<form method="post" action="/login">

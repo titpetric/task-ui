@@ -1,4 +1,3 @@
-{* The users settings page. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 
@@ -41,6 +40,6 @@
 			{eval $data_copy = $data.mcp.add}{include components/copyable.tpl}</li>
 		<li>Other clients connect to the endpoint over HTTP with the header <code>Authorization: Bearer &lt;token&gt;</code>. Check with <code>claude mcp list</code>: it shows <code>task</code> as connected.</li>
 	</ol>
-	<p class="faint">For the list of tools, read <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/mcp.md">the MCP chapter of the guide</a>.</p>
+	<p class="faint"><a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/mcp.md">The MCP chapter of the guide</a></p>
 </section>
 {if $data.trail}{eval $data_trail = $data.trail}{include components/setup-trail.tpl}{/if}

@@ -149,7 +149,7 @@ class mod_profile implements Module {
 				"data-method" => "POST",
 				"data-copy-fill" => Task\Mcp\Connect::add(Task\Route::site()),
 				"data-notice" => "MCP token copied as the claude mcp add command",
-				"title" => "Make an MCP token for " . $name . " and copy the claude mcp add command that carries it",
+				"title" => "Make an MCP token for " . $name . " and copy the claude mcp add command",
 			));
 		}
 

@@ -1,9 +1,7 @@
-{* The Instance page. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 <section class="block instance-section" id="general">
 	<h3>General</h3>
-	<p class="section-intro">Where the instance answers, who signs in, and the clock it reads.</p>
 	{include components/instance-head.tpl}
 		<tr><td class="key">Base link</td><td class="value mono" data-label="Value">{data.site}</td><td class="var" data-label="Variable"><code>TASK_UI_URL</code></td><td class="desc" data-label="About"><span>{if $data.instance.url}The link pages and MCP clients use.{else}Empty: task-ui reads the link from each request.{/if}</span></td></tr>
 		<tr><td class="key">Version</td><td class="value mono ro" data-label="Value">{chrome.version}</td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>The build that serves this page.</span></td></tr>
@@ -19,7 +17,6 @@
 
 <section class="block instance-section" id="runs">
 	<h3>Runs</h3>
-	<p class="section-intro">How many runs do work at once, and how many may wait for a free slot. Terminals take no slot.</p>
 	{include components/instance-head.tpl}
 {if $data.instance.running}		<tr><td class="key">Parallel runs</td><td class="value mono ro" data-label="Value">{data.instance.backlog.parallel}<small class="faint">{data.instance.backlog.going} going, {data.instance.backlog.waiting} waiting</small></td><td class="var" data-label="Variable"><span class="faint">computed</span></td><td class="desc" data-label="About"><span>One run per CPU of the machine; a run over that waits, queued, in order.</span></td></tr>
 		<tr><td class="key">Automatic backlog</td><td class="value mono ro" data-label="Value">{data.instance.backlog.auto}</td><td class="var" data-label="Variable"><code>backlog_length_auto</code></td><td class="desc" data-label="About"><span>20 runs per CPU: the length of the line while an admin sets no backlog length.</span></td></tr>
@@ -40,7 +37,7 @@
 
 {if $data.instance.parent_env}<section class="block instance-section" id="environment">
 	<h3>Parent environment</h3>
-	<p class="section-intro">How much of the server's own environment a run starts with. The variables of the folder and of the integrations reach a run under every choice; a script reads any other variable with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
+	<p class="section-intro"><a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a></p>
 {if $data.admin}	<form class="form parent-env" data-api="/api/instance" data-method="PUT" data-next="{data.forward}" data-parent-env>
 		<div class="field" role="radiogroup" aria-labelledby="parent-env-label">
 			<span class="label" id="parent-env-label">Forward <span class="faint">applies to the next run</span></span>
@@ -67,7 +64,6 @@
 {/if}
 <section class="block instance-section" id="paths">
 	<h3>Paths</h3>
-	<p class="section-intro">Where task-ui keeps its data, the folders it runs and its keys.</p>
 	{include components/instance-head.tpl}
 		<tr><td class="key">Workspace folder</td><td class="value mono" data-label="Value">{data.instance.root}</td><td class="var" data-label="Variable"><code>TASK_UI_WORKSPACE</code></td><td class="desc" data-label="About"><span>The folders with jobs to run, by default <code>workspaces</code> in the data directory.</span></td></tr>
 		<tr><td class="key">Discovery</td><td class="value" data-label="Value">{if $data.instance.discover}<span class="badge ok">on</span>{else}<span class="badge">off</span>{/if}</td><td class="var" data-label="Variable"><code>TASK_UI_DISCOVER</code></td><td class="desc" data-label="About"><span>List every folder under the root with something to run.</span></td></tr>
@@ -79,7 +75,6 @@
 </section>
 {if $data.instance.measured}<section class="block instance-section" id="storage">
 	<h3>Storage</h3>
-	<p class="section-intro">What the instance keeps on disk: its database, the recordings and the artifacts of the runs, the tool history of each workspace's home and the instance's own copy, and the checkouts under each workspace's <code>src</code>. Measured now and then; an ellipsis stands for a measure still under way.</p>
 	<div class="table-wrap">
 	<table class="table storage-table cards">
 		<colgroup><col class="c-item"><col class="c-where"><col class="c-size"><col class="c-files"></colgroup>
@@ -94,7 +89,6 @@
 {/if}
 <section class="block instance-section" id="tooling">
 	<h3>Tooling</h3>
-	<p class="section-intro">The tools task-ui found in its PATH at the last check, and what each is used for. Check probes one tool; Check all probes every tool and replaces the list. A tool that is not there is left out.</p>
 {if $data.admin}	<form class="inline" data-api="/api/instance/tools/check" data-method="POST" data-next="{data.checked}"><button class="btn btn-sm" type="submit">Check all</button></form>
 {/if}{foreach $data.tooling as $group}	<h4>{group.title}</h4>
 	<div class="table-wrap">
@@ -106,11 +100,10 @@
 {/foreach}		</tbody>
 	</table>
 	</div>
-{/foreach}{if !$data.tooling}	<p>No tooling was detected: Check all probes the PATH.</p>
-{/if}</section>
+{/foreach}</section>
 {if $data.keys.shown}<section class="block instance-section" id="keys">
 	<h3>Keys <small>in the key folder</small></h3>
-	<p class="section-intro">The encryption key of the instance's secrets and the SSH key git pulls and clones with. <a href="{data.keys.every}">Every key</a></p>
+	<p class="section-intro"><a href="{data.keys.every}">Every key</a></p>
 	<div class="table-wrap fit">
 	<table class="table instance-keys key-table cards">
 		{include components/key-head.tpl}
@@ -126,7 +119,6 @@
 {/if}
 <section class="block instance-section" id="integrations">
 	<h3>Integrations</h3>
-	<p class="section-intro">The services task-ui reads from.</p>
 	{include components/instance-head.tpl}
 		<tr><td class="key">Inventory</td><td class="value" data-label="Value">{if $data.instance.beszel}<span class="badge ok">on</span>{else}<span class="badge">off</span>{/if}</td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>Hosts from the Beszel <a href="{data.integrations}">integration</a>.</span></td></tr>
 	{include components/instance-foot.tpl}

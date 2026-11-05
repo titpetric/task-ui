@@ -1,4 +1,3 @@
-{* input scope: data_workflows. See sidebar-workflows.md. *}
 {foreach $data_workflows as $flow}
 {if !$flow.hidden}					<div class="flow{if $flow.active} active{/if}">
 						<i class="shebang{if $flow.running} running{/if}" aria-hidden="true">#!</i>

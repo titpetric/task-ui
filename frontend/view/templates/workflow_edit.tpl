@@ -16,10 +16,6 @@
 
 {{ template "stepeditor" (list $ $w "/api/workflows/" "PUT" (print "/workflows/" $w.ID) "Save") }}
 
-{{- /* The workflow's schedules, with the form that adds one: the
-     schedules page's create form less the job, the args, the triage
-     and Runs as, which a workflow run has no use for: it runs as the
-     workflow's user. */}}
 <section class="block" id="schedule">
 	{{- $as := "the user who adds the schedule" }}{{ if $w.RunAs }}{{ $as = print $w.RunAs ", the user set on the workflow" }}{{ end }}
 	{{- template "blockhead" (head "Schedule" (print "Runs the workflow on a cron expression, as " $as ". Each run needs permission to run every step at that time.") (and (not $.Schedules) "Not scheduled.")) }}

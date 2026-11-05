@@ -1,4 +1,3 @@
-{* input scope: data_mcp. See mcp-access.md. *}
 <section class="block mcp-access" id="mcp">
 	<h3>MCP access</h3>
 {if $data_mcp.on}	<div class="table-wrap" data-before-reveal>
@@ -16,12 +15,12 @@
 	</table>
 	</div>
 {else}	<p data-before-reveal>{data_mcp.name} holds no MCP token. New token makes one that lasts 30 days and shows it once.</p>
-{/if}{if !$data_mcp.agent}	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>, which an admin turns on.</p>
+{/if}{if !$data_mcp.agent}	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>.</p>
 {elseif $data_mcp.manage}	<div class="actions" data-before-reveal>
 		<form class="inline" data-api="{data_mcp.api}" data-method="POST" data-reveal="#mcp-token"><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>New token</button></form>
 	</div>
 	<p class="faint" data-before-reveal>One token per client, so retiring a client is one Delete and the others keep signing in.</p>
-{else}	<p class="faint">Making a token needs Allow Edits on Users. Ask someone who has it.</p>
+{else}	<p class="faint">Making a token needs Allow Edits on Users.</p>
 {/if}	<div id="mcp-token" class="mcp-token" hidden>
 		<div class="alert">Copy the token now; you won't see it again. <b data-fill="{data_mcp.named}"></b> works until <b data-fill="{data_mcp.until}"></b>. Make another here, or delete this one, whenever you like.</div>
 		<dl class="copy-list">

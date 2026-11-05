@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="table-wrap">
 <table class="table file-table col-hover">
 	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
@@ -42,7 +41,7 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 			<td class="hide-sm nowrap" title="<?php echo htmlspecialchars($_v['row']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
 </td>
-			<td class="actions"><?php if($_v['row']['menu']){ $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php if($_v['row']['menu']){ $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

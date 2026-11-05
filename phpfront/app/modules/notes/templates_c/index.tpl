@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -146,10 +143,7 @@
 
 
 <form class="note-form" data-note-form>
-	<textarea name="body" rows="3" required data-mentions placeholder="<?php if($_v['data']['agent']){?>
-@<?php echo htmlspecialchars($_v['data']['agent'], ENT_QUOTES);?>
- update the weather job to …<?php }else{?>
-@name …<?php }?>" aria-label="A new note"></textarea>
+	<textarea name="body" rows="3" required data-mentions aria-label="A new note"></textarea>
 	<div class="form-foot note"><span class="faint">Ctrl+Enter posts. Markdown: <code>**bold**</code>, <code>- lists</code>, <code>`code`</code> and <code>```</code> blocks.</span><button class="btn btn-primary" type="submit">Post note</button></div>
 </form>
 
@@ -157,8 +151,7 @@
 <?php if(!empty($_v['data']['threads']))foreach($_v['data']['threads'] as $_v['thread']){?>
 	<?php $_v['data_note'] = $_v['thread'];?>
 
-	
-	<article class="note<?php if($_v['data_note']['state']){?>
+		<article class="note<?php if($_v['data_note']['state']){?>
  instruction <?php echo htmlspecialchars($_v['data_note']['state'], ENT_QUOTES); }?>" id="note-<?php echo htmlspecialchars($_v['data_note']['id'], ENT_QUOTES);?>
 ">
 		<header>
@@ -168,7 +161,7 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -230,8 +223,7 @@
 <?php }?>			<span class="spacer"></span>
 			<?php $_v['data_menu'] = $_v['data_note']['menu'];?>
 
-			
-<?php if(!$_v['data_menu']['empty']){?>
+			<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -290,7 +282,7 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -342,7 +334,7 @@
  <a class="faint mono" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /runs/<?php echo htmlspecialchars($_v['reply']['run'], ENT_QUOTES);?>
 " title="The run this reply comes from">run <?php echo htmlspecialchars($_v['reply']['short'], ENT_QUOTES);?>
-</a><?php }?><span class="spacer"></span><?php $_v['data_menu'] = $_v['reply']['menu'];if(!$_v['data_menu']['empty']){?>
+</a><?php }?><span class="spacer"></span><?php $_v['data_menu'] = $_v['reply']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

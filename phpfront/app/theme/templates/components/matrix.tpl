@@ -1,4 +1,3 @@
-{* input scope: data_matrix. See matrix.md. *}
 <form class="matrix-form{if $data_matrix.fixed} fixed{/if}"{if $data_matrix.editable} data-api="{data_matrix.api}" data-method="PUT" data-next="reload" data-notice="Permissions saved" data-matrix{/if}>
 	<div class="table-wrap">
 	<table class="table matrix{if $data_matrix.effective} effective{/if}">

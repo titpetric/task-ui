@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 	<footer>
 		<span class="credit">
 			<a class="wordmark" href="https://github.com/titpetric/task-ui">task-ui</a>

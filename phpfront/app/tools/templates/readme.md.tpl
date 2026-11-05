@@ -8,8 +8,8 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ## Pages
 
-{if !$routes}This module draws no page. It owns a data model other modules read, so it
-carries a schema and the statements over it and no route.
+{if !$routes}This module draws no page. It owns a data model other modules read: a
+schema and the statements over it, and no route.
 
 {else}| Method | Path | Answered by |
 |--------|------|-------------|

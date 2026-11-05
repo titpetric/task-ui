@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="table-wrap">
 <table class="table control col-hover">
 	<tbody>
@@ -16,7 +15,6 @@
 <span class="faint"><?php echo htmlspecialchars($_v['row']['empty'], ENT_QUOTES);?>
 </span><?php }else{?>
 <div class="cc-row"><?php if(!empty($_v['row']['jobs']))foreach($_v['row']['jobs'] as $_v['job']){?><?php $_v['data_cc'] = $_v['job'];?>
-
 <span class="cc-slot" data-cc="<?php echo htmlspecialchars($_v['data_cc']['key'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['data_cc']['folder'], ENT_QUOTES);?>
 " data-job="<?php echo htmlspecialchars($_v['data_cc']['job'], ENT_QUOTES);?>
@@ -64,7 +62,7 @@ play<?php }?>"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'],
 "><i class="shebang" aria-hidden="true">#!</i><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
 </span></a><?php }?></span>
 <?php }?></div><?php }?></td>
-			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

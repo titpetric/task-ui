@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="table-wrap fit">
 <table class="table projects cards">
 	<thead><tr><th>Folder</th><th>Sources</th><th>Origin</th><th class="hide-sm hide-narrow">Last commit</th><?php if($_v['data_projects']['sized']){?>
@@ -27,13 +26,12 @@
  <span class="faint"><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
 </span><?php }?><?php }?></td><?php if($_v['data_projects']['sized']){?>
 <td class="hide-sm hide-narrow" data-label="Size"><?php $_v['data_mini'] = $_v['row']['space'];?>
-
 <span class="spacemini" title="<?php echo htmlspecialchars($_v['data_mini']['title'], ENT_QUOTES);?>
 "><span class="spacebar-track"><i class="files" style="width: <?php echo htmlspecialchars($_v['data_mini']['filesPercent'], ENT_QUOTES);?>
 %"></i><i class="history" style="width: <?php echo htmlspecialchars($_v['data_mini']['historyPercent'], ENT_QUOTES);?>
 %"></i></span><span class="nowrap"><?php echo htmlspecialchars($_v['data_mini']['total'], ENT_QUOTES);?>
 </span></span></td><?php }?>
-			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

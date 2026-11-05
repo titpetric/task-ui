@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -208,7 +205,6 @@
 <span class="badge signal">applied</span><?php }?>
 				<?php if($_v['entry']['comment']['correction']){?>
 <span class="badge">rule</span><?php }?>
-				
 				<form class="refinement-delete" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /refinement/threads/<?php echo htmlspecialchars($_v['data']['thread']['id'], ENT_QUOTES);?>
 /comments/<?php echo htmlspecialchars($_v['entry']['comment']['id'], ENT_QUOTES);?>
@@ -216,7 +212,7 @@
 					<?php if($_v['entry']['comment']['id'] == $_v['data']['design']){?>
 data-confirm="Delete the design, and the whole thread with it? Its rules and its runs go. The files stay in the artifacts, under <?php echo htmlspecialchars($_v['data']['thread']['id'], ENT_QUOTES);?>
 ."<?php }else{?>
-data-confirm="Delete this request? The next Apply all will not carry it. The files it produced stay."<?php }?>>
+data-confirm="Delete this request? The files it produced stay."<?php }?>>
 					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
 			</div>
@@ -228,7 +224,6 @@ data-confirm="Delete this request? The next Apply all will not carry it. The fil
 	<form class="form refinement-apply" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /refinement/threads/<?php echo htmlspecialchars($_v['data']['thread']['id'], ENT_QUOTES);?>
 /apply">
-		<p class="faint">Folds every request above into one and runs it over the files as they stand, so the result satisfies all of them together rather than one after another.</p>
 		<button class="btn" type="submit"><svg class="ic"><use href="#i-collapse"/></svg>Apply all</button>
 	</form>
 
@@ -236,8 +231,7 @@ data-confirm="Delete this request? The next Apply all will not carry it. The fil
 /refinement/threads/<?php echo htmlspecialchars($_v['data']['thread']['id'], ENT_QUOTES);?>
 /fork">
 		<label for="refinement-fork">Fork</label>
-		<p class="faint" id="refinement-fork-help">A new thread on another subject, carrying every rule above. Say what it is and what it should produce; the rules come along and the files do not.</p>
-		<textarea id="refinement-fork" name="want" rows="2" aria-describedby="refinement-fork-help" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
+		<textarea id="refinement-fork" name="want" rows="2" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
 		<div class="form-foot">
 			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
 		</div>

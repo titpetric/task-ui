@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if($_v['data_chart']['charts']){?>
+<?php $_v=&$this->vars; if($_v['data_chart']['charts']){?>
 <div class="activity">
 	<p class="activity-sum"><?php echo htmlspecialchars($_v['data_chart']['sum'], ENT_QUOTES); if($_v['data_chart']['failed']){?>
  · <span class="bad"><?php echo htmlspecialchars($_v['data_chart']['failed'], ENT_QUOTES);?>

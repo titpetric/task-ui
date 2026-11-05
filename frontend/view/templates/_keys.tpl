@@ -1,36 +1,13 @@
-{{/* The label of a key whose rotation kept a backup that serves beside
-     it: BACKUP ACTIVE and the backup's name. */}}
 {{ define "backup-active" }}<span class="backup-active" title="The previous material serves beside the key until you delete the backup">BACKUP ACTIVE: {{ . }}</span>{{ end }}
 
-{{/* The head of a keys table, the same wherever keys list: the Keys
-     page, the Instance page, a workspace's page, Your SSH keys and a
-     profile: Name, as wide as the names, Algorithm, Size, Public key,
-     which takes the rest of the width with its copy button, and the
-     row's ⋯ menu. The table sits in a table-wrap fit; a narrow one
-     leaves out Algorithm and Size, hide-narrow. */}}
 {{ define "keyhead" }}<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col class="c-pub"><col class="c-actions"></colgroup>
 		<thead><tr><th>Name</th><th class="hide-narrow">Algorithm</th><th class="hide-narrow">Size</th><th>Public key</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
 
-{{/* A key's row, (list page key next [workspace]): its name, the
-     encryption key marked, its public key, as much as fits with the
-     whole line in its tooltip, to copy, and the [...] menu, its details
-     on top, the purpose among them, then Copy and Download, Edit links,
-     Rotate key or Delete backup, and Remove last. next is the page a
-     change returns to, Edit links too.
-
-     On a workspace's page a key of the workspace removes through the
-     workspace, which takes workspace/edit, and has neither Edit links
-     nor a link on its name: it was added to one workspace and every run
-     of that workspace gets it, so there is nothing left to choose and no
-     page to open. The instance's keys reach every workspace, so theirs
-     is the menu item that stays. */}}
 {{ define "keyrow" }}
 {{- $p := index . 0 }}{{ $k := index . 1 }}{{ $next := index . 2 }}{{ $ws := "" }}{{ if gt (len .) 3 }}{{ $ws = index . 3 }}{{ end }}
 {{- $edit := print "/settings/keys/" $k.Name }}{{ if ne $next "/settings/keys" }}{{ $edit = print $edit "?next=" (urlquery $next) }}{{ end }}{{ $remove := print "/api/keys/" $k.Name }}{{ $canEdit := $p.Can "key/edit" }}{{ $canRemove := $p.Can "key/delete" }}
 {{- if $ws }}{{ $remove = print "/api/workspaces/" $ws "/keys/" $k.Name }}{{ $canRemove = $p.Can "workspace/edit" }}{{ end }}
 {{- $links := join $k.Roles ", " }}{{ with $k.Users }}{{ if $links }}{{ $links = print $links ", " }}{{ end }}{{ $links = print $links (join . ", ") }}{{ end }}
-{{/* A workspace's key goes to every run of its workspace, whatever the
-     rows of an older instance say: the scope is the grant. */}}
 {{- if $k.Encrypts }}{{ $links = "never handed out" }}{{ else if $k.Workspace }}{{ $links = "every run of the workspace" }}{{ else if not $links }}{{ $links = "none" }}{{ end }}
 <tr id="key-{{ $k.Name }}">
 	<td class="key">{{ if or $k.Encrypts (not $canEdit) $ws }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ if $k.Encrypts }} <span class="badge signal">encryption</span>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
@@ -57,9 +34,6 @@
 </tr>
 {{- end }}
 
-{{/* wskeyfoot is the foot of a workspace key's form, (list next dialog
-     label): Cancel closes the dialog the form is in, or goes back to
-     next, beside the submit button. */}}
 {{ define "wskeyfoot" }}
 {{- $next := index . 0 }}{{ $dialog := index . 1 }}{{ $label := index . 2 }}
 	<div class="form-foot">
@@ -72,12 +46,6 @@
 	</div>
 {{- end }}
 
-{{/* wskeygenerate is the form that generates an SSH key of a workspace,
-     (list page next dialog): its name, algorithm and comment; it returns
-     to next. In a dialog, Cancel closes it.
-
-     Whose runs get it is no field: it is a key of this workspace, so
-     every run of this workspace gets it. */}}
 {{ define "wskeygenerate" }}
 {{- $p := index . 0 }}{{ $next := index . 1 }}{{ $dialog := index . 2 }}{{ $ws := $p.Workspace }}
 <form class="form" data-api="/api/workspaces/{{ $ws.Folder }}/keys/generate" data-method="POST" data-next="{{ $next }}?notice=Key+generated">
@@ -111,8 +79,6 @@
 </form>
 {{- end }}
 
-{{/* wskeyupload is the form that uploads a private key as an SSH key
-     of a workspace, (list page next dialog), laid out as wskeygenerate. */}}
 {{ define "wskeyupload" }}
 {{- $p := index . 0 }}{{ $next := index . 1 }}{{ $dialog := index . 2 }}{{ $ws := $p.Workspace }}
 <form class="form" data-api="/api/workspaces/{{ $ws.Folder }}/keys/upload" data-method="POST" data-next="{{ $next }}?notice=Key+uploaded">
@@ -141,10 +107,6 @@
 </form>
 {{- end }}
 
-{{/* wskeydialogs are the dialogs that generate and upload a workspace's
-     SSH key, (list page next), for the pages that list the workspace's
-     keys: the keys page and the workspace's own page open the same two,
-     and return to next. */}}
 {{ define "wskeydialogs" }}
 {{- $p := index . 0 }}{{ $next := index . 1 }}
 <dialog class="confirm" id="key-generate-dialog" aria-labelledby="key-generate-title">
@@ -155,10 +117,6 @@
 </dialog>
 {{- end }}
 
-{{/* userkeys is the Keys block of a user, (list page account next): the
-     instance SSH keys linked to them, with Generate key and Upload key
-     for key/edit, on the profile and on the edit page. next is the page
-     a change returns to. */}}
 {{ define "userkeys" }}
 {{- $p := index . 0 }}{{ $u := index . 1 }}{{ $next := index . 2 }}
 <section class="block" id="keys">

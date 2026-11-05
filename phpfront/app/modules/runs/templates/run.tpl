@@ -1,4 +1,3 @@
-{* The page of one run. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 
@@ -9,7 +8,7 @@
 </section>
 {elseif $data.output.recording}<section class="block">
 	<h3>Output <small>every line the run printed</small></h3>
-	<pre class="output" data-output="{data.output.id}" data-cols="{data.output.cols}" data-rows="{data.output.rows}"><span class="faint">Reading the recording…</span></pre>
+	<pre class="output" data-output="{data.output.id}" data-cols="{data.output.cols}" data-rows="{data.output.rows}"><span class="faint">Reading the recording</span></pre>
 </section>
 {/if}{if $data.prompt}{eval $data_prompt = $data.prompt}{include components/prompt.tpl}
 {/if}

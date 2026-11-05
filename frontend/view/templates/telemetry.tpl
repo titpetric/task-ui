@@ -23,7 +23,6 @@
 			</span>
 			<span>Enabled</span>
 		</label>
-		<p class="faint">Off, a request passes through and records nothing. This is the one setting that takes effect on its own: everything else below rebuilds the recorder, which empties the traces it holds.</p>
 	</div>
 
 	<div class="field">
@@ -56,7 +55,6 @@
 	<div class="field">
 		<label for="telemetry-debug-min">Shortest debug span <span class="faint">a span marked as detail is dropped under this, and counted; <code>0</code> keeps every one</span></label>
 		<input type="text" id="telemetry-debug-min" name="debug_span_min_duration" value="{{ .DebugSpanMinDuration }}"{{ if not $admin }} disabled{{ end }}>
-		<p class="faint">Spelled as a duration: <code>1ms</code>, <code>500us</code>. The PHP interpreter marks a span per frame as detail, so this is what keeps a page that calls two hundred methods from filling its trace with them.</p>
 	</div>
 
 	<div class="field">
@@ -76,7 +74,6 @@
 			</span>
 			<span>Live stream</span>
 		</label>
-		<p class="faint">Serves the live view over server sent events, so a trace appears as it happens instead of on a timer.</p>
 	</div>
 
 	<div class="field">
@@ -87,13 +84,12 @@
 	<div class="field">
 		<label for="telemetry-networks">Allowed networks <span class="faint">CIDR ranges, one per line; empty is every network</span></label>
 		<textarea id="telemetry-networks" name="allowed_networks" rows="3"{{ if not $admin }} disabled{{ end }}>{{ .AllowedNetworks }}</textarea>
-		<p class="faint">The dashboard is an admin's either way: a trace holds request paths, query strings and the errors a handler recorded, and a request from outside these ranges gets a 404 rather than a refusal.</p>
 	</div>
 
 	<div class="field">
 		<label for="telemetry-path">Path <span class="faint">where the dashboard is mounted</span></label>
 		<input type="text" id="telemetry-path" name="path" value="{{ .Options.Path }}"{{ if not $admin }} disabled{{ end }}>
-		<p class="faint">The router reads this once, at startup, so a path saved here takes a restart. It is <code>{{ .Path }}</code> now.</p>
+		<p class="faint"><code>{{ .Path }}</code></p>
 	</div>
 </section>
 
@@ -108,7 +104,6 @@
 			</span>
 			<span>Capture logs</span>
 		</label>
-		<p class="faint">Records the log lines a trace writes. Off, an error still lands on its span.</p>
 	</div>
 
 	<div class="field">
@@ -119,7 +114,6 @@
 			</span>
 			<span>Track memory use</span>
 		</label>
-		<p class="faint">Records the process's allocation change per trace.</p>
 	</div>
 
 	<div class="field">
@@ -130,7 +124,6 @@
 			</span>
 			<span>Trust Request-Id</span>
 		</label>
-		<p class="faint">Reuses a client's <code>Request-Id</code> header as the trace identifier, so a request crossing two services reads as one trace. Behind a trusted proxy alone: a client that picks its own identifier can collide with another's.</p>
 	</div>
 
 	{{- if $admin }}

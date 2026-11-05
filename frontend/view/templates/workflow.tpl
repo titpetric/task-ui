@@ -21,12 +21,8 @@
 	</div>
 </div>
 
-{{- /* The page follows the workflow's topic: data-sse names it, and the
-     events update the parts below in place, no fetch. */}}
 <section class="block" data-sse="workflow:{{ $w.ID }}" data-user="{{ $.User.Name }}">
 	<h3>Pipeline</h3>
-	{{- /* The steps; while a run is going, its states and screens live. A
-	     finished run opens with View under Runs. */}}
 	{{- with $latest := $w.LastRun }}
 	<p class="faint" data-latest>Latest run <span class="state"><i class="dot {{ $latest.State }}"></i>{{ $latest.State }}</span>{{ if $latest.Message }} {{ $latest.Message }},{{ end }} <span title="{{ stamp $latest.StartedAt }}">{{ ago $latest.StartedAt }}</span> by {{ $latest.UserName }}</p>
 	{{- else }}

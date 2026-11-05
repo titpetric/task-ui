@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 	<article class="note<?php if($_v['data_note']['state']){?>
  instruction <?php echo htmlspecialchars($_v['data_note']['state'], ENT_QUOTES); }?>" id="note-<?php echo htmlspecialchars($_v['data_note']['id'], ENT_QUOTES);?>
 ">
@@ -10,7 +9,7 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -72,8 +71,7 @@
 <?php }?>			<span class="spacer"></span>
 			<?php $_v['data_menu'] = $_v['data_note']['menu'];?>
 
-			
-<?php if(!$_v['data_menu']['empty']){?>
+			<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -132,7 +130,7 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -184,7 +182,7 @@
  <a class="faint mono" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /runs/<?php echo htmlspecialchars($_v['reply']['run'], ENT_QUOTES);?>
 " title="The run this reply comes from">run <?php echo htmlspecialchars($_v['reply']['short'], ENT_QUOTES);?>
-</a><?php }?><span class="spacer"></span><?php $_v['data_menu'] = $_v['reply']['menu'];if(!$_v['data_menu']['empty']){?>
+</a><?php }?><span class="spacer"></span><?php $_v['data_menu'] = $_v['reply']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

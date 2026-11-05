@@ -1,4 +1,3 @@
-{* One run of a workflow. The scope is {data}; the chrome is {chrome}. *}
 <section class="block" data-pipeline-view>
 	<div class="page-head">
 		<div>

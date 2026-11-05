@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <nav class="setup-trail" aria-label="Setup steps">
 <?php if($_v['data_trail']['previous']){?>
 	<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['data_trail']['previous']['href'], ENT_QUOTES);?>

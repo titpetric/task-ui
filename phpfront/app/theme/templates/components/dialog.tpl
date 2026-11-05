@@ -1,4 +1,3 @@
-{* input scope: none. See dialog.md. *}
 	<dialog class="run" id="run-dialog" aria-labelledby="run-title">
 		<div class="run-head">
 			<span class="label" id="run-kind">Run</span>
@@ -40,10 +39,6 @@
 			<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 		</div>
 	</dialog>
-{* The image window: an image or an svg of the artifacts, scaled to fit, opened
-   in the page, or an HTML page a run wrote, in a frame that holds it apart from
-   this one. A file of a checkout that runs carries the Run or Attach of its
-   row in the foot. *}
 	<dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 		<div class="run-head">
 			<span class="label" id="preview-label">Artifact</span>
@@ -57,7 +52,6 @@
 			<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-{* The pipeline window: one workflow run's pipeline, fetched from its page. *}
 	<dialog class="run pipeline-window" id="pipeline-dialog" aria-labelledby="pipeline-title">
 		<div class="run-head">
 			<span class="label">Workflow run</span>
@@ -70,7 +64,6 @@
 			<button type="button" class="btn" id="pipeline-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-{* The summary window: Claude's summary of a run's or a workflow run's output. *}
 	<dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
 		<div class="run-head">
 			<span class="label">Summary</span>
@@ -83,8 +76,6 @@
 			<button type="button" class="btn" id="summary-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-{* The source window: a file a folder's pipeline reads, coloured, as large as
-   the run window. *}
 	<dialog class="run source" id="source-dialog" aria-labelledby="source-title">
 		<div class="run-head">
 			<span class="label">Source</span>

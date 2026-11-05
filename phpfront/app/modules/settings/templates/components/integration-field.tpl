@@ -1,4 +1,4 @@
-{* input scope: data_field. See integration-field.md. *}{if $data_field.kind === "who"}							<div class="field wf-wide">
+{if $data_field.kind === "who"}							<div class="field wf-wide">
 								<span class="label">{data_field.label}</span>{eval $data_whofield = $data_field.who}{include components/who-field.tpl}{if $data_field.help}<small class="faint">{data_field.help}</small>{/if}
 							</div>
 {elseif $data_field.kind === "env"}							<div class="field wf-wide env-flag">

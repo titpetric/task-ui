@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if(!$_v['data_menu']['empty']){?>
+<?php $_v=&$this->vars; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

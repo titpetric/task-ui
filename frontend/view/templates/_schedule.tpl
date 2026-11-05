@@ -1,11 +1,3 @@
-{{/* schedtable takes (list $ schedules can what): the schedules of a job
-     or a workflow, Expression | Next run | Last run | Runs as | State,
-     and with can each row's menu, Edit, Enable or Disable and Delete,
-     whose confirm names what the schedule is for. Nothing for no
-     schedules.
-
-     Edit is in every row of this table, because the two pages that draw
-     it draw the form that saves one under the same can. */}}
 {{ define "schedtable" }}{{ $p := index . 0 }}{{ $can := index . 2 }}{{ $what := index . 3 }}{{ with index . 1 }}
 	<div class="table-wrap fit">
 	<table class="table fit-cards">
@@ -26,27 +18,12 @@
 	</div>
 {{- end }}{{ end }}
 
-{{/* schedmenu takes (list schedule on what edits): a schedule row's menu,
-     Edit, where edits says the page holds the form that saves one, then
-     Enable or Disable, by on, whether the schedule runs, and Delete,
-     whose confirm names what the schedule is for.
-
-     Edit carries the expression rather than a page of its own: the form
-     is already on the page and task-ui.js turns it into a save of this
-     row. The schedules page draws the form only for a reader with a job
-     to schedule, which is what edits answers. */}}
 {{ define "schedmenu" }}{{ $on := index . 1 }}{{ $what := index . 2 }}{{ $edits := index . 3 }}{{ with index . 0 }}{{ template "menu" (menu (print "Actions on the schedule " .Expression)
 	(and $edits (item "edit" "Edit" "data-sched-edit" (print "/api/schedules/" .ID) "data-sched-expression" .Expression))
 	(item (or (and $on "stop") "play") (or (and $on "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and $on `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload" "data-notice" (or (and $on "Schedule disabled") "Schedule enabled"))
 	(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $what "?") "data-confirm-ok" "Delete" "data-next" "reload" "data-notice" "Schedule deleted")
 ) }}{{ end }}{{ end }}
 
-{{/* schedbuilder is the fields of a schedule: the controls that compile a
-     cron expression, the expression itself, the table that says what each
-     of its five positions means, and the button that saves it. It is
-     static markup, the same on both front ends, and task-ui.js is what
-     makes it work; theme/templates/components/sched-builder.md states the
-     attributes it drives. A form that includes it writes data-sched. */}}
 {{ define "schedbuilder" }}	<div class="field">
 		<label for="sch-every">Repeat</label>
 		<select id="sch-every" data-sched-mode>

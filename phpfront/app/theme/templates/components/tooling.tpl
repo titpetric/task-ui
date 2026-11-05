@@ -1,4 +1,3 @@
-{* input scope: data_tooling. See tooling.md. *}
 {if $data_tooling.scopes}<div class="tooling">
 {foreach $data_tooling.scopes as $scope}	<section class="tooling-scope">
 		<p class="tooling-sum"><span class="tooling-db" title="{scope.database}">&lrm;{scope.database}</span><span><span class="key">{scope.name}</span>{if $scope.repository} <span class="faint">{scope.repository}</span>{/if} · {scope.sum}</span></p>

@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -190,16 +187,12 @@
 <?php if($_v['data']['activity']){?>
 <section class="block" data-fold="runs-activity">
 	<h3><?php $_v['data_fold'] = $_v['data']['fold'];?>
-
 <button type="button" class="fold-toggle" aria-expanded="true" aria-controls="<?php echo htmlspecialchars($_v['data_fold']['id'], ENT_QUOTES);?>
 "><svg class="ic chev"><use href="#i-chev"/></svg><?php echo htmlspecialchars($_v['data_fold']['label'], ENT_QUOTES);?>
 </button>
  <small>in the server's time zone</small></h3>
 	<div class="fold-body" id="runs-activity">
-<?php $_v['data_chart'] = $_v['data']['activity'];?>
-
-
-<?php if($_v['data_chart']['charts']){?>
+<?php $_v['data_chart'] = $_v['data']['activity'];if($_v['data_chart']['charts']){?>
 <div class="activity">
 	<p class="activity-sum"><?php echo htmlspecialchars($_v['data_chart']['sum'], ENT_QUOTES); if($_v['data_chart']['failed']){?>
  · <span class="bad"><?php echo htmlspecialchars($_v['data_chart']['failed'], ENT_QUOTES);?>
@@ -283,16 +276,12 @@
 <?php } if($_v['data']['tooling']){?>
 <section class="block" data-fold="runs-tooling">
 	<h3><?php $_v['data_fold'] = $_v['data']['toolFold'];?>
-
 <button type="button" class="fold-toggle" aria-expanded="true" aria-controls="<?php echo htmlspecialchars($_v['data_fold']['id'], ENT_QUOTES);?>
 "><svg class="ic chev"><use href="#i-chev"/></svg><?php echo htmlspecialchars($_v['data_fold']['label'], ENT_QUOTES);?>
 </button>
  <small>what the commands inside the runs spent their time on</small></h3>
 	<div class="fold-body" id="runs-tooling">
-<?php $_v['data_tooling'] = $_v['data']['tooling'];?>
-
-
-<?php if($_v['data_tooling']['scopes']){?>
+<?php $_v['data_tooling'] = $_v['data']['tooling'];if($_v['data_tooling']['scopes']){?>
 <div class="tooling">
 <?php if(!empty($_v['data_tooling']['scopes']))foreach($_v['data_tooling']['scopes'] as $_v['scope']){?>	<section class="tooling-scope">
 		<p class="tooling-sum"><span class="tooling-db" title="<?php echo htmlspecialchars($_v['scope']['database'], ENT_QUOTES);?>
@@ -423,7 +412,7 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -495,10 +484,7 @@
 " data-attach="<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['attach'], ENT_QUOTES);?>
 </a>
-<?php $_v['data_menu'] = $_v['row']['menu'];?>
-
-
-<?php if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -548,10 +534,7 @@
 <?php }?>		</tbody>
 	</table>
 	</div>
-<?php $_v['data_pager'] = $_v['data']['pager'];?>
-
-
-<?php if($_v['data_pager']['prev'] || $_v['data_pager']['next']){?>
+<?php $_v['data_pager'] = $_v['data']['pager'];if($_v['data_pager']['prev'] || $_v['data_pager']['next']){?>
 	<nav class="pager" aria-label="Pages">
 <?php if($_v['data_pager']['prev']){?>
 		<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_pager']['prev'], ENT_QUOTES);?>

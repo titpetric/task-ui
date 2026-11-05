@@ -28,11 +28,6 @@
 					{{- with $row.Note }}<small class="faint">{{ . }}</small>{{ end }}
 				</td>
 				<td class="mono"><a href="{{ $row.Item.Href }}">{{ $row.Item.Href }}</a></td>
-				{{/* The switch carries no name: serialize splits a field name
-				     on a dot into a map, and a module's link can hold one.
-				     sidebarBody reads the switches out of the DOM instead,
-				     keyed by the link, and data-row-shown remembers the state
-				     the page loaded with so the foot can count what changed. */}}
 				<td class="num">
 					<label class="switch" title="{{ if $row.Item.Hidden }}Left out of the sidebar{{ else }}Listed in the sidebar{{ end }}">
 						<input type="checkbox" data-row-shown="{{ if $row.Item.Hidden }}false{{ else }}true{{ end }}"{{ if not $row.Item.Hidden }} checked{{ end }}{{ if not $admin }} disabled{{ end }} aria-label="Show {{ $row.Title }} in the sidebar">

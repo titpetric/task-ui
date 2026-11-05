@@ -1,4 +1,3 @@
-{* input scope: data_note. See note.md. *}
 	<article class="note{if $data_note.state} instruction {data_note.state}{/if}" id="note-{data_note.id}">
 		<header>
 			<span class="author">{eval $data_user = $data_note.author}{include components/user.tpl}</span>

@@ -1,4 +1,4 @@
-{* input scope: data_editor. See stepeditor.md. *}<form class="form workflow-form" data-workflow data-api="{data_editor.api}" data-method="{data_editor.method}" data-next="{base}{data_editor.next}" novalidate>
+<form class="form workflow-form" data-workflow data-api="{data_editor.api}" data-method="{data_editor.method}" data-next="{base}{data_editor.next}" novalidate>
 	<div class="wf-meta">
 		<div class="field">
 			<label for="wf-name-{data_editor.id}">Name</label>
@@ -20,15 +20,13 @@
 {else}			<span class="label">Runs as</span>
 			<span class="wf-runas">{data_editor.runAs}</span>
 {if $data_editor.isNew}			<input type="hidden" name="user" value="{data_editor.runAsValue}">
-{/if}{/if}			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's. The keys are the instance keys the user gets; a step's workspace adds its own keys.</small>
-		</div>
+{/if}{/if}		</div>
 		<div class="field">
 			<label for="wf-over-{data_editor.id}">Runs over</label>
 			<select id="wf-over-{data_editor.id}" name="runs_over">
 				<option value=""{if $data_editor.overNone} selected{/if}>No workspace: the steps run once</option>
 {foreach $data_editor.overs as $over}				<option value="{over.id}"{if $over.selected} selected{/if}>Every project of {over.title}</option>
 {/foreach}			</select>
-			<small class="faint">The steps run once per project of the workspace, a project at a time: a step in a project of it runs in each project in turn, at the same path, and a project without the step's job skips it. A prompt or a summary whose place is the workspace root asks in the project's root, so Claude works in the project of its pass. A failed step ends that project's pass, and the next project starts. Steps outside the workspace run in every pass as they are. A workflow step may not run over projects.</small>
 		</div>
 	</div>
 
@@ -36,7 +34,6 @@
 		<div class="wf-steps-head">
 			<div>
 				<h3 class="section-title" id="wf-steps-{data_editor.id}">Steps</h3>
-				<p class="faint">Top to bottom, each once the one before it ends ok. A prompt or a summary reads the output of the steps before it.</p>
 			</div>
 			<button type="button" class="btn btn-sm" data-steps-fold aria-pressed="false">Expand all</button>
 		</div>

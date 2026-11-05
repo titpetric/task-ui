@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 		<aside class="rail" aria-label="Recents">
 			<div class="rail-inner">
 				<div class="label side-label"><a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data']['href'], ENT_QUOTES);?>

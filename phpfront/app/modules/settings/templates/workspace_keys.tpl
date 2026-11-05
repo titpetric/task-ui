@@ -1,4 +1,3 @@
-{* The SSH keys of one workspace. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 {if $data.dir}<section class="block workspace-keys" id="keys">

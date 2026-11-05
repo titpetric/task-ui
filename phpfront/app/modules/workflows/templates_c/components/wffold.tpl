@@ -4,7 +4,7 @@ true<?php }else{?>
 false<?php }?>" aria-controls="wf-answer-<?php echo htmlspecialchars($_v['data_wffold']['id'], ENT_QUOTES);?>
 " title="<?php if($_v['data_wffold']['open']){?>
 Hide<?php }else{?>
-Show<?php }?> the answer" aria-label="<?php if($_v['data_wffold']['open']){?>
+Show<?php }?>" aria-label="<?php if($_v['data_wffold']['open']){?>
 Hide<?php }else{?>
-Show<?php }?> the answer"><svg class="ic chev"><use href="#i-chev"/></svg></button><?php }else{?>
+Show<?php }?>"><svg class="ic chev"><use href="#i-chev"/></svg></button><?php }else{?>
 <span class="wf-fold" aria-hidden="true"></span><?php }?>

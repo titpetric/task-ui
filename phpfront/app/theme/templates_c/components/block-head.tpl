@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="block-head<?php if($_v['data_block']['empty']){?>
  is-empty<?php }?>">
 	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
@@ -9,7 +8,7 @@
 	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
 </p>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
-	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>

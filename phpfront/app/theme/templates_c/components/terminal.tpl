@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <section class="block" data-live>
 	<h3>Terminal <small>as it looks now, <?php if($_v['data_terminal']['watching']){ echo htmlspecialchars($_v['data_terminal']['watching'], ENT_QUOTES);?>
  watching<?php }else{?>

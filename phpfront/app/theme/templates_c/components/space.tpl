@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="spacebar" role="img" aria-label="<?php echo htmlspecialchars($_v['data_space']['total'], ENT_QUOTES);?>
  in all: <?php echo htmlspecialchars($_v['data_space']['files'], ENT_QUOTES);?>
  of files, <?php echo htmlspecialchars($_v['data_space']['history'], ENT_QUOTES);?>

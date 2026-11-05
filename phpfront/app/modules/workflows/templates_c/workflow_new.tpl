@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -179,7 +176,6 @@
 " name="user">
 				<option value=""<?php if(!$_v['data_editor']['runAsValue']){?>
  selected<?php }?>>Whoever starts it</option>
-
 <?php if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
 "<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
  selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
@@ -195,8 +191,7 @@
 <?php if($_v['data_editor']['isNew']){?>
 			<input type="hidden" name="user" value="<?php echo htmlspecialchars($_v['data_editor']['runAsValue'], ENT_QUOTES);?>
 ">
-<?php }?><?php }?>			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's. The keys are the instance keys the user gets; a step's workspace adds its own keys.</small>
-		</div>
+<?php }?><?php }?>		</div>
 		<div class="field">
 			<label for="wf-over-<?php echo htmlspecialchars($_v['data_editor']['id'], ENT_QUOTES);?>
 ">Runs over</label>
@@ -209,7 +204,6 @@
  selected<?php }?>>Every project of <?php echo htmlspecialchars($_v['over']['title'], ENT_QUOTES);?>
 </option>
 <?php }?>			</select>
-			<small class="faint">The steps run once per project of the workspace, a project at a time: a step in a project of it runs in each project in turn, at the same path, and a project without the step's job skips it. A prompt or a summary whose place is the workspace root asks in the project's root, so Claude works in the project of its pass. A failed step ends that project's pass, and the next project starts. Steps outside the workspace run in every pass as they are. A workflow step may not run over projects.</small>
 		</div>
 	</div>
 
@@ -219,7 +213,6 @@
 			<div>
 				<h3 class="section-title" id="wf-steps-<?php echo htmlspecialchars($_v['data_editor']['id'], ENT_QUOTES);?>
 ">Steps</h3>
-				<p class="faint">Top to bottom, each once the one before it ends ok. A prompt or a summary reads the output of the steps before it.</p>
 			</div>
 			<button type="button" class="btn btn-sm" data-steps-fold aria-pressed="false">Expand all</button>
 		</div>
@@ -244,7 +237,7 @@ false<?php }?>">
 				<span class="badge wf-off" data-step-off-badge>off</span>
 				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 			</button>
-<?php $_v['data_menu'] = $_v['data_step']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -335,7 +328,7 @@ false<?php }?>">
 "<?php if($_v['one']['selected']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['one']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -455,7 +448,7 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="<?php echo htmlspecialchars($_v['data_step']['dir'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off">
 				</div>
@@ -466,7 +459,6 @@ false<?php }?>">
 				<blockquote><p class="wf-question"><?php echo htmlspecialchars($_v['data_step']['question'], ENT_QUOTES);?>
 </p><p><?php echo htmlspecialchars($_v['data_step']['instruction'], ENT_QUOTES);?>
 </p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 <?php }?><?php }?>			<p class="wf-hint" data-step-hint role="status"<?php if(!$_v['data_step']['missing']){?>
  hidden<?php }?>><?php echo htmlspecialchars($_v['data_step']['missing'], ENT_QUOTES);?>
@@ -518,7 +510,7 @@ false<?php }?>">
 				<span class="badge wf-off" data-step-off-badge>off</span>
 				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 			</button>
-<?php $_v['data_menu'] = $_v['data_step']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -609,7 +601,7 @@ false<?php }?>">
 "<?php if($_v['one']['selected']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['one']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -729,7 +721,7 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="<?php echo htmlspecialchars($_v['data_step']['dir'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off">
 				</div>
@@ -740,7 +732,6 @@ false<?php }?>">
 				<blockquote><p class="wf-question"><?php echo htmlspecialchars($_v['data_step']['question'], ENT_QUOTES);?>
 </p><p><?php echo htmlspecialchars($_v['data_step']['instruction'], ENT_QUOTES);?>
 </p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 <?php }?><?php }?>			<p class="wf-hint" data-step-hint role="status"<?php if(!$_v['data_step']['missing']){?>
  hidden<?php }?>><?php echo htmlspecialchars($_v['data_step']['missing'], ENT_QUOTES);?>
@@ -772,7 +763,7 @@ false<?php }?>">
 				<span class="badge wf-off" data-step-off-badge>off</span>
 				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 			</button>
-<?php $_v['data_menu'] = $_v['data_step']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -863,7 +854,7 @@ false<?php }?>">
 "<?php if($_v['one']['selected']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['one']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -983,7 +974,7 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="<?php echo htmlspecialchars($_v['data_step']['dir'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off">
 				</div>
@@ -994,7 +985,6 @@ false<?php }?>">
 				<blockquote><p class="wf-question"><?php echo htmlspecialchars($_v['data_step']['question'], ENT_QUOTES);?>
 </p><p><?php echo htmlspecialchars($_v['data_step']['instruction'], ENT_QUOTES);?>
 </p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 <?php }?><?php }?>			<p class="wf-hint" data-step-hint role="status"<?php if(!$_v['data_step']['missing']){?>
  hidden<?php }?>><?php echo htmlspecialchars($_v['data_step']['missing'], ENT_QUOTES);?>
@@ -1026,7 +1016,7 @@ false<?php }?>">
 				<span class="badge wf-off" data-step-off-badge>off</span>
 				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 			</button>
-<?php $_v['data_menu'] = $_v['data_step']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -1117,7 +1107,7 @@ false<?php }?>">
 "<?php if($_v['one']['selected']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['one']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -1237,7 +1227,7 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="<?php echo htmlspecialchars($_v['data_step']['dir'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off">
 				</div>
@@ -1248,7 +1238,6 @@ false<?php }?>">
 				<blockquote><p class="wf-question"><?php echo htmlspecialchars($_v['data_step']['question'], ENT_QUOTES);?>
 </p><p><?php echo htmlspecialchars($_v['data_step']['instruction'], ENT_QUOTES);?>
 </p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 <?php }?><?php }?>			<p class="wf-hint" data-step-hint role="status"<?php if(!$_v['data_step']['missing']){?>
  hidden<?php }?>><?php echo htmlspecialchars($_v['data_step']['missing'], ENT_QUOTES);?>
@@ -1279,7 +1268,7 @@ false<?php }?>">
 				<span class="badge wf-off" data-step-off-badge>off</span>
 				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 			</button>
-<?php $_v['data_menu'] = $_v['data_step']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -1370,7 +1359,7 @@ false<?php }?>">
 "<?php if($_v['one']['selected']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['one']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -1490,7 +1479,7 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="<?php echo htmlspecialchars($_v['data_step']['dir'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off">
 				</div>
@@ -1501,7 +1490,6 @@ false<?php }?>">
 				<blockquote><p class="wf-question"><?php echo htmlspecialchars($_v['data_step']['question'], ENT_QUOTES);?>
 </p><p><?php echo htmlspecialchars($_v['data_step']['instruction'], ENT_QUOTES);?>
 </p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 <?php }?><?php }?>			<p class="wf-hint" data-step-hint role="status"<?php if(!$_v['data_step']['missing']){?>
  hidden<?php }?>><?php echo htmlspecialchars($_v['data_step']['missing'], ENT_QUOTES);?>
@@ -1532,7 +1520,7 @@ false<?php }?>">
 				<span class="badge wf-off" data-step-off-badge>off</span>
 				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 			</button>
-<?php $_v['data_menu'] = $_v['data_step']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -1623,7 +1611,7 @@ false<?php }?>">
 "<?php if($_v['one']['selected']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['one']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data_step']['hostJobs']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -1743,7 +1731,7 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="<?php echo htmlspecialchars($_v['data_step']['dir'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off">
 				</div>
@@ -1754,7 +1742,6 @@ false<?php }?>">
 				<blockquote><p class="wf-question"><?php echo htmlspecialchars($_v['data_step']['question'], ENT_QUOTES);?>
 </p><p><?php echo htmlspecialchars($_v['data_step']['instruction'], ENT_QUOTES);?>
 </p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 <?php }?><?php }?>			<p class="wf-hint" data-step-hint role="status"<?php if(!$_v['data_step']['missing']){?>
  hidden<?php }?>><?php echo htmlspecialchars($_v['data_step']['missing'], ENT_QUOTES);?>

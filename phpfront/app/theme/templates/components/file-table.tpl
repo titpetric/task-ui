@@ -1,4 +1,3 @@
-{* input scope: data_files. See file-table.md. *}
 <div class="table-wrap">
 <table class="table file-table col-hover">
 	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>

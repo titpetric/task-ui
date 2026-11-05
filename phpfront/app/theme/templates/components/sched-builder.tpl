@@ -1,4 +1,4 @@
-{* input scope: none. See sched-builder.md. *}	<div class="field">
+	<div class="field">
 		<label for="sch-every">Repeat</label>
 		<select id="sch-every" data-sched-mode>
 			<option value="hourly">Hourly</option>

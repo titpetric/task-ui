@@ -1,10 +1,3 @@
-{{- /* The tooling panel: what atkins recorded the tree running, a
-     section per database it records to. Each holds a chart per window,
-     the activity charts' own spans, a group of bars a slot, one per top
-     command of the window, with a legend; the newest commands; and the
-     commands by their time behind a toggle. The toggle is a details
-     element, so it needs no script and the browser remembers nothing
-     to go wrong. */}}
 {{- define "tooling" }}
 <div class="tooling">
 	{{- range .Scopes }}

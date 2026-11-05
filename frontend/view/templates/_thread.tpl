@@ -1,10 +1,3 @@
-{{/* thread takes (list $ thread): a note with its replies, each in
-     markdown under its author, and a field to reply. A note to the agent
-     or a prompt carries its state, a spinner while it works, and links
-     its run. Its author, or an admin, clicks a note's text to edit it;
-     the agent's answer that runs again shows working, its old text
-     dimmed, until the new one takes its place. The notes board and the
-     prompt box draw it. */}}
 {{- define "thread" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ $t := . }}
 	<article class="note{{ if .State }} instruction {{ .State }}{{ end }}" id="note-{{ .ID }}">
 		<header>

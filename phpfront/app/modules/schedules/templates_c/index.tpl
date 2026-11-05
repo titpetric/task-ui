@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -165,7 +162,7 @@
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
 </option>
-<?php }?><?php $_v['data_hostjobs'] = $_v['data']['hosts'];if($_v['data_hostjobs']){?>
+<?php }?><?php $_v['data_hostjobs'] = $_v['data']['hosts']; if($_v['data_hostjobs']){?>
 			<optgroup label="Hosts">
 <?php if(!empty($_v['data_hostjobs']))foreach($_v['data_hostjobs'] as $_v['job']){?>				<option value="<?php echo htmlspecialchars($_v['job']['id'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
@@ -191,7 +188,7 @@
 ">Runs as</label>
 		<select id="<?php echo htmlspecialchars($_v['data_runas']['id'], ENT_QUOTES);?>
 " name="user">
-<?php $_v['data_options'] = $_v['data_runas']['options'];if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
+<?php $_v['data_options'] = $_v['data_runas']['options']; if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
 "<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
  selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES); if(!$_v['data_options']['short']){?>
@@ -276,7 +273,6 @@
 <?php }?>
 <section class="block">
 <?php $_v['data_block'] = $_v['data']['block'];?>
-
 <div class="block-head<?php if($_v['data_block']['empty']){?>
  is-empty<?php }?>">
 	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
@@ -286,7 +282,7 @@
 	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
 </p>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
-	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -351,14 +347,14 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <select name="user" data-submit aria-label="Runs as">
-<?php $_v['data_options'] = $_v['row']['options'];if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
+<?php $_v['data_options'] = $_v['row']['options']; if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
 "<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
  selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES); if(!$_v['data_options']['short']){?>
  (<?php echo htmlspecialchars($_v['option']['role'], ENT_QUOTES);?>
 )<?php }?> · <?php echo htmlspecialchars($_v['option']['said'], ENT_QUOTES);?>
 </option>
-<?php }?>		</select><?php $_v['data_menu'] = $_v['row']['user']['menu'];if(!$_v['data_menu']['empty']){?>
+<?php }?>		</select><?php $_v['data_menu'] = $_v['row']['user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -406,7 +402,7 @@
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -454,7 +450,7 @@
 <span class="badge ok">enabled</span><?php }else{?>
 <span class="badge">disabled</span><?php }?><?php if($_v['row']['triage']){?>
  <span class="badge signal" title="Claude triages a failed run">triage</span><?php }?></td>
-				<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+				<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

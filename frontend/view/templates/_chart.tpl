@@ -1,5 +1,3 @@
-{{/* chart is a month of measures: its title, the drawing, and a row a
-     series of its least, mean and most, the stack's total last. */}}
 {{ define "chart" }}
 <figure class="chart">
 	<figcaption class="chart-title">{{ .Title }}</figcaption>

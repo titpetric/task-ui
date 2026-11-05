@@ -1,13 +1,3 @@
-{{- /* The control buttons of a folder's jobs, the dashboard's control
-     centre's. */}}
-
-{{/* controltable is the control centre's table: a row per folder, a
-     column per job name that repeats, the rest under other. On a
-     folder's page every row holds Named buttons: its label, the source's file
-     linked to where it runs or the group's kind, then its jobs as named
-     buttons; a table of Named rows has no head. With menus, each row
-     ends with a [...] of what the buttons leave out.
-     (list $ control menus) */}}
 {{- define "controltable" }}
 {{- $ := index . 0 }}{{ $c := index . 1 }}{{ $menus := index . 2 }}
 	<div class="table-wrap">
@@ -28,7 +18,6 @@
 				<td class="faint" colspan="{{ add (len $c.Columns) 1 }}">{{ $row.Empty }}</td>
 				{{- else }}
 				{{- range $i, $cell := $row.Cells }}
-				{{- /* One job is a bare button; jobs that share a name carry their kinds. */}}
 				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
 				{{- end }}
 				<td class="col other" data-label="Other">
@@ -48,25 +37,14 @@
 	</div>
 {{- end }}
 
-{{/* controljob is a job's button in the control centre: Run, an eye on
-     the run in progress, or a #! to its page for a user who may not run
-     it. In the other column the button carries the job's name. The
-     button and the #! take the colour of the job's last run: ok, bad for
-     failed, stopped or killed, never without one. Its title says what the
-     job does; an interactive job's button on a folder's page shows a
-     terminal; a job that takes args opens a field for them first. The
-     slot around it says what the script needs to draw it again as runs
-     start and end. */}}
 {{- define "controljob" }}
 {{- $ := index . 0 }}{{ $f := index . 1 }}{{ $r := index . 2 }}{{ $named := index . 3 }}
 {{- $run := $.RunningRun $r.Key }}
-{{- /* When two sources share a name, the kind tells them apart, as in the sidebar. */}}
 {{- $label := $r.Name }}{{ if ne $r.ID $r.Name }}{{ $label = $r.ID }}{{ end }}
 {{- $last := "never" }}{{ with $.LastRun $r.Key }}{{ $last = "bad" }}{{ if eq .State "ok" }}{{ $last = "ok" }}{{ end }}{{ end }}
 {{- $what := print $f.ID (or (and $r.Dir (print "/" $r.Dir)) "") " / " $r.Name }}
 {{- $desc := "" }}{{ if and $r.Description (ne $r.Description $r.Name) }}{{ $desc = $r.Description }}{{ end }}
 {{- $confirm := $.RunConfirm $r }}
-{{- /* On a folder's page a job that takes a terminal shows the terminal where the play goes. */}}
 {{- $term := and $r.Interactive $.JobGroups }}
 <span class="cc-slot" data-cc="{{ $r.Key }}" data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-name="{{ $r.Name }}" data-label="{{ if $named }}{{ $label }}{{ end }}" data-last="{{ $last }}"{{ if $.CanRun $f $r }} data-can{{ end }}{{ with $r.Dir }} data-dir="{{ . }}"{{ end }}{{ with $desc }} data-desc="{{ . }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }}{{ with $confirm }} data-confirm="{{ . }}"{{ end }}{{ if eq $r.Kind "file" }} data-path="{{ $r.Source }}"{{ end }}{{ if $term }} data-interactive{{ end }}>
 {{- if $run -}}
@@ -79,9 +57,6 @@
 </span>
 {{- end }}
 
-{{/* controlmore is the rest of a folder's jobs behind one button: a menu
-     of them, each with its own action, live as the slots are; nothing
-     for no jobs. (list $ folder jobs) */}}
 {{- define "controlmore" }}
 {{- $ := index . 0 }}{{ $f := index . 1 }}{{ $jobs := index . 2 }}
 {{- with $jobs }}

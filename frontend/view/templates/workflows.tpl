@@ -44,9 +44,6 @@
 	{{- end }}
 </section>
 
-{{- /* The newest runs of the workflows the user sees, a line each: its
-     state on the dot by the workflow's name, linked to the run, and
-     Claude's answer open under the line, with the chevron that folds it. */}}
 <section class="block">
 	{{- template "blockhead" (head "Recent runs" "" (and (not .WorkflowRuns) "No workflow has run yet.")) }}
 	{{- with .WorkflowRuns }}

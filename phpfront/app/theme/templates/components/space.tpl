@@ -1,4 +1,3 @@
-{* input scope: data_space. See space.md. *}
 <div class="spacebar" role="img" aria-label="{data_space.total} in all: {data_space.files} of files, {data_space.history} of history">
 	<div class="spacebar-track"><i class="files" style="width: {data_space.filesPercent}%"></i><i class="history" style="width: {data_space.historyPercent}%"></i></div>
 	<div class="spacebar-legend">

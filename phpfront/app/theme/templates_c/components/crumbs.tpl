@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if($_v['data']['crumbs']){?>
+<?php $_v=&$this->vars; if($_v['data']['crumbs']){?>
 
 			<div class="crumbs"><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /">Dashboard</a><?php if(!empty($_v['data']['crumbs']))foreach($_v['data']['crumbs'] as $_v['crumb']){?><span><?php if($_v['crumb']['href']){?>

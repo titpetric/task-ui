@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 	<dialog class="confirm" id="workflow-input-dialog" aria-labelledby="workflow-input-title">
 		<form method="dialog" data-workflow-input>
 			<h3 id="workflow-input-title">Run</h3>

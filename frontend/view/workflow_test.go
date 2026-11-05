@@ -121,13 +121,11 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.Contains(t, out, `<option value="miguel" selected data-keys="deploy_ed25519 forge_ed25519">miguel (runner) · keys: deploy_ed25519, forge_ed25519</option>`)
 	assert.Contains(t, out, `<option value="admin" data-keys="">admin (admin) · no keys</option>`)
 	assert.Contains(t, out, `<option value="">Whoever starts it</option>`)
-	assert.Contains(t, out, "The keys are the instance keys the user gets; a step's workspace adds its own keys.")
 	p.Workflow.RunAs = ""
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
 	assert.Contains(t, buf.String(), `<option value="" selected>Whoever starts it</option>`, "no user set: the starter")
 	p.Workflow.RunAs = "miguel"
-	assert.Contains(t, out, "Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in.")
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_new", p))
 	out = buf.String()
@@ -202,7 +200,7 @@ func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
 	assert.NotContains(t, out, "<script>alert(1)</script>")
 	assert.Contains(t, out, "&lt;script&gt;")
 	assert.Equal(t, 1, strings.Count(out, "data-answer-toggle"), "a chevron for the run with an answer alone")
-	assert.Contains(t, out, `data-answer-toggle aria-expanded="true" aria-controls="wf-answer-wr1" title="Hide the answer" aria-label="Hide the answer"`)
+	assert.Contains(t, out, `data-answer-toggle aria-expanded="true" aria-controls="wf-answer-wr1" title="Hide" aria-label="Hide"`)
 	assert.NotContains(t, out, `wf-answer-wr2`)
 	assert.NotContains(t, out, "No workflow has run yet.")
 
@@ -231,7 +229,7 @@ func TestView_RenderWorkflowRuns(t *testing.T) {
 	assert.Contains(t, out, `<i class="dot failed" title="failed"></i>`)
 	assert.Contains(t, out, `<small class="faint wf-desc">step 2 failed</small>`)
 	assert.Contains(t, out, `data-answer-of="wr1" hidden><td colspan="4">`, "folded on the workflow's page")
-	assert.Contains(t, out, `data-answer-toggle aria-expanded="false" aria-controls="wf-answer-wr1" title="Show the answer"`)
+	assert.Contains(t, out, `data-answer-toggle aria-expanded="false" aria-controls="wf-answer-wr1" title="Show"`)
 	assert.Contains(t, out, "Skip <strong>watering</strong>.")
 	assert.Equal(t, 1, strings.Count(out, "data-answer-toggle"))
 	assert.NotContains(t, out, "I didn&#39;t water yesterday", "no input")

@@ -1,4 +1,3 @@
-{* input scope: data. See sidebar-folders.md. *}
 			<nav class="folders">
 {foreach $data as $group}
 {if $group.workspace}{eval $data_workspace = $group}{include components/sidebar-workspace.tpl}

@@ -1,4 +1,3 @@
-{* input scope: data_run. See run-buttons.md. *}
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{data_run.folder}"{if $data_run.dir} data-dir="{data_run.dir}"{/if} data-job="{data_run.job}" data-title="{data_run.what}"{if $data_run.args} data-args="{data_run.args}" title="Run with arguments after {data_run.args}"{/if}><svg class="ic"><use href="#i-play"/></svg>Run{if $data_run.takesArgs}...{/if}</button>
 {if $data_run.menu}	<details class="more-menu run-menu">

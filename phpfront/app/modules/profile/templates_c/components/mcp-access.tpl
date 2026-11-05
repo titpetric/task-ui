@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <section class="block mcp-access" id="mcp">
 	<h3>MCP access</h3>
 <?php if($_v['data_mcp']['on']){?>
@@ -39,7 +38,7 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 	<p data-before-reveal><?php echo htmlspecialchars($_v['data_mcp']['name'], ENT_QUOTES);?>
  holds no MCP token. New token makes one that lasts 30 days and shows it once.</p>
 <?php }?><?php if(!$_v['data_mcp']['agent']){?>
-	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>, which an admin turns on.</p>
+	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>.</p>
 <?php }elseif($_v['data_mcp']['manage']){?>
 	<div class="actions" data-before-reveal>
 		<form class="inline" data-api="<?php echo htmlspecialchars($_v['data_mcp']['api'], ENT_QUOTES);?>
@@ -47,7 +46,7 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 	</div>
 	<p class="faint" data-before-reveal>One token per client, so retiring a client is one Delete and the others keep signing in.</p>
 <?php }else{?>
-	<p class="faint">Making a token needs Allow Edits on Users. Ask someone who has it.</p>
+	<p class="faint">Making a token needs Allow Edits on Users.</p>
 <?php }?>	<div id="mcp-token" class="mcp-token" hidden>
 		<div class="alert">Copy the token now; you won't see it again. <b data-fill="<?php echo htmlspecialchars($_v['data_mcp']['named'], ENT_QUOTES);?>
 "></b> works until <b data-fill="<?php echo htmlspecialchars($_v['data_mcp']['until'], ENT_QUOTES);?>

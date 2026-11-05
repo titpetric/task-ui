@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 			<nav class="menu">
 <?php if(!empty($_v['data']))foreach($_v['data'] as $_v['item']){?>
 				<a href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
@@ -10,8 +9,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <i class="dot<?php if($_v['chrome']['running']){?>
  running<?php }?>" data-any-running></i><?php }?></a>
 <?php if($_v['item']['flows'] && $_v['chrome']['workflows']){ $_v['data_workflows'] = $_v['chrome']['workflows'];?>
-				<div class="flows">
-<?php if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
+				<div class="flows"><?php if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
 					<div class="flow<?php if($_v['flow']['active']){?>
  active<?php }?>">
 						<i class="shebang<?php if($_v['flow']['running']){?>

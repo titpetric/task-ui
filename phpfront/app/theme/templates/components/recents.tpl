@@ -1,4 +1,3 @@
-{* input scope: data. See recents.md. *}
 		<aside class="rail" aria-label="Recents">
 			<div class="rail-inner">
 				<div class="label side-label"><a href="{base}{data.href}">Recents</a></div>

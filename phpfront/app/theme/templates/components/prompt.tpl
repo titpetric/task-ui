@@ -1,4 +1,3 @@
-{* input scope: data_prompt. See prompt.md. *}
 <details class="promptbox"{if $data_prompt.open} open{/if}{if $data_prompt.hidden} hidden{/if}>
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>{data_prompt.title} <small>{data_prompt.note}</small></h3></summary>
 {if !$data_prompt.watch}	<form class="note-form" data-api="{data_prompt.api}" data-refresh-notes>

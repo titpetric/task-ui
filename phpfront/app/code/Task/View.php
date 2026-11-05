@@ -19,7 +19,7 @@ class View {
 	const REFUSED = "You need permission to open this page.";
 
 	/** GRANTED is the rest of the refusal's lead, after what the alert said. */
-	const GRANTED = " An admin grants permissions under Settings. Pick a folder on the left to carry on.";
+	const GRANTED = " An admin grants permissions under Settings.";
 
 	var $module;
 	var $chrome;

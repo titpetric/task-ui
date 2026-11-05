@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="alert bad pipeline-alert" role="alert">
 	<b><?php echo htmlspecialchars($_v['data_findings']['pipelines'], ENT_QUOTES);?>
  <?php echo htmlspecialchars($_v['data_findings']['says'], ENT_QUOTES);?>

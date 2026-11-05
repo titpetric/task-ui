@@ -1,8 +1,3 @@
-{{- /* secretfields are the fields of a variable's form, (list secret
-     groups): the scope it applies to, every workspace or one, its name,
-     and its value. A secret's value never shows again, so an edit leaves
-     the field empty and keeps the value; an env value is filled in and
-     may be empty. The is_secret box decides which it is. */}}
 {{- define "secretfields" }}
 {{- $s := index . 0 }}{{ $groups := index . 1 }}
 {{- if $s.ID }}<input type="hidden" name="id" value="{{ $s.ID }}">{{ end }}

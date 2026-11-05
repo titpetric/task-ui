@@ -23,7 +23,6 @@
 	{{- $ask := .HeaderPrompt }}
 	<header class="top" data-prompt-folder="{{ $ask.Folder }}" data-prompt-dir="{{ $ask.Dir }}" data-prompt-run="{{ $ask.Run }}" data-prompt-label="{{ $ask.Label }}" data-prompt-href="{{ $ask.Href }}">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
-		{{- /* The logo toggles the prompt's panel; the name links home. */}}
 		<h1><a href="/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{{ template "logo" }}</button></h1>
 	{{- else }}
 	<header class="top">
@@ -33,7 +32,6 @@
 		{{- if .Can "prompt/edit" }}
 		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
 		{{- if .PromptUsers }}
-		{{- /* An admin picks who the header's prompt runs as; the pick shows with the field. */}}
 		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">{{ template "user-options" (list .PromptUsers .User.Name .UserKeys true) }}
 		</select></span>
 		{{- end }}
@@ -61,11 +59,6 @@
 	<div class="shell">
 		<div class="menu-backdrop" id="menu-backdrop"></div>
 		<aside class="side" id="side">
-			{{/* The sidebar's top block is the sidebar table, in its order,
-			     less the rows the user hid and the rows whose rule the user
-			     lacks: /settings/sidebar edits it. Two rows carry more than
-			     a link, and SideItem says which rather than the template
-			     matching on the href. */}}
 			<nav class="menu">
 				{{- range .SideItems }}
 				<a href="{{ .Href }}" class="{{ if .Active }}active{{ end }}"><svg class="ic"><use href="#i-{{ .Icon }}"/></svg><span>{{ .Title }}</span>{{ if .Pulse }}<i class="dot{{ if $.Running }} running{{ end }}" data-any-running></i>{{ end }}</a>
@@ -74,7 +67,7 @@
 					{{- range $.SideWorkflows }}{{ if not .SidebarHidden }}
 					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
 						<i class="shebang{{ if .Running }} running{{ end }}" aria-hidden="true">#!</i>
-						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := $.Links .Steps }}{{ if $i }} → {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
+						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := $.Links .Steps }}{{ if $i }} -> {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
 						{{- if .Running }}
 						<a class="play" href="/workflows/{{ .ID }}" title="{{ .Name }}, running" aria-label="Watch {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
 						{{- else if .CanRun }}
@@ -104,8 +97,6 @@
 			{{ template "content" . }}
 			{{- template "setup-trail" .SetupTrail }}
 		</main>
-		{{- /* The right rail, on wide screens: the latest runs and workflow
-		     runs by anyone. Narrower, Runs in the sidebar lists them. */}}
 		<aside class="rail" aria-label="Recents">
 			<div class="rail-inner">
 				<div class="label side-label"><a href="/runs">Recents</a></div>
@@ -134,8 +125,6 @@
 					{{- else }}
 					<div class="empty">Runs started by anyone show up here.</div>
 					{{- end }}
-					{{- /* The last slot when the rail can't show every entry:
-					     the script puts it in the last slot that fits. */}}
 					<a href="/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>
 				</nav>
 			</div>
@@ -144,8 +133,6 @@
 	{{ template "dialog" . }}
 	{{ template "confirm" . }}
 {{- end }}
-	{{- /* The page's toasts: what a change that reloads the page did, and
-	     what failed outside a form. */}}
 	<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 	<footer>
 		<span class="credit">
@@ -209,10 +196,6 @@
 </svg>
 {{ end }}
 
-{{- /* The replay button of a finished run with a recording: it plays
-     the recording in the run window at its recorded pace, and reads
-     nothing from the server but the recording. */}}
-
 {{ define "dialog" }}
 <dialog class="run" id="run-dialog" aria-labelledby="run-title">
 	<div class="run-head">
@@ -255,10 +238,6 @@
 		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 	</div>
 </dialog>
-{{- /* The image window: an image or an svg of the artifacts, scaled to
-     fit, opened in the page, or an HTML page a run wrote, in a frame
-     that holds it apart from this one. A file of a checkout that runs
-     carries the Run or Attach of its row in the foot. */}}
 <dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 	<div class="run-head">
 		<span class="label" id="preview-label">Artifact</span>
@@ -272,8 +251,6 @@
 		<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 	</div>
 </dialog>
-{{- /* The pipeline window: one workflow run's pipeline, fetched from its
-     page. */}}
 <dialog class="run pipeline-window" id="pipeline-dialog" aria-labelledby="pipeline-title">
 	<div class="run-head">
 		<span class="label">Workflow run</span>
@@ -286,8 +263,6 @@
 		<button type="button" class="btn" id="pipeline-close" aria-label="Close">Close</button>
 	</div>
 </dialog>
-{{- /* The summary window: Claude's summary of a run's or a workflow
-     run's output. */}}
 <dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
 	<div class="run-head">
 		<span class="label">Summary</span>
@@ -300,8 +275,6 @@
 		<button type="button" class="btn" id="summary-close" aria-label="Close">Close</button>
 	</div>
 </dialog>
-{{- /* The source window: a file a folder's pipeline reads, coloured, as
-     large as the run window. */}}
 <dialog class="run source" id="source-dialog" aria-labelledby="source-title">
 	<div class="run-head">
 		<span class="label">Source</span>
@@ -337,11 +310,6 @@
 </dialog>
 {{ end }}
 
-{{/* A run's state, and the run it belongs to, so the script keeps it
-     current: docs/framework.md. The content is rendered here and not
-     left to the script, so a reader with no JavaScript sees the state
-     the page was drawn with. data-finished says the run was over
-     already, which is most of them, and asks the instance nothing. */}}
 {{ define "state" }}
 {{- if . -}}
 <span class="state" data-run-id="{{ .ID }}"{{ if ended .State }} data-finished="true"{{ end }}><i class="dot {{ .State }}"></i>{{ .State }}{{ if and (ne .State "ok") (ended .State) }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span>
@@ -350,7 +318,6 @@
 {{- end -}}
 {{ end }}
 
-{{- /* The pages either side of a page of runs, from a view.Pager. */}}
 {{ define "pager" }}{{ with . }}
 <nav class="pager" aria-label="Pages">
 	{{- if .Prev }}<a class="btn btn-sm" href="{{ .Prev }}" rel="prev">Previous</a>{{ end }}
@@ -358,8 +325,6 @@
 </nav>
 {{- end }}{{ end }}
 
-{{- /* The footer of a step of the settings, from a view.SetupTrail: the
-     step before, the steps in order with this one in bold, the step after. */}}
 {{ define "setup-trail" }}{{ with . }}
 <nav class="setup-trail" aria-label="Setup steps">
 	{{- with .Previous }}<a class="btn btn-sm" href="{{ .Href }}" rel="prev"><svg class="ic back"><use href="#i-chev"/></svg>Previous: {{ .Name }}</a>{{ end }}
@@ -372,7 +337,6 @@
 </nav>
 {{- end }}{{ end }}
 
-{{- /* The page size select of a form that lists runs. */}}
 {{ define "pagesize" }}
 	<label class="page-size" for="page-size">Page size
 		<select id="page-size" name="n">
@@ -381,16 +345,12 @@
 	</label>
 {{- end }}
 
-{{/* avatar takes (list $ name): the initials of a user in the colour of their role. */}}
 {{ define "avatar" }}{{ $role := index (index . 0).Roles (index . 1) }}<span class="avatar sm{{ with $role }} role-{{ . }}{{ end }}" title="{{ index . 1 }}">{{ initials (index . 1) }}</span>{{ end }}
 
-{{/* who takes (list $ run): who started a run, and how. */}}
 {{ define "who" }}{{ $p := index . 0 }}{{ with index . 1 }}<span class="who-ran">{{ template "user" (list $p .UserName) }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}{{ end }}
 
 {{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 
-{{/* hostjobs lists the jobs that run a command on hosts in a job
-     picker, under Hosts, for a user with the hosts permission. */}}
 {{- define "hostjobs" }}{{ $job := "" }}{{ if gt (len .) 1 }}{{ $job = index . 1 }}{{ end }}{{ with index . 0 }}{{ if .HostJobs }}
 			<optgroup label="Hosts">
 				{{- range .HostJobs }}
@@ -399,10 +359,6 @@
 			</optgroup>
 {{- end }}{{ end }}{{ end }}
 
-{{- /* sideproject is a project in the sidebar: its row, its jobs and
-     the folders inside it. A project folds on its chevron; the row opens
-     it. The project of the open page shows as active and stays open. Without its
-     top folder listed, the folders stand on their own. */}}
 {{- define "sideproject" }}
 {{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
 {{- with $p := $g.Top }}
@@ -428,9 +384,6 @@
 {{- end }}
 {{- end }}
 
-{{- /* sideworkspace is a workspace in the sidebar: its row folds the
-     projects under it, each a project with its own fold. Without its top
-     folder listed, the projects stand on their own. */}}
 {{- define "sideworkspace" }}
 {{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
 {{- with $p := $g.Top }}
@@ -456,9 +409,6 @@
 {{- end }}
 {{- end }}
 
-{{/* sidefolder is a folder inside a project in the sidebar: a disclosure
-     of its jobs, open on its own page or when the tree is small. It
-     names its path below its project. */}}
 {{- define "sidefolder" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}{{ $top := index . 3 }}
 {{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
@@ -476,25 +426,13 @@
 </details>
 {{- end }}
 
-{{/* sideicon is the icon of a project's or a folder's row, (list icon
-     dirty): lit in the brand colour while git has files changed or
-     untracked under it, and saying how many on a mouse-over. An SVG
-     takes its tooltip from a <title> child. */}}
 {{- define "sideicon" }}
 {{- $dirty := index . 1 -}}
 <svg class="ic{{ if $dirty }} dirty{{ end }}">{{ if $dirty }}<title>{{ $dirty }} file{{ if ne $dirty 1 }}s{{ end }} changed or untracked</title>{{ end }}<use href="#i-{{ index . 0 }}"/></svg>
 {{- end }}
 
-{{/* tree is the Files panel of a folder page, a dashboard of what it
-     holds: .. up a level, the directories first, linked into, then the
-     files, each opening in the preview window. A directory that is a
-     folder links to its page. A file that runs carries #! and exec; it
-     runs from the Jobs table, whose Run its preview window carries too.
-     A sealed entry shows plain and locked. */}}
 {{- define "tree" }}{{ template "filetable" (list $.Up $.Tree) }}{{ end }}
 
-{{/* filetable is the table of the tree, (list up items): a .. row to
-     up unless up is empty, then the items. */}}
 {{- define "filetable" }}
 {{- $up := index . 0 }}{{ $items := index . 1 }}
 <div class="table-wrap">
@@ -536,9 +474,6 @@
 </div>
 {{- end }}
 
-{{/* spacebar is the space a directory takes: its files, and the git
-     history beside them, as one bar with a legend; the bar leaves out
-     what git ignores, and the legend names it apart. */}}
 {{- define "spacebar" }}
 <div class="spacebar" role="img" aria-label="{{ size .Total }} in all: {{ size .Files }} of files, {{ size .History }} of history">
 	<div class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></div>
@@ -550,17 +485,10 @@
 </div>
 {{- end }}
 
-{{/* spacemini is the same in a table cell: a short bar and the total. */}}
 {{- define "spacemini" }}
 <span class="spacemini" title="{{ size .Files }} of files, {{ size .History }} of history{{ if .Ignored }}; {{ size .Ignored }} more that git ignores{{ end }}"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></span><span class="nowrap">{{ size .Total }}</span></span>
 {{- end }}
 
-{{/* jobtable is the Jobs table of a folder's page, and of a directory's
-     inside one: a row of named buttons per job source of the place and
-     of each directory inside with targets, under the source's file, then
-     the files that run, each skill's jobs and the built-ins, from
-     Page.JobGroups. A row's [...] holds Run and summarize, the last run
-     and its summary, the history, Pin, Run force and Kill of its jobs. */}}
 {{- define "jobtable" }}
 {{- if $.JobGroups }}
 <section class="block" data-live>
@@ -570,19 +498,11 @@
 {{- end }}
 {{- end }}
 
-{{/* showsource is the Show button of a file a folder's pipeline reads:
-     it opens the file, coloured, in the source window. */}}
 {{- define "showsource" }}
 {{- $folder := index . 0 }}{{ $file := index . 1 }}{{ $lines := $folder.Lines $file -}}
 <button type="button" class="btn btn-sm show-source" data-source="{{ $folder.ID }}" data-file="{{ $file }}" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span>Show {{ $lines }} line{{ if ne $lines 1 }}s{{ end }}</span></button>
 {{- end }}
 
-{{- /* runButtons hold Run and the menu of the other ways to run the job:
-     Run and summarize, for a job Claude summarizes for the user, and Run
-     force, for a job in a workspace with hours, where task-ui refuses a
-     plain run outside them. Run of a job that takes args opens a field
-     for them under its card or head first, with the command they
-     follow; the menu's options do the same. */}}
 {{ define "runButtons" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 {{- $summarize := $.Summarizes $r -}}
@@ -607,7 +527,6 @@
 </div>
 {{- end }}
 
-{{- /* runButton holds Run of a job. (list $ folder job) */}}
 {{ define "runButton" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
@@ -632,10 +551,6 @@
 {{- range $.PinnedJobs $p.ID }}{{ template "sidepin" (list $ $p .) }}{{ end }}
 {{- end }}
 
-{{- /* sidepin is a pinned job in the sidebar, under its folder: a job
-     the folder's row does not list, as its directory or its args set it
-     apart, or one of a folder listed for its pinned jobs alone. It runs
-     as a job of the row does, with its directory and its args. */}}
 {{- define "sidepin" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $s := index . 2 }}{{ $r := $s.Job }}
 {{- $run := $.RunningRun $r.Key }}
@@ -652,8 +567,6 @@
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
 
-{{- /* keyname is the name field of a key form: the name before the
-     algorithm, which task-ui adds. */}}
 {{- define "keyname" }}
 <div class="field">
 	<label for="key-name">Name</label>
@@ -662,7 +575,6 @@
 </div>
 {{- end }}
 
-{{- /* keypurpose is the purpose field of a key form. */}}
 {{- define "keypurpose" }}
 <div class="field" role="radiogroup" aria-labelledby="key-purpose-label">
 	<span class="label" id="key-purpose-label">Purpose</span>
@@ -673,14 +585,6 @@
 </div>
 {{- end }}
 
-{{- /* whofield is the one "who gets it" element, a Who from the who
-     function: the roles, each with how many users act with it, the
-     users, each with the role a run checks for them and the state the
-     script fills from the boxes, and the summary line, which reads the
-     sentence for nothing checked from data-who-empty; an empty sentence
-     means no run gets it then. The caller's field holds the label and
-     the help. The compact form puts the roles and the users on one
-     wrapped line, with no summary, for a table cell. */}}
 {{- define "whofield" }}
 <div class="whofield{{ if .Compact }} compact{{ end }}" data-who-empty="{{ .Empty }}">
 	<div class="checks who-roles">
@@ -706,9 +610,6 @@
 </div>
 {{- end }}
 
-{{- /* keypolicies is who gets an instance SSH key, (list roles users
-     all): the roles' boxes are policies, the users' users; with nothing
-     checked no run gets it. */}}
 {{- define "keypolicies" }}
 <div class="field">
 	<span class="label">Who gets it</span>
@@ -717,10 +618,6 @@
 </div>
 {{- end }}
 
-{{- /* When runs ran: a bar per day and per hour of the last 24, each split
-     into the runs that ended ok, failed and the rest, and for a job or a
-     workflow the duration of its latest runs. Every bar and every run
-     on the line hovers its counts. */}}
 {{- define "activity" }}
 <div class="activity">
 	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>slowest <i class="line min"></i>fastest</span></p>
@@ -751,9 +648,6 @@
 </div>
 {{- end }}
 
-{{/* pipenode is a step of the pipeline: its name, state and, for a run's
-     step, its terminal's last screen, polled while it runs (data-frame).
-     A step that ran a workflow holds that run's chain. */}}
 {{- define "pipenode" }}
 {{- $l := index . 0 }}{{ $i := index . 1 }}
 <li class="node{{ with $l.State }} {{ . }}{{ end }}{{ if $l.Disabled }} disabled{{ end }}" data-step="{{ $i }}">
@@ -777,12 +671,6 @@
 </li>
 {{- end }}
 
-{{- /* activity-stats are a chart's finished runs in one line: the
-     fastest, the mean, the slowest and their time together. */}}
-{{- /* One count chart of the activity: its title and stats, a bar a
-     slot split by how the runs ended, the durations as lines under it,
-     and its time markers. Takes the title, what a slot is, the bars,
-     the lines, the ticks, the stats and a class. */}}
 {{- define "activity-chart" }}
 {{- $title := index . 0 }}{{ $unit := index . 1 }}{{ $bars := index . 2 }}{{ $lines := index . 3 }}{{ $ticks := index . 4 }}{{ $stats := index . 5 }}{{ $class := index . 6 }}
 <figure class="activity-chart{{ with $class }} {{ . }}{{ end }}">
@@ -799,9 +687,6 @@
 
 {{- define "activity-stats" }}{{ if .Count }}<span class="faint" title="{{ .Count }} finished run{{ if ne .Count 1 }}s{{ end }}: the fastest, the mean, the slowest and their time together">min/avg/max/total: {{ duration .Fastest }} {{ duration .Mean }} {{ duration .Slowest }} {{ duration .Spent }}</span>{{ end }}{{ end }}
 
-{{- /* The durations under a count chart: the average, the slowest and the
-     fastest run of each bucket as lines, a point in the middle of its
-     column; each column hovers its numbers. */}}
 {{- define "activity-lines" }}
 {{- $l := index . 0 }}{{ $bars := index . 1 }}{{ $n := len $bars }}
 <div class="activity-line durations" style="--n: {{ $n }}">

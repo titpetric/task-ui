@@ -1,4 +1,4 @@
-{* input scope: data_node. See pipenode.md. *}<li class="node{if $data_node.state} {data_node.state}{/if}{if $data_node.disabled} disabled{/if}" data-step="{data_node.pos}">
+<li class="node{if $data_node.state} {data_node.state}{/if}{if $data_node.disabled} disabled{/if}" data-step="{data_node.pos}">
 	<span class="rail"><i class="dot{if $data_node.state} {data_node.state}{/if}"></i></span>
 	<div class="what">
 		<div class="step-head">

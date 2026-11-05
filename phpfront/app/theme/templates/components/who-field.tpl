@@ -1,4 +1,3 @@
-{* input scope: data_whofield. See who-field.md. *}
 <div class="whofield{if $data_whofield.compact} compact{/if}" data-who-empty="{data_whofield.empty}">
 	<div class="checks who-roles">
 		<span class="faint">Roles</span>{foreach $data_whofield.roles as $role}

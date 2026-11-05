@@ -1,4 +1,3 @@
-{* The edit key links form. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 <form class="form" data-api="{data.api}" data-method="PUT" data-next="{data.saved}">{eval $data_whofield = $data.who}{include components/key-policies.tpl}

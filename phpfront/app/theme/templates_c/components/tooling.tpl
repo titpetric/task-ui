@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if($_v['data_tooling']['scopes']){?>
+<?php $_v=&$this->vars; if($_v['data_tooling']['scopes']){?>
 <div class="tooling">
 <?php if(!empty($_v['data_tooling']['scopes']))foreach($_v['data_tooling']['scopes'] as $_v['scope']){?>	<section class="tooling-scope">
 		<p class="tooling-sum"><span class="tooling-db" title="<?php echo htmlspecialchars($_v['scope']['database'], ENT_QUOTES);?>

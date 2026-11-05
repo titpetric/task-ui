@@ -1,4 +1,3 @@
-{* The add project form. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 
@@ -16,7 +15,6 @@
 		<select id="p-workspace" name="workspace" required>
 {foreach $data.options as $option}			<option value="{option.value}"{if $option.selected} selected{/if}>{option.folder} · {option.title}</option>
 {/foreach}		</select>
-		<small class="faint">internal, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder.</small>
 	</div>
 	<div class="field">
 		<label for="p-branch">Branch <span class="faint">optional, defaults to the repository's default branch</span></label>

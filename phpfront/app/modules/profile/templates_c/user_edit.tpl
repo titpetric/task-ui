@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -244,7 +241,6 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 	<p>An allow or a deny here is <?php echo htmlspecialchars($_v['data']['name'], ENT_QUOTES);?>
 's own and decides the rule for them. Inherit, the empty box, leaves it to the role's rules, where a deny denies the action even where another rule allows it. The mark after each box shows the result.</p>
 <?php }?><?php $_v['data_matrix'] = $_v['data']['permissions']['matrix'];?>
-
 <form class="matrix-form<?php if($_v['data_matrix']['fixed']){?>
  fixed<?php }?>"<?php if($_v['data_matrix']['editable']){?>
  data-api="<?php echo htmlspecialchars($_v['data_matrix']['api'], ENT_QUOTES);?>
@@ -306,10 +302,8 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 
 </section>
 <?php if($_v['data']['keys']){ $_v['data_user_keys'] = $_v['data']['keys'];?>
-
 <section class="block" id="keys">
 <?php $_v['data_block'] = $_v['data_user_keys']['block'];?>
-
 <div class="block-head<?php if($_v['data_block']['empty']){?>
  is-empty<?php }?>">
 	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
@@ -319,7 +313,7 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
 </p>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
-	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -388,7 +382,7 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 " aria-label="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
 "><svg class="ic"><use href="#i-copy"/></svg></button></span>
 </td>
-				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu'];if(!$_v['data_menu']['empty']){?>
+				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -440,7 +434,6 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 
 </section>
 <?php } $_v['data_mcp'] = $_v['data']['mcp'];?>
-
 <section class="block mcp-access" id="mcp">
 	<h3>MCP access</h3>
 <?php if($_v['data_mcp']['on']){?>
@@ -480,7 +473,7 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 	<p data-before-reveal><?php echo htmlspecialchars($_v['data_mcp']['name'], ENT_QUOTES);?>
  holds no MCP token. New token makes one that lasts 30 days and shows it once.</p>
 <?php }?><?php if(!$_v['data_mcp']['agent']){?>
-	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>, which an admin turns on.</p>
+	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>.</p>
 <?php }elseif($_v['data_mcp']['manage']){?>
 	<div class="actions" data-before-reveal>
 		<form class="inline" data-api="<?php echo htmlspecialchars($_v['data_mcp']['api'], ENT_QUOTES);?>
@@ -488,7 +481,7 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 	</div>
 	<p class="faint" data-before-reveal>One token per client, so retiring a client is one Delete and the others keep signing in.</p>
 <?php }else{?>
-	<p class="faint">Making a token needs Allow Edits on Users. Ask someone who has it.</p>
+	<p class="faint">Making a token needs Allow Edits on Users.</p>
 <?php }?>	<div id="mcp-token" class="mcp-token" hidden>
 		<div class="alert">Copy the token now; you won't see it again. <b data-fill="<?php echo htmlspecialchars($_v['data_mcp']['named'], ENT_QUOTES);?>
 "></b> works until <b data-fill="<?php echo htmlspecialchars($_v['data_mcp']['until'], ENT_QUOTES);?>

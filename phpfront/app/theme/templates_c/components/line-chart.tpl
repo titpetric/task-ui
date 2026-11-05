@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <figure class="chart">
 	<figcaption class="chart-title"><?php echo htmlspecialchars($_v['data_line_chart']['title'], ENT_QUOTES);?>
 </figcaption>

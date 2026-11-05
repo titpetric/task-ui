@@ -1,4 +1,3 @@
-{* input scope: data_projects. See project-table.md. *}
 <div class="table-wrap fit">
 <table class="table projects cards">
 	<thead><tr><th>Folder</th><th>Sources</th><th>Origin</th><th class="hide-sm hide-narrow">Last commit</th>{if $data_projects.sized}<th class="hide-sm hide-narrow">Size</th>{/if}<th class="actions" aria-label="Actions"></th></tr></thead>

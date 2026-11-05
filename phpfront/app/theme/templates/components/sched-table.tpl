@@ -1,4 +1,4 @@
-{* input scope: data_sched. See sched-table.md. *}{if $data_sched.rows}	<div class="table-wrap fit">
+{if $data_sched.rows}	<div class="table-wrap fit">
 	<table class="table fit-cards">
 		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
 		<tbody>

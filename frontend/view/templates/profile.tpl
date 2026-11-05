@@ -11,7 +11,7 @@
 	<div class="actions">
 		{{- if .AccountMCP.CanManage }}
 		{{- $add := printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer {token}\"" .BaseURL }}
-		<button type="button" class="btn" data-api="/api/users/{{ $u.ID }}/mcp" data-method="POST" data-copy-fill="{{ $add }}" data-notice="MCP token copied as the claude mcp add command" title="Make an MCP token for {{ $u.Name }} and copy the claude mcp add command that carries it"><svg class="ic"><use href="#i-copy"/></svg>New MCP token</button>
+		<button type="button" class="btn" data-api="/api/users/{{ $u.ID }}/mcp" data-method="POST" data-copy-fill="{{ $add }}" data-notice="MCP token copied as the claude mcp add command" title="Make an MCP token for {{ $u.Name }} and copy the claude mcp add command"><svg class="ic"><use href="#i-copy"/></svg>New MCP token</button>
 		{{- end }}
 		{{- if $pr.CanEdit }}
 		<a class="btn btn-primary" href="/users/{{ $u.Name }}/edit"><svg class="ic"><use href="#i-edit"/></svg>Edit</a>

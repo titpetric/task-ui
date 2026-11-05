@@ -235,7 +235,7 @@ class Workflow {
 				"running" => $flow["running"] !== "",
 				"canRun" => $flow["canRun"],
 				"prompted" => $flow["prompted"],
-				"title" => implode(" → ", $texts),
+				"title" => implode(" -> ", $texts),
 			);
 		}
 

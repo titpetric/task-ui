@@ -1,4 +1,3 @@
-{{/* mcp-connect tells how to connect an MCP client to this instance, with the base link to copy. */}}
 {{ define "mcp-connect" }}
 {{- $base := .BaseURL }}
 <section class="block mcp-connect" id="mcp">
@@ -16,17 +15,11 @@
 			{{ template "copyable" (list (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer <token>\"" $base) "the claude mcp add command") }}</li>
 		<li>Other clients connect to the endpoint over HTTP with the header <code>Authorization: Bearer &lt;token&gt;</code>. Check with <code>claude mcp list</code>: it shows <code>task</code> as connected.</li>
 	</ol>
-	<p class="faint">For the list of tools, read <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/mcp.md">the MCP chapter of the guide</a>.</p>
+	<p class="faint"><a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/mcp.md">The MCP chapter of the guide</a></p>
 </section>
 {{- end }}
 
 
-{{/* mcp-access is a user's MCP tokens on their edit page: (list page user).
-     One row per token, each with a Delete of its own, and New token adds
-     one more without touching them. The token shows once, in #mcp-token,
-     from the response to New token; Done leaves with a notice, which is a
-     navigation and not this page's own anchor, so the table it brings back
-     holds the new row. */}}
 {{ define "mcp-access" }}
 {{- $p := index . 0 }}{{ $u := index . 1 }}{{ $m := $p.AccountMCP }}
 {{- $api := printf "/api/users/%s/mcp" $u.ID }}
@@ -53,14 +46,14 @@
 	<p data-before-reveal>{{ $u.Name }} holds no MCP token. New token makes one that lasts 30 days and shows it once.</p>
 	{{- end }}
 	{{- if not $m.Agent }}
-	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>, which an admin turns on.</p>
+	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>.</p>
 	{{- else if $m.CanManage }}
 	<div class="actions" data-before-reveal>
 		<form class="inline" data-api="{{ $api }}" data-method="POST" data-reveal="#mcp-token"><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>New token</button></form>
 	</div>
 	<p class="faint" data-before-reveal>One token per client, so retiring a client is one Delete and the others keep signing in.</p>
 	{{- else }}
-	<p class="faint">Making a token needs Allow Edits on Users. Ask someone who has it.</p>
+	<p class="faint">Making a token needs Allow Edits on Users.</p>
 	{{- end }}
 	<div id="mcp-token" class="mcp-token" hidden>
 		<div class="alert">Copy the token now; you won't see it again. <b data-fill="{name}"></b> works until <b data-fill="{expires_at}"></b>. Make another here, or delete this one, whenever you like.</div>

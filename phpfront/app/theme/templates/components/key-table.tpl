@@ -1,4 +1,4 @@
-{* input scope: data_keys. See key-table.md. *}{if $data_keys}	<div class="table-wrap fit">
+{if $data_keys}	<div class="table-wrap fit">
 	<table class="table keys key-table cards">
 		{include components/key-head.tpl}
 		<tbody>

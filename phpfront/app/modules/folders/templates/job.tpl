@@ -1,4 +1,3 @@
-{* The page of one job: what it is, every run of it, and what runs it on a schedule. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 {if $data.running}<div class="alert signal">

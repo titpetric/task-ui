@@ -1,4 +1,4 @@
-{* input scope: data_pick. See folder-pick.md. *}	<div class="field" data-folder-pick{if $data_pick.label} role="group" aria-labelledby="folders-label"{/if}>
+	<div class="field" data-folder-pick{if $data_pick.label} role="group" aria-labelledby="folders-label"{/if}>
 {if $data_pick.label}		<span class="label" id="folders-label">Folders</span>
 {/if}		<label class="check"><input type="radio" name="scope" value="all"{if $data_pick.all} checked{/if}> All folders</label>
 		<label class="check"><input type="radio" name="scope" value="custom"{if !$data_pick.all} checked{/if}> Custom</label>

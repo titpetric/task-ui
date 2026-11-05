@@ -27,7 +27,7 @@ class mod_workflow_edit implements Module {
 	/** DENIED is why the refusal happened, and ADMIN what the theme's own page adds to it. */
 	const DENIED = "Its owner or an admin changes a workflow.";
 
-	const ADMIN = " An admin grants permissions under Settings. Pick a folder on the left to carry on.";
+	const ADMIN = " An admin grants permissions under Settings.";
 
 	/** ANYONE and OWNER name who the schedules run as, in the Schedule note. */
 	const ANYONE = "the user who adds the schedule";

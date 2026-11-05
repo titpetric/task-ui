@@ -1,3 +1,3 @@
-{* input scope: none. See instance-foot.md. *}</tbody>
+</tbody>
 	</table>
 	</div>

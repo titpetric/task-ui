@@ -1,4 +1,3 @@
-{* One workflow, its pipeline and its runs. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}{include components/page-head.tpl}
 
 <section class="block" data-sse="workflow:{data.id}" data-user="{data.user}">

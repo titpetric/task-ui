@@ -1,18 +1,3 @@
-{{/* promptbox is the prompt box of a folder page, of a directory browsed
-     inside a folder, of the Workflows page and of a run's page, for a user with prompt/edit and
-     a Claude token: Claude Code on a prompt in that directory, a run of
-     @claude-prompt there, and the threads asked there under it, each
-     question with Claude's answer once its run ends. A run's box asks
-     about the run, with its output, and lists the threads about it; one
-     who only reads prompts sees those threads without the box, a running
-     run's box hidden until a thread about it comes. A workflow run's box
-     lists the threads of its prompt and summary steps alone, open while
-     the run goes and folded once it ends, when the thread above it has
-     what Claude replied. Open on a workspace's page, a run's page and where a thread exists,
-     folded elsewhere. */}}
-{{/* prompt-as takes the page: who a prompt runs as in a box's foot,
-     you, or for an admin a pick of the user, the login selected, which
-     the form posts as user. */}}
 {{- define "prompt-as" }}{{ if .PromptUsers }}<select name="user" aria-label="Runs as">{{ template "user-options" (list .PromptUsers .User.Name .UserKeys true) }}
 		</select>{{ else }}you{{ end }}{{ end }}
 

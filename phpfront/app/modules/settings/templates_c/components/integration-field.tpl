@@ -2,7 +2,6 @@
 							<div class="field wf-wide">
 								<span class="label"><?php echo htmlspecialchars($_v['data_field']['label'], ENT_QUOTES);?>
 </span><?php $_v['data_whofield'] = $_v['data_field']['who'];?>
-
 <div class="whofield<?php if($_v['data_whofield']['compact']){?>
  compact<?php }?>" data-who-empty="<?php echo htmlspecialchars($_v['data_whofield']['empty'], ENT_QUOTES);?>
 ">

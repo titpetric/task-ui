@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -146,7 +143,6 @@
 
 <section class="block instance-section" id="general">
 	<h3>General</h3>
-	<p class="section-intro">Where the instance answers, who signs in, and the clock it reads.</p>
 	<div class="table-wrap">
 	<table class="table instance-table cards">
 		<colgroup><col class="c-key"><col class="c-value"><col class="c-var"><col class="c-desc"></colgroup>
@@ -170,7 +166,7 @@ Empty: task-ui reads the link from each request.<?php }?></span></td></tr>
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -232,7 +228,6 @@ Empty: task-ui reads the link from each request.<?php }?></span></td></tr>
 
 <section class="block instance-section" id="runs">
 	<h3>Runs</h3>
-	<p class="section-intro">How many runs do work at once, and how many may wait for a free slot. Terminals take no slot.</p>
 	<div class="table-wrap">
 	<table class="table instance-table cards">
 		<colgroup><col class="c-key"><col class="c-value"><col class="c-var"><col class="c-desc"></colgroup>
@@ -279,7 +274,7 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 <?php if($_v['data']['instance']['parent_env']){?>
 <section class="block instance-section" id="environment">
 	<h3>Parent environment</h3>
-	<p class="section-intro">How much of the server's own environment a run starts with. The variables of the folder and of the integrations reach a run under every choice; a script reads any other variable with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
+	<p class="section-intro"><a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a></p>
 <?php if($_v['data']['admin']){?>
 	<form class="form parent-env" data-api="/api/instance" data-method="PUT" data-next="<?php echo htmlspecialchars($_v['data']['forward'], ENT_QUOTES);?>
 " data-parent-env>
@@ -325,7 +320,6 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 <?php }?>
 <section class="block instance-section" id="paths">
 	<h3>Paths</h3>
-	<p class="section-intro">Where task-ui keeps its data, the folders it runs and its keys.</p>
 	<div class="table-wrap">
 	<table class="table instance-table cards">
 		<colgroup><col class="c-key"><col class="c-value"><col class="c-var"><col class="c-desc"></colgroup>
@@ -353,7 +347,6 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 <?php if($_v['data']['instance']['measured']){?>
 <section class="block instance-section" id="storage">
 	<h3>Storage</h3>
-	<p class="section-intro">What the instance keeps on disk: its database, the recordings and the artifacts of the runs, the tool history of each workspace's home and the instance's own copy, and the checkouts under each workspace's <code>src</code>. Measured now and then; an ellipsis stands for a measure still under way.</p>
 	<div class="table-wrap">
 	<table class="table storage-table cards">
 		<colgroup><col class="c-item"><col class="c-where"><col class="c-size"><col class="c-files"></colgroup>
@@ -374,7 +367,6 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 <?php }?>
 <section class="block instance-section" id="tooling">
 	<h3>Tooling</h3>
-	<p class="section-intro">The tools task-ui found in its PATH at the last check, and what each is used for. Check probes one tool; Check all probes every tool and replaces the list. A tool that is not there is left out.</p>
 <?php if($_v['data']['admin']){?>
 	<form class="inline" data-api="/api/instance/tools/check" data-method="POST" data-next="<?php echo htmlspecialchars($_v['data']['checked'], ENT_QUOTES);?>
 "><button class="btn btn-sm" type="submit">Check all</button></form>
@@ -396,13 +388,11 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 <?php }?>		</tbody>
 	</table>
 	</div>
-<?php }?><?php if(!$_v['data']['tooling']){?>
-	<p>No tooling was detected: Check all probes the PATH.</p>
 <?php }?></section>
 <?php if($_v['data']['keys']['shown']){?>
 <section class="block instance-section" id="keys">
 	<h3>Keys <small>in the key folder</small></h3>
-	<p class="section-intro">The encryption key of the instance's secrets and the SSH key git pulls and clones with. <a href="<?php echo htmlspecialchars($_v['data']['keys']['every'], ENT_QUOTES);?>
+	<p class="section-intro"><a href="<?php echo htmlspecialchars($_v['data']['keys']['every'], ENT_QUOTES);?>
 ">Every key</a></p>
 	<div class="table-wrap fit">
 	<table class="table instance-keys key-table cards">
@@ -438,7 +428,7 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 " aria-label="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
 "><svg class="ic"><use href="#i-copy"/></svg></button></span>
 </td>
-				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu'];if(!$_v['data_menu']['empty']){?>
+				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -516,7 +506,7 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 " aria-label="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
 "><svg class="ic"><use href="#i-copy"/></svg></button></span>
 </td>
-				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu'];if(!$_v['data_menu']['empty']){?>
+				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -572,7 +562,6 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 <?php }?>
 <section class="block instance-section" id="integrations">
 	<h3>Integrations</h3>
-	<p class="section-intro">The services task-ui reads from.</p>
 	<div class="table-wrap">
 	<table class="table instance-table cards">
 		<colgroup><col class="c-key"><col class="c-value"><col class="c-var"><col class="c-desc"></colgroup>
@@ -589,7 +578,6 @@ every version<?php }?></td><td class="var" data-label="Variable"><code>TASK_UI_A
 
 </section>
 <?php if($_v['data']['trail']){ $_v['data_trail'] = $_v['data']['trail'];?>
-
 <nav class="setup-trail" aria-label="Setup steps">
 <?php if($_v['data_trail']['previous']){?>
 	<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['data_trail']['previous']['href'], ENT_QUOTES);?>

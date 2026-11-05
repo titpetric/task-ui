@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="whofield<?php if($_v['data_whofield']['compact']){?>
  compact<?php }?>" data-who-empty="<?php echo htmlspecialchars($_v['data_whofield']['empty'], ENT_QUOTES);?>
 ">

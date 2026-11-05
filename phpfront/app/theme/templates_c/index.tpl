@@ -1,9 +1,7 @@
 <?php $_v=&$this->vars;?>
-
 <!DOCTYPE html>
 <html lang="en">
 <?php $_v['data'] = $_v['chrome'];?>
-
 
 <head>
 	<meta charset="utf-8">
@@ -30,7 +28,6 @@
 "<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
 edit<?php }elseif($_v['chrome']['can']['user/view']){?>
 view<?php }?>">
-
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 	<symbol id="i-project" viewBox="0 0 16 16"><circle cx="4.5" cy="3.5" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="4.5" cy="12.5" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="5.5" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5.4v5.2M11.5 7.4c0 2.6-2.2 3.1-5.2 3.9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
 	<symbol id="i-folder" viewBox="0 0 16 10"><path d="M.65 1.6A1 1 0 0 1 1.65.6h3.6l1.3 1.3h7.8a1 1 0 0 1 1 1v5.5a1 1 0 0 1-1 1H1.65a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
@@ -78,10 +75,7 @@ view<?php }?>">
 <?php if($_v['chrome']['user']){?>
 
 <a class="skip-link" href="#main">Skip to content</a>
-<?php $_v['data'] = $_v['chrome'];?>
-
-
-<?php if($_v['data']['can']['prompt/edit']){?>
+<?php $_v['data'] = $_v['chrome'];if($_v['data']['can']['prompt/edit']){?>
 	<header class="top" data-prompt-folder="<?php echo htmlspecialchars($_v['data']['prompt']['folder'], ENT_QUOTES);?>
 " data-prompt-dir="<?php echo htmlspecialchars($_v['data']['prompt']['dir'], ENT_QUOTES);?>
 " data-prompt-run="<?php echo htmlspecialchars($_v['data']['prompt']['run'], ENT_QUOTES);?>
@@ -89,14 +83,13 @@ view<?php }?>">
 " data-prompt-href="<?php echo htmlspecialchars($_v['data']['prompt']['href'], ENT_QUOTES);?>
 ">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
-		
 		<h1><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
 </button></h1>
 		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
 <?php if($_v['data']['runAs']['users']){?>
-		
-		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data']['runAs'];if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
+
+		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data']['runAs']; if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
 "<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
  selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES); if(!$_v['data_options']['short']){?>
@@ -149,7 +142,6 @@ view<?php }?>">
 		<aside class="side" id="side">
 <?php $_v['data'] = $_v['chrome']['sidebar'];?>
 
-
 			<nav class="menu">
 <?php if(!empty($_v['data']))foreach($_v['data'] as $_v['item']){?>
 				<a href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
@@ -160,8 +152,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <i class="dot<?php if($_v['chrome']['running']){?>
  running<?php }?>" data-any-running></i><?php }?></a>
 <?php if($_v['item']['flows'] && $_v['chrome']['workflows']){ $_v['data_workflows'] = $_v['chrome']['workflows'];?>
-				<div class="flows">
-<?php if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
+				<div class="flows"><?php if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
 					<div class="flow<?php if($_v['flow']['active']){?>
  active<?php }?>">
 						<i class="shebang<?php if($_v['flow']['running']){?>
@@ -193,9 +184,8 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 
 <?php $_v['data'] = $_v['chrome']['folders'];?>
 
-
 			<nav class="folders">
-<?php if(!empty($_v['data']))foreach($_v['data'] as $_v['group']){ if($_v['group']['workspace']){ $_v['data_workspace'] = $_v['group'];if($_v['data_workspace']['top']){?>
+<?php if(!empty($_v['data']))foreach($_v['data'] as $_v['group']){ if($_v['group']['workspace']){ $_v['data_workspace'] = $_v['group']; if($_v['data_workspace']['top']){?>
 
 <details class="workspace<?php if($_v['data_workspace']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_workspace']['id'], ENT_QUOTES);?>
@@ -221,7 +211,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php if($_v['data_workspace']['jobs']){?>
 
 	<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_workspace'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_workspace']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -263,7 +253,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php }?>
 
 	</div>
-<?php } if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project'];if($_v['data_project']['top']){?>
+<?php } if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project']; if($_v['data_project']['top']){?>
 
 				<details class="project<?php if($_v['data_project']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
@@ -294,7 +284,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php if($_v['data_project']['jobs']){?>
 
 					<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_project']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -337,7 +327,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -364,7 +353,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -410,7 +399,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -437,7 +425,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -482,7 +470,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 </details>
 <?php } } }?>
 </details>
-<?php }else{if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project'];if($_v['data_project']['top']){?>
+<?php }else{if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project']; if($_v['data_project']['top']){?>
 
 				<details class="project<?php if($_v['data_project']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
@@ -513,7 +501,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php if($_v['data_project']['jobs']){?>
 
 					<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_project']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -556,7 +544,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -583,7 +570,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -629,7 +616,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -656,7 +642,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -699,7 +685,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 
 	</div>
 </details>
-<?php } } } }}else{ $_v['data_project'] = $_v['group'];if($_v['data_project']['top']){?>
+<?php } } } }}else{ $_v['data_project'] = $_v['group']; if($_v['data_project']['top']){?>
 
 				<details class="project<?php if($_v['data_project']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
@@ -730,7 +716,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php if($_v['data_project']['jobs']){?>
 
 					<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_project']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -773,7 +759,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -800,7 +785,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -846,7 +831,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -873,7 +857,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -927,20 +911,14 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 
 		</aside>
 		<main id="main" tabindex="-1">
-<?php $_v['data'] = $_v['chrome'];?>
-
-
-<?php if($_v['data']['crumbs']){?>
+<?php $_v['data'] = $_v['chrome'];if($_v['data']['crumbs']){?>
 
 			<div class="crumbs"><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /">Dashboard</a><?php if(!empty($_v['data']['crumbs']))foreach($_v['data']['crumbs'] as $_v['crumb']){?><span><?php if($_v['crumb']['href']){?>
 <a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES); echo htmlspecialchars($_v['crumb']['href'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['crumb']['text'], ENT_QUOTES);?>
 </a><?php }else{ echo htmlspecialchars($_v['crumb']['text'], ENT_QUOTES); }?></span><?php }?></div>
-<?php }?>
-
-
-<?php if($_v['data']['notice']){?>
+<?php }if($_v['data']['notice']){?>
 
 			<div class="alert ok" role="status"><?php echo htmlspecialchars($_v['data']['notice'], ENT_QUOTES);?>
 </div>
@@ -952,7 +930,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 
 		</main>
 <?php $_v['data'] = $_v['chrome']['recents'];?>
-
 
 		<aside class="rail" aria-label="Recents">
 			<div class="rail-inner">
@@ -993,7 +970,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 		</aside>
 
 	</div>
-
 	<dialog class="run" id="run-dialog" aria-labelledby="run-title">
 		<div class="run-head">
 			<span class="label" id="run-kind">Run</span>
@@ -1036,7 +1012,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 		</div>
 	</dialog>
-
 	<dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 		<div class="run-head">
 			<span class="label" id="preview-label">Artifact</span>
@@ -1050,7 +1025,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-
 	<dialog class="run pipeline-window" id="pipeline-dialog" aria-labelledby="pipeline-title">
 		<div class="run-head">
 			<span class="label">Workflow run</span>
@@ -1063,7 +1037,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<button type="button" class="btn" id="pipeline-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-
 	<dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
 		<div class="run-head">
 			<span class="label">Summary</span>
@@ -1076,7 +1049,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<button type="button" class="btn" id="summary-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-
 	<dialog class="run source" id="source-dialog" aria-labelledby="source-title">
 		<div class="run-head">
 			<span class="label">Source</span>
@@ -1088,7 +1060,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<button type="button" class="btn" id="source-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
-
 
 	<dialog class="confirm" id="workflow-input-dialog" aria-labelledby="workflow-input-title">
 		<form method="dialog" data-workflow-input>
@@ -1120,7 +1091,6 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 <?php echo $_v['content'];}?>
 	<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <?php $_v['data'] = $_v['chrome'];?>
-
 
 	<footer>
 		<span class="credit">

@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -145,7 +142,6 @@
 <?php }?></div>
 
 <?php if($_v['data']['findings']){ $_v['data_findings'] = $_v['data']['findings'];?>
-
 <div class="alert bad pipeline-alert" role="alert">
 	<b><?php echo htmlspecialchars($_v['data_findings']['pipelines'], ENT_QUOTES);?>
  <?php echo htmlspecialchars($_v['data_findings']['says'], ENT_QUOTES);?>
@@ -184,7 +180,6 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data']['git']){ $_v['data_git'] = $_v['data']['git'];?>
-
 <div class="actionsbar">
 	<div class="gitline" title="<?php echo htmlspecialchars($_v['data_git']['title'], ENT_QUOTES);?>
 ">
@@ -230,7 +225,6 @@
 <section class="block" data-live>
 	<h3>Jobs <small>a row per job source, then files, skills and terminals</small></h3>
 <?php $_v['data_control'] = $_v['data']['control'];?>
-
 <div class="table-wrap">
 <table class="table control col-hover">
 	<tbody>
@@ -247,7 +241,6 @@
 <span class="faint"><?php echo htmlspecialchars($_v['row']['empty'], ENT_QUOTES);?>
 </span><?php }else{?>
 <div class="cc-row"><?php if(!empty($_v['row']['jobs']))foreach($_v['row']['jobs'] as $_v['job']){?><?php $_v['data_cc'] = $_v['job'];?>
-
 <span class="cc-slot" data-cc="<?php echo htmlspecialchars($_v['data_cc']['key'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['data_cc']['folder'], ENT_QUOTES);?>
 " data-job="<?php echo htmlspecialchars($_v['data_cc']['job'], ENT_QUOTES);?>
@@ -295,7 +288,7 @@ play<?php }?>"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'],
 "><i class="shebang" aria-hidden="true">#!</i><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
 </span></a><?php }?></span>
 <?php }?></div><?php }?></td>
-			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -346,7 +339,6 @@ play<?php }?>"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'],
 <?php }?><?php if($_v['data']['nothing']){?>
 <div class="alert">task-ui found nothing to run in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
 <?php }?><?php if($_v['data']['prompt']){ $_v['data_prompt'] = $_v['data']['prompt'];?>
-
 <details class="promptbox"<?php if($_v['data_prompt']['open']){?>
  open<?php }?><?php if($_v['data_prompt']['hidden']){?>
  hidden<?php }?>>
@@ -362,7 +354,7 @@ play<?php }?>"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'],
 <?php }?>		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="<?php echo htmlspecialchars($_v['data_prompt']['placeholder'], ENT_QUOTES);?>
 " aria-label="The prompt"></textarea>
 		<div class="form-foot note"><span class="faint run-in"><?php echo htmlspecialchars($_v['data_prompt']['lead'], ENT_QUOTES); if($_v['data_prompt']['options']['users']){?>
-<select name="user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data_prompt']['options'];if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
+<select name="user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data_prompt']['options']; if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
 "<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
  selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES); if(!$_v['data_options']['short']){?>
@@ -381,7 +373,6 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
  data-area="<?php echo htmlspecialchars($_v['data_prompt']['area'], ENT_QUOTES);?>
 "<?php }?>>
 <?php if(!empty($_v['data_prompt']['threads']))foreach($_v['data_prompt']['threads'] as $_v['thread']){?><?php $_v['data_note'] = $_v['thread'];?>
-
 	<article class="note<?php if($_v['data_note']['state']){?>
  instruction <?php echo htmlspecialchars($_v['data_note']['state'], ENT_QUOTES); }?>" id="note-<?php echo htmlspecialchars($_v['data_note']['id'], ENT_QUOTES);?>
 ">
@@ -392,7 +383,7 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -454,8 +445,7 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
 <?php }?>			<span class="spacer"></span>
 			<?php $_v['data_menu'] = $_v['data_note']['menu'];?>
 
-			
-<?php if(!$_v['data_menu']['empty']){?>
+			<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -514,7 +504,7 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -566,7 +556,7 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
  <a class="faint mono" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /runs/<?php echo htmlspecialchars($_v['reply']['run'], ENT_QUOTES);?>
 " title="The run this reply comes from">run <?php echo htmlspecialchars($_v['reply']['short'], ENT_QUOTES);?>
-</a><?php }?><span class="spacer"></span><?php $_v['data_menu'] = $_v['reply']['menu'];if(!$_v['data_menu']['empty']){?>
+</a><?php }?><span class="spacer"></span><?php $_v['data_menu'] = $_v['reply']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -633,7 +623,6 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
 	<h3>Files <small><?php echo htmlspecialchars($_v['data']['files']['note'], ENT_QUOTES);?>
 </small></h3>
 <?php $_v['data_files'] = $_v['data']['files']['panel'];?>
-
 <div class="table-wrap">
 <table class="table file-table col-hover">
 	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
@@ -676,7 +665,7 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 			<td class="hide-sm nowrap" title="<?php echo htmlspecialchars($_v['row']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
 </td>
-			<td class="actions"><?php if($_v['row']['menu']){ $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php if($_v['row']['menu']){ $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -730,7 +719,6 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 	<h3>Home <small><?php echo htmlspecialchars($_v['data']['home']['note'], ENT_QUOTES);?>
 </small></h3>
 <?php $_v['data_files'] = $_v['data']['home']['panel'];?>
-
 <div class="table-wrap">
 <table class="table file-table col-hover">
 	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
@@ -773,7 +761,7 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 			<td class="hide-sm nowrap" title="<?php echo htmlspecialchars($_v['row']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
 </td>
-			<td class="actions"><?php if($_v['row']['menu']){ $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php if($_v['row']['menu']){ $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -849,7 +837,6 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 </span><?php }?></div><div class="faint">pulled before every run</div></td></tr>
 <?php }?><?php if($_v['data']['detail']['space']){?>
 			<tr><th>Checkout size</th><td><?php $_v['data_space'] = $_v['data']['detail']['space'];?>
-
 <div class="spacebar" role="img" aria-label="<?php echo htmlspecialchars($_v['data_space']['total'], ENT_QUOTES);?>
  in all: <?php echo htmlspecialchars($_v['data_space']['files'], ENT_QUOTES);?>
  of files, <?php echo htmlspecialchars($_v['data_space']['history'], ENT_QUOTES);?>

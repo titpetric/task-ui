@@ -31,7 +31,7 @@
 {{- else if and $run.CastPath (ended $run.State) }}
 <section class="block">
 	<h3>Output <small>every line the run printed</small></h3>
-	<pre class="output" data-output="{{ $run.ID }}" data-cols="{{ $run.TermCols }}" data-rows="{{ $run.TermRows }}"><span class="faint">Reading the recording…</span></pre>
+	<pre class="output" data-output="{{ $run.ID }}" data-cols="{{ $run.TermCols }}" data-rows="{{ $run.TermRows }}"><span class="faint">Reading the recording</span></pre>
 </section>
 {{- end }}
 

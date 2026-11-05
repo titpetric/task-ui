@@ -1,11 +1,3 @@
-{* The page shell. Each component is handed its own slice of the chrome as
-   {data} immediately before it is included; components/<name>.md states the
-   scope each one reads.
-
-   The shell reads four of the chrome itself, for the body: roles and
-   workspaces, each the JSON of a map the script parses out of its attribute;
-   user, for the name the script answers as the reader; and can, for which
-   profile page a mention opens. *}
 <!DOCTYPE html>
 <html lang="en">
 {eval $data = $chrome}

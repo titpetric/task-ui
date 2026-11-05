@@ -1,4 +1,3 @@
-{* The data retention page. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 <form class="form retention" data-api="/api/retention" data-method="PUT" data-next="{data.next}">

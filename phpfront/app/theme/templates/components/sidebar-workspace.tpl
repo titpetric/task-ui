@@ -1,4 +1,3 @@
-{* input scope: data_workspace. See sidebar-workspace.md. *}
 {if $data_workspace.top}
 <details class="workspace{if $data_workspace.active} active{/if}" data-project="{data_workspace.id}" open>
 	<summary{if $data_workspace.here} class="active"{/if} title="{data_workspace.title}">

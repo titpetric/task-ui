@@ -1,4 +1,3 @@
-{* The sign in form. The scope is {data}; the chrome is {chrome}. *}
 <section class="login">
 	<h2>Sign in</h2>
 	<form method="post" action="/login">

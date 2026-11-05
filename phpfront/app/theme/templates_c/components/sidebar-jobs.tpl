@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v=&$this->vars; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>

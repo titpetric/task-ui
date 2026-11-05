@@ -1,4 +1,4 @@
-{* input scope: data_thread. See wfthread.md. *}<div class="notes wf-thread" data-workflow-thread="{data_thread.id}"{if $data_thread.running} data-follow="{data_thread.workflowId}" data-page="{base}{data_thread.page}"{/if}>
+<div class="notes wf-thread" data-workflow-thread="{data_thread.id}"{if $data_thread.running} data-follow="{data_thread.workflowId}" data-page="{base}{data_thread.page}"{/if}>
 	<article class="note instruction {data_thread.noteState}">
 		<header>
 			<span class="author">{eval $data_user = $data_thread.user}{include components/user.tpl}</span>

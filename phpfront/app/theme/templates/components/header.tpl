@@ -1,10 +1,8 @@
-{* input scope: data. See header.md. *}
 {if $data.can['prompt/edit']}	<header class="top" data-prompt-folder="{data.prompt.folder}" data-prompt-dir="{data.prompt.dir}" data-prompt-run="{data.prompt.run}" data-prompt-label="{data.prompt.label}" data-prompt-href="{data.prompt.href}">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
-		{* The logo toggles the prompt's panel; the name links home. *}
 		<h1><a href="{data.base}/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{include components/logo.tpl}</button></h1>
 		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
-{if $data.runAs.users}		{* An admin picks who the header's prompt runs as; the pick shows with the field. *}
+{if $data.runAs.users}
 		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">{eval $data_options = $data.runAs}{include components/user-options.tpl}		</select></span>
 {/if}		<div class="header-answer" id="header-answer" hidden></div>
 {else}	<header class="top">

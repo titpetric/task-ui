@@ -14,7 +14,7 @@
 <span class="badge">not set up</span><?php }?>
 						<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
 					</button>
-					<?php $_v['data_menu'] = $_v['data_card']['menu'];if(!$_v['data_menu']['empty']){?>
+					<?php $_v['data_menu'] = $_v['data_card']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -69,7 +69,6 @@
 							<div class="field wf-wide">
 								<span class="label"><?php echo htmlspecialchars($_v['data_field']['label'], ENT_QUOTES);?>
 </span><?php $_v['data_whofield'] = $_v['data_field']['who'];?>
-
 <div class="whofield<?php if($_v['data_whofield']['compact']){?>
  compact<?php }?>" data-who-empty="<?php echo htmlspecialchars($_v['data_whofield']['empty'], ENT_QUOTES);?>
 ">

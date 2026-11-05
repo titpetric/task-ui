@@ -1,4 +1,3 @@
-{* input scope: data_chart. See chart.md. *}
 {if $data_chart.charts}<div class="activity">
 	<p class="activity-sum">{data_chart.sum}{if $data_chart.failed} · <span class="bad">{data_chart.failed}</span>{/if}{if $data_chart.median} · {data_chart.median}{/if}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>slowest <i class="line min"></i>fastest</span></p>
 	<div class="activity-charts">

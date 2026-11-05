@@ -1,4 +1,4 @@
-{* input scope: data_env. See integration-env.md. *}						<p class="faint integration-env-note">A set API key sends every variable below; an empty value takes its default.</p>
+						<p class="faint integration-env-note">A set API key sends every variable below; an empty value takes its default.</p>
 						<div class="table-wrap integration-env">
 							<table class="table">
 								<thead><tr><th>Variable</th><th>Value</th></tr></thead>

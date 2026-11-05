@@ -1,13 +1,3 @@
-{{/* stepeditor is the workflow form, new and edit alike: the name, a
-     description, the sidebar toggle, who its runs run as and the
-     workspace whose projects they run over, then the steps in order on
-     a rail, each a card of its kind that folds to one line, and Add step
-     with the kinds to pick from. A prompt or a summary takes prompt/edit,
-     a script shell.
-     list: page, workflow (nil for a new one), API path, method, where to
-     go after, the submit label. task-ui.js reads the cards into the
-     request's steps, moves them by their grip or their menu, and puts an
-     error the API names a step by under that step. */}}
 {{ define "stepeditor" }}
 {{- $p := index . 0 }}{{ $w := index . 1 }}{{ $api := index . 2 }}{{ $method := index . 3 }}{{ $next := index . 4 }}{{ $label := index . 5 -}}
 {{- $id := "new" }}{{ if $w }}{{ $id = $w.ID }}{{ end }}{{ $asks := $p.Can "prompt/edit" }}{{ $shell := $p.Can "shell" -}}
@@ -25,11 +15,6 @@
 			<label class="check"><input type="checkbox" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar</label>
 			<small class="faint">Off for a workflow you only use as a step of others.</small>
 		</div>
-		{{- /* Runs as: an admin picks the user from a select, the current
-		     login on a new workflow and the saved user on edit, or whoever
-		     starts it; everyone else reads the user: themself on a new
-		     workflow, posted hidden, and on edit the saved user, which the
-		     form leaves alone. */}}
 		{{- $runAs := $p.User.Name }}{{ if $w }}{{ $runAs = $w.RunAs }}{{ end }}
 		<div class="field">
 			{{- if $p.Users }}
@@ -43,7 +28,6 @@
 			<span class="wf-runas">{{ or $runAs "Whoever starts it" }}</span>
 			{{- if not $w }}<input type="hidden" name="user" value="{{ $runAs }}">{{ end }}
 			{{- end }}
-			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's. The keys are the instance keys the user gets; a step's workspace adds its own keys.</small>
 		</div>
 		{{- $over := "" }}{{ if $w }}{{ $over = $w.RunsOver }}{{ end }}
 		<div class="field">
@@ -54,7 +38,6 @@
 				<option value="{{ .ID }}"{{ if eq .ID $over }} selected{{ end }}>Every project of {{ .Title }}</option>
 				{{- end }}
 			</select>
-			<small class="faint">The steps run once per project of the workspace, a project at a time: a step in a project of it runs in each project in turn, at the same path, and a project without the step's job skips it. A prompt or a summary whose place is the workspace root asks in the project's root, so Claude works in the project of its pass. A failed step ends that project's pass, and the next project starts. Steps outside the workspace run in every pass as they are. A workflow step may not run over projects.</small>
 		</div>
 	</div>
 
@@ -62,7 +45,6 @@
 		<div class="wf-steps-head">
 			<div>
 				<h3 class="section-title" id="wf-steps-{{ $id }}">Steps</h3>
-				<p class="faint">Top to bottom, each once the one before it ends ok. A prompt or a summary reads the output of the steps before it.</p>
 			</div>
 			<button type="button" class="btn btn-sm" data-steps-fold aria-pressed="false">Expand all</button>
 		</div>
@@ -108,14 +90,6 @@
 </form>
 {{ end }}
 
-{{/* wfstep is one card of the workflow form, (list page step open): its
-     node on the rail, its head, the grip, its kind and the step in one
-     line, with the [...] menu, and its fields under it, folded unless
-     open. A command picks a workspace, then a folder of it and its job,
-     or Workflows, then a workflow; a script its command and folder, a
-     prompt its text and place, a summary its place, each a workspace
-     and then a folder of it, and a check the markers it looks for and
-     the passes it allows. */}}
 {{ define "wfstep" }}
 {{- $p := index . 0 }}{{ $s := index . 1 }}{{ $open := index . 2 }}{{ $kind := $s.StepKind -}}
 {{- $off := "Disable" }}{{ $offIcon := "stop" }}{{ if $s.Disabled }}{{ $off = "Enable" }}{{ $offIcon = "play" }}{{ end -}}
@@ -234,7 +208,7 @@
 					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="{{ $s.Dir }}" spellcheck="false" autocomplete="off">
 				</div>
 			</div>
@@ -242,7 +216,6 @@
 			<div class="wf-builtin">
 				<span class="label">Claude gets</span>
 				<blockquote><p class="wf-question">{{ workflowSummaryQuestion }}</p><p>{{ summaryPrompt }}</p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 			{{- end }}
 			{{- end }}
@@ -253,15 +226,6 @@
 </li>
 {{- end }}
 
-{{/* stepspace is the Workspace field of a step card, (list page
-     selected workflows allow-none): internal, the named workspaces the
-     user sees a folder of, and Workflows for a command; allow-none adds
-     no workspace, the workspaces root, for a prompt or summary. The
-     folder select next to it lists the options whose data-workspace
-     matches, each by its folder relative to the workspace, data-rel;
-     when the workspace changes, task-ui.js narrows it and keeps the
-     folder of the same data-rel and its job, or says under the card
-     what the workspace lacks. */}}
 {{ define "stepspace" }}
 {{- $p := index . 0 }}{{ $sel := index . 1 }}{{ $flows := index . 2 }}{{ $none := index . 3 -}}
 <div class="field">
@@ -280,12 +244,6 @@
 </div>
 {{- end }}
 
-{{/* wfthread takes (list $ run): a workflow run as a thread, its input,
-     or else its first prompt, under who started it, and the reply: the
-     answer of its last prompt or summary step under Claude, in markdown,
-     or for a run of commands alone how it ended. While the run goes the
-     reply shows working, and task-ui.js puts the thread in again from
-     the page once the workflow's topic says the run ended. */}}
 {{- define "wfthread" }}{{ $p := index . 0 }}{{ with index . 1 }}
 <div class="notes wf-thread" data-workflow-thread="{{ .ID }}"{{ if .Running }} data-follow="{{ .WorkflowID }}" data-page="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}"{{ end }}>
 	<article class="note instruction {{ .NoteState }}">
@@ -319,16 +277,8 @@
 </div>
 {{- end }}{{ end }}
 
-{{/* wffold takes (list run open): the chevron that shows a run's answer
-     in the row under it, for a run with an answer, open from the start
-     with open, as the Workflows page has it, folded without, as the
-     workflow's page does; a run without an answer keeps the place empty,
-     its state on the dot beside it saying how it ended. */}}
-{{- define "wffold" }}{{ $open := false }}{{ if gt (len .) 1 }}{{ $open = index . 1 }}{{ end }}{{ with index . 0 }}{{ if .Answer }}<button type="button" class="btn-icon wf-fold" data-answer-toggle aria-expanded="{{ $open }}" aria-controls="wf-answer-{{ .ID }}" title="{{ if $open }}Hide{{ else }}Show{{ end }} the answer" aria-label="{{ if $open }}Hide{{ else }}Show{{ end }} the answer"><svg class="ic chev"><use href="#i-chev"/></svg></button>{{ else }}<span class="wf-fold" aria-hidden="true"></span>{{ end }}{{ end }}{{ end }}
+{{- define "wffold" }}{{ $open := false }}{{ if gt (len .) 1 }}{{ $open = index . 1 }}{{ end }}{{ with index . 0 }}{{ if .Answer }}<button type="button" class="btn-icon wf-fold" data-answer-toggle aria-expanded="{{ $open }}" aria-controls="wf-answer-{{ .ID }}" title="{{ if $open }}Hide{{ else }}Show{{ end }}" aria-label="{{ if $open }}Hide{{ else }}Show{{ end }}"><svg class="ic chev"><use href="#i-chev"/></svg></button>{{ else }}<span class="wf-fold" aria-hidden="true"></span>{{ end }}{{ end }}{{ end }}
 
-{{/* wfanswer takes (list $ run columns open): the row under a run with
-     Claude's answer in full, in markdown, as wide as the table, folded
-     unless open; none for a run without an answer. */}}
 {{- define "wfanswer" }}{{ $p := index . 0 }}{{ $cols := index . 2 }}{{ $open := false }}{{ if gt (len .) 3 }}{{ $open = index . 3 }}{{ end }}{{ with index . 1 }}{{ if .Answer }}
 <tr class="wf-answer-row" id="wf-answer-{{ .ID }}" data-answer-of="{{ .ID }}"{{ if not $open }} hidden{{ end }}><td colspan="{{ $cols }}"><div class="note-body">{{ $p.Message .Answer }}</div></td></tr>
 {{- end }}{{ end }}{{ end }}

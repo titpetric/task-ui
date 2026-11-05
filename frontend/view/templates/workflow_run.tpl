@@ -1,7 +1,6 @@
 {{ define "content" }}
 {{- if and .Workflow .WorkflowRuns }}
 {{- $w := .Workflow }}{{ $r := index .WorkflowRuns 0 }}
-{{- /* data-pipeline-view is what the workflow page's window shows. */}}
 <section class="block" data-pipeline-view>
 	<div class="page-head">
 		<div>

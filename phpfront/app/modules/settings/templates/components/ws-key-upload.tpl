@@ -1,4 +1,3 @@
-{* input scope: data_wsup. See ws-key-upload.md. *}
 <form class="form" data-api="{data_wsup.api}" data-method="POST" data-next="{data_wsup.next}">
 {if $data_wsup.dialog}	<h3 id="key-upload-title">Upload key</h3>
 	<p>Saves a private key you already use as an SSH key of {data_wsup.folder}. The folder refuses a key it holds, under any name.</p>

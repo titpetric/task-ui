@@ -23,7 +23,6 @@
 			<option value="{{ .Folder }}"{{ if or (eq .Folder $ws) (and (not $ws) (eq $i 0)) }} selected{{ end }}>{{ .Folder }} · {{ if eq .Folder "internal" }}the root{{ else }}{{ or .Title .Folder }}{{ end }}</option>
 			{{- end }}
 		</select>
-		<small class="faint">internal, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder.</small>
 	</div>
 	<div class="field">
 		<label for="p-branch">Branch <span class="faint">optional, defaults to the repository's default branch</span></label>

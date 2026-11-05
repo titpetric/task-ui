@@ -1,11 +1,3 @@
-{{/* projecttable lists projects, (list page entries): the table of the
-     Projects page and of a workspace's page, the same rows on both:
-     the folder, its sources and jobs, the checkout's remote, cut to its
-     column and whole on a hover, and branch, the last commit with its
-     subject on a hover, the size on disk when the page measures it, and
-     the row's [...] with Open, Edit project, Pull now on a checkout
-     whose git skill the user may run, and Remove checkout. A page with
-     no entries draws its blockhead's empty line instead. */}}
 {{- define "projecttable" }}{{ $p := index . 0 }}
 <div class="table-wrap fit">
 <table class="table projects cards">

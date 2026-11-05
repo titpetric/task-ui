@@ -1,4 +1,3 @@
-{* input scope: data_git. See git-line.md. *}
 <div class="actionsbar">
 	<div class="gitline" title="{data_git.title}">
 		<span class="branch"><span class="glyph" aria-hidden="true">⎇</span> {if $data_git.branch}{data_git.branch}{else}<span class="faint">detached</span> {data_git.detached}{/if}</span>

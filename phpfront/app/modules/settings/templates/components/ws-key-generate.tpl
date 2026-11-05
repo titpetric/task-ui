@@ -1,4 +1,3 @@
-{* input scope: data_wsgen. See ws-key-generate.md. *}
 <form class="form" data-api="{data_wsgen.api}" data-method="POST" data-next="{data_wsgen.next}">
 {if $data_wsgen.dialog}	<h3 id="key-generate-title">Generate key</h3>
 	<p>Generates an SSH key of {data_wsgen.folder} in {data_wsgen.dir}, named <span class="mono">workspace_{data_wsgen.folder}_&lt;name&gt;_&lt;algorithm&gt;</span>.</p>

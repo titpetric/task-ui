@@ -1,4 +1,4 @@
-{* input scope: data_step. See wfstep.md. *}<li class="wf-step kind-{data_step.kind}{if $data_step.disabled} off{/if}{if $data_step.open} open{/if}" data-step data-kind="{data_step.kind}"{if $data_step.disabled} data-off{/if}>
+<li class="wf-step kind-{data_step.kind}{if $data_step.disabled} off{/if}{if $data_step.open} open{/if}" data-step data-kind="{data_step.kind}"{if $data_step.disabled} data-off{/if}>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
 	<div class="wf-card">
 		<div class="wf-card-head">
@@ -77,14 +77,13 @@
 {/if}					</select>
 				</div>
 				<div class="field">
-					<span class="label">Directory <span class="faint">inside it, optional</span></span>
+					<span class="label">Directory</span>
 					<input type="text" data-step-dir aria-label="Directory inside the folder" placeholder="none" value="{data_step.dir}" spellcheck="false" autocomplete="off">
 				</div>
 			</div>
 {if $data_step.sums}			<div class="wf-builtin">
 				<span class="label">Claude gets</span>
 				<blockquote><p class="wf-question">{data_step.question}</p><p>{data_step.instruction}</p></blockquote>
-				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 {/if}{/if}			<p class="wf-hint" data-step-hint role="status"{if !$data_step.missing} hidden{/if}>{data_step.missing}</p>
 			<p class="wf-error" data-step-error role="alert" hidden></p>

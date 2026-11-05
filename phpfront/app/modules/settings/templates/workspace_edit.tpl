@@ -1,4 +1,3 @@
-{* The settings of one workspace. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 {eval $set = $data.settings}
@@ -22,7 +21,6 @@
 		<div class="field">
 			<label for="we-hours">Hours</label>
 			<textarea id="we-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{set.hours}</textarea>
-			<small class="faint">When runs in this workspace can start, every job of its folders and the built-ins; one rule per line, and the last rule for a day applies. Empty allows any time. Outside the hours a run needs Run force and a reason; scheduled runs and prompts go ahead.</small>
 		</div>
 		<div class="form-foot">
 			<a class="btn" href="{set.cancel}">Cancel</a>

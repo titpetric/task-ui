@@ -144,9 +144,6 @@
 </section>
 {{ end }}
 
-{{/* envswitch is a setting's switch to send its variable or leave it out:
-     (list integration field), a checkbox under `values.<field>.enabled`
-     whose stored row is `<field>_enabled`. */}}
 {{ define "envswitch" }}
 {{- $int := index . 0 }}{{ $f := index . 1 -}}
 <label class="switch env-switch" title="Send {{ $f.Env }} in a run">

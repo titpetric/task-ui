@@ -1,4 +1,3 @@
-{* input scope: data_jobs. See sidebar-jobs.md. *}
 {foreach $data_jobs.jobs as $job}
 <div class="job{if $job.pinned} pinned{/if}{if $job.active} active{/if}" data-job-key="{job.key}">
 	<i class="shebang{if $job.running} running{/if}" aria-hidden="true">#!</i>

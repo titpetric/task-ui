@@ -12,8 +12,6 @@
 	{{- end }}
 </div>
 
-{{- /* The dashboard follows the runs topic: a run that starts adds its
-     tile, one that ends marks it; no reload. */}}
 {{- template "pipelinenote" (list $ ($.PipelineAlert "")) }}
 
 <div data-sse="runs" data-dashboard>

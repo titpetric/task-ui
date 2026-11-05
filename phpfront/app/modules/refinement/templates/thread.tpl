@@ -1,4 +1,3 @@
-{* One thread. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 
@@ -38,10 +37,8 @@
 				{if $entry.comment.run}<span class="state" data-run-id="{entry.comment.run}"></span>{/if}{if $entry.comment.note_id}<a class="badge" href="{base}/notes#{entry.comment.note_id}">the run</a>{/if}
 				{if $entry.applied}<span class="badge signal">applied</span>{/if}
 				{if $entry.comment.correction}<span class="badge">rule</span>{/if}
-				{* Deleting the design deletes the thread: the rules correct it,
-				   and without it they correct nothing. The artifacts stay. *}
 				<form class="refinement-delete" method="post" action="{base}/refinement/threads/{data.thread.id}/comments/{entry.comment.id}/delete"
-					{if $entry.comment.id == $data.design}data-confirm="Delete the design, and the whole thread with it? Its rules and its runs go. The files stay in the artifacts, under {data.thread.id}."{else}data-confirm="Delete this request? The next Apply all will not carry it. The files it produced stay."{/if}>
+					{if $entry.comment.id == $data.design}data-confirm="Delete the design, and the whole thread with it? Its rules and its runs go. The files stay in the artifacts, under {data.thread.id}."{else}data-confirm="Delete this request? The files it produced stay."{/if}>
 					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
 			</div>
@@ -50,14 +47,12 @@
 {/foreach}	</ol>
 
 	<form class="form refinement-apply" method="post" action="{base}/refinement/threads/{data.thread.id}/apply">
-		<p class="faint">Folds every request above into one and runs it over the files as they stand, so the result satisfies all of them together rather than one after another.</p>
 		<button class="btn" type="submit"><svg class="ic"><use href="#i-collapse"/></svg>Apply all</button>
 	</form>
 
 	<form class="form refinement-fork" method="post" action="{base}/refinement/threads/{data.thread.id}/fork">
 		<label for="refinement-fork">Fork</label>
-		<p class="faint" id="refinement-fork-help">A new thread on another subject, carrying every rule above. Say what it is and what it should produce; the rules come along and the files do not.</p>
-		<textarea id="refinement-fork" name="want" rows="2" aria-describedby="refinement-fork-help" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
+		<textarea id="refinement-fork" name="want" rows="2" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
 		<div class="form-foot">
 			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
 		</div>

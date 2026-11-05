@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="table-wrap<?php if($_v['data_table']['wrap']){?>
  <?php echo htmlspecialchars($_v['data_table']['wrap'], ENT_QUOTES); }?>">
 <table class="table<?php if($_v['data_table']['class']){?>

@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -25,7 +24,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -66,7 +64,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -99,8 +97,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -163,7 +160,6 @@
 " autocomplete="off">
 		</div>
 <?php $_v['data_recursive'] = $_v['set']['recursive'];?>
-
 	<div class="field">
 		<label class="check"><input type="checkbox" id="<?php echo htmlspecialchars($_v['data_recursive']['id'], ENT_QUOTES);?>
 " name="recursive"<?php if($_v['data_recursive']['checked']){?>
@@ -181,7 +177,6 @@
 			<label for="we-hours">Hours</label>
 			<textarea id="we-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13"><?php echo htmlspecialchars($_v['set']['hours'], ENT_QUOTES);?>
 </textarea>
-			<small class="faint">When runs in this workspace can start, every job of its folders and the built-ins; one rule per line, and the last rule for a day applies. Empty allows any time. Outside the hours a run needs Run force and a reason; scheduled runs and prompts go ahead.</small>
 		</div>
 		<div class="form-foot">
 			<a class="btn" href="<?php echo htmlspecialchars($_v['set']['cancel'], ENT_QUOTES);?>
@@ -194,7 +189,6 @@
 
 <section class="block workspace-home" id="home">
 <?php $_v['data_block'] = $_v['home']['block'];?>
-
 <div class="block-head<?php if($_v['data_block']['empty']){?>
  is-empty<?php }?>">
 	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
@@ -204,7 +198,7 @@
 	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
 </p>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
-	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -285,7 +279,6 @@
 <?php }?>
 <section class="block" id="projects">
 <?php $_v['data_block'] = $_v['data']['block'];?>
-
 <div class="block-head<?php if($_v['data_block']['empty']){?>
  is-empty<?php }?>">
 	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
@@ -295,7 +288,7 @@
 	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
 </p>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
-	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -329,7 +322,6 @@
 	</div>
 <?php }?></div>
 <?php $_v['data_projects'] = $_v['data']['table']; if($_v['data_projects']['rows']){?>
-
 <div class="table-wrap fit">
 <table class="table projects cards">
 	<thead><tr><th>Folder</th><th>Sources</th><th>Origin</th><th class="hide-sm hide-narrow">Last commit</th><?php if($_v['data_projects']['sized']){?>
@@ -357,13 +349,12 @@
  <span class="faint"><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
 </span><?php }?><?php }?></td><?php if($_v['data_projects']['sized']){?>
 <td class="hide-sm hide-narrow" data-label="Size"><?php $_v['data_mini'] = $_v['row']['space'];?>
-
 <span class="spacemini" title="<?php echo htmlspecialchars($_v['data_mini']['title'], ENT_QUOTES);?>
 "><span class="spacebar-track"><i class="files" style="width: <?php echo htmlspecialchars($_v['data_mini']['filesPercent'], ENT_QUOTES);?>
 %"></i><i class="history" style="width: <?php echo htmlspecialchars($_v['data_mini']['historyPercent'], ENT_QUOTES);?>
 %"></i></span><span class="nowrap"><?php echo htmlspecialchars($_v['data_mini']['total'], ENT_QUOTES);?>
 </span></span></td><?php }?>
-			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -415,7 +406,6 @@
 
 <section class="block workspace-keys" id="keys">
 <?php $_v['data_block'] = $_v['keys']['block'];?>
-
 <div class="block-head<?php if($_v['data_block']['empty']){?>
  is-empty<?php }?>">
 	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
@@ -425,7 +415,7 @@
 	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
 </p>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
-	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -495,7 +485,7 @@
 " aria-label="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
 "><svg class="ic"><use href="#i-copy"/></svg></button></span>
 </td>
-				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu'];if(!$_v['data_menu']['empty']){?>
+				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -545,10 +535,8 @@
 	</div>
 <?php } }?></section>
 <?php if($_v['data']['dialogs']){ $_v['data_wsdialogs'] = $_v['data']['dialogs'];?>
-
 <dialog class="confirm" id="key-generate-dialog" aria-labelledby="key-generate-title">
 	<?php $_v['data_wsgen'] = $_v['data_wsdialogs']['generate'];?>
-
 <form class="form" data-api="<?php echo htmlspecialchars($_v['data_wsgen']['api'], ENT_QUOTES);?>
 " data-method="POST" data-next="<?php echo htmlspecialchars($_v['data_wsgen']['next'], ENT_QUOTES);?>
 ">
@@ -595,7 +583,6 @@ _&lt;name&gt;_&lt;algorithm&gt;</span>.</p>
 </dialog>
 <dialog class="confirm" id="key-upload-dialog" aria-labelledby="key-upload-title">
 	<?php $_v['data_wsup'] = $_v['data_wsdialogs']['upload'];?>
-
 <form class="form" data-api="<?php echo htmlspecialchars($_v['data_wsup']['api'], ENT_QUOTES);?>
 " data-method="POST" data-next="<?php echo htmlspecialchars($_v['data_wsup']['next'], ENT_QUOTES);?>
 ">
@@ -662,7 +649,6 @@ _&lt;name&gt;_&lt;algorithm&gt;</span>.</p>
 	</form>
 </dialog>
 <?php }?><?php if($_v['data']['trail']){ $_v['data_trail'] = $_v['data']['trail'];?>
-
 <nav class="setup-trail" aria-label="Setup steps">
 <?php if($_v['data_trail']['previous']){?>
 	<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['data_trail']['previous']['href'], ENT_QUOTES);?>

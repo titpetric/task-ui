@@ -1,8 +1,6 @@
 <?php $_v=&$this->vars;?>
-
 <div class="field">
-	<span class="label">Who gets it</span>
-<div class="whofield<?php if($_v['data_whofield']['compact']){?>
+	<span class="label">Who gets it</span><div class="whofield<?php if($_v['data_whofield']['compact']){?>
  compact<?php }?>" data-who-empty="<?php echo htmlspecialchars($_v['data_whofield']['empty'], ENT_QUOTES);?>
 ">
 	<div class="checks who-roles">

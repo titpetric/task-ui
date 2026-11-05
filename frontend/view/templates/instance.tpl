@@ -10,7 +10,6 @@
 {{- with .Instance }}
 <section class="block instance-section" id="general">
 	<h3>General</h3>
-	<p class="section-intro">Where the instance answers, who signs in, and the clock it reads.</p>
 	{{ template "instance-table-head" }}
 		<tr><td class="key">Base link</td><td class="value mono" data-label="Value">{{ $.BaseURL }}</td><td class="var" data-label="Variable"><code>TASK_UI_URL</code></td><td class="desc" data-label="About"><span>{{ if .URL }}The link pages and MCP clients use.{{ else }}Empty: task-ui reads the link from each request.{{ end }}</span></td></tr>
 		<tr><td class="key">Version</td><td class="value mono ro" data-label="Value">{{ $.Version }}</td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>The build that serves this page.</span></td></tr>
@@ -26,7 +25,6 @@
 
 <section class="block instance-section" id="runs">
 	<h3>Runs</h3>
-	<p class="section-intro">How many runs do work at once, and how many may wait for a free slot. Terminals take no slot.</p>
 	{{ template "instance-table-head" }}
 		{{- with .Backlog }}
 		<tr><td class="key">Parallel runs</td><td class="value mono ro" data-label="Value">{{ .Parallel }}<small class="faint">{{ .Going }} going, {{ .Waiting }} waiting</small></td><td class="var" data-label="Variable"><span class="faint">computed</span></td><td class="desc" data-label="About"><span>One run per CPU of the machine; a run over that waits, queued, in order.</span></td></tr>
@@ -51,7 +49,7 @@
 {{- if .ParentEnv }}
 <section class="block instance-section" id="environment">
 	<h3>Parent environment</h3>
-	<p class="section-intro">How much of the server's own environment a run starts with. The variables of the folder and of the integrations reach a run under every choice; a script reads any other variable with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
+	<p class="section-intro"><a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a></p>
 	{{- if $admin }}
 	<form class="form parent-env" data-api="/api/instance" data-method="PUT" data-next="/settings/instance?notice=Parent+environment+saved#environment" data-parent-env>
 		<div class="field" role="radiogroup" aria-labelledby="parent-env-label">
@@ -90,7 +88,6 @@
 
 <section class="block instance-section" id="paths">
 	<h3>Paths</h3>
-	<p class="section-intro">Where task-ui keeps its data, the folders it runs and its keys.</p>
 	{{ template "instance-table-head" }}
 		<tr><td class="key">Workspace folder</td><td class="value mono" data-label="Value">{{ .Root }}</td><td class="var" data-label="Variable"><code>TASK_UI_WORKSPACE</code></td><td class="desc" data-label="About"><span>The folders with jobs to run, by default <code>workspaces</code> in the data directory.</span></td></tr>
 		<tr><td class="key">Discovery</td><td class="value" data-label="Value">{{ if .Discover }}<span class="badge ok">on</span>{{ else }}<span class="badge">off</span>{{ end }}</td><td class="var" data-label="Variable"><code>TASK_UI_DISCOVER</code></td><td class="desc" data-label="About"><span>List every folder under the root with something to run.</span></td></tr>
@@ -105,7 +102,6 @@
 {{- with .Instance }}{{ with .Storage }}
 <section class="block instance-section" id="storage">
 	<h3>Storage</h3>
-	<p class="section-intro">What the instance keeps on disk: its database, the recordings and the artifacts of the runs, the tool history of each workspace's home and the instance's own copy, and the checkouts under each workspace's <code>src</code>. Measured now and then; an ellipsis stands for a measure still under way.</p>
 	<div class="table-wrap">
 	<table class="table storage-table cards">
 		<colgroup><col class="c-item"><col class="c-where"><col class="c-size"><col class="c-files"></colgroup>
@@ -124,7 +120,6 @@
 {{- with .Instance }}
 <section class="block instance-section" id="tooling">
 	<h3>Tooling</h3>
-	<p class="section-intro">The tools task-ui found in its PATH at the last check, and what each is used for. Check probes one tool; Check all probes every tool and replaces the list. A tool that is not there is left out.</p>
 	{{- if $admin }}
 	<form class="inline" data-api="/api/instance/tools/check" data-method="POST" data-next="/settings/instance?notice=Tooling+checked#tooling"><button class="btn btn-sm" type="submit">Check all</button></form>
 	{{- end }}
@@ -142,9 +137,6 @@
 	</table>
 	</div>
 	{{- end }}
-	{{- if not .Tooling }}
-	<p>No tooling was detected: Check all probes the PATH.</p>
-	{{- end }}
 </section>
 {{- end }}
 
@@ -155,7 +147,6 @@
 {{- with .Instance }}
 <section class="block instance-section" id="integrations">
 	<h3>Integrations</h3>
-	<p class="section-intro">The services task-ui reads from.</p>
 	{{ template "instance-table-head" }}
 		<tr><td class="key">Inventory</td><td class="value" data-label="Value">{{ if .Beszel }}<span class="badge ok">on</span>{{ else }}<span class="badge">off</span>{{ end }}</td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>Hosts from the Beszel <a href="/settings/integrations">integration</a>.</span></td></tr>
 	{{ template "instance-table-foot" }}
@@ -163,9 +154,6 @@
 {{- end }}
 {{ end }}
 
-{{/* The table every section of the Instance page holds, one width per
-     column across the page: the setting, its value, the variable that
-     sets it and what it does. */}}
 {{ define "instance-table-head" }}<div class="table-wrap">
 	<table class="table instance-table cards">
 		<colgroup><col class="c-key"><col class="c-value"><col class="c-var"><col class="c-desc"></colgroup>
@@ -175,13 +163,11 @@
 	</table>
 	</div>{{ end }}
 
-{{/* The keys of the instance on its page: the encryption key and the
-     key git pulls with, each with its actions behind a menu. */}}
 {{ define "instance-keys" }}
 {{- $git := "" }}{{ range .Keys }}{{ if .Git }}{{ $git = . }}{{ end }}{{ end }}
 <section class="block instance-section" id="keys">
 	<h3>Keys <small>in the key folder</small></h3>
-	<p class="section-intro">The encryption key of the instance's secrets and the SSH key git pulls and clones with. <a href="/settings/keys">Every key</a></p>
+	<p class="section-intro"><a href="/settings/keys">Every key</a></p>
 	<div class="table-wrap fit">
 	<table class="table instance-keys key-table cards">
 		{{ template "keyhead" }}

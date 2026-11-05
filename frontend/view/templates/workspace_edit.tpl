@@ -41,7 +41,6 @@
 		<div class="field">
 			<label for="we-hours">Hours</label>
 			<textarea id="we-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ $ws.Hours }}</textarea>
-			<small class="faint">When runs in this workspace can start, every job of its folders and the built-ins; one rule per line, and the last rule for a day applies. Empty allows any time. Outside the hours a run needs Run force and a reason; scheduled runs and prompts go ahead.</small>
 		</div>
 		<div class="form-foot">
 			<a class="btn" href="/settings/workspaces">Cancel</a>
@@ -62,11 +61,6 @@
 {{- end }}
 {{ end }}
 
-{{- /* workspacehome is a workspace's home, the HOME of its runs: the
-     repository of its checkout with its branch and commit, or
-     "The home is an empty directory.", with Pull now, which runs the
-     home's @git:pull, Replace, a dialog that clones a repository in its
-     place, and Remove, which empties it. */}}
 {{- define "workspacehome" }}
 {{- $ws := .Workspace }}{{ $edit := .Can "workspace/edit" }}
 {{- with .Home }}{{ $home := . }}
@@ -108,9 +102,6 @@
 {{- end }}
 {{- end }}
 
-{{- /* workspaceexport is the dialog that downloads a workspace as a
-     bundle another task-ui imports, an age file encrypted to a
-     passphrase typed twice or generated. */}}
 {{- define "workspaceexport" }}
 {{- $ws := .Workspace }}
 <dialog class="confirm workspace-export" id="export-dialog" aria-labelledby="export-title">
@@ -138,10 +129,6 @@
 </dialog>
 {{- end }}
 
-{{- /* workspacekeys are a workspace's SSH keys, which its runs get,
-     each to every run in the workspace: the keys table every page
-     shares, or one line with Upload key and Generate key while there is
-     none. */}}
 {{- define "workspacekeys" }}
 {{- $ws := .Workspace }}{{ $edit := .Can "workspace/edit" }}
 <section class="block workspace-keys" id="keys">

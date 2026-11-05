@@ -11,9 +11,6 @@
 	</div>
 </div>
 
-{{/* What index.php echoed, as HTML. A module is code the instance runs, so
-     its output is markup and not a value to escape; view.Module.Body says
-     so and says what that means for anything a user typed. */}}
 <div class="module-body">{{ .Body }}</div>
 
 <p class="module-foot faint">Rendered in <span class="mono">{{ .Render }}</span> by phpscript.</p>

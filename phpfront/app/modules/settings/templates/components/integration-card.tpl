@@ -1,4 +1,4 @@
-{* input scope: data_card. See integration-card.md. *}		<li class="wf-step integration-step kind-{data_card.id}" id="{data_card.id}">
+		<li class="wf-step integration-step kind-{data_card.id}" id="{data_card.id}">
 			<span class="wf-node" aria-hidden="true">{data_card.number}</span>
 			<div class="wf-card">
 				<div class="wf-card-head">

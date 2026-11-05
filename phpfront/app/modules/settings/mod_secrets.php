@@ -46,7 +46,7 @@ class mod_secrets implements Module {
 	const EMPTY_LINE = "No variables yet.";
 
 	/** MASK is what a secret's value column draws in place of the value. */
-	const MASK = "••••••";
+	const MASK = "******";
 
 	/** ENV_HEADING is the block of what the integrations add to a run. */
 	const ENV_HEADING = "Integration environment";

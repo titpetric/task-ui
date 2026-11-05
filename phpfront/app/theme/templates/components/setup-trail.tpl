@@ -1,4 +1,3 @@
-{* input scope: data_trail. See setup-trail.md. *}
 <nav class="setup-trail" aria-label="Setup steps">
 {if $data_trail.previous}	<a class="btn btn-sm" href="{data_trail.previous.href}" rel="prev"><svg class="ic back"><use href="#i-chev"/></svg>Previous: {data_trail.previous.name}</a>
 {/if}	<ol class="steps">

@@ -1,9 +1,3 @@
-{{/* actions is the git line of a folder page and of a directory browsed
-     inside a folder: the checkout the place is in, its branch, what it
-     has to push and pull and what changed, the changed files a table
-     under it that the click on their count shows and hides. The jobs,
-     the skills' and the built-ins among them, are rows of the Jobs
-     table. */}}
 {{- define "actions" }}
 {{- with .Actions }}{{ with .Git }}
 <div class="actionsbar">

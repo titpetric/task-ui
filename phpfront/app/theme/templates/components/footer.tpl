@@ -1,4 +1,3 @@
-{* input scope: data. See footer.md. *}
 	<footer>
 		<span class="credit">
 			<a class="wordmark" href="https://github.com/titpetric/task-ui">task-ui</a>

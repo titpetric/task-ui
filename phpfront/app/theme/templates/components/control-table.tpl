@@ -1,4 +1,3 @@
-{* input scope: data_control. See control-table.md. *}
 <div class="table-wrap">
 <table class="table control col-hover">
 	<tbody>

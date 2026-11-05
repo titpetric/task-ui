@@ -53,9 +53,6 @@
 				<td>
 					{{- if .SSH }}
 					<a href="{{ $base }}#keys">{{ len .SSH }} key{{ if ne (len .SSH) 1 }}s{{ end }}</a>
-					{{/* Each chip opens the workspace's keys, not a page of
-					     its own: a key of a workspace goes to every run of
-					     that workspace, so there is nothing of it to edit. */}}
 					<div class="key-names">{{ range .SSH }}<a class="key-chip" href="{{ $base }}/keys#key-{{ .Name }}" title="{{ .Name }}, to every run of {{ $ws.Folder }}">{{ .Name }}</a>{{ end }}</div>
 					{{- else }}
 					<a class="faint" href="{{ $base }}#keys">none</a>

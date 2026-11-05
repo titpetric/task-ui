@@ -1,4 +1,3 @@
-{* input scope: data_menu. See menu.md. *}
 {if !$data_menu.empty}<details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="{data_menu.label}" aria-label="{data_menu.label}"><svg class="ic"><use href="#i-more"/></svg></summary>
 	<div class="more-list">

@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="actionsbar">
 	<div class="gitline" title="<?php echo htmlspecialchars($_v['data_git']['title'], ENT_QUOTES);?>
 ">

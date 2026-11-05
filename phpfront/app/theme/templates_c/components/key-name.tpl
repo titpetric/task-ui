@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="field">
 	<label for="key-name">Name</label>
 	<input type="text" id="key-name" name="name" value="<?php echo htmlspecialchars($_v['data_keyname']['value'], ENT_QUOTES);?>

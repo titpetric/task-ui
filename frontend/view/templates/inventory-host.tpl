@@ -6,8 +6,6 @@
 		<p>A host of the <a href="/inventory">inventory</a>, as its line on the Inventory page opens: its containers, its durable filesystems and its month in charts.</p>
 	</div>
 </div>
-{{- /* The Inventory page fetches this page and puts what follows under the
-     host's line, its expanded row. */}}
 <div class="host-detail" data-host-detail="{{ $d.System.Name }}">
 	<p class="host-facts faint">
 		<span><code>{{ $d.System.Host }}</code></span>
@@ -98,5 +96,4 @@
 {{- end }}
 {{ end }}
 
-{{/* usebar is a share, 0 to 100, as a short bar and its number. */}}
 {{ define "usebar" }}<span class="meter{{ if ge . 90.0 }} high{{ else if ge . 75.0 }} warm{{ end }}"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.1f" . }}%"></i></span><span class="nowrap">{{ printf "%.0f" . }}%</span></span>{{ end }}

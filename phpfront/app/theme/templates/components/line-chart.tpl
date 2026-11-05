@@ -1,4 +1,3 @@
-{* input scope: data_line_chart. See line-chart.md. *}
 <figure class="chart">
 	<figcaption class="chart-title">{data_line_chart.title}</figcaption>
 {if $data_line_chart.empty}	<p class="faint chart-empty">No records in the last 30 days.</p>

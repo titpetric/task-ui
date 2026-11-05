@@ -1,4 +1,3 @@
-{* The editor of one workflow and the schedules that start it. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 

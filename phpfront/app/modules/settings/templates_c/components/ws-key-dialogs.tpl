@@ -1,8 +1,6 @@
 <?php $_v=&$this->vars;?>
-
 <dialog class="confirm" id="key-generate-dialog" aria-labelledby="key-generate-title">
 	<?php $_v['data_wsgen'] = $_v['data_wsdialogs']['generate'];?>
-
 <form class="form" data-api="<?php echo htmlspecialchars($_v['data_wsgen']['api'], ENT_QUOTES);?>
 " data-method="POST" data-next="<?php echo htmlspecialchars($_v['data_wsgen']['next'], ENT_QUOTES);?>
 ">
@@ -49,7 +47,6 @@ _&lt;name&gt;_&lt;algorithm&gt;</span>.</p>
 </dialog>
 <dialog class="confirm" id="key-upload-dialog" aria-labelledby="key-upload-title">
 	<?php $_v['data_wsup'] = $_v['data_wsdialogs']['upload'];?>
-
 <form class="form" data-api="<?php echo htmlspecialchars($_v['data_wsup']['api'], ENT_QUOTES);?>
 " data-method="POST" data-next="<?php echo htmlspecialchars($_v['data_wsup']['next'], ENT_QUOTES);?>
 ">

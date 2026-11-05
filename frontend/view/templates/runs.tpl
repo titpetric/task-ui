@@ -30,8 +30,6 @@
 	<button class="btn" type="submit">Filter</button>
 </form>
 
-{{- /* Activity and Tooling fold on their heading's toggle, and the
-     browser remembers a folded block per user. */}}
 {{- with .Activity }}
 <section class="block" data-fold="runs-activity">
 	<h3>{{ template "fold" (list "runs-activity" "Activity") }} <small>in the server's time zone</small></h3>
@@ -50,8 +48,6 @@
 </section>
 {{- end }}
 
-{{- /* The table follows the runs topic: a run that starts goes on top,
-     one that ends changes in place, no reload. */}}
 <section class="block" data-sse="runs">
 	<h3>Runs <small>newest first</small></h3>
 	<div class="table-wrap">

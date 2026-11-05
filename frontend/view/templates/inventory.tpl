@@ -34,8 +34,6 @@
 		</div>
 		<div class="form-foot note"><span></span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
 	</form>
-	{{- /* The user's last Run: a run of @host:<host> a host, one batch. While one
-	     runs, the page fetches itself and puts this back. */}}
 	<div class="inventory-results" data-inventory-results>
 		{{- with .Batch }}
 		{{- $first := index . 0 }}{{ $live := false }}{{ range . }}{{ if not (ended .State) }}{{ $live = true }}{{ end }}{{ end }}
@@ -51,7 +49,7 @@
 				<tr>
 					<td class="nowrap"><a href="/runs/{{ .ID }}"><code>{{ .Target }}</code></a></td>
 					<td class="nowrap">{{ template "state" . }} <span class="faint">{{ duration .Elapsed }}</span> <button type="button" class="btn btn-sm" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</button></td>
-					<td class="run-output">{{ if eq .State "queued" }}<span class="faint">Queued: waits for the run on {{ .Target }} before it.</span>{{ else if not (ended .State) }}<div class="frame" role="img" aria-label="Terminal of {{ .Target }}">{{ .FrameSVG }}</div>{{ else if .CastPath }}<pre class="output" data-output="{{ .ID }}" data-cols="{{ .TermCols }}" data-rows="{{ .TermRows }}"><span class="faint">Reading the recording…</span></pre>{{ else }}<span class="faint">No recording.</span>{{ end }}</td>
+					<td class="run-output">{{ if eq .State "queued" }}<span class="faint">Queued: waits for the run on {{ .Target }} before it.</span>{{ else if not (ended .State) }}<div class="frame" role="img" aria-label="Terminal of {{ .Target }}">{{ .FrameSVG }}</div>{{ else if .CastPath }}<pre class="output" data-output="{{ .ID }}" data-cols="{{ .TermCols }}" data-rows="{{ .TermRows }}"><span class="faint">Reading the recording</span></pre>{{ else }}<span class="faint">No recording.</span>{{ end }}</td>
 				</tr>
 			{{- end }}
 			</tbody>
@@ -62,8 +60,6 @@
 	{{- template "promptbox" . }}
 </section>
 {{- end }}
-{{- /* The hosts follow Beszel: the page fetches itself once a minute and
-     puts this section back, with the time of the fetch under the table. */}}
 <section class="block" data-hosts-live>
 {{- with .Cluster }}
 <div class="cluster">
@@ -104,9 +100,6 @@
 	<tbody>
 	{{- $open := .Can "hosts" }}
 	{{- range .Hosts }}
-		{{- /* With hosts, a click on a host's line, or Enter or Space on it,
-		     opens its expanded row: the page of the host, which the row
-		     names so the script fetches it from this front end. */}}
 		<tr{{ if $open }} class="host-row" data-host-row="{{ .Name }}" data-host-url="/inventory/hosts/{{ .Name }}" tabindex="0" aria-expanded="false"{{ end }}>
 			<td class="key nowrap" title="{{ .Host }}, {{ .Status }}">{{ if $open }}<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg>{{ end }}<svg class="ic host-state {{ if .Up }}up{{ else }}down{{ end }}" role="img" aria-label="{{ .Status }}"><use href="#i-server"/></svg> {{ .Name }}</td>
 			{{- if $.Logins }}
@@ -136,5 +129,4 @@
 {{- end }}
 {{ end }}
 
-{{/* meter is a share, 0 to 100, as a short bar and its number. */}}
 {{ define "meter" }}<span class="meter{{ if ge . 90.0 }} high{{ else if ge . 75.0 }} warm{{ end }}"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.1f" . }}%"></i></span><span class="nowrap">{{ printf "%.0f" . }}%</span></span>{{ end }}

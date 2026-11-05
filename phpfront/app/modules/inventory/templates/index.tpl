@@ -1,4 +1,3 @@
-{* The hosts page. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 {if $data.off}<p class="empty-state">The Beszel integration isn't set up yet.{if $data.integrations} Add its URL and token under <a href="{base}/settings/integrations#beszel">Settings, Integrations</a>.{/if}</p>
@@ -33,7 +32,7 @@
 {foreach $data.batch.rows as $run}					<tr>
 						<td class="nowrap"><a href="{base}/runs/{run.id}"><code>{run.target}</code></a></td>
 						<td class="nowrap">{eval $data_state = $run.state}{include components/state.tpl} <span class="faint">{run.duration}</span> <button type="button" class="btn btn-sm" data-attach="{run.id}">{run.attach}</button></td>
-						<td class="run-output">{if $run.queued}<span class="faint">Queued: waits for the run on {run.target} before it.</span>{elseif $run.running}<div class="frame" role="img" aria-label="Terminal of {run.target}">{run.frame|raw}</div>{elseif $run.cast}<pre class="output" data-output="{run.id}" data-cols="{run.cols}" data-rows="{run.rows}"><span class="faint">Reading the recording…</span></pre>{else}<span class="faint">No recording.</span>{/if}</td>
+						<td class="run-output">{if $run.queued}<span class="faint">Queued: waits for the run on {run.target} before it.</span>{elseif $run.running}<div class="frame" role="img" aria-label="Terminal of {run.target}">{run.frame|raw}</div>{elseif $run.cast}<pre class="output" data-output="{run.id}" data-cols="{run.cols}" data-rows="{run.rows}"><span class="faint">Reading the recording</span></pre>{else}<span class="faint">No recording.</span>{/if}</td>
 					</tr>
 {/foreach}				</tbody>
 			</table>

@@ -1,2 +1,1 @@
-{* input scope: data_meter. See meter.md. *}
 <span class="meter{if $data_meter.share >= 90} high{elseif $data_meter.share >= 75} warm{/if}"><span class="spacebar-track"><i class="files" style="width: {data_meter.width}%"></i></span><span class="nowrap">{data_meter.pct}%</span></span>

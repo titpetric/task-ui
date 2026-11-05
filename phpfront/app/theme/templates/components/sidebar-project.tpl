@@ -1,4 +1,3 @@
-{* input scope: data_project. See sidebar-project.md. *}
 {if $data_project.top}
 				<details class="project{if $data_project.active} active{/if}" data-project="{data_project.id}" open>
 					<summary{if $data_project.here} class="active"{/if} title="{data_project.title}">

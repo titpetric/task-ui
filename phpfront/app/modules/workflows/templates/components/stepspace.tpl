@@ -1,4 +1,4 @@
-{* input scope: data_space. See stepspace.md. *}<div class="field">
+<div class="field">
 	<span class="label">Workspace</span>
 	<select data-step-space aria-label="Workspace">
 {if $data_space.none}		<option value="" data-workspace="" data-rel="."{if $data_space.noneSelected} selected{/if}>none (the workspace root)</option>

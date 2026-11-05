@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars;if($_v['data_workspace']['top']){?>
+<?php $_v=&$this->vars; if($_v['data_workspace']['top']){?>
 
 <details class="workspace<?php if($_v['data_workspace']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_workspace']['id'], ENT_QUOTES);?>
@@ -24,7 +24,7 @@
 <?php if($_v['data_workspace']['jobs']){?>
 
 	<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_workspace'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_workspace']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -66,7 +66,7 @@
 <?php }?>
 
 	</div>
-<?php } if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project'];if($_v['data_project']['top']){?>
+<?php } if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project']; if($_v['data_project']['top']){?>
 
 				<details class="project<?php if($_v['data_project']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
@@ -97,7 +97,7 @@
 <?php if($_v['data_project']['jobs']){?>
 
 					<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_project']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -140,7 +140,6 @@
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -167,7 +166,7 @@
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -213,7 +212,6 @@
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -240,7 +238,7 @@
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -285,7 +283,7 @@
 </details>
 <?php } } }?>
 </details>
-<?php }else{if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project'];if($_v['data_project']['top']){?>
+<?php }else{if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project']; if($_v['data_project']['top']){?>
 
 				<details class="project<?php if($_v['data_project']['active']){?>
  active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
@@ -316,7 +314,7 @@
 <?php if($_v['data_project']['jobs']){?>
 
 					<div class="jobs top">
-<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_project']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -359,7 +357,6 @@
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -386,7 +383,7 @@
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
@@ -432,7 +429,6 @@
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
-
 <details class="folder<?php if($_v['data_folder']['active']){?>
  active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
@@ -459,7 +455,7 @@
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
-<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
  pinned<?php }?><?php if($_v['job']['active']){?>
  active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>

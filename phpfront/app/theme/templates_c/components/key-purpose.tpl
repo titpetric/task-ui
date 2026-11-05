@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <div class="field" role="radiogroup" aria-labelledby="key-purpose-label">
 	<span class="label" id="key-purpose-label">Purpose</span>
 	<label class="check"><input type="radio" name="purpose" value="ssh" checked> SSH key</label>

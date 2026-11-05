@@ -64,7 +64,8 @@ func TestTelemetryPage(t *testing.T) {
 	assert.Contains(t, body, `name="ignore_paths"`)
 	assert.Contains(t, body, `name="allowed_networks"`)
 	assert.Contains(t, body, `href="/debug/oida"`)
-	assert.Contains(t, body, "takes a restart")
+	// The path the router is answering on now, beside the field that sets it.
+	assert.Contains(t, body, `<code>/debug/oida</code>`)
 
 	// A viewer reads the page and saves nothing.
 	p.Telemetry.Admin = false

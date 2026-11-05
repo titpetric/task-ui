@@ -1,4 +1,3 @@
-{* input scope: data_table. See table.md. *}
 <div class="table-wrap{if $data_table.wrap} {data_table.wrap}{/if}">
 <table class="table{if $data_table.class} {data_table.class}{/if}">
 {if $data_table.header}	<thead>

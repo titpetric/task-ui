@@ -66,7 +66,9 @@ func TestInstance_Tooling(t *testing.T) {
 	p.Instance = &view.Instance{}
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "instance", p))
-	assert.Contains(t, buf.String(), "No tooling was detected: Check all probes the PATH.")
+	// An instance that found no tool draws the section and no table in it.
+	assert.Contains(t, buf.String(), `<section class="block instance-section" id="tooling">`)
+	assert.NotContains(t, buf.String(), `data-label="Tool"`)
 }
 
 // The Parent environment section reads the base variables and the

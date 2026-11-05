@@ -1,1 +1,1 @@
-{* input scope: data_icon. See sidebar-icon.md. *}<svg class="ic{if $data_icon.dirty} dirty{/if}">{if $data_icon.dirty}<title>{data_icon.changed}</title>{/if}<use href="#i-{data_icon.icon}"/></svg>
+<svg class="ic{if $data_icon.dirty} dirty{/if}">{if $data_icon.dirty}<title>{data_icon.changed}</title>{/if}<use href="#i-{data_icon.icon}"/></svg>

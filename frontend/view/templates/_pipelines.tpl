@@ -1,7 +1,3 @@
-{{- /* pipelinealert is the alert of the broken atkins pipelines in a
-     place, from Page.PipelineAlert: a row per finding with its folder,
-     file and job, the rows past five folded under Show more. atkins lists
-     no job of a pipeline its linter refuses. (list $ alert) */}}
 {{- define "pipelinealert" }}
 {{- $ := index . 0 }}{{ $a := index . 1 }}
 {{- with $a }}
@@ -22,15 +18,11 @@
 {{- end }}
 {{- end }}
 
-{{- /* pipelineerror is one finding of a pipeline alert. (list $ row) */}}
 {{- define "pipelineerror" }}
 {{- $ := index . 0 }}{{ $r := index . 1 }}
 <li><a href="{{ $.Href $r.Folder.ID }}">{{ $r.Folder.ID }}</a> <code>{{ $r.Finding.Path }}</code>{{ with $r.Finding.Job }} <span class="dim">job</span> <b>{{ . }}</b>{{ end }}: <span{{ with $r.Finding.Issue }} title="{{ . }}"{{ end }}>{{ $r.Finding.Detail }}</span></li>
 {{- end }}
 
-{{- /* pipelinenote is the dashboard's line for the broken pipelines the
-     user sees, each workspace linked to the page that lists them. (list
-     $ alert) */}}
 {{- define "pipelinenote" }}
 {{- $ := index . 0 }}{{ $a := index . 1 }}
 {{- with $a }}
@@ -38,9 +30,6 @@
 {{- end }}
 {{- end }}
 
-{{- /* sidebad is the warning badge of a folder in the sidebar that
-     failed to read: the count of atkins' findings, titled with the
-     first, or ! with the error. */}}
 {{- define "sidebad" }}
 {{- with .Errors }}<small class="bad" title="{{ (index . 0).Detail }}">!{{ len . }}</small>{{ else }}<small class="bad" title="{{ .Error }}">!</small>{{ end }}
 {{- end }}

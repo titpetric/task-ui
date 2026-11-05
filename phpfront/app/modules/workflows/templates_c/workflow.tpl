@@ -1,5 +1,4 @@
-<?php $_v=&$this->vars;$_v['data_head'] = $_v['data']['head'];?>
-
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
 <div class="page-head">
 	<div>
 		<h2><?php if($_v['data_head']['icon']){?>
@@ -24,7 +23,6 @@
  data-actions<?php }?>>
 <?php if($_v['data_head']['run']){?>
 		<?php $_v['data_run'] = $_v['data_head']['run'];?>
-
 <div class="run-split">
 	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
@@ -65,7 +63,7 @@
 <?php }?></div>
 
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
-		<?php $_v['data_buttons'] = $_v['data_head']['buttons'];if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
 "/></svg></button>
@@ -98,8 +96,7 @@
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
 
-		
-<?php if(!$_v['data_menu']['empty']){?>
+		<?php if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -253,10 +250,7 @@
 
 <section class="block">
 	<h3>Runs</h3>
-<?php if($_v['data']['activity']){ $_v['data_chart'] = $_v['data']['activity'];?>
-
-
-<?php if($_v['data_chart']['charts']){?>
+<?php if($_v['data']['activity']){ $_v['data_chart'] = $_v['data']['activity'];if($_v['data_chart']['charts']){?>
 <div class="activity">
 	<p class="activity-sum"><?php echo htmlspecialchars($_v['data_chart']['sum'], ENT_QUOTES); if($_v['data_chart']['failed']){?>
  · <span class="bad"><?php echo htmlspecialchars($_v['data_chart']['failed'], ENT_QUOTES);?>
@@ -359,9 +353,9 @@ true<?php }else{?>
 false<?php }?>" aria-controls="wf-answer-<?php echo htmlspecialchars($_v['data_wffold']['id'], ENT_QUOTES);?>
 " title="<?php if($_v['data_wffold']['open']){?>
 Hide<?php }else{?>
-Show<?php }?> the answer" aria-label="<?php if($_v['data_wffold']['open']){?>
+Show<?php }?>" aria-label="<?php if($_v['data_wffold']['open']){?>
 Hide<?php }else{?>
-Show<?php }?> the answer"><svg class="ic chev"><use href="#i-chev"/></svg></button><?php }else{?>
+Show<?php }?>"><svg class="ic chev"><use href="#i-chev"/></svg></button><?php }else{?>
 <span class="wf-fold" aria-hidden="true"></span><?php }?>
 <a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['row']['stamp'], ENT_QUOTES);?>
@@ -377,7 +371,7 @@ Show<?php }?> the answer"><svg class="ic chev"><use href="#i-chev"/></svg></butt
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-</span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
+</span><?php $_v['data_menu'] = $_v['data_user']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -432,7 +426,7 @@ Show<?php }?> the answer"><svg class="ic chev"><use href="#i-chev"/></svg></butt
 <svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['link']['text'], ENT_QUOTES);?>
 </a><?php }?></span></td>
 				<td class="actions"><a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
-" data-workflow-view>View</a><?php $_v['data_menu'] = $_v['row']['menu'];if(!$_v['data_menu']['empty']){?>
+" data-workflow-view>View</a><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -488,10 +482,7 @@ Show<?php }?> the answer"><svg class="ic chev"><use href="#i-chev"/></svg></butt
 <?php }?>		</tbody>
 	</table>
 	</div>
-<?php $_v['data_pager'] = $_v['data']['pager'];?>
-
-
-<?php if($_v['data_pager']['prev'] || $_v['data_pager']['next']){?>
+<?php $_v['data_pager'] = $_v['data']['pager'];if($_v['data_pager']['prev'] || $_v['data_pager']['next']){?>
 	<nav class="pager" aria-label="Pages">
 <?php if($_v['data_pager']['prev']){?>
 		<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_pager']['prev'], ENT_QUOTES);?>

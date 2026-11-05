@@ -1,4 +1,3 @@
-{* input scope: data. See alerts.md. *}
 {if $data.notice}
 			<div class="alert ok" role="status">{data.notice}</div>
 {/if}

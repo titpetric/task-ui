@@ -1,4 +1,3 @@
-{* The sidebar settings page. The scope is {data}; the chrome is {chrome}. *}
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 <form class="form sidebar-form" {if $data.admin}data-api="/api/sidebar" data-method="PUT" data-next="reload" data-notice="Sidebar saved" data-sidebar{/if} novalidate>

@@ -1,4 +1,3 @@
-{* One user's page. The scope is {data}; the chrome is {chrome}. *}
 <div class="page-head profile-head">
 	<div class="profile-who">
 		<span class="avatar lg role-{data.who.role}" aria-hidden="true">{data.who.initials}</span>

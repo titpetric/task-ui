@@ -1,5 +1,4 @@
 <?php $_v=&$this->vars;?>
-
 <form class="matrix-form<?php if($_v['data_matrix']['fixed']){?>
  fixed<?php }?>"<?php if($_v['data_matrix']['editable']){?>
  data-api="<?php echo htmlspecialchars($_v['data_matrix']['api'], ENT_QUOTES);?>
