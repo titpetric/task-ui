@@ -297,6 +297,7 @@
     attached: function () {
       return !!(session && session.ws && session.ws.readyState === 1 && session.run && session.run.can_run);
     },
+    toast: toast,
   };
 
   // --------------------------------------------------------------- dialog

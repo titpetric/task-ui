@@ -410,9 +410,16 @@
       to.el.focus();
       to.el.dispatchEvent(new Event("input", { bubbles: true }));
     }
-    done.then(function (ok) {
-      if (!ok) console.info("voice: the recording was not kept");
+    done.then(function (saved) {
+      say(saved ? "Recording kept in artifacts, under voice/" : "The recording was not kept", saved ? "ok" : "bad");
     });
+  }
+
+  // say reports through the page's toasts, which is the only report a phone
+  // ever sees: the window has closed and nobody opens a console there.
+  function say(text, tone) {
+    if (window.taskUI.toast) window.taskUI.toast(text, tone);
+    else console.info("voice: " + text);
   }
 
   // ------------------------------------------------------------------ bind
