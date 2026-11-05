@@ -286,8 +286,8 @@
   // dictation reaches the process through paste and a button press or not at
   // all.
   //
-  // #run-dialog fires a run-open event beside its own close event, so a module
-  // learns a window opened without reading the session.
+  // #run-dialog fires a run-buttons event whenever the foot is redrawn, so a
+  // module reads the gate below without reading the session.
   window.taskUI = {
     paste: function (text) {
       if (!text || !session || !session.ws || session.ws.readyState !== 1) return false;
@@ -421,7 +421,6 @@
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
     watchViewport(true);
-    dialog.dispatchEvent(new CustomEvent("run-open"));
     session.term.focus();
     return session;
   }

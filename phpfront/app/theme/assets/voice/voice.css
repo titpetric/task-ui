@@ -1,24 +1,103 @@
-/* .voice styles the dictation overlay: the avatar, what it heard, and the two acts. */
+/* .voice-orb is the thing to press: a small cloud of the same light, parked
+   out of the way, that opens the window where the avatar is full size. It
+   breathes on its own so the page says dictation is here before anyone asks. */
+.voice-orb {
+  --voice-hot: #ffd9a0;
+  --voice-warm: var(--signal);
+  --voice-cool: #5fc1c9;
+  position: fixed;
+  inset-inline-end: 1rem;
+  bottom: 1rem;
+  z-index: 69;
+  width: 3.4rem;
+  height: 3.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-round);
+  /* Last gradient is the body and the first is the specular on top of it. A
+     small hot point over a deep sphere is what reads as light; a wide one
+     reads as paint. */
+  background:
+    radial-gradient(circle at 33% 27%, #fffaf0 0%, color-mix(in srgb, var(--voice-hot) 90%, transparent) 7%, transparent 22%),
+    radial-gradient(circle at 56% 58%, color-mix(in srgb, var(--voice-warm) 70%, transparent) 0%, transparent 46%),
+    radial-gradient(circle at 74% 78%, color-mix(in srgb, var(--voice-violet, #a98ce8) 55%, transparent) 0%, transparent 40%),
+    radial-gradient(circle at 50% 46%, #1d5f66 0%, #0c2a34 72%, #061218 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--voice-hot) 40%, transparent),
+    0 0 1.1rem color-mix(in srgb, var(--voice-warm) 55%, transparent),
+    0 0 2.6rem color-mix(in srgb, var(--voice-cool) 38%, transparent),
+    inset 0 -0.3rem 0.7rem color-mix(in srgb, #02060a 45%, transparent);
+  cursor: pointer;
+  transition: transform 0.14s ease-out;
+
+  /* The halo breathes and the orb holds still. Dropping the whole thing's
+     opacity on a dark page reads as a smudge. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.7rem;
+    border-radius: inherit;
+    background: radial-gradient(circle, color-mix(in srgb, var(--voice-warm) 34%, transparent) 0%, transparent 66%);
+    animation: voice-breathe 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  &:hover,
+  &:focus-visible {
+    transform: scale(1.08);
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+/* The toasts share the corner, so they stack above the orb when it is up. */
+body:has(.voice-orb:not([hidden])) .toasts {
+  bottom: 5.4rem;
+}
+
+@keyframes voice-breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* .voice is the window the orb opens: the avatar at full size, what it heard,
+   and the two acts. It is a modal dialog, so it draws over a run window too. */
 .voice {
   --voice-level: 0;
   --voice-hot: #ffd9a0;
   --voice-warm: var(--signal);
   --voice-cool: #5fc1c9;
   --voice-violet: #a98ce8;
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  width: 100vw;
+  max-width: none;
+  height: var(--app-vh, 100dvh);
+  max-height: var(--app-vh, 100dvh);
   padding: 1.2rem;
-  background: radial-gradient(circle at 50% 42%, rgba(12, 18, 26, 0.72), rgba(4, 6, 9, 0.94));
-  backdrop-filter: blur(3px);
+  border: 0;
+  color: var(--text);
+  background: radial-gradient(circle at 50% 42%, rgba(12, 18, 26, 0.92), rgba(4, 6, 9, 0.985));
 
-  &[hidden] {
-    display: none;
+  &[open] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  &::backdrop {
+    background: rgba(2, 4, 7, 0.72);
+    backdrop-filter: blur(3px);
   }
 }
 
@@ -123,6 +202,16 @@
   }
 }
 
+/* .voice-where names what send will do with the words, since the same window
+   opens over a run and over a page with no run in it. */
+.voice-where {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--ls-sm);
+  text-align: center;
+}
+
 /* .voice-acts are the two phone buttons: discard on the left, send on the
    right, far enough apart that a thumb cannot hit both. */
 .voice-acts {
@@ -167,8 +256,17 @@
   }
 }
 
-/* #run-mic marks itself while the overlay is up, so the foot says which
-   button opened it. */
-#run-mic[aria-pressed="true"] {
-  color: var(--signal);
+/* Reduced motion keeps the light and drops the movement: --voice-level still
+   reaches every layer, so the avatar answers a voice without spinning. */
+@media (prefers-reduced-motion: reduce) {
+  .voice-orb::after {
+    animation: none;
+    opacity: 0.7;
+    transform: none;
+  }
+
+  .voice-avatar .voice-haze ellipse,
+  .voice-avatar .voice-whorl {
+    animation: none;
+  }
 }

@@ -27,6 +27,7 @@
 	</div>
 {include components/dialog.tpl}
 {include components/confirm.tpl}
+{include components/voice.tpl}
 {else}
 	<header class="top login-top">
 		<h1><a href="{base}/"><span>TaskUI</span>{include components/logo.tpl}</a></h1>

@@ -1,21 +1,29 @@
-// voice: dictation into an attached run, transcribed on the device.
+// voice: dictation, transcribed on the device.
 //
-// The microphone opens once. The stream feeds two things: an analyser, whose
-// level drives the avatar, and a worklet that collects the samples so the
-// recording can be kept beside the words it came out as.
+// The orb in the corner opens the window: the avatar at full size, the words
+// under it, and two buttons. The microphone opens once and the stream feeds
+// two things, an analyser whose level drives the avatar and a worklet that
+// collects the samples, so the recording can be kept beside the words it came
+// out as.
 //
-// Nothing reaches the run while you talk. Interim results are drawn in the
-// overlay; the only write is taskUI.paste on send, which is the whole of the
+// Nothing reaches a run while you talk. Interim results are drawn in the
+// window; the only write is taskUI.paste on send, which is the whole of the
 // interface this file has. There is no path from the recogniser to the socket.
+//
+// Send goes to the run when one is attached and takes input, and to the header
+// prompt otherwise, filled and focused but never submitted, so the words are
+// read before they go anywhere.
 (function (TAP) {
   "use strict";
 
-  var dialog = document.getElementById("run-dialog");
   var overlay = document.getElementById("voice-overlay");
-  var mic = document.getElementById("run-mic");
-  if (!dialog || !overlay || !mic || !window.taskUI) return;
+  var orb = document.getElementById("voice-orb");
+  if (!overlay || !orb || !window.taskUI) return;
 
+  var dialog = document.getElementById("run-dialog");
+  var mic = document.getElementById("run-mic");
   var said = document.getElementById("voice-said");
+  var where = document.getElementById("voice-where");
   var sendBtn = document.getElementById("voice-send");
   var discardBtn = document.getElementById("voice-discard");
 
@@ -30,24 +38,27 @@
   var MAX = 16 << 20;
 
   var lang = document.documentElement.lang || navigator.language || "en-US";
-  var ready = null; // null until asked, then true or false
-  var rec = null;   // the recogniser while it runs
+  var ready = null;     // null until probed, then true or false
+  var install = false;  // the language needs fetching before the first press
+  var rec = null;       // the recogniser while it runs
   var media = null; // { stream, ctx, node, frames, length }
   var raf = 0;
   var text = "";    // every final result of this session
 
   // ------------------------------------------------------------------ gate
 
-  // paint is the only writer of the button's visibility, and it needs two
-  // facts: whether the run takes input, which task-ui.js publishes as
-  // data-allowed, and whether this browser transcribes on the device.
+  // paint is the only writer of what is visible to press. The orb shows
+  // wherever this browser transcribes on the device; the run window's own
+  // button shows on top of that when the run takes input, because a modal run
+  // window puts the orb behind its backdrop and out of reach.
   function paint() {
-    mic.hidden = !(ready && mic.dataset.allowed);
+    orb.hidden = !ready;
+    if (mic) mic.hidden = !(ready && mic.dataset.allowed);
   }
 
   // probe settles once whether this browser transcribes without sending the
   // audio anywhere. A language that is downloadable counts: the first press
-  // installs it. Anything else leaves the button hidden for good, since the
+  // installs it. Anything else leaves the orb hidden for good, since the
   // alternative is sending the audio to a transcriber elsewhere.
   function probe() {
     if (ready !== null) {
@@ -57,16 +68,16 @@
     ready = false;
     var SR = window.SpeechRecognition;
     if (!SR || !SR.available || !window.isSecureContext) {
-      mic.title = !SR || !SR.available
-        ? "On-device speech is not available in this browser"
-        : "Dictation needs a secure origin";
+      console.info(!SR || !SR.available
+        ? "voice: this browser has no on-device speech recognition"
+        : "voice: dictation needs a secure origin");
       paint();
       return;
     }
     SR.available({ langs: [lang], processLocally: true }).then(function (state) {
       ready = state === "available" || state === "downloadable";
-      if (!ready) mic.title = "The on-device language for " + lang + " is not available";
-      mic.dataset.install = state === "downloadable" ? "1" : "";
+      if (!ready) console.info("voice: no on-device language for " + lang + ", state " + state);
+      install = state === "downloadable";
       paint();
     }, function () {
       paint();
@@ -256,10 +267,26 @@
 
   // ------------------------------------------------------------------ flow
 
+  // target picks where send puts the words. A run that is attached and takes
+  // input is the terminal; anything else is the header prompt, which is on
+  // every page a user may ask Claude from.
+  function target() {
+    if (window.taskUI.attached()) return { kind: "run", say: "Sends to the run" };
+    var ask = document.getElementById("header-prompt");
+    if (ask) return { kind: "prompt", el: ask, say: "Fills the prompt, yours to send" };
+    return { kind: "none", say: "Nowhere to send this, so it is only kept" };
+  }
+
+  // show opens and closes the window. showModal puts it in the top layer, so
+  // it draws over a run window, which is a modal dialog of its own.
   function show(on) {
-    overlay.hidden = !on;
-    mic.setAttribute("aria-pressed", on ? "true" : "false");
-    if (!on) said.textContent = "";
+    if (on) {
+      if (!overlay.open) overlay.showModal();
+      return;
+    }
+    said.textContent = "";
+    where.textContent = "";
+    if (overlay.open) overlay.close();
   }
 
   function heard(final, partial) {
@@ -271,48 +298,71 @@
     said.appendChild(span);
   }
 
+  // start runs on the press and nowhere else. install() is the first call it
+  // makes, because fetching a downloadable language is refused unless it is
+  // handling the user's gesture, and anything before it risks spending that.
   function start() {
     var SR = window.SpeechRecognition;
+    var first = install && SR.install
+      ? SR.install({ langs: [lang], processLocally: true }).then(function () { install = false; })
+      : Promise.resolve();
     text = "";
     show(true);
-    said.textContent = "";
+    said.textContent = install ? "Fetching the language, once" : "";
+    where.textContent = target().say;
+    // The recogniser opens its own microphone and is what dictation is. The
+    // analyser and the worklet are a second consumer of the same device, so
+    // they come after and are allowed to fail. A refused second stream leaves
+    // the words intact and costs the glow and the recording.
     var run = function () {
-      return listen().then(function () {
-        rec = new SR();
-        rec.lang = lang;
-        rec.continuous = true;
-        rec.interimResults = true;
-        rec.processLocally = true;
-        rec.onresult = function (event) {
-          var partial = "";
-          for (var i = event.resultIndex; i < event.results.length; i++) {
-            var r = event.results[i];
-            if (r.isFinal) text += (text ? " " : "") + r[0].transcript.trim();
-            else partial += r[0].transcript;
-          }
-          heard(text, partial.trim());
-        };
-        rec.onerror = function (event) {
-          said.textContent = event.error === "not-allowed"
-            ? "The microphone was refused."
-            : "Dictation stopped: " + event.error;
-          stop(false);
-        };
-        rec.start();
+      rec = new SR();
+      rec.lang = lang;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.processLocally = true;
+      rec.onresult = function (event) {
+        var partial = "";
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          var r = event.results[i];
+          if (r.isFinal) text += (text ? " " : "") + r[0].transcript.trim();
+          else partial += r[0].transcript;
+        }
+        heard(text, partial.trim());
+      };
+      rec.onerror = function (event) {
+        fault(event.error === "not-allowed"
+          ? "The microphone was refused. Allow it for this site and press again."
+          : "Dictation stopped: " + event.error);
+      };
+      rec.start();
+      return listen().catch(function (err) {
+        console.info("voice: no level and no recording", err);
       });
     };
-    var first = mic.dataset.install && SR.install
-      ? SR.install({ langs: [lang], processLocally: true }).then(function () { mic.dataset.install = ""; })
-      : Promise.resolve();
-    said.textContent = mic.dataset.install ? "Fetching the language, once" : "";
     first.then(run).catch(function (err) {
-      said.textContent = "Dictation could not start: " + (err && err.message ? err.message : err);
-      window.setTimeout(function () { stop(false); }, 2500);
+      fault(err && err.name === "NotAllowedError"
+        ? "The microphone was refused. Allow it for this site and press again."
+        : "Dictation could not start: " + (err && err.message ? err.message : err));
     });
   }
 
-  // stop ends the session. send writes the words into the run and keeps the
-  // recording; discard writes nothing anywhere.
+  // fault ends the recording and leaves the window open with the reason in
+  // it. Closing on its own would take the message with it.
+  function fault(why) {
+    if (rec) {
+      rec.onresult = null;
+      rec.onerror = null;
+      try { rec.stop(); } catch (e) { /* already stopped */ }
+      rec = null;
+    }
+    release();
+    media = null;
+    said.textContent = why;
+    where.textContent = "";
+  }
+
+  // stop ends the session. send puts the words where target named and keeps
+  // the recording; discard writes nothing anywhere.
   function stop(send) {
     var words = sanitize(text);
     if (rec) {
@@ -327,11 +377,17 @@
       show(false);
       return;
     }
-    if (words) window.taskUI.paste(words);
+    var to = target();
     var done = keep(words);
     release();
     media = null;
     show(false);
+    if (words && to.kind === "run") window.taskUI.paste(words);
+    if (words && to.kind === "prompt") {
+      to.el.value = to.el.value ? to.el.value + " " + words : words;
+      to.el.focus();
+      to.el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     done.then(function (ok) {
       if (!ok) console.info("voice: the recording was not kept");
     });
@@ -339,26 +395,37 @@
 
   // ------------------------------------------------------------------ bind
 
-  mic.addEventListener("click", function () {
-    if (rec || !overlay.hidden) {
+  function toggle() {
+    if (rec || overlay.open) {
       stop(false);
       return;
     }
-    if (!window.taskUI.attached()) return;
     start();
-  });
+  }
+
+  orb.addEventListener("click", toggle);
+  if (mic) mic.addEventListener("click", toggle);
   sendBtn.addEventListener("click", function () { stop(true); });
   discardBtn.addEventListener("click", function () { stop(false); });
 
-  dialog.addEventListener("run-open", function () {
-    show(false);
-    probe();
+  // Escape closes a modal dialog on its own, and a close with a recording
+  // running is a discard.
+  overlay.addEventListener("cancel", function (event) {
+    event.preventDefault();
+    stop(false);
   });
-  dialog.addEventListener("run-buttons", paint);
-  dialog.addEventListener("close", function () { stop(false); });
+  overlay.addEventListener("close", function () {
+    if (rec || media) stop(false);
+  });
+
+  if (dialog) {
+    dialog.addEventListener("run-buttons", paint);
+    dialog.addEventListener("close", function () { if (rec) stop(false); });
+  }
   document.addEventListener("visibilitychange", function () {
     if (document.hidden && rec) stop(false);
   });
+  probe();
 // document.currentScript names this tag only while the file runs, so it is
 // read at the call and passed in; a callback would find it null.
 })(document.currentScript && document.currentScript.src);
