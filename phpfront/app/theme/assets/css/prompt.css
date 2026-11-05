@@ -1,0 +1,29 @@
+/* .promptbox styles the prompt a folder's page opens with. */
+.promptbox {
+  margin-bottom: 1.6rem;
+
+  & > summary {
+    list-style: none;
+    cursor: pointer;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover .section-title {
+      color: var(--signal);
+    }
+  }
+
+  & .section-title {
+    align-items: center;
+
+    & small {
+      color: var(--text-faint);
+      font-weight: 400;
+      letter-spacing: var(--ls-xs);
+      text-transform: none;
+    }
+  }
+
+}

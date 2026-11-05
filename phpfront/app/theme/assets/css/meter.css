@@ -1,0 +1,24 @@
+/* .meter styles a share inline as a short bar, warm past 75% and high past 90%. */
+.meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+
+  & .spacebar-track {
+    width: 3rem;
+    height: 0.45rem;
+  }
+
+  &.warm .spacebar-track i.files {
+    background: var(--signal);
+  }
+
+  &.high .spacebar-track i.files {
+    background: var(--bad);
+  }
+
+  &:not(.warm):not(.high) .spacebar-track i.files {
+    background: var(--ok);
+  }
+}

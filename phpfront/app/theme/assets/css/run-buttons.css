@@ -1,0 +1,22 @@
+/* .run-split styles the run button with its caret joined to the right of it. */
+.run-split {
+  display: inline-flex;
+  align-items: stretch;
+
+  & > .btn {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  & > .more-menu > summary.run-caret {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    margin-inline-start: -1px;
+    padding-inline: 0.4rem;
+
+    & .ic {
+      width: 0.7rem;
+      height: 0.7rem;
+    }
+  }
+}

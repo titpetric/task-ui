@@ -1,0 +1,18 @@
+/* .fold-toggle styles the button a heading folds its block with. */
+.fold-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text);
+  }
+}

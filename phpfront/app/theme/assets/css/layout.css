@@ -1,5 +1,4 @@
-/* ------------------------------------------------------------------ shell */
-
+/* .shell styles the page shell: the sidebar, the content column and the right rail. */
 .shell {
   position: relative;
   z-index: 1;
@@ -8,73 +7,13 @@
   grid-template-columns: var(--side) minmax(0, 1fr) var(--rail);
 }
 
-/* The right rail: the recents, beside the page on a wide screen. */
-aside.rail {
-  position: relative;
-  border-inline-start: 1px solid var(--line);
-  background: var(--ink-1);
-  min-height: 100%;
-
-  & .rail-inner {
-    padding: 0.9rem 0 1rem;
-  }
-
-  & .side-label {
-    margin-top: 0;
-  }
-
-  /* The rail adds nothing to the page's height: it lies over its column,
-     and the script hides the recents that would run past the page or the
-     screen, whichever ends first. */
-  & .rail-inner {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-  }
-}
-
-.recents [hidden] {
-  display: none;
-}
-
-/* A heading over the recents of one hour, or one day. */
-.recents .recent-group {
-  margin: 0.7rem 1.1rem 0.2rem;
-  color: var(--text-faint);
-  font-size: var(--fs-label);
-  letter-spacing: var(--ls-sm);
-  text-transform: uppercase;
-
-  &:first-child {
-    margin-top: 0.2rem;
-  }
-}
-
-aside.rail .side-label a {
-  color: inherit;
-
-  &:hover {
-    color: var(--text);
-    text-decoration: none;
-  }
-}
-
-aside.rail .empty {
-  padding: 0.3rem 1.1rem;
-  color: var(--text-faint);
-  font-size: var(--fs-sm);
-}
-
 @media (max-width: 1199px) {
   .shell {
     grid-template-columns: var(--side) minmax(0, 1fr);
   }
-
-  aside.rail {
-    display: none;
-  }
 }
 
+/* aside.side styles the left column the sidebar fills. */
 aside.side {
   border-inline-end: 1px solid var(--line);
   background: var(--ink-1);
@@ -82,8 +21,7 @@ aside.side {
   min-height: 100%;
 }
 
-/* The folders, as a file browser lists them: an icon, the folder name, and
-   the count of jobs. The open folder shows an open icon and the accent. */
+/* .folders a styles a folder in the sidebar, marked when it is the open one. */
 .folders a {
   display: flex;
   align-items: center;
@@ -139,92 +77,23 @@ aside.side {
   }
 }
 
+/* .side .empty styles what the sidebar says when a workspace holds nothing. */
 .side .empty {
   padding: 0.3rem 1.1rem;
   color: var(--text-faint);
   font-size: var(--fs-sm);
 }
 
+/* main pads the content column the page is written into. */
 main {
   padding: 1.1rem 1.5rem 2rem;
   min-width: 0;
 }
 
-.crumbs {
-  margin-bottom: 0.6rem;
-  color: var(--text-faint);
-  font-size: var(--fs-sm);
-
-  & a {
-    color: var(--text-dim);
-  }
-
-  & span::before {
-    content: "/";
-    margin: 0 0.45rem;
-    color: var(--line-2);
-  }
-}
-
-/* The head of a page: the title and its lead in the first column, the
-   actions pinned to the end of the second, whatever the lead's length.
-   At phone width the actions stack under the lead, and the [...] menu
-   leaves them for the title's line, so it never stands alone. */
-.page-head {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.75rem 1.5rem;
-  padding-bottom: 0.8rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--line);
-
-  & h2 {
-    font-size: 1.45rem;
-    letter-spacing: -0.015em;
-  }
-
-  & p {
-    margin: 0.35rem 0 0;
-    color: var(--text-dim);
-    max-width: 70ch;
-    font-size: 0.925rem;
-  }
-
-  & .actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 640px) {
-  .page-head {
-    grid-template-columns: minmax(0, 1fr);
-
-    & > div:first-child {
-      padding-inline-end: 2.5rem;
-    }
-
-    & .actions {
-      justify-content: flex-start;
-    }
-
-    & .actions > .more-menu {
-      position: absolute;
-      top: 0;
-      inset-inline-end: 0;
-    }
-  }
-}
-
+/* section.block styles a block of a page and the heading it opens with. */
 section.block {
   margin-bottom: var(--block-gap);
 
-  /* A block of more than one table names each with a sub-heading. */
   & > h4 {
     margin: var(--stack-gap) 0 var(--head-gap);
     color: var(--text-dim);
@@ -260,13 +129,10 @@ section.block > .block-head > h3,
   text-transform: uppercase;
 }
 
-/* A heading beside its actions: the head holds the gap below. */
 section.block > .block-head > h3 {
   margin-bottom: 0;
 }
 
-/* An empty list's one line, "No keys added.", in the row of its block's
-   head, between the heading and the buttons that add to the list. */
 section.block > .block-head > .empty-line {
   flex: 1;
   margin: 0;
@@ -281,27 +147,7 @@ section.block > .block-head > .empty-line {
   text-transform: none;
 }
 
-/* The toggle of a folding block is its heading's own text, with a
-   chevron that points down while the block is open. */
-.fold-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--text);
-  }
-}
-
-/* A job's description from its pipeline, above the job page. */
+/* pre.summary styles a job's description above what it runs. */
 pre.summary {
   margin: 0 0 1rem;
   padding: 0.6rem 0.8rem;

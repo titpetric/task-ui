@@ -1,0 +1,4 @@
+/* .who-ran styles the name of whoever started a run. */
+.who-ran {
+  white-space: nowrap;
+}

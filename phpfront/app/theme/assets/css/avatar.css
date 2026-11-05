@@ -1,0 +1,49 @@
+/* .avatar styles the initials a user is drawn as, in three sizes. */
+.avatar {
+  --avatar-size: round(2rem, 1px);
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  line-height: calc(var(--avatar-size) - 2px);
+  text-align: center;
+  vertical-align: middle;
+  border-radius: var(--radius-round);
+  border: 1px solid var(--line-2);
+  background: var(--ink-2);
+  color: var(--text);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--ls-sm);
+  text-indent: var(--ls-sm);
+
+  @supports (text-box: trim-both cap alphabetic) {
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
+    padding-top: calc(round((var(--avatar-size) + 1cap) / 2, 1px) - 1cap - 1px);
+  }
+
+  &.role-admin {
+    border-color: var(--role-admin);
+  }
+
+  &.role-runner {
+    border-color: var(--role-runner);
+  }
+
+  &.role-viewer {
+    border-color: var(--role-viewer);
+  }
+}
+
+.avatar.sm {
+  --avatar-size: round(1.45rem, 1px);
+  font-size: 0.55rem;
+  letter-spacing: var(--ls-xs);
+  text-indent: var(--ls-xs);
+}
+
+.avatar.lg {
+  --avatar-size: round(3rem, 1px);
+  font-size: var(--fs-md);
+}

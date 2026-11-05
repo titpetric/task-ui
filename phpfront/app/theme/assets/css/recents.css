@@ -1,0 +1,58 @@
+/* aside.rail styles the right-hand rail and the recent runs it groups by day. */
+aside.rail {
+  position: relative;
+  border-inline-start: 1px solid var(--line);
+  background: var(--ink-1);
+  min-height: 100%;
+
+  & .rail-inner {
+    padding: 0.9rem 0 1rem;
+  }
+
+  & .side-label {
+    margin-top: 0;
+  }
+
+  & .rail-inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+}
+
+.recents [hidden] {
+  display: none;
+}
+
+.recents .recent-group {
+  margin: 0.7rem 1.1rem 0.2rem;
+  color: var(--text-faint);
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-sm);
+  text-transform: uppercase;
+
+  &:first-child {
+    margin-top: 0.2rem;
+  }
+}
+
+aside.rail .side-label a {
+  color: inherit;
+
+  &:hover {
+    color: var(--text);
+    text-decoration: none;
+  }
+}
+
+aside.rail .empty {
+  padding: 0.3rem 1.1rem;
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 1199px) {
+  aside.rail {
+    display: none;
+  }
+}

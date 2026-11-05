@@ -1,5 +1,4 @@
-/* ------------------------------------------------------------------ alerts */
-
+/* .alert styles a message over a page. */
 .alert {
   margin-bottom: 1rem;
   padding: 0.55rem 0.8rem;
@@ -16,8 +15,7 @@
   & b { color: var(--text); }
 }
 
-/* The broken pipelines of a place: a finding a line, its folder linked,
-   the rows past the first few folded under Show all. */
+/* .pipeline-alert styles the findings a folder's linter reported, a row each. */
 .pipeline-alert {
   & .pipeline-errors {
     margin: 0.4rem 0 0;

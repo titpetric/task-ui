@@ -1,57 +1,4 @@
-/* ------------------------------------------------------------------ setup */
-
-/* The footer of a step of the settings: the steps in setup order on a
-   line of their own, then Previous on the left and Next on the right. */
-.setup-trail {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1rem;
-  margin-top: 1.6rem;
-  padding-top: 0.8rem;
-  border-top: 1px solid var(--line);
-
-  & [rel="prev"] {
-    & .back {
-      transform: scaleX(-1);
-    }
-  }
-
-  & .steps {
-    order: -1;
-    flex: 1 1 100%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.2rem 0;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    color: var(--text-faint);
-    font-size: var(--fs-xs);
-
-    & li + li::before {
-      content: "·";
-      padding: 0 0.45em;
-    }
-
-    & a {
-      color: var(--text-dim);
-    }
-
-    & b {
-      color: var(--text);
-      font-weight: 600;
-    }
-  }
-
-  & [rel="next"] {
-    margin-inline-start: auto;
-  }
-}
-
-/* The steps on the Settings page, and the values of the Instance step:
-   the descriptions take the width, a long path breaks. */
+/* .table.settings styles the instance's settings: a section a block, a row a value. */
 .table.settings {
   & td.num {
     width: 1.5rem;
@@ -70,10 +17,7 @@
   }
 }
 
-/* The Instance step: a section per group of settings, each a heading,
-   a line on what it holds, and a table whose four columns keep one
-   width down the page. A computed value reads quieter than one the
-   environment or the page sets; the backlog length saves in place. */
+/* .instance-section groups the settings of one area of the instance. */
 .instance-section {
   & > h3 {
     padding-bottom: 0.35rem;
@@ -88,6 +32,7 @@
   }
 }
 
+/* .storage-table styles what the instance keeps on disk, an area a row. */
 .storage-table {
   table-layout: fixed;
 
@@ -125,6 +70,7 @@
   }
 }
 
+/* .instance-table styles the instance's own facts, a name and a value a row. */
 .instance-table {
   table-layout: fixed;
 
@@ -179,8 +125,7 @@
   }
 }
 
-/* The tools found in the PATH, a table per category: the tool, its
-   version, where it is, and what it is used for. */
+/* .toolset-table styles the tools a run can reach and the version each is at. */
 .toolset-table {
   table-layout: fixed;
 
@@ -215,6 +160,7 @@
   }
 }
 
+/* .inline-setting styles a setting a reader changes in the row it sits on. */
 .inline-setting {
   display: flex;
   align-items: center;
@@ -228,7 +174,7 @@
   }
 }
 
-/* A rotated key's label while its backup serves beside it. */
+/* .backup-active marks the backup the instance is keeping. */
 .backup-active {
   display: block;
   margin-top: 0.3rem;
@@ -239,8 +185,7 @@
   letter-spacing: var(--ls-xs);
 }
 
-/* The parent environment's choice: a radio a line under the field's
-   label, Save in the form's foot. */
+/* .parent-env styles a variable a run inherits from the process above it. */
 .parent-env {
   margin-bottom: 0.75rem;
 

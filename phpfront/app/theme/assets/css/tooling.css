@@ -1,17 +1,8 @@
-/* ---------------------------------------------------------------- tooling */
-
-/* What the commands inside the runs spent their time on, as atkins
-   recorded it. A chart per window, drawn the way activity draws its
-   buckets: a day a column, in it a bar per top command of the window,
-   side by side, each its own hover target. Under each chart the legend
-   of those commands, longest first, so a reader sees the shape of a
-   month and what it went on without reading a table. The table is
-   behind a details element, which needs no script. */
+/* .tooling styles the tooling block of a folder page. */
 .tooling {
   margin: 0 0 1rem;
 }
 
-/* A section per database the run records to, the project first. */
 .tooling-scope + .tooling-scope {
   margin-top: 1.2rem;
   padding-top: 1rem;
@@ -25,8 +16,6 @@
   font-size: var(--fs-sm);
 }
 
-/* The file the rows came from, floated to the end: it answers "why is
-   this empty" and nothing else, so it reads as a footnote. */
 .tooling-db {
   float: inline-end;
   margin-inline-start: 0.5rem;
@@ -40,9 +29,6 @@
   direction: rtl;
 }
 
-/* The charts take the activity charts' columns, so the month lines up
-   with the month above it and the week with the day; a lone chart
-   takes the row. */
 .tooling-charts {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
@@ -84,12 +70,6 @@
   }
 }
 
-/* A group of bars a day, a slot per command of the legend in its
-   order, each measured from zero against the window's tallest bar. A
-   command that did not run that day leaves its slot empty, and a day
-   nothing ran is an empty column and not a missing one, so a run of
-   days reads as time. On a week the bars stand apart; on a month they
-   touch and the days stand apart. */
 .tooling-bars {
   display: grid;
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
@@ -129,19 +109,16 @@
     }
   }
 
-  /* More slots than a month: the slots touch but for a hairline, and
-     the commands in one share it. */
   &.fine {
     gap: 1px;
   }
 }
 
+/* .s-other colours whatever a tooling chart did not name on its own. */
 .s-other {
   --seg: var(--text-faint);
 }
 
-/* The legend of a window: a swatch, the command, its time and how often
-   it ran. */
 .tooling-legend {
   margin: 0.3rem 0 0;
   padding: 0;
@@ -161,8 +138,6 @@
     color: var(--text-faint);
   }
 
-  /* Under the wide week the legend runs in columns, so a name and its
-     time stay close. */
   .wide & {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
@@ -185,9 +160,6 @@
   }
 }
 
-/* The newest commands, newest first: the time, the command in its
-   chart colour and its job, how long it took and how it ended. Two columns
-   on a wide screen, one on a phone. */
 .tooling-latest {
   margin-top: 0.8rem;
 
@@ -277,8 +249,6 @@
   }
 }
 
-/* Under the fold the charts stack, as the activity charts do, and the
-   newest commands take one column. */
 @media (width <= 860px) {
   .tooling-charts {
     grid-template-columns: minmax(0, 1fr);
@@ -288,7 +258,6 @@
     columns: 1;
   }
 
-  /* On a phone the file goes under the line, on its own. */
   .tooling-sum {
     display: flex;
     flex-direction: column-reverse;

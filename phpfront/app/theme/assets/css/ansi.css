@@ -1,4 +1,4 @@
-/* The colours a terminal prints, as the run window's palette draws them. */
+/* .ansi-bold and its siblings style the colours a terminal prints. */
 .ansi-bold { font-weight: 700; }
 .ansi-dim { opacity: 0.65; }
 .ansi-italic { font-style: italic; }

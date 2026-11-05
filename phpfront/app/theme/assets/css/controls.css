@@ -1,9 +1,4 @@
-/* ---------------------------------------------------------------- controls */
-
-/* The controls: text fields, textareas and selects, the dropdown that
-   stands in for a select, and the buttons, each in one place. A field
-   is set in the page's face, font: inherit below; the dropdown's button
-   and options wear the data's mono face. */
+/* .btn-icon styles a button drawn as an icon alone. */
 .btn-icon {
   display: inline-flex;
   align-items: center;
@@ -29,7 +24,6 @@
     text-decoration: none;
   }
 
-  /* As .btn: a move with nowhere to go, the first row's Move up. */
   &:disabled {
     opacity: 0.35;
     cursor: not-allowed;
@@ -41,7 +35,6 @@
     }
   }
 
-  /* Destructive actions wear the one red on the page. */
   &.danger {
     color: var(--bad);
 
@@ -52,14 +45,13 @@
   }
 }
 
-/* Every control in a row is --control high. The caption is uppercase,
-   which has no descenders, so it sits a hair lower than the line box's
-   middle to look centred. */
+/* input and select take the one height every control on a form is drawn at. */
 input:is([type="text"], [type="password"], [type="email"], [type="number"], [type="search"], [type="time"], [type="url"]),
 select {
   height: var(--control);
 }
 
+/* .btn styles a button and the primary, danger and small variants of it. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -119,30 +111,7 @@ select {
   font-size: var(--fs-label);
 }
 
-/* Run and the menu of the other ways to run it share one control:
-   [ Run | ▾ ], the menu's list under the caret. */
-.run-split {
-  display: inline-flex;
-  align-items: stretch;
-
-  & > .btn {
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-  }
-
-  & > .more-menu > summary.run-caret {
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
-    margin-inline-start: -1px;
-    padding-inline: 0.4rem;
-
-    & .ic {
-      width: 0.7rem;
-      height: 0.7rem;
-    }
-  }
-}
-
+/* input and textarea take the frame, the padding and the font a reader types in. */
 input:is([type="text"], [type="password"]),
 textarea {
   width: 100%;
@@ -160,9 +129,6 @@ textarea {
   font-size: var(--fs-xs);
 }
 
-/* A one-line field takes its height from --control: no padding above or
-   below, the text centred in it. A field and a select set their text
-   alike, whatever the label around them sets. */
 input:is([type="text"], [type="password"]) {
   padding-block: 0;
   line-height: normal;
@@ -186,9 +152,7 @@ select {
   font: inherit;
 }
 
-/* A dropdown: the select stays in the form under it, out of sight, and
-   a button shows the choice, drawn like a text field; its list opens
-   under it, or over it when the screen ends first. */
+/* .dd styles the dropdown: the button, its chevron and the list it opens. */
 .dd {
   position: relative;
   width: 100%;
@@ -228,9 +192,6 @@ select {
   }
 }
 
-/* The focus of a control is the page's outline, as base.css draws it
-   on a field, a textarea, the dropdown's button and every button alike;
-   the open dropdown's button carries the accent on its border as well. */
 .dd.open .dd-button {
   border-color: var(--signal);
 }
@@ -325,37 +286,5 @@ input[type="file"] {
     letter-spacing: var(--ls-button);
     text-transform: uppercase;
     cursor: pointer;
-  }
-}
-
-/* A value to copy, from the copyable template: the value in code and
-   its copy button right after it, on every page the same: a public key,
-   a link, a command, a token that shows once. */
-.copyable {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  max-width: 100%;
-  min-width: 0;
-  vertical-align: middle;
-
-  & code {
-    min-width: 0;
-    padding: 0.15rem 0.45rem;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  /* fill takes the width it has, the value cut with an ellipsis and
-     whole in its tooltip, the button beside it staying in view. */
-  &.fill {
-    display: flex;
-    width: 100%;
-
-    & code {
-      flex: 1 1 auto;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
   }
 }

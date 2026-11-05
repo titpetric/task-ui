@@ -1,7 +1,4 @@
-/* The cluster over the hosts table: a pool a resource, each a bar of a
-   segment a host, as wide as its share of the whole, the used part in
-   the host's colour and the free part a wash of it. A host keeps its
-   colour in every pool and in the legend under them. */
+/* .cluster styles the pools over the hosts table, each a bar of one segment per host. */
 .cluster {
   margin: 0 0 1.2rem;
 

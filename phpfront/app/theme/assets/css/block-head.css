@@ -1,4 +1,4 @@
-/* A block head: the title of a block and its actions on the right. */
+/* .block-head styles a block's title and the actions on its right. */
 .block-head {
   display: flex;
   flex-wrap: wrap;

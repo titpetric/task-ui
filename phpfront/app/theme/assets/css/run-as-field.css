@@ -1,0 +1,11 @@
+/* .run-as styles the picker naming who a run goes out as. */
+.run-as {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  & .dd {
+    width: auto;
+    max-width: var(--control-w-l);
+  }
+}

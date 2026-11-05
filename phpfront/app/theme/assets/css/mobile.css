@@ -1,8 +1,4 @@
-/* ------------------------------------------------------------------ mobile */
-
-/* Under the breakpoint the sidebar is a drawer behind the menu button, and
-   the tables that list jobs and runs fold into cards: one block per row,
-   each cell with its label in front. */
+/* @media narrows the layout under 860px. */
 @media (max-width: 860px) {
   .shell {
     grid-template-columns: 1fr;
@@ -22,15 +18,11 @@
     transition: transform 0.2s ease-out;
   }
 
-  /* The shadow only on the open drawer: on the closed one it bleeds in
-     from the left edge, which shows on the light theme. */
   body.menu-open aside.side {
     transform: none;
     box-shadow: var(--shadow-drawer);
   }
 
-  /* The shell is a stacking context under the header; the open drawer
-     has to rise above both. */
   body.menu-open .shell {
     z-index: 31;
   }
@@ -117,8 +109,6 @@
       padding-bottom: 0.25rem;
     }
 
-    /* A key's card: the name, its badge and its comment on lines of
-       their own, the public key cut to the card's width. */
     & td.key {
       flex-wrap: wrap;
       width: auto;

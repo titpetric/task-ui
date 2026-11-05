@@ -1,0 +1,7 @@
+/* .state styles a run's state and the dot in front of it. */
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}

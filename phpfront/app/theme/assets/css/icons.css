@@ -1,5 +1,4 @@
-/* ------------------------------------------------------------------- icons */
-
+/* .ic styles the sizes and the tones of the icon sprite. */
 .ic {
   width: 1em;
   height: 1em;
@@ -8,18 +7,10 @@
   flex: none;
 }
 
-/* An icon that leads text in a line, the workflow icon before a
-   workflow's name in a chain, a row or the rail: a gap between them,
-   where flex or a button gives none. */
 .ic.lead {
   margin-inline-end: 0.3rem;
 }
 
-/* The disclosure chevron, one look wherever something folds: the
-   sidebar's workspaces, projects and folders, a block's heading, the
-   prompt box, a host's row, a details toggle. It points right while
-   folded and turns down while open, faint until its row is hovered.
-   Where it sits is the place's own; what it looks like is this. */
 .ic.chev {
   width: 0.85rem;
   height: 0.85rem;

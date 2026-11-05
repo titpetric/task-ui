@@ -1,0 +1,64 @@
+/* table.matrix styles a permission grid: a rule a row, a role or a user a column. */
+table.matrix {
+  width: auto;
+  min-width: 100%;
+
+  & th,
+  & td {
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  & th[scope="row"] {
+    color: var(--text);
+    font-weight: 500;
+    text-align: start;
+  }
+
+  & thead th:first-child {
+    text-align: start;
+  }
+
+  & tr.group th {
+    padding-top: 0.9rem;
+    color: var(--text-dim);
+    font-size: var(--fs-label);
+    letter-spacing: var(--ls-label);
+    text-align: start;
+    text-transform: uppercase;
+  }
+
+  & td[colspan] {
+    text-align: start;
+  }
+}
+
+@media (max-width: 860px) {
+  table.matrix {
+    & th[scope="row"],
+    & thead th:first-child {
+      position: sticky;
+      z-index: 1;
+      inset-inline-start: 0;
+      background: var(--ink-1);
+      box-shadow: 1px 0 0 var(--line);
+    }
+
+    & thead th:first-child {
+      background: var(--ink-2);
+    }
+  }
+}
+
+.matrix-form {
+  & .form-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+  }
+}
+
+.matrix-role h3 .avatar {
+  margin-inline-end: 0.2rem;
+}

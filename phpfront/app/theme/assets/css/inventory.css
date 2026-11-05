@@ -1,7 +1,4 @@
-/* The host inventory: a share as a short bar, warm past 75%, high past 90%;
-   the cores centred, the sizes left-aligned, digits of one width. Every
-   cell is the mono face at one size, aligned to the top, and what sits in
-   a cell (badge, copy button, meter) is one line tall. */
+/* .table.hosts styles the host inventory, where a share is a short bar, warm past 75% and high past 90%. */
 .table.hosts {
   & :is(th, td) {
     padding-inline: 0.45rem;
@@ -44,7 +41,6 @@
     vertical-align: top;
   }
 
-  /* A host's icon says its state: green up, red anything else. */
   & td .ic.host-state.up {
     color: var(--ok);
   }
@@ -64,32 +60,9 @@
   }
 }
 
+/* .live-stamp styles the time the inventory last answered. */
 .live-stamp {
   margin: 0.4rem 0 0;
   font-size: var(--fs-xs);
   text-align: end;
-}
-
-.meter {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-variant-numeric: tabular-nums;
-
-  & .spacebar-track {
-    width: 3rem;
-    height: 0.45rem;
-  }
-
-  &.warm .spacebar-track i.files {
-    background: var(--signal);
-  }
-
-  &.high .spacebar-track i.files {
-    background: var(--bad);
-  }
-
-  &:not(.warm):not(.high) .spacebar-track i.files {
-    background: var(--ok);
-  }
 }

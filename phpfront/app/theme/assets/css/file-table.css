@@ -1,7 +1,4 @@
-/* What a directory holds, the artifact tree's or a checkout's: a row per
-   directory or file, its size, when it changed and its actions on the
-   right. A file that runs carries #! in the icon's column; a sealed
-   entry is listed muted, locked, with nothing to click. */
+/* .file-table styles what a directory holds: a row per directory or file. */
 .file-table {
   & td.key {
     & .ic,
@@ -47,75 +44,5 @@
   & .badge.exec {
     color: var(--signal);
     border-color: color-mix(in srgb, var(--signal) 50%, transparent);
-  }
-}
-
-/* The space a directory takes: the files in the signal colour, the git
-   history beside them faint, then the sizes. */
-.spacebar {
-  display: grid;
-  gap: 0.5rem;
-  max-width: 40rem;
-}
-
-.spacebar-track {
-  display: flex;
-  height: 0.6rem;
-  overflow: hidden;
-  border-radius: var(--radius);
-  background: var(--ink-3);
-
-  & i {
-    display: block;
-    height: 100%;
-  }
-}
-
-.spacebar-track i.files,
-.swatch.files {
-  background: var(--signal);
-}
-
-.spacebar-track i.history,
-.swatch.history {
-  background: var(--line-2);
-}
-
-.spacebar-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.25rem;
-  font-size: var(--fs-sm);
-  color: var(--text-dim);
-
-  & span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  & b {
-    color: var(--text);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-.swatch {
-  display: inline-block;
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 1px;
-}
-
-.spacemini {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-variant-numeric: tabular-nums;
-
-  & .spacebar-track {
-    width: 5rem;
-    height: 0.45rem;
   }
 }

@@ -1,10 +1,4 @@
-/* The [...] menu, the one way a row, or a block, shows the actions it
-   seldom needs (the menu template, docs/development.md, Row actions): an
-   icon button that opens a list on a click, its details on top, then its
-   items, an icon and a label each, a line between their groups, the
-   danger group last in the bad colour. The list opens fixed, placed by
-   the script against its button, so a table that scrolls sideways does
-   not clip it; on a phone it is a sheet along the bottom of the screen. */
+/* .more-menu styles the [...] menu a row or a block puts its seldom-used actions behind. */
 .more-menu {
   position: relative;
   display: inline-block;
@@ -95,8 +89,6 @@
   }
 }
 
-/* The details a menu holds above its items, what the row's columns
-   leave out: a key's fingerprint, a run's ID, when a file changed. */
 .more-details {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -127,8 +119,6 @@
   border-top: 1px solid var(--line);
 }
 
-/* On a phone the list is a sheet along the bottom, the width of the
-   screen, its items tall enough to tap. */
 @media (max-width: 640px) {
   .more-list {
     inset: auto 0.5rem 0.5rem;

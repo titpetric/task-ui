@@ -1,43 +1,7 @@
-/* Users: the [...] menu next to a user's name, the profile, and the
-   permission matrices of roles and users. */
-
-/* A user's avatar and name with the menu after them, quiet until
-   hovered. The menu opens fixed, placed by the script, so a row that
-   scrolls sideways does not clip it. */
-.user-ref {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-
-  & .more-menu > summary {
-    width: 1.3rem;
-    height: 1.3rem;
-    opacity: 0.55;
-
-    & .ic {
-      width: 0.85rem;
-      height: 0.85rem;
-    }
-  }
-
-  &:hover .more-menu > summary,
-  & .more-menu[open] > summary,
-  & .more-menu > summary:focus-visible {
-    opacity: 1;
-  }
-}
-
+/* .profile-who styles a user's page: who they are, and the lists under it. */
 .author .user-name {
   color: var(--text);
   font-weight: 600;
-}
-
-/* The profile: a large avatar beside the name and when they joined,
-   the role in the avatar's colour. */
-.avatar.lg {
-  --avatar-size: round(3rem, 1px);
-  font-size: var(--fs-md);
 }
 
 .profile-who {
@@ -46,14 +10,11 @@
   gap: 0.9rem;
 }
 
-/* The line under a profile's runs that leads to every run by them. */
 .block .more-link {
   margin: 0.4rem 0 0;
   font-size: var(--fs-sm);
 }
 
-/* The notes and prompts of a profile, one a row: the excerpt on one
-   line, cut with an ellipsis, and when it was written at the end. */
 .profile-list {
   display: grid;
   gap: 0.1rem;
@@ -85,152 +46,7 @@
   }
 }
 
-/* A permission matrix: a row per section, a column per rule. A cell is
-   a square that cycles inherit (empty), allow (green ✓) and deny
-   (red ✕); the mark after it, muted, is what the user may do. */
-table.matrix {
-  width: auto;
-  min-width: 100%;
-
-  & th,
-  & td {
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  & th[scope="row"] {
-    color: var(--text);
-    font-weight: 500;
-    text-align: start;
-  }
-
-  & thead th:first-child {
-    text-align: start;
-  }
-
-  & tr.group th {
-    padding-top: 0.9rem;
-    color: var(--text-dim);
-    font-size: var(--fs-label);
-    letter-spacing: var(--ls-label);
-    text-align: start;
-    text-transform: uppercase;
-  }
-
-  & td[colspan] {
-    text-align: start;
-  }
-}
-
-/* On a phone a matrix scrolls sideways under its first column, which
-   stays in view, so a row keeps its name beside its cells. */
-@media (max-width: 860px) {
-  table.matrix {
-    & th[scope="row"],
-    & thead th:first-child {
-      position: sticky;
-      z-index: 1;
-      inset-inline-start: 0;
-      background: var(--ink-1);
-      box-shadow: 1px 0 0 var(--line);
-    }
-
-    & thead th:first-child {
-      background: var(--ink-2);
-    }
-  }
-}
-
-.tri-cell {
-  display: inline-flex;
-  vertical-align: middle;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.tri {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  padding: 0;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius);
-  background: var(--ink-2);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--fs-md);
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: middle;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    border-color: var(--signal);
-  }
-
-  &[data-tri="allow"] {
-    border-color: var(--ok);
-    background: var(--ok-wash);
-    color: var(--ok);
-  }
-
-  &[data-tri="deny"] {
-    border-color: var(--bad);
-    background: var(--bad-wash);
-    color: var(--bad);
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.7;
-  }
-}
-
-.eff {
-  width: 0.8rem;
-  font-size: var(--fs-xs);
-  opacity: 0.7;
-
-  &.ok {
-    color: var(--ok);
-  }
-
-  &.bad {
-    color: var(--text-faint);
-  }
-}
-
-.matrix-form {
-  & .form-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 0.75rem;
-  }
-}
-
-.matrix-role h3 .avatar {
-  margin-inline-end: 0.2rem;
-}
-
-/* Who a schedule runs as, which an admin changes on the row. */
-.run-as {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-
-  /* The pick names the user's keys after the name: the dropdown stops
-     at a width that keeps the row's other columns in view, the full
-     list of keys in its open list. */
-  & .dd {
-    width: auto;
-    max-width: var(--control-w-l);
-  }
-}
-
-/* A row that opens a page on a click anywhere in it. */
+/* tr.row-link styles a table row that opens the page of whoever it names. */
 tr.row-link {
   cursor: pointer;
 

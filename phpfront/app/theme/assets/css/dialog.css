@@ -1,5 +1,4 @@
-/* ----------------------------------------------------------------- confirm */
-
+/* dialog.confirm styles the confirmation step in front of a destructive action. */
 dialog.confirm {
   width: min(26rem, calc(100vw - 2rem));
   padding: 1.1rem 1.3rem 1rem;
@@ -26,15 +25,13 @@ dialog.confirm {
     margin-bottom: 1rem;
   }
 
-  /* The input of a workflow's prompt, above the dialog's buttons. */
   & textarea {
     width: 100%;
     margin-bottom: 1rem;
   }
 }
 
-/* A workspace's Export and Import: a form in the confirm dialog, a
-   passphrase field with Copy and Generate beside it. */
+/* dialog.workspace-export styles the export and import steps of a workspace. */
 dialog.workspace-export,
 dialog.workspace-import {
   width: min(34rem, calc(100vw - 2rem));
@@ -65,11 +62,7 @@ dialog.workspace-import {
   }
 }
 
-/* ------------------------------------------------------------------ toasts */
-
-/* A line of feedback at the foot of the page after a change, or a
-   failure outside a form, in the bad colour: the newest under the
-   others, each gone after a few seconds or on a click. */
+/* .toasts stacks the messages that slide in over a page and time out. */
 .toasts {
   position: fixed;
   inset-inline-end: 1rem;
@@ -113,8 +106,7 @@ dialog.workspace-import {
   }
 }
 
-/* ------------------------------------------------------------------- modal */
-
+/* dialog.run styles the window a run opens in, over the page that started it. */
 dialog.run {
   width: min(78rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
@@ -136,6 +128,7 @@ dialog.run {
   }
 }
 
+/* .run-head styles a run's title row: what ran, where, and how long it took. */
 .run-head {
   display: flex;
   align-items: center;
@@ -170,9 +163,6 @@ dialog.run {
 
 }
 
-/* A state label after the title: a pill with a dot, in the colour of
-   what it says. A replay of a recording is red with a pulsing dot; a
-   window that took input is amber. */
 .run-head .tag {
   --tag: var(--text-dim);
   --tag-wash: transparent;
@@ -219,7 +209,6 @@ dialog.run {
   }
 }
 
-/* The title the run's terminal set follows the job's name, dim. */
 .run-head .run-subtitle {
   min-width: 0;
   overflow: hidden;
@@ -233,8 +222,6 @@ dialog.run {
   }
 }
 
-/* A window that took input on a run of a job that takes none: its
-   terminal takes the signal colour as well. */
 dialog.run.taking-input .run-body {
   box-shadow: inset 0 0 0 1px var(--signal);
 }
@@ -254,6 +241,7 @@ dialog.run.taking-input .run-body {
   }
 }
 
+/* .run-body holds the terminal a run draws into. */
 .run-body {
   position: relative;
   flex: 1;
@@ -266,15 +254,11 @@ dialog.run.taking-input .run-body {
   }
 }
 
-/* A replay takes the size of its recording, which can be larger than
-   the window: the terminal scrolls inside it, under the foot. */
 dialog.run.replaying .terminal-host {
   overflow: auto;
 }
 
-/* A file a folder's pipeline reads, coloured, in the source window. The
-   classes are the highlight package's: k key, c comment, s string, n
-   number, v variable, p dash. */
+/* pre.code styles a source file unwrapped, and colours its tokens. */
 pre.code {
   margin: 0;
   padding: 0.55rem 0.8rem;
@@ -288,8 +272,6 @@ pre.code {
   tab-size: 4;
 }
 
-/* The highlight package's classes, in the source window and in a text
-   file of a checkout in the preview window. */
 :is(pre.code, .preview-doc.text pre) {
   & .k { color: #7cb7e8; }
   & .c { color: var(--text-faint); font-style: italic; }
@@ -299,6 +281,7 @@ pre.code {
   & .p { color: var(--text-faint); }
 }
 
+/* dialog.source styles the window a job's source opens in. */
 dialog.source {
   & .run-body {
     padding: 0;
@@ -316,6 +299,7 @@ dialog.source {
   vertical-align: middle;
 }
 
+/* .run-notice styles what the window says when a run ends or needs an answer. */
 .run-notice {
   display: none;
   margin: 0;
@@ -331,6 +315,7 @@ dialog.source {
   &.bad { background: var(--bad-wash); color: var(--text); }
 }
 
+/* .run-foot styles the actions along the bottom of the run window. */
 .run-foot {
   display: flex;
   align-items: center;
@@ -344,8 +329,6 @@ dialog.source {
     font-size: var(--fs-xs);
   }
 
-  /* The paginator of a run's chain, a Run and summarize or a workflow
-     run, left of the hint: Previous, where the run stands, Next. */
   & .run-chain {
     display: flex;
     align-items: center;
@@ -364,8 +347,6 @@ dialog.source {
     white-space: nowrap;
   }
 
-  /* The pick of who a prompt runs as, as wide as its choice within
-     reason. */
   & .dd {
     width: auto;
     min-width: var(--control-w-l);
@@ -373,6 +354,7 @@ dialog.source {
   }
 }
 
+/* .xterm .xterm-viewport hides the scrollbar xterm.js draws inside the window. */
 .xterm .xterm-viewport {
   background-color: var(--term-bg) !important;
 }

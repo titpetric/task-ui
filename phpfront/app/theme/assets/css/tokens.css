@@ -1,3 +1,4 @@
+/* @font-face and :root hold the fonts and the custom properties every sheet below reads. */
 @font-face {
   font-family: "Inter";
   font-style: normal;
@@ -49,7 +50,6 @@
 :root {
   color-scheme: dark light;
 
-  /* --font is the data face, which the terminal uses too; --font-ui the words. */
   --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono",
     "IBM Plex Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -69,20 +69,14 @@
   --ok: #57b894;
   --bad: #e06c6c;
 
-  /* A wash is its colour over the page, faint: the background of a lit
-     row, an alert, a badge. Mixed with transparent in srgb, a wash is the
-     colour itself at that alpha. */
   --signal-wash: color-mix(in srgb, var(--signal) 12%, transparent);
   --ok-wash: color-mix(in srgb, var(--ok) 10%, transparent);
   --bad-wash: color-mix(in srgb, var(--bad) 10%, transparent);
 
-  /* The ring of an avatar says the user's role. */
   --role-admin: var(--signal);
   --role-runner: var(--ok);
   --role-viewer: var(--text-faint);
 
-  /* The series of a chart and the hosts of the inventory's pools, in a
-     fixed order, apart from the status colours. */
   --series-0: #3987e5;
   --series-1: #d95926;
   --series-2: #199e70;
@@ -92,12 +86,9 @@
 
   --term-bg: #090c10;
   --term-fg: #d5dee7;
-  /* The logo's tile stays a dark terminal in either theme. */
   --logo-bg: #0b0f14;
   --logo-fg: #d5dee7;
 
-  /* The type sizes in use, smallest first. The labels are uppercase and
-     tracked, the fields and the body are text. */
   --fs-label: 0.68rem;
   --fs-tick: 0.6875rem;
   --fs-caption: 0.7rem;
@@ -110,8 +101,6 @@
   --fs-body: 0.9rem;
   --fs-lg: 0.95rem;
 
-  /* The tracking of uppercase words, from an avatar's initials to the
-     brand. */
   --ls-xs: 0.04em;
   --ls-sm: 0.08em;
   --ls-button: 0.1em;
@@ -119,31 +108,20 @@
   --ls-heading: 0.16em;
   --ls-brand: 0.24em;
 
-  /* One height for every control in a row: a text field, a select and a
-     button line up, a small button is the small height, and a button in
-     a row of the sidebar or a table the smallest. */
   --control: 2.3rem;
   --control-sm: 1.75rem;
   --control-xs: 1.5rem;
 
-  /* The widths of a control that is not as wide as its box: a number, a
-     filter, a pick in a row of words, a pick that names the keys of a
-     user; and the width of a form. */
   --control-w-s: 8rem;
   --control-w-m: 11rem;
   --control-w-l: 14rem;
   --control-w-xl: 18rem;
   --form-w: 40rem;
 
-  /* The gaps of a form: between its fields, under a label, and around a
-     hint, after the label or under the control. */
   --field-gap: 0.8rem;
   --label-gap: 0.3rem;
   --hint-gap: 0.35rem;
 
-  /* What floats over the page casts a shadow by how far it rises: a
-     tooltip, a dropdown, the user menu, the drawer, a dialog. The scrim
-     dims the page under a dialog. */
   --shadow-tip: 0 2px 8px rgba(0, 0, 0, 0.25);
   --shadow-pop: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
   --shadow-menu: 0 18px 36px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
@@ -151,9 +129,6 @@
   --shadow-dialog: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
   --scrim: rgba(4, 6, 9, 0.72);
 
-  /* The vertical rhythm of a page: between blocks, under a block's
-     heading, and between the parts of a block, its intro, chart and
-     tables, a sub-heading's top included. */
   --block-gap: 1.6rem;
   --head-gap: 0.45rem;
   --stack-gap: 1rem;

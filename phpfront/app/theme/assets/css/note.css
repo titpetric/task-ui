@@ -1,5 +1,4 @@
-/* Notes: a note is its author, its text and its replies;
-   an instruction to the agent carries its state on the left edge. */
+/* .note-form styles the box a note is written in. */
 .note-form {
   display: grid;
   gap: 0.5rem;
@@ -20,17 +19,12 @@
   }
 }
 
-/* The foot of a note or prompt form: a line of words at the start, the
-   buttons at the end. */
 .form-foot.note {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   font-size: var(--fs-xs);
 
-  /* Who a prompt runs as, and the folder an area's prompt runs in,
-     picked inside the line: the dropdown as wide as its choice, in the
-     flow of the words. */
   & .run-in {
     line-height: 2;
 
@@ -50,14 +44,14 @@
   }
 }
 
-/* One column as wide as the page: a long line in a code block scrolls in
-   its block, never widens the note. */
+/* .notes stacks the notes of a page. */
 .notes {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
 }
 
+/* .note styles one note: its author, its text and the replies under it. */
 .note {
   padding: 0.85rem 1rem;
   border: 1px solid var(--line);
@@ -88,7 +82,6 @@
   font-size: var(--fs-sm);
 }
 
-/* The author is a line of text, so the avatar sits on its x-height. */
 .note header .author {
   white-space: nowrap;
 }
@@ -97,12 +90,12 @@
   flex: 1;
 }
 
+/* .note-state styles whether a note is open or settled. */
 .note-state {
   &:is(.working, .open) {
     color: var(--signal);
   }
 
-  /* A note the agent works on pulses, as a running run's dot does. */
   &.working::before {
     content: "";
     display: inline-block;
@@ -124,6 +117,7 @@
   }
 }
 
+/* .note-body styles a note's markdown. */
 .note-body {
   margin-top: 0.4rem;
   font-size: var(--fs-md);
@@ -146,8 +140,6 @@
     font-size: var(--fs-sm);
   }
 
-  /* A note is markdown: a fenced block as the terminal draws it, lists,
-     headings no louder than the note, quotes and tables. */
   & pre {
     margin: 0.5rem 0;
     padding: 0.6rem 0.75rem;
@@ -205,6 +197,7 @@
   }
 }
 
+/* .mention styles a name a note points at. */
 .mention {
   padding: 0 0.2rem;
   border-radius: var(--radius);
@@ -216,9 +209,7 @@ a.mention:hover {
   text-decoration: underline;
 }
 
-/* A note's field draws its text on a layer behind it, the field's own
-   text clear, so a mention of a user wears the colour of a link while
-   the caret and the selection stay the field's. */
+/* .mention-field styles the field that completes a name as it is typed. */
 .mention-field {
   position: relative;
   display: grid;
@@ -257,7 +248,6 @@ a.mention:hover {
   }
 }
 
-/* The users a mention may name, under the caret. */
 .mention-list {
   position: fixed;
   z-index: 60;
@@ -294,7 +284,6 @@ a.mention:hover {
   }
 }
 
-/* A note its author may edit opens in a field on a click. */
 .note-body[data-edit] {
   cursor: text;
   border-radius: var(--radius);
@@ -304,16 +293,16 @@ a.mention:hover {
   }
 }
 
+/* .note-edit styles a note while its author is rewriting it. */
 .note-edit {
   margin: 0.4rem 0 0;
 }
 
-/* An answer that runs again keeps its old text, dimmed, until the new
-   one lands. */
 .replies .rerun > .note-body {
   opacity: 0.5;
 }
 
+/* .replies indents an answer under the note it replies to. */
 .replies {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -338,6 +327,7 @@ a.mention:hover {
   }
 }
 
+/* .empty-state styles what a page says when it has nothing to list. */
 .empty-state {
   color: var(--text-faint);
 }

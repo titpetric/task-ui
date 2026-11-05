@@ -1,0 +1,61 @@
+/* .tri styles the allow, deny and inherit button of a permission cell. */
+.tri-cell {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tri {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--signal);
+  }
+
+  &[data-tri="allow"] {
+    border-color: var(--ok);
+    background: var(--ok-wash);
+    color: var(--ok);
+  }
+
+  &[data-tri="deny"] {
+    border-color: var(--bad);
+    background: var(--bad-wash);
+    color: var(--bad);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+}
+
+.eff {
+  width: 0.8rem;
+  font-size: var(--fs-xs);
+  opacity: 0.7;
+
+  &.ok {
+    color: var(--ok);
+  }
+
+  &.bad {
+    color: var(--text-faint);
+  }
+}

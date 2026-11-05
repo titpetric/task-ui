@@ -45,7 +45,7 @@ func TestAssetsFS_Feedback(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, string(forms), ".form-error,\n.login-error {\n  grid-column: 1 / -1;")
 	assert.Contains(t, string(forms), ":user-invalid")
-	dialogs, err := fs.ReadFile(view.AssetsFS(), "css/dialogs.css")
+	dialogs, err := fs.ReadFile(view.AssetsFS(), "css/dialog.css")
 	assert.NoError(t, err)
 	assert.Contains(t, string(dialogs), ".toasts {")
 }

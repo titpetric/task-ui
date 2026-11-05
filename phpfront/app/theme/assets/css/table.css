@@ -1,8 +1,4 @@
-/* ------------------------------------------------------------------ tables */
-
-/* A table wider than its box scrolls sideways, and its right edge
-   fades while there is more past it: the fade follows the scroll, gone
-   once the end is in view, and absent when the table fits. */
+/* .table-wrap scrolls a table sideways and fades the edge it cuts off. */
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -23,6 +19,7 @@
   }
 }
 
+/* .table styles every table: its head, its cells and the rows between them. */
 table.table {
   width: 100%;
   border-collapse: collapse;
@@ -54,8 +51,6 @@ table.table {
     background: var(--ink-2);
   }
 
-  /* A table with col-hover lights the column under the pointer too; the
-     script marks its cells col-hot, the head a step darker. */
   &.col-hover .col-hot {
     background: var(--ink-2);
   }
@@ -98,8 +93,6 @@ table.table-kv td {
   width: auto;
 }
 
-/* Step labels stack in their cell and lose their tail rather than pushing
-   the table into a scroll: the full step is one click away on the job. */
 td.steps code {
   display: block;
   margin: 0.1rem 0;
@@ -125,11 +118,7 @@ table.table-kv th {
   background: transparent;
 }
 
-/* A table that fits its box, whatever the sidebars leave it: past 56rem
-   wide it shows every column; narrower, it leaves out its .hide-narrow
-   columns and the avatar and menu of who a row runs as; narrower than
-   46rem, each row is a card, its cells labelled, as a phone shows
-   .table.cards. */
+/* .table-wrap.fit makes the wrap a container, so a narrow table turns to cards. */
 .table-wrap.fit {
   container-type: inline-size;
 }
@@ -197,8 +186,7 @@ table.table-kv th {
   }
 }
 
-/* A run's summary opens under its row: the row above it loses its
-   rule, and the markdown reads as a document, not as table cells. */
+/* .summary-row marks the row a summary hangs under, and dashes the line above it. */
 .table tr:has(+ .summary-row) td {
   border-bottom-style: dashed;
 }
@@ -208,6 +196,7 @@ table.table-kv th {
   white-space: normal;
 }
 
+/* .summary-details styles the document a row folds open under itself. */
 .summary-details {
   & > summary {
     cursor: pointer;
@@ -234,10 +223,7 @@ table.table-kv th {
   }
 }
 
-/* The projects table's Origin takes the width the other columns leave,
-   a long remote on one line, cut with an ellipsis and whole on a hover,
-   its branch badge under it; a phone's card lays the two out beside the
-   label. */
+/* .table.projects styles the Projects table, where the origin takes the slack. */
 .table.projects {
   & td.origin {
     max-width: 0;
@@ -258,9 +244,6 @@ table.table-kv th {
   }
 }
 
-/* In a box narrower than 44rem, the table leaves out Last commit and
-   Size rather than scroll sideways with Size cut off; a phone's card
-   shows them, labelled. */
 @container (max-width: 44rem) {
   .table.projects .hide-narrow {
     display: none;

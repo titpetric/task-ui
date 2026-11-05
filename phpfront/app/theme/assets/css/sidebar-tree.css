@@ -1,20 +1,16 @@
-/* ----------------------------------------------------------- sidebar tree */
-
-/* The menu button shows under the breakpoint. */
-/* The header's 1rem gap is for its groups; the button belongs with the
-   name, so it sits closer. */
+/* .menu-toggle styles the folder tree of the sidebar. */
 .menu-toggle {
   display: none;
   margin: 0 -0.4rem 0 -0.35rem;
 }
 
-/* After the rule above, or it would hide the button on phones too. */
 @media (max-width: 860px) {
   .menu-toggle {
     display: inline-flex;
   }
 }
 
+/* .menu-backdrop dims the page behind the sidebar on a narrow screen. */
 .menu-backdrop {
   display: none;
   position: fixed;
@@ -23,13 +19,7 @@
   background: rgba(4, 6, 9, 0.6);
 }
 
-/* A folder at the top of the root is a project: a repository icon at the
-   menu's alignment, its name, the count of its own jobs. Its jobs and
-   folders hang under it, one step in.
-
-   The columns of the tree, from the left edge of a row: the project icon
-   where the menu icons are, a folder icon under the project's name, a
-   job's dot under the folder's name. Each step is an icon and its gap. */
+/* .folders styles the tree: a workspace, its projects and a project's folders. */
 .folders {
   --tree-icon: 16px;
   --tree-gap: 0.55rem;
@@ -38,8 +28,6 @@
   --tree-2: calc(var(--tree-1) + var(--tree-icon) + var(--tree-gap));
 }
 
-/* A project is a disclosure: its row opens the project, the chevron at
-   its right folds the jobs and folders under it. */
 .folders details.project > summary {
   display: flex;
   align-items: center;
@@ -48,8 +36,6 @@
   cursor: pointer;
   border-inline-start: 2px solid transparent;
 
-  /* The row as a whole, chevron included, is lit on hover and when it is
-     the page's folder. */
   &:hover {
     background: var(--ink-2);
   }
@@ -73,11 +59,6 @@
   margin-top: 0;
 }
 
-/* A workspace is a disclosure above its projects: a label row with the
-   chevron in the project icons' column, pointing down while open. The
-   row opens the workspace; the chevron folds its projects, each of
-   which keeps a fold of its own. A rule above and below sets the
-   workspace apart from the projects around it. */
 .folders details.workspace {
   --ws-chev: 0.85rem;
   --ws-centre: calc((var(--tree-icon) - var(--ws-chev)) / 2);
@@ -134,8 +115,6 @@
     border-top: 0;
   }
 
-  /* Its projects follow the label closely; the next workspace or project
-     after it keeps the usual gap. */
   & > .jobs.top + details.project > summary,
   & > summary + details.project > summary {
     margin-top: 0.2rem;
@@ -176,25 +155,16 @@
     }
   }
 
-  /* The icon lights for a checkout with files changed or untracked,
-     not for the open page: the row's wash and bar say that. */
   & .ic.dirty {
     color: var(--signal);
   }
 
-  /* In a project's or a workspace's row the summary is lit: one wash
-     and one bar at the row's edge. The link adds neither, or the wash
-     doubles and a workspace's bar lands after its chevron. */
   summary &.active {
     background: none;
     border-inline-start-color: transparent;
   }
 }
 
-/* The folders of a project, one step in, named by their path below the
-   project: the part above the folder dim, the folder itself bright. A
-   folder is a disclosure: the row opens the folder, the chevron shows its
-   jobs, each with a running dot. */
 .folders details.folder summary {
   display: flex;
   align-items: center;
@@ -226,7 +196,6 @@
       color: var(--text);
     }
 
-    /* The path above the folder gives way before the folder's own name. */
     & span {
       display: flex;
       min-width: 0;
@@ -295,7 +264,7 @@
   }
 }
 
-/* The reason a run out of hours needs, asked in the window. */
+/* .run-reason styles the reason given for forcing a run. */
 .run-reason {
   display: flex;
   flex-direction: column;

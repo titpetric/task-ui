@@ -1,7 +1,4 @@
-/* ------------------------------------------------------------------ output */
-
-/* The whole output of a finished run, as the terminal drew it: every line,
-   in the terminal's colours, scrolling inside the block when it is long. */
+/* pre.output styles a run's output and its recording. */
 pre.output {
   margin: 0;
   max-height: 75vh;
@@ -18,8 +15,7 @@ pre.output {
   tab-size: 8;
 }
 
-/* A report reads as a document: Claude's markdown at a line length for
-   reading, on the page's surface. */
+/* .markdown-doc styles a run's report, written in markdown. */
 .markdown-doc:is(.report-doc, .report-question) {
   max-width: 80ch;
 }

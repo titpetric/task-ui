@@ -1,16 +1,8 @@
-/* --------------------------------------------------------------- activity */
-
-/* When runs ran, the way pulse draws its sparklines: a bar per bucket,
-   the busiest one full height, each split into the runs that ended ok
-   (the accent), failed (red) and the rest (faint), fading upwards. The
-   whole column is the hover target. The duration line is drawn the way
-   oida draws its memory graph. */
+/* .activity styles the strip of runs per day. */
 .activity {
   margin: 0 0 var(--stack-gap);
 }
 
-/* The line holds its key, floated to its end, so the charts under it
-   take the full width however the key wraps. */
 .activity-sum {
   display: flow-root;
   margin: 0 0 0.6rem;
@@ -28,8 +20,6 @@
   gap: 0.8rem;
 }
 
-/* Each chart in a panel of its own: its title and its slowest run over
-   it, the time markers under it. */
 .activity-chart {
   margin: 0;
   min-width: 0;
@@ -42,8 +32,6 @@
   background: var(--ink-1);
 }
 
-/* The week in three-hour slots takes a row of its own under the month
-   and the day: 56 columns need the width. */
 .activity-charts .activity-chart.wide {
   grid-column: 1 / -1;
 }
@@ -66,7 +54,6 @@
   }
 }
 
-/* A time marker in the middle of its column, with a tick over it. */
 .activity-axis {
   position: relative;
   height: 1.2rem;
@@ -143,9 +130,6 @@
   }
 }
 
-/* Under each count chart, its durations as lines, all solid: the average
-   in the text colour, the slowest dimmer, the fastest faint. The columns
-   over it are the hover targets, lined up with the bars above. */
 .activity-line.durations {
   height: 2.6rem;
   margin-top: 4px;
@@ -263,8 +247,6 @@
     opacity: 0.7;
   }
 
-  /* The runs on the line hover as strips laid over it, so they carry the
-     same tooltip as the bars. */
   & .hit {
     position: absolute;
     top: 0;
@@ -291,9 +273,7 @@
   }
 }
 
-/* A tooltip shown at once on hover, above its element, from data-tip:
-   the count first, then when. Near an edge it anchors to that edge, so
-   it stays inside the chart. */
+/* .tip styles the label a bar shows on hover, nudged in at either end. */
 .tip:hover::after {
   content: attr(data-tip);
   position: absolute;

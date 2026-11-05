@@ -1,13 +1,9 @@
-/* ------------------------------------------------------------------- forms */
-
+/* .field styles one field of a form: its label, its control and its hint. */
 .field {
   display: block;
   margin-bottom: var(--field-gap);
 }
 
-/* A label: over a control in a field, and the word that heads a group
-   wherever one stands, the sidebar's Recents, a run window's kind, a
-   workflow step's summary. */
 .label,
 .field > label {
   color: var(--text-faint);
@@ -23,7 +19,6 @@
   margin-bottom: var(--label-gap);
 }
 
-/* The hint after a label is a sentence, not a label. */
 .field > label .faint,
 .field > .label .faint {
   margin-inline-start: var(--hint-gap);
@@ -32,11 +27,7 @@
   text-transform: none;
 }
 
-/* What the API answered to a form that failed: a box over the fields,
-   as wide as the form whatever its shape, a grid's every column or a
-   wrapped flex row of its own; the sign-in page's error looks the same.
-   The field the error names takes the bad colour, at the end of this
-   file, which loads after the borders of controls.css. */
+/* .form-error styles what a form refused, across the width it refused it in. */
 .form-error,
 .login-error {
   grid-column: 1 / -1;
@@ -62,15 +53,12 @@
   flex-wrap: wrap;
 }
 
-/* The help under a control is a sentence of its own, on its own line. */
 .field > small {
   display: block;
   margin-top: var(--hint-gap);
   font-size: var(--fs-xs);
 }
 
-/* The help under a toggle hangs under its text, past the box, so it
-   never wraps into a column beside the label. */
 .field > label.check + small {
   margin: 0 0 0.5rem 1.5rem;
 
@@ -79,26 +67,15 @@
   }
 }
 
-/* A number, and a clock, stand in a box as wide as what they hold, not
-   as the form. Both keep the browser's own box: the page sets its colour
-   scheme, so a native control follows the theme, and the spinner and the
-   clock stay the ones the reader knows. */
 .field > input:is([type="number"], [type="time"]) {
   width: var(--control-w-s);
 }
 
+/* .form bounds a form's width and lays its fields out, in a row when inline. */
 .form {
   max-width: var(--form-w);
 }
 
-/* An inline form, the schedule forms: the fields side by side on one
-   grid, as many to a row as fit, each three rows, the label, the
-   control and the help under it, shared across the row through a
-   subgrid, so the labels sit on one line over the controls whether or
-   not a hint makes one of them wrap, and a help line under one control
-   hangs under them all. The submit button is in the last column on the
-   controls' row. A toggle takes a row of its own, its help running on
-   after it. */
 .form.inline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--control-w-l), 1fr));
@@ -152,8 +129,7 @@
   }
 }
 
-/* A row of boxes or radios under a field's label, the group's word
-   first. */
+/* .checks wraps a row of toggles, each one a box in front of its label. */
 .checks {
   display: flex;
   flex-wrap: wrap;
@@ -176,16 +152,11 @@
   min-width: var(--control-w-xl);
 }
 
-/* A day of the month sits in the row with its presets, so its box is as
-   wide as two digits and a spinner and no wider. */
 .checks > input[type="number"] {
   width: 5rem;
 }
 
-/* The schedule builder's legend is a read-out of the expression above
-   it, not data: the three columns that name a position are as narrow as
-   their words, and the field the expression holds there carries the
-   accent, so the eye lands on what this one says. */
+/* .table.sched-legend narrows the first four columns a schedule names. */
 .table.sched-legend {
   & th:nth-child(-n + 4),
   & td:nth-child(-n + 4) {
@@ -198,14 +169,7 @@
   }
 }
 
-/* The "who gets it" element, .whofield from the template of that name:
-   a role's box carries how many users act with the role; the users are a
-   list, each with its effective role and its state, which the script
-   keeps: gets it by its own box (who-direct), by a checked role
-   (who-role), both in the ok tint; not at all (who-none), faint; or with
-   nothing checked (who-all), as everyone. The compact form, in a table
-   cell, runs the roles and the users on one wrapped line and has no
-   summary. */
+/* .whofield styles the field naming who a setting reaches, by role and by name. */
 .whofield {
   & .count,
   & .role {
@@ -224,8 +188,6 @@
     list-style: none;
   }
 
-  /* A user is a row of the list, its box, name, role and state in
-     columns, so the states line up. */
   & .who-list label.who-user {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -285,8 +247,6 @@
   }
 }
 
-/* A label in a field's table, a project's Per job rows with the
-   compact who-field, names its row in the row's own type. */
 .field .table label {
   color: inherit;
   font: inherit;
@@ -294,6 +254,7 @@
   text-transform: none;
 }
 
+/* .form-foot puts a form's buttons at its end. */
 .form-foot {
   display: flex;
   justify-content: flex-end;
@@ -301,6 +262,7 @@
   margin-top: 0.4rem;
 }
 
+/* .grid-2 splits a form into two columns, the wide variant favouring the first. */
 .grid-2.wide {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
 
@@ -316,6 +278,7 @@
   align-items: start;
 }
 
+/* .panel frames a group of fields inside a form. */
 .panel {
   padding: 0.9rem 1rem;
   border: 1px solid var(--line);
@@ -328,8 +291,7 @@
   }
 }
 
-/* The field an error names, and a field the browser finds wanting once
-   the user has been at it, take the bad colour alike. */
+/* .field.invalid reddens a control the browser or the server rejected. */
 .field.invalid :is(input, textarea, select, .dd-button),
 :is(input, textarea, select)[aria-invalid="true"],
 :is(input, textarea, select):user-invalid {

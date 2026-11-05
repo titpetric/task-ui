@@ -1,6 +1,4 @@
-/* A toggle in a form, in a field or straight in the form: the box
-   before its label, on one line, the label set as text, not as a
-   field's heading. */
+/* label.check styles a toggle in a form: the box before its label, on one line. */
 :is(.field, .form) label.check {
   display: flex;
   align-items: center;
@@ -21,7 +19,6 @@
   }
 }
 
-/* The user form's folders: All folders, or Custom and a box each. */
 [data-folder-pick] > label.check {
   display: inline-flex;
   margin-inline-end: 1.2rem;

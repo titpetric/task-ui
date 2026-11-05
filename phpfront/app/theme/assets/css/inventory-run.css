@@ -1,7 +1,4 @@
-/* The inventory's run: quick commands, the command, the hosts, then a
-   card of output per host. */
-/* The run panel: the quick commands, the command, the hosts, then the
-   buttons, a step apart; the command box as tall as a few lines. */
+/* .inventory-run styles the inventory's run: the command, the hosts, and a card of output per host. */
 .inventory-run form {
   display: grid;
   gap: 0.9rem;
@@ -19,6 +16,7 @@
   font-size: var(--fs-sm);
 }
 
+/* .run-commands styles the command a run sends to every host. */
 .run-commands {
   display: flex;
   flex-wrap: wrap;
@@ -31,14 +29,13 @@
   }
 }
 
-/* The hosts to run on: a chip each, its box filled while picked, and
-   All, None and Invert with the count over them. The checkbox stays in
-   the chip, out of sight, for the form and the keyboard. */
+/* .run-hosts styles the hosts a run reaches. */
 .run-hosts {
   display: grid;
   gap: 0.5rem;
 }
 
+/* .host-tools styles the tools a host answered with. */
 .host-tools {
   display: flex;
   align-items: center;
@@ -50,6 +47,7 @@
   }
 }
 
+/* .host-picks styles the picker that chooses which hosts a run reaches. */
 .host-picks {
   display: flex;
   flex-wrap: wrap;
@@ -116,12 +114,11 @@
   }
 }
 
+/* .inventory-results styles what came back, a card of output per host. */
 .inventory-results:not(:empty) {
   margin-top: 1rem;
 }
 
-/* The output takes the width the host and the result leave, and a
-   wide one scrolls inside it. */
 .run-results td.run-output {
   width: 100%;
   max-width: 0;
@@ -132,13 +129,10 @@
   overflow-wrap: anywhere;
 }
 
-/* Every cell from the top, the host and its result level with the
-   first line of its output. */
 .run-results td {
   vertical-align: top;
 }
 
-/* A host's output scrolls inside its cell. */
 .run-results .output {
   max-height: 24rem;
   margin: 0;

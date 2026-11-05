@@ -1,5 +1,4 @@
-/* The preview window: the picture scaled to fit, with room around it, or
-   a document from the top. */
+/* dialog.preview styles the preview window: a picture scaled to fit, or a document from the top. */
 dialog.preview .preview-body {
   display: flex;
   align-items: center;
@@ -24,9 +23,6 @@ dialog.preview .preview-body:has(.preview-frame:not([hidden])) {
   align-items: flex-start;
 }
 
-/* A page a run wrote, in a frame of its own. The page is a document the
-   instance did not write: it comes down sandboxed, so it renders on its
-   own white background and reaches nothing of the window around it. */
 dialog.preview .preview-frame {
   width: 100%;
   height: calc(100vh - 10rem);
@@ -39,14 +35,11 @@ dialog.preview #preview-version {
   max-width: 22rem;
 }
 
-/* The Run, Run force or Attach of a file that runs, after Download, which
-   keeps the focus the window opens with. */
 dialog.preview .preview-actions {
   display: contents;
 }
 
-/* The pipeline window: centred, one size, the run's pipeline scrolling
-   inside it on the page's background. */
+/* dialog.pipeline-window styles the window a pipeline file opens in. */
 dialog.pipeline-window {
   width: min(64rem, calc(100vw - 2rem));
   height: min(46rem, calc(100vh - 4rem));
@@ -66,8 +59,7 @@ dialog.pipeline-window .page-head h2 {
   display: none;
 }
 
-/* The summary window: centred like the others, one size from the wait to
-   the answer, the answer scrolling inside it. */
+/* dialog.run-summary styles the window a run's report opens in. */
 dialog.run-summary {
   width: min(56rem, calc(100vw - 2rem));
   height: min(46rem, calc(100vh - 4rem));
@@ -84,7 +76,7 @@ dialog.run-summary .preview-doc {
   overflow: visible;
 }
 
-/* A document in the preview window: markdown as a page, text as it is. */
+/* .preview-doc styles a document in a window: plain text, or rendered markdown. */
 .preview-doc {
   width: 100%;
   max-width: 52rem;

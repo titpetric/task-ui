@@ -1,0 +1,56 @@
+/* .spacebar styles a disk's usage as one bar, its legend and its swatches. */
+.spacebar {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 40rem;
+}
+
+.spacebar-track {
+  display: flex;
+  height: 0.6rem;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--ink-3);
+
+  & i {
+    display: block;
+    height: 100%;
+  }
+}
+
+.spacebar-track i.files,
+.swatch.files {
+  background: var(--signal);
+}
+
+.spacebar-track i.history,
+.swatch.history {
+  background: var(--line-2);
+}
+
+.spacebar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+
+  & span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  & b {
+    color: var(--text);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 1px;
+}

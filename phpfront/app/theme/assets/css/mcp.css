@@ -1,11 +1,10 @@
-/* The MCP block of the users page and a user's MCP access: values to
-   copy, each from the copyable template; a step's command sits on a
-   line of its own. */
+/* .mcp-steps styles the MCP block of a user's page: the values to copy and the steps that use them. */
 .mcp-steps .copyable {
   display: flex;
   margin: 0.3rem 0;
 }
 
+/* .copy-list pairs each value an MCP client needs with the button that copies it. */
 .copy-list {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -39,6 +38,7 @@
   }
 }
 
+/* .mcp-connect and .mcp-access style the two steps: connect, then grant. */
 .mcp-connect,
 .mcp-access {
   margin-top: 1.6rem;
@@ -51,7 +51,6 @@
     flex-wrap: wrap;
   }
 
-  /* The tokens, one row each, over the New token that adds one. */
   & .table-wrap {
     margin-bottom: 0.75rem;
   }

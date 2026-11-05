@@ -1,7 +1,4 @@
-/* ------------------------------------------------------------------- login */
-
-/* The sign in screen, as oida draws it: one narrow card, labels above
-   inputs, one amber action, nothing else on the page. */
+/* section.login styles the login page. */
 section.login {
   position: relative;
   z-index: 1;

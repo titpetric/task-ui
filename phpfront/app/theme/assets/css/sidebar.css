@@ -1,6 +1,4 @@
-/* ---------------------------------------------------------------- sidebar */
-
-/* The menu above the folders: the views that cut across folders. */
+/* .menu styles the sidebar: its workspaces, its recents and the menu over them. */
 .menu {
   margin-bottom: 0.7rem;
   padding-bottom: 0.6rem;
@@ -46,9 +44,6 @@
   }
 }
 
-/* The workflows under Workflows, rows like a project's jobs, one step
-   in: a #! where the entry names start, in an icon's column, and the
-   name a column further, as a job sits under its project. */
 .menu .flows {
   --menu-name: calc(1.1rem + 1.05rem + 0.5rem);
   padding: 0.1rem 0 0.2rem;
@@ -131,12 +126,12 @@
   }
 }
 
+/* .side-label styles the heading over a group of the sidebar. */
 .side-label {
   margin: 1rem 1.1rem 0.3rem;
 }
 
-/* Recents, as a chat app lists conversations: the state, the job, the
-   folder, and who started it as an initials badge. */
+/* .recents a.recent styles one recent run in the rail: what ran and how it went. */
 .recents a.recent {
   display: flex;
   align-items: center;
@@ -152,8 +147,6 @@
   }
 }
 
-/* The last slot when some recents don't fit: a link to Runs, and how
-   many it leaves out, muted. */
 .recents a.recent.more {
   color: var(--text-faint);
 
@@ -161,7 +154,6 @@
     color: var(--text-dim);
   }
 
-  /* The list icon stands where an entry's dot does. */
   & > .ic {
     width: 0.8rem;
     height: 0.8rem;
@@ -187,7 +179,6 @@
     color: var(--text-faint);
     font-size: var(--fs-caption);
 
-    /* A workflow's run says so under its name, with the workflow icon. */
     & .ic {
       width: 0.7rem;
       height: 0.7rem;
@@ -200,16 +191,4 @@
   width: 0.8rem;
   height: 0.8rem;
   color: var(--signal);
-}
-
-.avatar.sm {
-  --avatar-size: round(1.45rem, 1px);
-  font-size: 0.55rem;
-  letter-spacing: var(--ls-xs);
-  text-indent: var(--ls-xs);
-}
-
-/* Who ran it is a line of text, so the avatar sits on its x-height. */
-.who-ran {
-  white-space: nowrap;
 }

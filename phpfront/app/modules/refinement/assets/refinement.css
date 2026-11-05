@@ -1,10 +1,4 @@
-/* The refinement module's own styles, loaded from its public tree.
- *
- * Every colour, radius and space is a task-ui custom property, so the module
- * follows the instance's theme in both light and dark without knowing which
- * one is on. A literal colour here would read wrong under the other theme.
- */
-
+/* .refinement styles the refinement module, in task-ui's custom properties throughout. */
 .refinement {
 	display: flex;
 	flex-direction: column;
@@ -19,7 +13,6 @@
 	margin: 0.25rem 0 0;
 }
 
-/* The thread: a comment, then what the run it started produced. */
 .refinement-thread {
 	display: flex;
 	flex-direction: column;
@@ -45,10 +38,6 @@
 	gap: 0.5rem;
 }
 
-/* The artifact index the run writes, rendered from the thread's README. An
- * image artifact is embedded at the width it has, up to the column, so a
- * schema diagram is read on the page.
- */
 .refinement-report img,
 .refinement-report svg {
 	display: block;
@@ -63,9 +52,6 @@
 	overflow-x: auto;
 }
 
-/* Links to the thread's folder and to the context its runs keep, where the
- * artifacts view takes over.
- */
 .refinement-files {
 	display: flex;
 	flex-wrap: wrap;
@@ -73,11 +59,6 @@
 	margin: 0 0 1rem;
 }
 
-/* The delete button of a request sits at the end of its head, away from the
- * badges, and shows itself when the request is under the pointer or the
- * button has the focus: a row of trash cans reads as a toolbar and this is
- * one button that belongs to one request.
- */
 .refinement-delete {
 	margin-left: auto;
 }
@@ -92,10 +73,6 @@
 	opacity: 1;
 }
 
-/* What is being refined, above everything: the images the last run
- * embedded, at the width the column gives them. A refinement is reviewed by
- * looking at it, so this is the part of the page that gets the room.
- */
 .refinement-output {
 	margin: 0 0 1rem;
 }
@@ -114,9 +91,6 @@
 	margin: 0;
 }
 
-/* How the run got there. Kept, and closed: the picture is the work and the
- * prose is the working.
- */
 .refinement-thinking {
 	margin: 0 0 1rem;
 }
@@ -131,17 +105,10 @@
 	margin-bottom: 0.5rem;
 }
 
-/* The next subject, with this thread's rules. Set apart from Apply all: one
- * runs this thread again and the other opens another.
- */
 .refinement-fork {
 	margin: 1rem 0;
 }
 
-/* A request, drawn as the markdown it was written as. Its headings came
- * down to h6 before rendering, so what is left is a bold line: a request is
- * a paragraph inside a thread and the thread's own headings have to win.
- */
 .refinement-body > :first-child {
 	margin-top: 0;
 }
@@ -166,10 +133,6 @@
 	overflow-x: auto;
 }
 
-/* The requests an Apply all folded. The disclosure is closed, because the
- * point of folding is that the thread reads as one request; what is inside
- * is the record of how it got there.
- */
 .refinement-folded > details > summary {
 	cursor: pointer;
 	color: var(--fg-faint, inherit);
@@ -182,9 +145,6 @@
 	border-left: 1px solid var(--line);
 }
 
-/* Apply all, above the box that adds one more request: a different thing to
- * press, so it does not read as the send button.
- */
 .refinement-apply {
 	margin: 1rem 0;
 	padding: 0.75rem 1rem;

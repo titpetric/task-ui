@@ -1,6 +1,4 @@
-/* -------------------------------------------------------------- workflows */
-
-/* A chain of steps, folder / job, wrapping between steps. */
+/* .chain styles the workflow editor and the steps it chains. */
 .chain {
   display: inline-flex;
   flex-wrap: wrap;
@@ -12,13 +10,10 @@
   margin-right: 0.3rem;
 }
 
-/* The arrow between two steps of a chain. */
 .then::before {
   content: "\00a0\2192\00a0";
 }
 
-/* The workflow page's pipeline: the steps top to bottom on a rail, the
-   dot of each on it in the state of the latest run. */
 .pipeline {
   margin: 0;
   padding: 0.2rem 0 0.2rem 0.2rem;
@@ -66,8 +61,6 @@
     min-width: 0;
   }
 
-  /* The step's terminal, its last screen, under its name: a tile like
-     the dashboard's, opening the run. */
   & .what .frame {
     max-width: 60rem;
     margin-top: 0.4rem;
@@ -79,7 +72,6 @@
     }
   }
 
-  /* A prompt step's prompt, under its name. */
   & .what .step-prompt {
     max-width: 60rem;
     margin: 0.2rem 0 0;
@@ -89,7 +81,6 @@
     font-size: var(--fs-data);
   }
 
-  /* The step's name, with Expand on its row at the terminal's right edge. */
   & .what .step-head {
     display: flex;
     align-items: center;
@@ -107,13 +98,11 @@
     }
   }
 
-  /* The whole output scrolls inside its box past a screenful or two. */
   & .what .frame.expanded {
     max-height: 70vh;
     overflow-y: auto;
   }
 
-  /* The chain of a workflow a step ran, under that step. */
   &.sub {
     margin-top: 0.5rem;
     padding: 0;
@@ -152,13 +141,11 @@
     color: var(--signal);
   }
 
-  /* A disabled step of the workflow, which its runs skip. */
   & .node.disabled .what {
     opacity: 0.55;
   }
 }
 
-/* A workflow's description, under its name in the list. */
 .wf-desc {
   display: block;
   min-width: 12rem;
@@ -168,8 +155,6 @@
   font-size: var(--fs-xs);
 }
 
-/* The workflow form: the name, the description and the sidebar toggle,
-   then the steps on a rail and Add step at its foot. */
 .workflow-form {
   max-width: 56rem;
 
@@ -205,9 +190,6 @@
   }
 }
 
-/* The rail: a numbered node a step down the left, joined by a line, and
-   the step's card beside its node. A kind has its colour, --kind, on its
-   node, its label and the edge of its card. */
 .wf-rail,
 .wf-add {
   --node: 1.75rem;
@@ -253,7 +235,6 @@
     --kind: var(--series-5);
   }
 
-  /* The line from this node down to the next, or to Add step. */
   &::before {
     content: "";
     position: absolute;
@@ -296,8 +277,6 @@
   }
 }
 
-/* The head: the grip, the toggle with the kind and the step in one
-   line, and the [...] menu. */
 .wf-card-head {
   display: flex;
   align-items: center;
@@ -401,8 +380,6 @@
   flex: none;
 }
 
-/* The fields, under the head while the card is open, in line with the
-   kind's label. */
 .wf-card-body {
   display: none;
   padding: 0.9rem 0.9rem 0.3rem 1.95rem;
@@ -429,16 +406,12 @@
     grid-column: 1 / -1;
   }
 
-  /* Workspace, folder and job side by side, their fields in line
-     under labels of any length. */
   &.wf-cascade {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: end;
   }
 }
 
-/* A summary's question and instruction, as Claude gets them, with the
-   help under them as under a field's control. */
 .wf-builtin {
   margin-bottom: var(--field-gap);
 
@@ -473,7 +446,6 @@
   }
 }
 
-/* What a move to another workspace did not find there, under the card. */
 .wf-hint {
   margin: 0 0 0.8rem;
   color: var(--signal);
@@ -486,8 +458,6 @@
   font-size: var(--fs-sm);
 }
 
-/* A step that is off stays on the rail, dimmed, its node hollow: a run
-   skips it. */
 .wf-step.off {
   & .wf-node {
     border-style: dashed;
@@ -509,7 +479,6 @@
   border-left-color: var(--bad);
 }
 
-/* The card under the pointer while it moves. */
 .wf-rail.sorting {
   cursor: grabbing;
   user-select: none;
@@ -526,7 +495,6 @@
   }
 }
 
-/* Add step, the node at the foot of the rail, and the kinds it offers. */
 .wf-add {
   align-items: start;
 }
@@ -623,7 +591,6 @@
   }
 }
 
-/* What a move or a change did, for a screen reader alone. */
 .wf-live {
   position: absolute;
   overflow: hidden;
@@ -672,14 +639,10 @@
   }
 }
 
-/* The thread of the prompt on a workflow run's page, under its steps. */
 [data-pipeline-view] .promptbox {
   margin-top: 1.4rem;
 }
 
-/* A list of workflow runs: the chevron that unfolds the answer, then
-   the run's state on its dot by the link to the run; the answer opens
-   in the row under it, as wide as the table. */
 .wf-runs {
   & td.key {
     & a {
@@ -721,8 +684,6 @@
   }
 }
 
-/* A workflow run's page: the thread, its input and the answer, above
-   the steps. */
 .wf-thread {
   margin: 0.25rem 0 1.25rem;
 }
@@ -731,7 +692,6 @@
   margin-bottom: 0.75rem;
 }
 
-/* On a phone the answer under a run's card takes the card's width. */
 @media (max-width: 860px) {
   .wf-runs tr.wf-answer-row > td {
     display: block;

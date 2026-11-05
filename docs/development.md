@@ -31,7 +31,7 @@ A template draws one with the `menu` template and the functions of the same name
 	(and ($.Can "key/delete") (danger "trash" "Remove" "data-delete" (print "/api/keys/" .Name) "data-confirm" "Remove it?" "data-next" "reload"))) }}
 ```
 
-`item` and `danger` take an icon of the sprite, a label and pairs of an attribute and its value: `href`, `download`, `note`, `disabled` (its value the note) and any `data-*`, `aria-*` or `title`, the values escaped; an unknown attribute fails the render. `detail` takes a label, a value and `title` or `mono`. `sep` ends a group. `(and $cond (item ...))` leaves an item out while the condition is empty, and a menu with nothing in it draws no button. `menuHTML` in `task-ui.js` draws the same for the rows a script adds. The CSS is in `css/menus.css`.
+`item` and `danger` take an icon of the sprite, a label and pairs of an attribute and its value: `href`, `download`, `note`, `disabled` (its value the note) and any `data-*`, `aria-*` or `title`, the values escaped; an unknown attribute fails the render. `detail` takes a label, a value and `title` or `mono`. `sep` ends a group. `(and $cond (item ...))` leaves an item out while the condition is empty, and a menu with nothing in it draws no button. `menuHTML` in `task-ui.js` draws the same for the rows a script adds. The CSS is in `css/menu.css`.
 
 A keys table has the same columns on every page, the Keys page, the Instance page, a workspace's page, Your SSH keys and a user's edit page: Name, as wide as the names, with the encryption key marked, Algorithm, Size in bits, Public key filling the rest, cut with an ellipsis, with a copy button for the whole line, and the **⋯** menu with the fingerprint, the dates, the purpose and the links in its details.
 

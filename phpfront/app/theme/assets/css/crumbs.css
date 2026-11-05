@@ -1,0 +1,16 @@
+/* .crumbs styles the trail of links above a page title. */
+.crumbs {
+  margin-bottom: 0.6rem;
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+
+  & a {
+    color: var(--text-dim);
+  }
+
+  & span::before {
+    content: "/";
+    margin: 0 0.45rem;
+    color: var(--line-2);
+  }
+}

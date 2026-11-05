@@ -1,5 +1,4 @@
-/* A key in the keys page's policy table: its comment, linked to its
-   policies; a key that comes with the role is quieter. */
+/* .key-chip styles a key in the policy table of the keys page. */
 .key-chip {
   display: inline-block;
   margin: 0.1rem 0.35rem 0.1rem 0;
@@ -21,9 +20,7 @@
   }
 }
 
-/* The keys page's table of purposes: a row for the instance, then one
-   per workspace, with its secrets, its one encryption key and its SSH
-   keys. A missing encryption key marks its row. */
+/* .key-purposes styles what a key is allowed to be used for. */
 .key-purposes {
   & td {
     vertical-align: top;
@@ -68,8 +65,7 @@
   }
 }
 
-/* The secrets page: a workspace's secrets, those for every project in
-   it first, then each project's under its name. */
+/* .table.secrets styles the secrets of a scope, a name and its reads a row. */
 .table.secrets {
   table-layout: fixed;
 
@@ -99,16 +95,12 @@
   }
 }
 
+/* .secret-filter styles the box that narrows the secrets to a scope. */
 .secret-filter {
   margin-bottom: 0.75rem;
 }
 
-/* A keys table, wherever keys list, from the keyhead and keyrow
-   templates: Name as wide as the names, with the encryption key's badge
-   and a comment under it that wraps, Algorithm, Size, Public key taking
-   the rest of the width, as much of the line as fits with its copy
-   button beside it, and the row's actions behind a menu that opens over
-   the table. */
+/* .key-table sets the column widths the keys table reserves. */
 .key-table {
   & col.c-algo {
     width: 6rem;
@@ -136,8 +128,6 @@
       vertical-align: middle;
     }
 
-    /* The comment wraps at the width the names set: it adds nothing
-       to the column's width. */
     & .faint {
       width: 0;
       min-width: 100%;
@@ -163,9 +153,6 @@
   }
 }
 
-/* In a box narrower than 44rem, the table leaves out Algorithm and
-   Size, so the public key keeps a column rather than fold a letter a
-   line; a phone's card shows them, labelled. */
 @container (max-width: 44rem) {
   .key-table {
     & .hide-narrow,

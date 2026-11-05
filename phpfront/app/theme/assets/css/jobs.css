@@ -1,15 +1,14 @@
+/* .btn .ic sizes the icon inside a job's button. */
 .btn .ic {
   width: 0.85em;
   height: 0.85em;
 }
 
-/* The sidebar's jobs run in place: the name opens the job, the play
-   button runs it, an eye attaches to the run in progress. */
+/* .folders .jobs .job styles a job in the sidebar: the name opens it, the play button runs it, the eye attaches to it. */
 .folders .jobs .job {
   display: flex;
   align-items: center;
   gap: var(--tree-gap);
-  /* One step in from the folder: the #! under the folder's name. */
   padding: 0.15rem 0.6rem 0.15rem var(--tree-2);
   color: var(--text-dim);
   font-size: var(--fs-sm);
@@ -77,8 +76,6 @@
   }
 }
 
-/* A project's own jobs are rows like its folders: the #! in the folder
-   icon's column, the name where the folder names start. */
 .folders .jobs.top .job {
   padding-inline-start: var(--tree-1);
 }

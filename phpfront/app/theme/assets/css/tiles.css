@@ -1,7 +1,4 @@
-/* ------------------------------------------------------------------ tiles */
-
-/* The dashboard: every live terminal as its last frame, a grid of screens
-   the way a control room shows them. */
+/* .tiles styles the figures across the top of a dashboard. */
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
@@ -42,8 +39,7 @@
   }
 }
 
-/* The terminal sits inset like the text of an alert or a form, not
-   against the tile's border. */
+/* .frame styles the border a tile's chart or terminal is drawn inside. */
 .frame {
   display: block;
   width: 100%;
@@ -62,9 +58,7 @@
   max-width: 78rem;
 }
 
-/* The title a run's terminal set, beside its name or its state on the
-   tiles, the runs list and the run's page: one line, cut short, the
-   whole of it in the tooltip. */
+/* .term-title styles the caption over a tile's terminal. */
 .term-title {
   display: inline-block;
   max-width: 24ch;

@@ -1,7 +1,4 @@
-/* ------------------------------------------------------------------ header */
-
-/* The first stop of the page: off screen until the keyboard reaches it,
-   then a button over the header that jumps past the sidebar to main. */
+/* .skip-link styles the link that jumps a reader past the bar to the page. */
 .skip-link {
   position: absolute;
   left: 0.5rem;
@@ -22,6 +19,7 @@ main:focus {
   outline: none;
 }
 
+/* header.top styles the top bar: the logo, the prompt and the runs-as picker. */
 header.top {
   position: relative;
   z-index: 20;
@@ -49,17 +47,12 @@ header.top h1 a:hover {
   text-decoration: none;
 }
 
-/* The logo after the name is the favicon as a prompt: a terminal tile, the
-   amber chevron, and a cursor that blinks the way a shell's does. The tile
-   stays dark in the light theme, as a terminal does. */
 header.top h1 a {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-/* The letter spacing trails the last letter too; take it back so the gap
-   to the logo is the gap. */
 header.top h1 a span {
   margin-inline-end: calc(-1 * var(--ls-brand));
 }
@@ -69,8 +62,6 @@ header.top h1 .logo {
   height: 1.3rem;
 }
 
-/* For prompt/edit the logo is a button of its own after the name, which
-   opens and closes the prompt's panel; the name still links home. */
 header.top h1:has(.logo-toggle) {
   display: inline-flex;
   align-items: center;
@@ -119,11 +110,6 @@ header.top .spacer {
   flex: 1;
 }
 
-/* The header's prompt: a field in the header's empty space after the
-   logo, the header's own colour until it has focus or text, then typed
-   at the logo's prompt, amber and monospace, while the logo's cursor
-   holds still. Enter asks Claude where the page is; the answer drops
-   under the header in a panel. */
 header.top .header-prompt {
   flex: 1;
   min-width: 0;
@@ -158,9 +144,6 @@ header.top:has(.header-prompt:focus) h1 .logo .cursor {
   animation: none;
 }
 
-/* Who an admin's header prompt runs as: a small dropdown beside the
-   field, out of sight with it until the field has focus or text, and
-   while the pick itself is in use. */
 header.top .header-runas {
   opacity: 0;
   pointer-events: none;
@@ -184,9 +167,6 @@ header.top:has(.header-prompt:focus, .header-prompt.typed, .header-runas:focus-w
   pointer-events: auto;
 }
 
-/* The answer drops under the header as a panel in the page's own
-   colours, as a dialog is: the question at the logo's prompt in amber,
-   the place and the state muted. */
 header.top .header-answer {
   position: absolute;
   top: 100%;
@@ -246,12 +226,12 @@ header.top .header-answer {
   }
 }
 
+/* header.login-top centres the bar on the page that has nobody signed in. */
 header.login-top {
   justify-content: center;
 }
 
-/* The signed in user: a circle with their initials, and a disclosure menu
-   under it. A details element, so it needs no script and closes on Escape. */
+/* details.user styles the avatar at the end of the bar and the menu it opens. */
 details.user {
   position: relative;
 }
@@ -264,49 +244,6 @@ details.user summary {
   &::marker,
   &::-webkit-details-marker {
     display: none;
-  }
-}
-
-/* The initials sit in the middle of the disc: a disc a whole number of
-   pixels across, and the capitals trimmed to their cap height with their
-   baseline on a whole pixel, so the disc and the letters land on the
-   same pixel grid wherever the row puts them. Next to text the disc
-   sits on the middle of its x-height, as vertical-align: middle has it;
-   the indent matches the spacing the last letter trails. */
-.avatar {
-  --avatar-size: round(2rem, 1px);
-  display: inline-block;
-  flex: 0 0 auto;
-  width: var(--avatar-size);
-  height: var(--avatar-size);
-  line-height: calc(var(--avatar-size) - 2px);
-  text-align: center;
-  vertical-align: middle;
-  border-radius: var(--radius-round);
-  border: 1px solid var(--line-2);
-  background: var(--ink-2);
-  color: var(--text);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  letter-spacing: var(--ls-sm);
-  text-indent: var(--ls-sm);
-
-  @supports (text-box: trim-both cap alphabetic) {
-    line-height: 1;
-    text-box: trim-both cap alphabetic;
-    padding-top: calc(round((var(--avatar-size) + 1cap) / 2, 1px) - 1cap - 1px);
-  }
-
-  &.role-admin {
-    border-color: var(--role-admin);
-  }
-
-  &.role-runner {
-    border-color: var(--role-runner);
-  }
-
-  &.role-viewer {
-    border-color: var(--role-viewer);
   }
 }
 

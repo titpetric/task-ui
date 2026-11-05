@@ -1,10 +1,9 @@
-/* Settings, Data retention: a table with a row per area that fits the
-   page without a scroll, the Keep and Size limit selects in their
-   cells, the What goes column taking what the others leave. */
+/* .form.retention styles Settings, Data retention: a row per area, fitting the page without a scroll. */
 .form.retention {
   max-width: none;
 }
 
+/* .table.retention styles how long each area is kept, an area a row. */
 .table.retention {
   table-layout: fixed;
 

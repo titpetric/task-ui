@@ -1,0 +1,51 @@
+/* .page-head styles a page's title, its blurb and the actions across from them. */
+.page-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem 1.5rem;
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+
+  & h2 {
+    font-size: 1.45rem;
+    letter-spacing: -0.015em;
+  }
+
+  & p {
+    margin: 0.35rem 0 0;
+    color: var(--text-dim);
+    max-width: 70ch;
+    font-size: 0.925rem;
+  }
+
+  & .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-head {
+    grid-template-columns: minmax(0, 1fr);
+
+    & > div:first-child {
+      padding-inline-end: 2.5rem;
+    }
+
+    & .actions {
+      justify-content: flex-start;
+    }
+
+    & .actions > .more-menu {
+      position: absolute;
+      top: 0;
+      inset-inline-end: 0;
+    }
+  }
+}

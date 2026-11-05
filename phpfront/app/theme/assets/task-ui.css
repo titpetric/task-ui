@@ -1,39 +1,46 @@
-/* task-ui: runbook console.
-   The visual language follows oida: hairlines instead of boxes, one amber
-   accent for state and action, one corner radius. The type is a dashboard
-   pair, both vendored so the page makes no external requests: Inter for
-   the words, JetBrains Mono for the data: names, numbers, code and the
-   terminal. Layout follows bootstrap habits: a header, a sidebar column,
-   condensed tables and plain action buttons. */
-
+/* @import pulls the sheets below in the order they cascade. */
 @import url("css/tokens.css");
 @import url("css/base.css");
+@import url("css/avatar.css");
 @import url("css/header.css");
 @import url("css/icons.css");
 @import url("css/layout.css");
-@import url("css/tables.css");
+@import url("css/recents.css");
+@import url("css/crumbs.css");
+@import url("css/page-head.css");
+@import url("css/fold.css");
+@import url("css/table.css");
 @import url("css/controls.css");
-@import url("css/menus.css");
+@import url("css/run-buttons.css");
+@import url("css/copyable.css");
+@import url("css/menu.css");
 @import url("css/badges.css");
+@import url("css/state.css");
 @import url("css/alerts.css");
 @import url("css/forms.css");
 @import url("css/login.css");
 @import url("css/footer.css");
-@import url("css/dialogs.css");
+@import url("css/dialog.css");
 @import url("css/sidebar.css");
+@import url("css/who.css");
 @import url("css/tiles.css");
 @import url("css/filters.css");
+@import url("css/pager.css");
 @import url("css/sidebar-tree.css");
 @import url("css/jobs.css");
 @import url("css/control.css");
 @import url("css/actions.css");
+@import url("css/prompt.css");
 @import url("css/output.css");
 @import url("css/workflows.css");
 @import url("css/choices.css");
 @import url("css/keys.css");
-@import url("css/files.css");
-@import url("css/artifacts.css");
+@import url("css/file-table.css");
+@import url("css/space.css");
+@import url("css/space-mini.css");
+@import url("css/block-head.css");
 @import url("css/inventory.css");
+@import url("css/meter.css");
 @import url("css/inventory-pools.css");
 @import url("css/inventory-host.css");
 @import url("css/charts.css");
@@ -41,11 +48,16 @@
 @import url("css/inventory-run.css");
 @import url("css/ansi.css");
 @import url("css/windows.css");
-@import url("css/notes.css");
+@import url("css/note.css");
 @import url("css/activity.css");
 @import url("css/tooling.css");
 @import url("css/mcp.css");
-@import url("css/users.css");
+@import url("css/user.css");
+@import url("css/matrix.css");
+@import url("css/tri.css");
+@import url("css/run-as-field.css");
+@import url("css/profile.css");
+@import url("css/setup-trail.css");
 @import url("css/setup.css");
 @import url("css/retention.css");
 @import url("css/sidebar-settings.css");

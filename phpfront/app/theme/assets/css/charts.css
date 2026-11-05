@@ -1,8 +1,4 @@
-/* A month of measures the way rrdtool draws it: thin lines over a day
-   axis with a gridline a week, a faint area under a lone line, a stack
-   of areas for the hosts of the cluster, and the least, mean and most
-   of each series under the drawing. The series take the series colours
-   in order. */
+/* .charts styles a month of measures the way rrdtool draws it. */
 .charts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -76,8 +72,6 @@
   }
 }
 
-/* The legend sits in the hosts table when a host's row is open, so it
-   undoes what that table sets on its cells. */
 .chart-legend {
   width: 100%;
   margin-top: 0.3rem;

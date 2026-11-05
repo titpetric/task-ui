@@ -1,5 +1,4 @@
-/* ---------------------------------------------------------------- filters */
-
+/* .filters styles the filter row over a table. */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -32,17 +31,7 @@
   width: 5.5rem;
 }
 
-/* Previous on the left, Next on the right, under a table of runs. */
-.pager {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 0.8rem;
-
-  & [rel="next"] {
-    margin-inline-start: auto;
-  }
-}
-
+/* .table td.actions form keeps a row's buttons on the row's own line. */
 .table td.actions form {
   display: inline;
 }

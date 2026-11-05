@@ -1,0 +1,12 @@
+/* .spacemini styles a disk's usage inline, beside the figure it belongs to. */
+.spacemini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+
+  & .spacebar-track {
+    width: 5rem;
+    height: 0.45rem;
+  }
+}

@@ -1,6 +1,4 @@
-/* A host's expanded row: its line opens it with a click, the chevron
-   turned down while open. Under the line, the host's facts, its
-   containers and filesystems, and its charts, on the page's ground. */
+/* .table.hosts styles a host's expanded row: its facts, its containers and its filesystems. */
 .table.hosts {
   & tr.host-row {
     cursor: pointer;
@@ -34,9 +32,7 @@
   }
 }
 
-/* The table of the hosts may scroll sideways on a narrow screen; the
-   expanded row stays as wide as what shows of it, --detail-w, and its
-   own tables scroll instead. */
+/* .host-detail styles the row a host opens: its containers and its filesystems. */
 .host-detail {
   position: sticky;
   left: 0.9rem;
@@ -98,6 +94,7 @@
   }
 }
 
+/* .host-facts styles what a host reports about itself. */
 .host-facts {
   display: flex;
   flex-wrap: wrap;
@@ -110,8 +107,6 @@
   }
 }
 
-/* A chart's legend in an open row keeps its own line height over the
-   one of the hosts table's cells. */
 .table.hosts .chart-legend :is(th, td) {
   font: 400 var(--fs-xs)/1.5 var(--font);
   vertical-align: middle;

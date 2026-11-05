@@ -1,7 +1,4 @@
-/* ----------------------------------------------------------- actions bar */
-
-/* Under the head of a folder page and of a directory browsed inside a
-   folder: the git line of the checkout. */
+/* .actionsbar styles the bar of actions over a page. */
 .actionsbar {
   display: flex;
   flex-wrap: wrap;
@@ -12,9 +9,7 @@
   font-size: var(--fs-data);
 }
 
-/* ⎇ main ↑1 ↓3 ● 2 files changed or untracked · the checkout: the
-   branch bright, what to push or pull and what changed in the accent,
-   the checkout faint. */
+/* .gitline styles a checkout's branch, its commit and how far it has drifted. */
 .gitline {
   display: flex;
   flex-wrap: wrap;
@@ -39,8 +34,6 @@
     color: var(--signal);
   }
 
-  /* The count of changed files opens the table under the line: the
-     line's own type, with a chevron that turns down while it is open. */
   & .dirty {
     display: inline-flex;
     align-items: center;
@@ -68,8 +61,7 @@
   }
 }
 
-/* The changed files of the checkout, under the git line: the status git
-   prints in short, and the file's path. */
+/* .gitstatus styles the count of files a checkout has changed. */
 .gitstatus {
   flex-basis: 100%;
   min-width: 0;
@@ -83,44 +75,7 @@
   }
 }
 
-/* ------------------------------------------------------------ prompt box */
-
-/* The prompt box under the bar: a section title that folds the form
-   away, open on a workspace's page. */
-.promptbox {
-  margin-bottom: 1.6rem;
-
-  & > summary {
-    list-style: none;
-    cursor: pointer;
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-
-    &:hover .section-title {
-      color: var(--signal);
-    }
-  }
-
-  & .section-title {
-    align-items: center;
-
-    & small {
-      color: var(--text-faint);
-      font-weight: 400;
-      letter-spacing: var(--ls-xs);
-      text-transform: none;
-    }
-  }
-
-}
-
-/* ------------------------------------------------------------- args line */
-
-/* The arguments of a job that takes them, under its row of the Jobs
-   table or the page's head: the command they follow, the field, and what
-   runs, each word one argument. */
+/* .argsline styles the arguments a job takes before it starts. */
 .argsline {
   display: grid;
   flex-basis: 100%;
