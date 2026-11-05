@@ -62,11 +62,26 @@ A keys table has the same columns on every page, the Keys page, the Instance pag
 ## Prose
 
 `task lint:docs`, the atkins job `lint:docs`, reports what vale finds:
-every markdown file whole, and the comments out of the Go, PHP,
-JavaScript and CSS. The style is `llm-slop`, thirty rules vendored under
-`.vale/styles`, so it needs no network. `.vale.ini` declares the globs
-and switches the style off for the two vendored trees, the testdata
-fixtures and the four generated documents.
+every markdown file and every template whole, and the comments out of
+the Go, PHP, JavaScript and CSS. The style is `llm-slop`, thirty rules
+vendored under `.vale/styles`, so it needs no network. `.vale.ini`
+declares the globs and switches the style off for the two vendored
+trees, the compiled `templates_c/`, the testdata fixtures and the four
+generated documents.
+
+**A finding in a template is deleted, never rewritten.** The hint under
+a field, the paragraph under a heading, the `placeholder` in an input:
+where vale flags one, the text goes, and the element with it when the
+text was all it held. None of it was written for a reader — it is filler
+an agent left behind, and rewriting it only launders the same sentence.
+A control that needs a name keeps one: cut the flagged words and leave
+the shortest label that still says what the control does, so `title="Show
+the answer"` becomes `title="Show"` and the button stays reachable.
+
+A glyph is not language. `…`, `→` and `•` are flagged by
+`llm-slop.Punctuation`, which asks for the ASCII on a keyboard: a
+separator or a masked value takes `->`, `...` or `*` and stays where it
+is. Deleting one is deleting markup.
 
 It is run by name and never from `default` or `lint`. The tree is not at
 zero, so a job that fails on every run gates nothing; the count comes
