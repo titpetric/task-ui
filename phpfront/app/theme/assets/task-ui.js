@@ -247,6 +247,36 @@
     return { term: term, fit: fit };
   }
 
+  // ------------------------------------------------------------- viewport
+
+  // --app-vh is the height a full-screen dialog may use, which on a phone is
+  // the screen less whatever the on-screen keyboard covers. CSS cannot read
+  // that: 100dvh follows a retracting address bar and stops there, while
+  // visualViewport.height is the space actually left.
+  //
+  // The terminal is sized off it, so every change re-fits xterm and tells the
+  // process the new cols and rows through the session's own resize handler.
+  var viewport = window.visualViewport;
+
+  function measure() {
+    if (!viewport) return;
+    document.documentElement.style.setProperty("--app-vh", viewport.height + "px");
+    if (session && session.onResize) session.onResize();
+  }
+
+  function watchViewport(on) {
+    if (!viewport) return;
+    if (on) {
+      viewport.addEventListener("resize", measure);
+      viewport.addEventListener("scroll", measure);
+      measure();
+      return;
+    }
+    viewport.removeEventListener("resize", measure);
+    viewport.removeEventListener("scroll", measure);
+    document.documentElement.style.removeProperty("--app-vh");
+  }
+
   // --------------------------------------------------------------- dialog
 
   function setState(state, text) {
@@ -320,6 +350,7 @@
     if (session.ws && session.ws.readyState <= 1) session.ws.close();
     if (session.term) session.term.dispose();
     if (session.onResize) window.removeEventListener("resize", session.onResize);
+    watchViewport(false);
     var changed = session.changed;
     termTitle("");
     session = null;
@@ -360,6 +391,7 @@
     els.replay.hidden = true;
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
+    watchViewport(true);
     session.term.focus();
     return session;
   }

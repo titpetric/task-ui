@@ -52,8 +52,21 @@
     display: none;
   }
 
+  /* dialog.run takes the whole screen on a phone, down to the height the
+     on-screen keyboard leaves. --app-vh is what task-ui.js measures off
+     visualViewport; 100dvh is the floor, which tracks a retracting address
+     bar but not a keyboard. */
+  dialog.run {
+    width: 100vw;
+    max-width: none;
+    height: var(--app-vh, 100dvh);
+    max-height: var(--app-vh, 100dvh);
+    border: 0;
+    border-radius: 0;
+  }
+
   .run-body .terminal-host {
-    height: 60vh;
+    height: 100%;
   }
 
   .tiles {
