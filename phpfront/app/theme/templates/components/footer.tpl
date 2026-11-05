@@ -10,5 +10,6 @@
 	<script src="{data.assets}/theme/vendor/xterm.js?v={data.assetVersion}" defer></script>
 	<script src="{data.assets}/theme/vendor/addon-fit.js?v={data.assetVersion}" defer></script>
 	<script src="{data.assets}/theme/task-ui.js?v={data.assetVersion}" defer></script>
+	<script src="{data.assets}/theme/voice/voice.js?v={data.assetVersion}" defer></script>
 {foreach $data.scripts as $script}	<script src="{script}" defer></script>
 {/foreach}

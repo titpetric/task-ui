@@ -32,6 +32,7 @@
     pause: document.getElementById("run-pause"),
     restart: document.getElementById("run-restart"),
     take: document.getElementById("run-take"),
+    mic: document.getElementById("run-mic"),
     input: document.getElementById("run-input"),
     chain: document.getElementById("run-chain"),
     prev: document.getElementById("run-prev"),
@@ -277,6 +278,27 @@
     document.documentElement.style.removeProperty("--app-vh");
   }
 
+  // ------------------------------------------------------------------ seam
+
+  // window.taskUI is the whole of what the voice module may do: paste a
+  // string, and read whether there is a run to paste into. The socket and the
+  // session stay in this closure, so nothing outside can stream into a run -
+  // dictation reaches the process through paste and a button press or not at
+  // all.
+  //
+  // #run-dialog fires a run-open event beside its own close event, so a module
+  // learns a window opened without reading the session.
+  window.taskUI = {
+    paste: function (text) {
+      if (!text || !session || !session.ws || session.ws.readyState !== 1) return false;
+      session.ws.send(JSON.stringify({ type: "input", message: text }));
+      return true;
+    },
+    attached: function () {
+      return !!(session && session.ws && session.ws.readyState === 1 && session.run && session.run.can_run);
+    },
+  };
+
   // --------------------------------------------------------------- dialog
 
   function setState(state, text) {
@@ -324,6 +346,13 @@
     els.pause.hidden = !opts.pause;
     els.restart.hidden = !opts.restart;
     els.take.hidden = !opts.take;
+    // Whether the run would take dictation. Whether the browser transcribes
+    // on the device is the voice module's half, so that module owns the
+    // button's visibility and reads this when the event below fires.
+    if (els.mic) {
+      els.mic.dataset.allowed = opts.mic ? "1" : "";
+      dialog.dispatchEvent(new CustomEvent("run-buttons"));
+    }
   }
 
   // taking shows whether the window holds input on a run of a job that
@@ -392,6 +421,7 @@
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
     watchViewport(true);
+    dialog.dispatchEvent(new CustomEvent("run-open"));
     session.term.focus();
     return session;
   }
@@ -557,7 +587,7 @@
     // A window that sees its run end follows the chain of the run on.
     s.follow = true;
     setState("running", "attaching");
-    buttons({ stop: run.can_run, kill: run.can_run, take: run.can_input });
+    buttons({ stop: run.can_run, kill: run.can_run, take: run.can_input, mic: run.can_run });
     taking(s, false, run.input_by || "");
     els.hint.textContent = run.can_run ? "" : "You're watching. You don't have permission to type into this run or end it.";
 

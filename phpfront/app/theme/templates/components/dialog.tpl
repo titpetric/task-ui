@@ -14,7 +14,7 @@
 		</div>
 		<div class="run-body">
 			<div class="terminal-host" id="run-terminal"></div>
-		</div>
+{include components/voice.tpl}		</div>
 		<p class="run-notice" id="run-notice" role="status"></p>
 		<div class="run-reason" id="run-reason" hidden>
 			<label for="run-reason-text">Why does this need to run outside its hours? task-ui saves your reason with the run.</label>
@@ -32,6 +32,7 @@
 			<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 			<button type="button" class="btn" id="run-again" hidden>Run again</button>
 			<button type="button" class="btn" id="run-take" aria-pressed="false" title="Send your keystrokes to the run, to answer a prompt it waits on" hidden>Take input</button>
+			<button type="button" class="btn-icon" id="run-mic" aria-pressed="false" title="Dictate into the run" aria-label="Dictate into the run" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 			<button type="button" class="btn" id="run-stop" hidden>Stop</button>
 			<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
 			<button type="button" class="btn" id="run-pause" hidden>Pause</button>

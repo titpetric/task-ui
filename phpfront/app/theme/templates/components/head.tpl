@@ -6,5 +6,6 @@
 	<link rel="icon" href="{data.assets}/theme/icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="{data.assets}/theme/vendor/xterm.css?v={data.assetVersion}">
 	<link rel="stylesheet" href="{data.assets}/theme/task-ui.css?v={data.assetVersion}">
+	<link rel="stylesheet" href="{data.assets}/theme/voice/voice.css?v={data.assetVersion}">
 {foreach $data.styles as $style}	<link rel="stylesheet" href="{style}">
 {/foreach}</head>

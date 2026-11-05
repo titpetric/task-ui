@@ -1,0 +1,174 @@
+/* .voice styles the dictation overlay: the avatar, what it heard, and the two acts. */
+.voice {
+  --voice-level: 0;
+  --voice-hot: #ffd9a0;
+  --voice-warm: var(--signal);
+  --voice-cool: #5fc1c9;
+  --voice-violet: #a98ce8;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.2rem;
+  background: radial-gradient(circle at 50% 42%, rgba(12, 18, 26, 0.72), rgba(4, 6, 9, 0.94));
+  backdrop-filter: blur(3px);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+/* .voice-avatar is the thing itself: fog, a core and three whorls of arms,
+   each layer additive so no edge ever reads as a surface. The level the
+   microphone measures reaches every layer through --voice-level. */
+.voice-avatar {
+  width: min(62vmin, 20rem);
+  height: min(62vmin, 20rem);
+  overflow: visible;
+  filter: drop-shadow(0 0 calc(1.2rem + var(--voice-level) * 2.6rem) color-mix(in srgb, var(--voice-warm) 55%, transparent));
+  will-change: transform;
+
+  & .voice-haze {
+    fill: color-mix(in srgb, var(--voice-cool) 42%, transparent);
+    mix-blend-mode: plus-lighter;
+    opacity: calc(0.42 + var(--voice-level) * 0.5);
+
+    & ellipse {
+      animation: voice-drift 54s ease-in-out infinite alternate;
+      transform-origin: 160px 160px;
+    }
+
+    & ellipse:nth-child(2) {
+      animation-duration: 67s;
+      animation-direction: alternate-reverse;
+    }
+
+    & ellipse:nth-child(3) {
+      animation-duration: 41s;
+    }
+  }
+
+  & .voice-core {
+    mix-blend-mode: plus-lighter;
+    transform-origin: 160px 160px;
+    transform: scale(calc(0.78 + var(--voice-level) * 0.34));
+    opacity: calc(0.55 + var(--voice-level) * 0.45);
+    transition: transform 90ms ease-out, opacity 90ms ease-out;
+  }
+
+  & .voice-arms {
+    fill: none;
+    stroke-linecap: round;
+    mix-blend-mode: plus-lighter;
+  }
+
+  & .voice-whorl {
+    transform-origin: 160px 160px;
+    animation: voice-spin 41s linear infinite;
+    opacity: calc(0.62 + var(--voice-level) * 0.38);
+  }
+
+  & .voice-whorl-2 {
+    animation-duration: 28s;
+    animation-direction: reverse;
+  }
+
+  & .voice-whorl-3 {
+    animation-duration: 63s;
+  }
+}
+
+@keyframes voice-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The haze only ever drifts and breathes. The turbulence that frays every
+   edge is static: animating baseFrequency repaints the filter each frame,
+   which no phone holds at 60fps. */
+@keyframes voice-drift {
+  from {
+    transform: translate(-7px, 5px) scale(0.94) rotate(-6deg);
+  }
+
+  to {
+    transform: translate(9px, -6px) scale(1.07) rotate(7deg);
+  }
+}
+
+/* .voice-said is the words as they are heard, which is the proof it listens. */
+.voice-said {
+  margin: 0;
+  max-width: 34rem;
+  min-height: 2.6em;
+  color: var(--text);
+  font-size: var(--fs-body);
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+
+  &:empty::before {
+    content: "Listening";
+    color: var(--text-faint);
+    letter-spacing: var(--ls-sm);
+  }
+
+  & .voice-partial {
+    color: var(--text-dim);
+  }
+}
+
+/* .voice-acts are the two phone buttons: discard on the left, send on the
+   right, far enough apart that a thumb cannot hit both. */
+.voice-acts {
+  display: flex;
+  gap: 3rem;
+}
+
+.voice-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  padding: 0;
+  border: 1px solid;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+
+  & .ic {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    transform: scale(1.06);
+  }
+
+  &.send {
+    border-color: color-mix(in srgb, var(--ok) 70%, transparent);
+    background: color-mix(in srgb, var(--ok) 22%, transparent);
+    color: var(--ok);
+    box-shadow: 0 0 1.4rem color-mix(in srgb, var(--ok) 30%, transparent);
+  }
+
+  &.discard {
+    border-color: color-mix(in srgb, var(--bad) 70%, transparent);
+    background: color-mix(in srgb, var(--bad) 20%, transparent);
+    color: var(--bad);
+    box-shadow: 0 0 1.4rem color-mix(in srgb, var(--bad) 26%, transparent);
+  }
+}
+
+/* #run-mic marks itself while the overlay is up, so the foot says which
+   button opened it. */
+#run-mic[aria-pressed="true"] {
+  color: var(--signal);
+}
