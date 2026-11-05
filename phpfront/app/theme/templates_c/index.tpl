@@ -1186,6 +1186,7 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 		<p class="voice-where" id="voice-where"></p>
 		<div class="voice-acts">
 			<button type="button" class="voice-act discard" id="voice-discard" title="Discard" aria-label="Discard"><svg class="ic"><use href="#i-trash"/></svg></button>
+			<button type="button" class="voice-act replay" id="voice-replay" title="Play again" aria-label="Play again" hidden><svg class="ic"><use href="#i-play"/></svg></button>
 			<button type="button" class="voice-act send" id="voice-send" title="Send" aria-label="Send" disabled><svg class="ic"><use href="#i-send"/></svg></button>
 		</div>
 	</dialog>

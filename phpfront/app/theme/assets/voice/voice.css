@@ -350,6 +350,17 @@ body:has(.voice-orb:not([hidden])) .toasts {
     box-shadow: 0 0 1.4rem color-mix(in srgb, var(--ok) 30%, transparent);
   }
 
+  &.replay {
+    border-color: color-mix(in srgb, var(--voice-cool) 70%, transparent);
+    background: color-mix(in srgb, var(--voice-cool) 20%, transparent);
+    color: var(--voice-cool);
+    box-shadow: 0 0 1.4rem color-mix(in srgb, var(--voice-cool) 28%, transparent);
+  }
+
+  &[hidden] {
+    display: none;
+  }
+
   &.discard {
     border-color: color-mix(in srgb, var(--bad) 70%, transparent);
     background: color-mix(in srgb, var(--bad) 20%, transparent);

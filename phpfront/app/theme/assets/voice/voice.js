@@ -10,9 +10,9 @@
 // window; the only write is taskUI.paste on send, which is the whole of the
 // interface this file has. There is no path from the recogniser to the socket.
 //
-// Send goes to the run when one is attached and takes input, and to the header
-// prompt otherwise, filled and focused but never submitted, so the words are
-// read before they go anywhere.
+// Send goes to the run when one is attached and takes input, and to Claude
+// otherwise: the window then shows what the request is doing and reads the
+// reply out through a voice this device holds.
 (function (TAP) {
   "use strict";
 
@@ -27,7 +27,8 @@
   var where = document.getElementById("voice-where");
   var sendBtn = document.getElementById("voice-send");
   var discardBtn = document.getElementById("voice-discard");
-  if (!stage) return;
+  var replayBtn = document.getElementById("voice-replay");
+  if (!stage || !replayBtn) return;
 
   // RATE is the sample rate the recording is written at. 16 kHz mono is what a
   // transcriber reads: Whisper and wav2vec both resample to it, so capturing
@@ -38,6 +39,10 @@
   // MAX bounds a recording at the artifact endpoint's own limit, 16 MiB, so a
   // dictation left running cannot fail its upload after the fact.
   var MAX = 16 << 20;
+
+  // BRIEF rides with a dictated question: the reply is read aloud, and a page
+  // of markdown takes minutes to speak.
+  var BRIEF = "Answer in one or two sentences.";
 
   var lang = document.documentElement.lang || navigator.language || "en-US";
   // canRecord is what the orb needs: a microphone and a secure page. ready is
@@ -52,6 +57,8 @@
   var buffer = null;    // { frames, length, rate, cap } across every pause
   var raf = 0;
   var text = "";        // every final result since the last send
+  var answer = "";      // the last reply, as spoken, kept for replay
+  var pending = false;  // a question is out and the window is following it
 
   // ------------------------------------------------------------------ gate
 
@@ -334,7 +341,8 @@
     stage.title = now === "recording" ? "Pause" : (now === "paused" ? "Resume" : "Record");
     stage.setAttribute("aria-label", stage.title);
     sendBtn.disabled = now === "idle";
-    where.textContent = now === "idle" ? "" : target().say;
+    // A question in flight owns the line; the state does not take it back.
+    if (!pending) where.textContent = now === "idle" ? "" : target().say;
     if (note !== undefined) {
       said.textContent = note;
       return;
@@ -443,6 +451,47 @@
     dress(why);
   }
 
+  // label returns a thread's state as a line, capitalised as the window reads.
+  function label(word) {
+    var say = String(word || "Working");
+    return say.charAt(0).toUpperCase() + say.slice(1);
+  }
+
+  // asked puts the question to Claude and follows it in the window, so the
+  // orb says what the request is doing and reads the reply out when it ends.
+  function asked(words) {
+    answer = "";
+    pending = true;
+    replayBtn.hidden = true;
+    if (!window.taskUI.ask) {
+      pending = false;
+      var box = document.getElementById("header-prompt");
+      if (box) {
+        box.value = box.value ? box.value + " " + words : words;
+        box.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      return;
+    }
+    window.taskUI.ask(words + " " + BRIEF, function (update) {
+      if (update.state === "answered") {
+        pending = false;
+        said.textContent = plain(update.body).slice(0, 400);
+        where.textContent = "Answered";
+        speak(update.body);
+        return;
+      }
+      if (update.state === "failed") {
+        pending = false;
+        var why = update.text && update.text !== "failed" ? update.text : "";
+        where.textContent = why || "The request failed";
+        return;
+      }
+      if (update.state === "done") return;
+      where.textContent = label(update.text || update.state);
+    });
+    where.textContent = "Asking";
+  }
+
   // trash drops the recording and the words and closes the window.
   function trash() {
     pause();
@@ -461,12 +510,9 @@
     pause();
     buffer = null;
     text = "";
-    if (words && to.kind === "run") window.taskUI.paste(words);
-    if (words && to.kind === "prompt") {
-      to.el.value = to.el.value ? to.el.value + " " + words : words;
-      to.el.dispatchEvent(new Event("input", { bubbles: true }));
-    }
     dress();
+    if (words && to.kind === "run") window.taskUI.paste(words);
+    if (words && to.kind === "prompt") asked(words);
     done.then(function (saved) {
       say(saved ? "Recording kept in artifacts, under voice/" : "The recording was not kept", saved ? "ok" : "bad");
     });
@@ -477,6 +523,48 @@
   function say(text, tone) {
     if (window.taskUI.toast) window.taskUI.toast(text, tone);
     else console.info("voice: " + text);
+  }
+
+  // ----------------------------------------------------------------- speak
+
+  // localVoice returns a voice this device holds, or null: a network voice
+  // would send the reply to a reader elsewhere.
+  function localVoice() {
+    var all = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+    var here = all.filter(function (v) { return v.localService; });
+    var base = lang.slice(0, 2).toLowerCase();
+    return here.filter(function (v) { return (v.lang || "").toLowerCase().indexOf(base) === 0; })[0] || here[0] || null;
+  }
+
+  // plain strips the markdown out of a reply, since a reader speaks every
+  // backtick and hash out loud.
+  function plain(body) {
+    return String(body || "")
+      .replace(/```[\s\S]*?```/g, " code block ")
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/^[#>\s-]*/gm, "")
+      .replace(/[*_~]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // speak reads a reply aloud and keeps it for replay.
+  function speak(body) {
+    answer = plain(body);
+    replayBtn.hidden = !answer;
+    if (!answer || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    var pick = localVoice();
+    if (!pick) {
+      console.info("voice: no on-device voice, the answer is not read aloud");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var line = new SpeechSynthesisUtterance(answer.slice(0, 1200));
+    line.voice = pick;
+    line.lang = pick.lang || lang;
+    line.rate = 1.02;
+    window.speechSynthesis.speak(line);
   }
 
   // ------------------------------------------------------------------ bind
@@ -496,6 +584,7 @@
   });
   sendBtn.addEventListener("click", send);
   discardBtn.addEventListener("click", trash);
+  replayBtn.addEventListener("click", function () { if (answer) speak(answer); });
 
   overlay.addEventListener("cancel", function (event) {
     event.preventDefault();

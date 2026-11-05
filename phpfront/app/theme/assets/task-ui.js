@@ -4150,7 +4150,17 @@
       link.href = place.href + (id ? "#note-" + encodeURIComponent(id) : "");
       headerAnswer.querySelector(".question").textContent = question;
     };
+    // watchers hear every state the asked thread passes through and the
+    // reply that ends it, so the voice window can speak one.
+    var watchers = [];
+    var tell = function (update) {
+      watchers.forEach(function (on) {
+        try { on(update); } catch (e) { /* a watcher is not the thread's problem */ }
+      });
+      if (update.state === "done" || update.state === "failed") watchers = [];
+    };
     var setState = function (state, text) {
+      tell({ state: state, text: text });
       var line = headerAnswer.querySelector("[data-state]");
       if (!line) return;
       if (state === "done") {
@@ -4163,6 +4173,7 @@
     // answer puts the last reply of the thread in the panel: as the
     // thread's page renders it, or as the summaries render markdown.
     var answer = function (place, id, reply) {
+      tell({ state: "answered", body: reply.body });
       var put = function (html) {
         var box = headerAnswer.querySelector(".answer");
         if (shown === id && box && html) box.innerHTML = html;
@@ -4184,10 +4195,12 @@
         var thread = ((res.data && res.data.notes) || []).filter(function (n) { return n.id === id; })[0];
         if (!thread) return false;
         frame(place, thread.body, thread.id);
-        setState(thread.state || "done", thread.state === "failed" ? "failed" : "");
         var replies = thread.replies || [];
-        if (replies.length && thread.state !== "open" && thread.state !== "working") answer(place, id, replies[replies.length - 1]);
-        else watch(place, id);
+        var running = thread.state === "open" || thread.state === "working";
+        // The reply goes out before the state that retires the watchers.
+        if (replies.length && !running) answer(place, id, replies[replies.length - 1]);
+        setState(thread.state || "done", thread.state === "failed" ? "failed" : "");
+        if (!replies.length || running) watch(place, id);
         return true;
       });
     };
@@ -4251,6 +4264,14 @@
         setState(res.data.state || "open");
         watch(here, id);
       });
+    };
+    // taskUI.ask posts a prompt the way Enter does and reports what the
+    // thread does next, so voice.js can follow a question it sent.
+    window.taskUI.ask = function (text, on) {
+      if (!text) return false;
+      if (on) watchers.push(on);
+      ask(text);
+      return true;
     };
     if (headerToggle) {
       headerToggle.addEventListener("click", function (event) {
