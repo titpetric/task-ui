@@ -9,6 +9,7 @@ import (
 	"time"
 
 	chi "github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
@@ -276,6 +277,13 @@ func (a *App) wire(version string) error {
 
 	routes := apiHandlers.Routes()
 	r := chi.NewRouter()
+	// A page is a quarter of a megabyte of HTML and the JSON behind it is
+	// bigger, so the transfer was most of what a reader waited for: /runs
+	// answered in 2.2s and took another 0.6s to arrive. gzip at level 5
+	// costs single digit milliseconds on a body this size. text/event-stream
+	// is not a compressible type here, so the SSE stream passes through, and
+	// a response that set its own Content-Encoding is left alone.
+	r.Use(middleware.Compress(5))
 	// MCP clients sign with a bearer token; its tools call the API as
 	// the token's user.
 	server := mcp.New(routes, version)
