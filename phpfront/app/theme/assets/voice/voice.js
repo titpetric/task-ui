@@ -7,7 +7,7 @@
 // Nothing reaches the run while you talk. Interim results are drawn in the
 // overlay; the only write is taskUI.paste on send, which is the whole of the
 // interface this file has. There is no path from the recogniser to the socket.
-(function () {
+(function (TAP) {
   "use strict";
 
   var dialog = document.getElementById("run-dialog");
@@ -97,19 +97,13 @@
 
   // ----------------------------------------------------------------- audio
 
-  // listen opens the microphone and keeps every sample. The worklet is a
-  // string because this file is the whole module: a second request for eight
-  // lines of audio plumbing is a request that can fail on its own.
-  var WORKLET = [
-    "class Tap extends AudioWorkletProcessor {",
-    "  process(inputs) {",
-    "    const ch = inputs[0] && inputs[0][0];",
-    "    if (ch) this.port.postMessage(new Float32Array(ch));",
-    "    return true;",
-    "  }",
-    "}",
-    "registerProcessor('tap', Tap);",
-  ].join("\n");
+  // listen opens the microphone and keeps every sample. The worklet is the
+  // file beside this one, found off this script's own src: the two front ends
+  // serve the theme under different prefixes, and the page's CSP is
+  // script-src 'self', which a blob: URL is not.
+  // The ?v= of this script goes with it, so a changed worklet is a changed
+  // URL and no browser answers it out of a cache.
+  var WORKLET = TAP ? new URL("tap.js" + TAP.replace(/^[^?]*/, ""), TAP).href : "";
 
   function listen() {
     return navigator.mediaDevices.getUserMedia({
@@ -128,9 +122,8 @@
         cap: Math.floor((MAX / 2) * (ctx.sampleRate / RATE)),
       };
       level(analyser);
-      var url = URL.createObjectURL(new Blob([WORKLET], { type: "text/javascript" }));
-      return ctx.audioWorklet.addModule(url).then(function () {
-        URL.revokeObjectURL(url);
+      if (!WORKLET) return;
+      return ctx.audioWorklet.addModule(WORKLET).then(function () {
         var node = new AudioWorkletNode(ctx, "tap");
         node.port.onmessage = function (event) {
           if (media && media.length < media.cap) {
@@ -140,10 +133,10 @@
         };
         src.connect(node);
         media.node = node;
-      }, function () {
-        // No worklet: the level still works and the recording is simply not
-        // kept, which the overlay says on send.
-        URL.revokeObjectURL(url);
+      }, function (err) {
+        // No worklet: the level still reads and the words still paste, and
+        // the console names the recording that went nowhere.
+        console.info("voice: no recording, the worklet did not load", err);
       });
     });
   }
@@ -366,4 +359,6 @@
   document.addEventListener("visibilitychange", function () {
     if (document.hidden && rec) stop(false);
   });
-})();
+// document.currentScript names this tag only while the file runs, so it is
+// read at the call and passed in; a callback would find it null.
+})(document.currentScript && document.currentScript.src);
