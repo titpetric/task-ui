@@ -171,7 +171,7 @@ Where the element the script reads is server-drawn, the server names the URL and
 
 ### Writes
 
-**A page of the instance writes nothing, and a module's page is the one that does.** Every form on a page of the instance posts to `/api`, which is Go and stays Go, so the twenty-eight routes ported so far are all `GET` and the port owes no write for any of them. A module is the exception the Go router already makes for the same reason — `frontend/frontend.go:85` wraps a module's pages in `access.SameOrigin` because a module's forms post to itself — and `modules/refinement` is the only module, so its five `POST` routes are every write this tree will hold until a page of the instance grows one of its own.
+**A page of the instance writes nothing, and a module's page is the one that does.** Every form on a page of the instance posts to `/api`, which is Go and stays Go, so the twenty-eight routes ported so far are all `GET` and none of them writes. A module is the exception the Go router already makes for the same reason — `frontend/frontend.go:85` wraps a module's pages in `access.SameOrigin` because a module's forms post to itself — and `modules/refinement` is the only module, so its five `POST` routes are every write this tree will hold until a page of the instance grows one of its own.
 
 A handler validates and the storage class writes. One statement where that does, and a transaction inside the storage class where it does not. A handler that changed something answers with a redirect, `Task\Route::go("/notes")`, so a reload does not repeat the work.
 

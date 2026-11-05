@@ -105,9 +105,9 @@ tasks:
       - go run ./internal/cmd/rulelint
 
   lint:docs:
-    desc: "Report the prose findings of the markdown, Go, PHP, JavaScript and CSS"
+    desc: "Report the prose findings of the markdown, templates, Go, PHP, JavaScript and CSS"
     cmds:
-      - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css)$' | xargs -r vale
+      - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css|tpl)$' | xargs -r vale
 
   install:
     desc: "Install task-ui"

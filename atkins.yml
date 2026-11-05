@@ -119,15 +119,16 @@ jobs:
         }
 
   # Run by name, never from default: the tree is not at zero yet, and a
-  # job that fails on every run gates nothing. vale reads the markdown
-  # whole and the comments out of the Go, PHP, JavaScript and CSS; the
-  # style is llm-slop, vendored under .vale/styles, so it needs no
-  # network. git decides which files it reads, because .gitignore already
-  # names the composer trees and the agent worktrees.
+  # job that fails on every run gates nothing. vale reads the markdown and
+  # the templates whole, and the comments out of the Go, PHP, JavaScript
+  # and CSS; the style is llm-slop, vendored under .vale/styles, so it
+  # needs no network. git decides which files it reads, and .vale.ini
+  # decides which of those are read for prose: the composer tree under
+  # phpfront/app/ext is committed, so the glob cannot skip it.
   lint:docs:
-    desc: "Report the prose findings: markdown, and the comments of the Go, PHP, JS and CSS"
+    desc: "Report the prose findings: markdown, the templates, and the comments of the Go, PHP, JS and CSS"
     steps:
-      - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css)$' | xargs -r vale
+      - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css|tpl)$' | xargs -r vale
 
   deploy:
     desc: "Deploy docs to cdn.si"

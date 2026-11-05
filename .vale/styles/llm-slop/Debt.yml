@@ -1,0 +1,25 @@
+---
+# Code owes nobody anything. A function has a requirement, a check has a
+# condition, and a package has a coverage floor; none of them is a debt, a
+# creditor or a payment. The metaphor reads as a judgement on the author and
+# names neither the number nor the thing that fails without it.
+#
+# `owes` came out of a coverage document: "the coverage a package owes" in
+# place of "80% of lines". The figure was already in the next clause, so the
+# verb carried no fact at all.
+extends: existence
+message: "'%s' puts code in debt. Name the requirement: the number, the check, or what fails without it."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bowes?\b'
+  - '\bowed\b'
+  - '\bowing\b'
+  - '\b(?:technical|design|test|documentation)\s+debt\b'
+  - '\bpays?\s+(?:off|for\s+itself)\b'
+  - '\bpaid\s+(?:off|for\s+itself)\b'
+  - '\bpay(?:s|ing)?\s+down\b'
+  - '\bpaid\s+down\b'
+  - '\bborrowed\s+(?:time|complexity)\b'
+  - '\binterest\s+on\b'

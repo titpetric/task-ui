@@ -89,7 +89,7 @@ func TestUserAuthTokenStorage_Many(t *testing.T) {
 	assert.Len(t, list, 2, "both MCP tokens stand, and no CLI one is among them")
 	// Newest first, and two writes of one request fall on either side of a
 	// millisecond as often as not, so which of the two leads is the stamps'
-	// business: what the order owes is that the later one never follows.
+	// business. The later one never follows.
 	ids := []string{list[0].ID, list[1].ID}
 	assert.Contains(t, ids, first.ID)
 	assert.Contains(t, ids, second.ID)
