@@ -38,6 +38,10 @@
   var MAX = 16 << 20;
 
   var lang = document.documentElement.lang || navigator.language || "en-US";
+  // canRecord is what the orb needs: a microphone and a secure page. ready is
+  // the stronger claim, that this browser also transcribes on the device.
+  var canRecord = !!(window.isSecureContext && navigator.mediaDevices &&
+    navigator.mediaDevices.getUserMedia);
   var ready = null;     // null until probed, then true or false
   var install = false;  // the language needs fetching before the first press
   var rec = null;       // the recogniser while it runs
@@ -48,17 +52,20 @@
   // ------------------------------------------------------------------ gate
 
   // paint is the only writer of what is visible to press. The orb shows
-  // wherever this browser transcribes on the device; the run window's own
-  // button shows on top of that when the run takes input, because a modal run
-  // window puts the orb behind its backdrop and out of reach.
+  // wherever a microphone can be opened, whether or not this browser can
+  // transcribe: without a recogniser the press still records, and the
+  // transcript comes from the workflow that reads the artifact later. The run
+  // window's own button shows on top of that when the run takes input,
+  // because a modal run window puts the orb behind its backdrop.
   function paint() {
-    orb.hidden = !ready;
-    if (mic) mic.hidden = !(ready && mic.dataset.allowed);
+    orb.hidden = !canRecord;
+    orb.title = ready ? "Dictate" : "Record";
+    if (mic) mic.hidden = !(canRecord && mic.dataset.allowed);
   }
 
   // probe settles once whether this browser transcribes without sending the
   // audio anywhere. A language that is downloadable counts: the first press
-  // installs it. Anything else leaves the orb hidden for good, since the
+  // installs it. Anything else records and nothing more, since the
   // alternative is sending the audio to a transcriber elsewhere.
   function probe() {
     if (ready !== null) {
@@ -66,17 +73,17 @@
       return;
     }
     ready = false;
+    paint();
     var SR = window.SpeechRecognition;
     if (!SR || !SR.available || !window.isSecureContext) {
       console.info(!SR || !SR.available
-        ? "voice: this browser has no on-device speech recognition"
-        : "voice: dictation needs a secure origin");
-      paint();
+        ? "voice: no on-device speech recognition here, recording only"
+        : "voice: a secure origin is needed, recording only");
       return;
     }
     SR.available({ langs: [lang], processLocally: true }).then(function (state) {
       ready = state === "available" || state === "downloadable";
-      if (!ready) console.info("voice: no on-device language for " + lang + ", state " + state);
+      if (!ready) console.info("voice: no on-device language for " + lang + ", state " + state + ", recording only");
       install = state === "downloadable";
       paint();
     }, function () {
@@ -244,6 +251,11 @@
   // tree, which versions them and ages them out on its own schedule. A reader
   // without artifact/edit dictates all the same, and the console says the
   // recording went nowhere.
+  //
+  // With no words there is no .txt, and that absence is the queue: the
+  // transcribe workflow reads every recording in voice/ that has no .txt
+  // beside it. An empty file here would take a recording out of that queue
+  // and leave it transcribed by nobody.
   function keep(words) {
     var audio = wav();
     if (!audio) return Promise.resolve(false);
@@ -259,10 +271,11 @@
         body: body,
       }).then(function (res) { return res.ok; });
     };
-    return Promise.all([
-      put(base + ".wav", audio, "audio/wav"),
-      put(base + ".txt", words, "text/plain"),
-    ]).then(function (ok) { return ok[0] && ok[1]; }, function () { return false; });
+    var writes = [put(base + ".wav", audio, "audio/wav")];
+    if (words) writes.push(put(base + ".txt", words, "text/plain"));
+    return Promise.all(writes).then(function (ok) {
+      return ok.indexOf(false) < 0;
+    }, function () { return false; });
   }
 
   // ------------------------------------------------------------------ flow
@@ -271,10 +284,11 @@
   // input is the terminal; anything else is the header prompt, which is on
   // every page a user may ask Claude from.
   function target() {
+    if (!ready) return { kind: "keep", say: "Keeps the recording, transcribed in the artifacts" };
     if (window.taskUI.attached()) return { kind: "run", say: "Sends to the run" };
     var ask = document.getElementById("header-prompt");
     if (ask) return { kind: "prompt", el: ask, say: "Fills the prompt, yours to send" };
-    return { kind: "none", say: "Nowhere to send this, so it is only kept" };
+    return { kind: "keep", say: "Keeps the recording, transcribed in the artifacts" };
   }
 
   // show opens and closes the window. showModal puts it in the top layer, so
@@ -303,40 +317,48 @@
   // handling the user's gesture, and anything before it risks spending that.
   function start() {
     var SR = window.SpeechRecognition;
-    var first = install && SR.install
+    var first = ready && install && SR.install
       ? SR.install({ langs: [lang], processLocally: true }).then(function () { install = false; })
       : Promise.resolve();
     text = "";
     show(true);
-    said.textContent = install ? "Fetching the language, once" : "";
+    // An empty line draws "Listening" from the stylesheet. With no recogniser
+    // there is nothing to listen with, so it says what it is doing instead.
+    said.textContent = install ? "Fetching the language, once" : (ready ? "" : "Recording");
     where.textContent = target().say;
-    // The recogniser opens its own microphone and is what dictation is. The
+    // The recogniser opens its own microphone and is what dictation is; the
     // analyser and the worklet are a second consumer of the same device, so
-    // they come after and are allowed to fail. A refused second stream leaves
-    // the words intact and costs the glow and the recording.
+    // they come after and are allowed to fail. Where there is no recogniser
+    // the worklet does the work alone: the press records, and the transcript
+    // is the workflow's to write once the artifact lands.
     var run = function () {
-      rec = new SR();
-      rec.lang = lang;
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.processLocally = true;
-      rec.onresult = function (event) {
-        var partial = "";
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-          var r = event.results[i];
-          if (r.isFinal) text += (text ? " " : "") + r[0].transcript.trim();
-          else partial += r[0].transcript;
-        }
-        heard(text, partial.trim());
-      };
-      rec.onerror = function (event) {
-        fault(event.error === "not-allowed"
-          ? "The microphone was refused. Allow it for this site and press again."
-          : "Dictation stopped: " + event.error);
-      };
-      rec.start();
-      return listen().catch(function (err) {
-        console.info("voice: no level and no recording", err);
+      if (ready) {
+        rec = new SR();
+        rec.lang = lang;
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.processLocally = true;
+        rec.onresult = function (event) {
+          var partial = "";
+          for (var i = event.resultIndex; i < event.results.length; i++) {
+            var r = event.results[i];
+            if (r.isFinal) text += (text ? " " : "") + r[0].transcript.trim();
+            else partial += r[0].transcript;
+          }
+          heard(text, partial.trim());
+        };
+        rec.onerror = function (event) {
+          fault(event.error === "not-allowed"
+            ? "The microphone was refused. Allow it for this site and press again."
+            : "Dictation stopped: " + event.error);
+        };
+        rec.start();
+        return listen().catch(function (err) {
+          console.info("voice: no level and no recording", err);
+        });
+      }
+      return listen().then(function () {
+        if (!media || !media.node) throw new Error("this browser cannot record");
       });
     };
     first.then(run).catch(function (err) {
