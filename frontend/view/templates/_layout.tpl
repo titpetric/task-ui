@@ -67,7 +67,7 @@
 					{{- range $.SideWorkflows }}{{ if not .SidebarHidden }}
 					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
 						<i class="shebang{{ if .Running }} running{{ end }}" aria-hidden="true">#!</i>
-						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := $.Links .Steps }}{{ if $i }} -> {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
+						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := $.Links .Steps }}{{ if $i }} -&gt; {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
 						{{- if .Running }}
 						<a class="play" href="/workflows/{{ .ID }}" title="{{ .Name }}, running" aria-label="Watch {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
 						{{- else if .CanRun }}
