@@ -17,7 +17,7 @@ func TestAssetsFS(t *testing.T) {
 	assert.Equal(t, "/static/", view.AssetPrefix)
 	for _, name := range []string{
 		"task-ui.css", "task-ui.js", "icon.svg", "vendor/xterm.js", "vendor/addon-fit.js", "vendor/xterm.css",
-		"voice/voice.js", "voice/voice.css", "voice/tap.js",
+		"voice/voice.js", "voice/voice.css", "voice/tap.js", "voice/well.png",
 		"fonts/Inter-Regular.woff2", "fonts/Inter-Medium.woff2", "fonts/Inter-SemiBold.woff2", "fonts/Inter.LICENSE",
 		"fonts/JetBrainsMono-Regular.woff2", "fonts/JetBrainsMono-Medium.woff2", "fonts/JetBrainsMono-SemiBold.woff2", "fonts/JetBrainsMono.LICENSE",
 	} {

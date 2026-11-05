@@ -70,7 +70,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
   }
 }
 
-/* .voice is the window the orb opens: the avatar at full size, what it heard,
+/* .voice is the window the orb opens: the avatar over the page, what it heard,
    and the two acts. It is a modal dialog, so it draws over a run window too. */
 .voice {
   --voice-level: 0;
@@ -85,7 +85,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
   padding: 1.2rem;
   border: 0;
   color: var(--text);
-  background: radial-gradient(circle at 50% 42%, rgba(12, 18, 26, 0.92), rgba(4, 6, 9, 0.985));
+  background: transparent;
 
   &[open] {
     display: flex;
@@ -95,26 +95,91 @@ body:has(.voice-orb:not([hidden])) .toasts {
     gap: 1rem;
   }
 
+  /* The page stays readable behind: this is a conversation over the work,
+     and the well below is what darkens the middle. */
   &::backdrop {
-    background: rgba(2, 4, 7, 0.72);
-    backdrop-filter: blur(3px);
+    background: rgba(2, 4, 7, 0.22);
   }
 }
 
-/* .voice-avatar is the thing itself: fog, a core and three whorls of arms,
-   each layer additive so no edge ever reads as a surface. The level the
-   microphone measures reaches every layer through --voice-level. */
+/* .voice-stage is the button you press to record, and it holds the well and
+   the avatar on one square so the gravity and its cause share a centre. */
+.voice-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(68vmin, 24rem);
+  height: min(68vmin, 24rem);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: scale 0.18s ease-out;
+
+  &:hover,
+  &:focus-visible {
+    scale: 1.02;
+  }
+
+  &:focus-visible {
+    outline: 1px solid color-mix(in srgb, var(--voice-warm) 60%, transparent);
+    outline-offset: 0.4rem;
+  }
+}
+
+/* Idle is asleep, paused is held still, recording is the only live state. */
+.voice[data-state="idle"] .voice-avatar {
+  opacity: 0.55;
+}
+
+.voice[data-state="paused"] .voice-avatar {
+  opacity: 0.7;
+  filter: saturate(0.35);
+
+  & .voice-orbits,
+  & .voice-comet,
+  & .voice-haze ellipse {
+    animation-play-state: paused;
+  }
+}
+
+.voice[data-state="paused"] .voice-said::after {
+  content: " · paused";
+  color: var(--text-faint);
+}
+
+/* .voice-well bends the page behind it. backdrop-filter takes an SVG filter,
+   so voice/well.png displaces the backdrop outward from the centre, which
+   reads as the page falling in. The mask fades the edge, or the disc would
+   cut a visible circle out of the page. */
+.voice-well {
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  backdrop-filter: url("#voice-gravity") brightness(0.42) saturate(0.7);
+  mask-image: radial-gradient(circle, #000 0%, #000 52%, transparent 78%);
+  pointer-events: none;
+}
+
+/* .voice-avatar is the thing itself: a core, three inclined orbits and a
+   comet on each, every layer additive so no edge reads as a surface. The
+   level the microphone measures reaches them through --voice-level. */
 .voice-avatar {
-  width: min(62vmin, 20rem);
-  height: min(62vmin, 20rem);
+  position: relative;
+  width: 100%;
+  height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 0 calc(1.2rem + var(--voice-level) * 2.6rem) color-mix(in srgb, var(--voice-warm) 55%, transparent));
-  will-change: transform;
+  filter: drop-shadow(0 0 calc(1rem + var(--voice-level) * 2.4rem) color-mix(in srgb, var(--voice-warm) 50%, transparent));
+
+  & .voice-shadow {
+    opacity: calc(0.85 - var(--voice-level) * 0.25);
+  }
 
   & .voice-haze {
-    fill: color-mix(in srgb, var(--voice-cool) 42%, transparent);
+    fill: color-mix(in srgb, var(--voice-cool) 30%, transparent);
     mix-blend-mode: plus-lighter;
-    opacity: calc(0.42 + var(--voice-level) * 0.5);
+    opacity: calc(0.3 + var(--voice-level) * 0.45);
 
     & ellipse {
       animation: voice-drift 54s ease-in-out infinite alternate;
@@ -125,45 +190,70 @@ body:has(.voice-orb:not([hidden])) .toasts {
       animation-duration: 67s;
       animation-direction: alternate-reverse;
     }
-
-    & ellipse:nth-child(3) {
-      animation-duration: 41s;
-    }
   }
 
   & .voice-core {
     mix-blend-mode: plus-lighter;
     transform-origin: 160px 160px;
-    transform: scale(calc(0.78 + var(--voice-level) * 0.34));
-    opacity: calc(0.55 + var(--voice-level) * 0.45);
+    transform: scale(calc(0.72 + var(--voice-level) * 0.3));
+    opacity: calc(0.6 + var(--voice-level) * 0.4);
     transition: transform 90ms ease-out, opacity 90ms ease-out;
   }
 
-  & .voice-arms {
+  /* The orbits keep their shape and turn as a set, so three inclinations
+     read as one body in three dimensions. */
+  & .voice-orbits {
     fill: none;
-    stroke-linecap: round;
+    mix-blend-mode: plus-lighter;
+    transform-origin: 160px 160px;
+    animation: voice-spin 150s linear infinite;
+    opacity: calc(0.55 + var(--voice-level) * 0.45);
+  }
+
+  & .voice-comets {
     mix-blend-mode: plus-lighter;
   }
 
-  & .voice-whorl {
-    transform-origin: 160px 160px;
-    animation: voice-spin 41s linear infinite;
-    opacity: calc(0.62 + var(--voice-level) * 0.38);
+  /* Each comet dims and shrinks on its far half, which is the whole of the
+     depth: a flat ellipse read as an orbit once the body behind it fades. */
+  & .voice-comet {
+    animation: voice-depth 19s ease-in-out infinite;
+
+    & .tail {
+      opacity: 0.5;
+      filter: blur(1.4px);
+    }
+
+    & .head {
+      filter: drop-shadow(0 0 4px var(--voice-hot));
+    }
   }
 
-  & .voice-whorl-2 {
-    animation-duration: 28s;
-    animation-direction: reverse;
+  & .comet-b {
+    animation-duration: 31s;
   }
 
-  & .voice-whorl-3 {
-    animation-duration: 63s;
+  & .comet-c {
+    animation-duration: 47s;
   }
 }
 
 @keyframes voice-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes voice-depth {
+  0%,
+  100% {
+    opacity: 1;
+    scale: 1.15;
+  }
+
+  50% {
+    opacity: 0.28;
+    scale: 0.72;
   }
 }
 
@@ -190,11 +280,17 @@ body:has(.voice-orb:not([hidden])) .toasts {
   line-height: 1.35;
   text-align: center;
   text-wrap: balance;
+  /* The page shows through the window, so the words bring their own ground. */
+  text-shadow: 0 0 0.5rem #04070b, 0 0 1.2rem #04070b, 0 1px 2px #04070b;
 
   &:empty::before {
     content: "Listening";
     color: var(--text-faint);
     letter-spacing: var(--ls-sm);
+  }
+
+  .voice[data-state="idle"] &:empty::before {
+    content: "Tap the orb to record";
   }
 
   & .voice-partial {
@@ -210,6 +306,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
   font-size: var(--fs-sm);
   letter-spacing: var(--ls-sm);
   text-align: center;
+  text-shadow: 0 0 0.5rem #04070b, 0 0 1.2rem #04070b;
 }
 
 /* .voice-acts are the two phone buttons: discard on the left, send on the
@@ -236,9 +333,14 @@ body:has(.voice-orb:not([hidden])) .toasts {
     height: 1.5rem;
   }
 
-  &:hover,
+  &:hover:not(:disabled),
   &:focus-visible {
     transform: scale(1.06);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
   }
 
   &.send {
@@ -266,7 +368,8 @@ body:has(.voice-orb:not([hidden])) .toasts {
   }
 
   .voice-avatar .voice-haze ellipse,
-  .voice-avatar .voice-whorl {
+  .voice-avatar .voice-orbits,
+  .voice-avatar .voice-comet {
     animation: none;
   }
 }

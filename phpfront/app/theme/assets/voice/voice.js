@@ -22,10 +22,12 @@
 
   var dialog = document.getElementById("run-dialog");
   var mic = document.getElementById("run-mic");
+  var stage = document.getElementById("voice-stage");
   var said = document.getElementById("voice-said");
   var where = document.getElementById("voice-where");
   var sendBtn = document.getElementById("voice-send");
   var discardBtn = document.getElementById("voice-discard");
+  if (!stage) return;
 
   // RATE is the sample rate the recording is written at. 16 kHz mono is what a
   // transcriber reads: Whisper and wav2vec both resample to it, so capturing
@@ -45,9 +47,11 @@
   var ready = null;     // null until probed, then true or false
   var install = false;  // the language needs fetching before the first press
   var rec = null;       // the recogniser while it runs
-  var media = null; // { stream, ctx, node, frames, length }
+  var media = null;     // { stream, ctx, node } while the microphone is open
+  var starting = false; // a press is waiting on the microphone to open
+  var buffer = null;    // { frames, length, rate, cap } across every pause
   var raf = 0;
-  var text = "";    // every final result of this session
+  var text = "";        // every final result since the last send
 
   // ------------------------------------------------------------------ gate
 
@@ -123,6 +127,13 @@
   // URL and no browser answers it out of a cache.
   var WORKLET = TAP ? new URL("tap.js" + TAP.replace(/^[^?]*/, ""), TAP).href : "";
 
+  // The gravity filter reads its displacement map off this script's own URL,
+  // for the same reason the worklet does.
+  if (TAP) {
+    var field = document.getElementById("voice-well-map");
+    if (field) field.setAttribute("href", new URL("well.png" + TAP.replace(/^[^?]*/, ""), TAP).href);
+  }
+
   function listen() {
     return navigator.mediaDevices.getUserMedia({
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
@@ -132,21 +143,23 @@
       var analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
       src.connect(analyser);
-      // cap is the frame count whose downsampled bytes reach MAX, so the
-      // bound is on the file that gets written and not on the samples the
-      // device happens to deliver it in.
-      media = {
-        stream: stream, ctx: ctx, frames: [], length: 0, rate: ctx.sampleRate,
-        cap: Math.floor((MAX / 2) * (ctx.sampleRate / RATE)),
-      };
+      media = { stream: stream, ctx: ctx };
+      // The buffer outlives the stream, so a pause and a resume write one
+      // file. cap bounds the frames whose downsampled bytes reach MAX.
+      if (!buffer) {
+        buffer = {
+          frames: [], length: 0, rate: ctx.sampleRate,
+          cap: Math.floor((MAX / 2) * (ctx.sampleRate / RATE)),
+        };
+      }
       level(analyser);
       if (!WORKLET) return;
       return ctx.audioWorklet.addModule(WORKLET).then(function () {
         var node = new AudioWorkletNode(ctx, "tap");
         node.port.onmessage = function (event) {
-          if (media && media.length < media.cap) {
-            media.frames.push(event.data);
-            media.length += event.data.length;
+          if (buffer && buffer.length < buffer.cap) {
+            buffer.frames.push(event.data);
+            buffer.length += event.data.length;
           }
         };
         src.connect(node);
@@ -159,6 +172,7 @@
     });
   }
 
+  // release closes the microphone and leaves the buffer where it is.
   function release() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
@@ -167,17 +181,18 @@
     if (media.node) media.node.port.onmessage = null;
     media.stream.getTracks().forEach(function (t) { t.stop(); });
     if (media.ctx.state !== "closed") media.ctx.close();
+    media = null;
   }
 
   // wav writes the frames as a RIFF file, mono, downsampled to RATE. Each
   // output sample is the mean of the source window behind it; one sample
   // picked out of that window would alias a voice badly.
   function wav() {
-    if (!media || !media.length) return null;
-    var all = new Float32Array(media.length);
+    if (!buffer || !buffer.length) return null;
+    var all = new Float32Array(buffer.length);
     var at = 0;
-    media.frames.forEach(function (f) { all.set(f, at); at += f.length; });
-    var ratio = media.rate / RATE;
+    buffer.frames.forEach(function (f) { all.set(f, at); at += f.length; });
+    var ratio = buffer.rate / RATE;
     var count = Math.floor(all.length / ratio);
     var out = new Int16Array(count);
     for (var i = 0; i < count; i++) {
@@ -303,6 +318,31 @@
     if (overlay.open) overlay.close();
   }
 
+  // state is the window's one source of truth: idle, recording or paused. A
+  // press counts as recording while the microphone opens, so the window
+  // answers the press and not the device.
+  function state() {
+    if (media || starting) return "recording";
+    return buffer || text ? "paused" : "idle";
+  }
+
+  // dress writes the state onto the window and says what the orb will do.
+  function dress(note) {
+    var now = state();
+    overlay.dataset.state = now;
+    stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
+    stage.title = now === "recording" ? "Pause" : (now === "paused" ? "Resume" : "Record");
+    stage.setAttribute("aria-label", stage.title);
+    sendBtn.disabled = now === "idle";
+    where.textContent = now === "idle" ? "" : target().say;
+    if (note !== undefined) {
+      said.textContent = note;
+      return;
+    }
+    if (now === "idle") said.textContent = "";
+    if (now === "paused" && !text) said.textContent = "Paused";
+  }
+
   function heard(final, partial) {
     said.textContent = final;
     if (!partial) return;
@@ -312,65 +352,35 @@
     said.appendChild(span);
   }
 
-  // start runs on the press and nowhere else. install() is the first call it
-  // makes, because fetching a downloadable language is refused unless it is
-  // handling the user's gesture, and anything before it risks spending that.
-  function start() {
+  // open shows the window with nothing recording; the orb starts it.
+  function open() {
+    show(true);
+    dress();
+  }
+
+  // record starts or resumes capture into the same buffer. install() is the
+  // first call it makes, because fetching a downloadable language is refused
+  // unless it is handling the user's gesture.
+  function record() {
+    if (starting || media) return;
     var SR = window.SpeechRecognition;
     var first = ready && install && SR.install
       ? SR.install({ langs: [lang], processLocally: true }).then(function () { install = false; })
       : Promise.resolve();
-    text = "";
-    show(true);
-    // An empty line draws "Listening" from the stylesheet. With no recogniser
-    // there is nothing to listen with, so it says what it is doing instead.
-    said.textContent = install ? "Fetching the language, once" : (ready ? "" : "Recording");
-    where.textContent = target().say;
-    // The recogniser opens its own microphone and is what dictation is; the
-    // analyser and the worklet are a second consumer of the same device, so
-    // they come after and are allowed to fail. Where there is no recogniser
-    // the worklet does the work alone: the press records, and the transcript
-    // is the workflow's to write once the artifact lands.
-    var run = function () {
-      if (ready) {
-        rec = new SR();
-        rec.lang = lang;
-        rec.continuous = true;
-        rec.interimResults = true;
-        rec.processLocally = true;
-        rec.onresult = function (event) {
-          var partial = "";
-          for (var i = event.resultIndex; i < event.results.length; i++) {
-            var r = event.results[i];
-            if (r.isFinal) text += (text ? " " : "") + r[0].transcript.trim();
-            else partial += r[0].transcript;
-          }
-          heard(text, partial.trim());
-        };
-        rec.onerror = function (event) {
-          fault(event.error === "not-allowed"
-            ? "The microphone was refused. Allow it for this site and press again."
-            : "Dictation stopped: " + event.error);
-        };
-        rec.start();
-        return listen().catch(function (err) {
-          console.info("voice: no level and no recording", err);
-        });
-      }
-      return listen().then(function () {
-        if (!media || !media.node) throw new Error("this browser cannot record");
-      });
-    };
-    first.then(run).catch(function (err) {
-      fault(err && err.name === "NotAllowedError"
-        ? "The microphone was refused. Allow it for this site and press again."
-        : "Dictation could not start: " + (err && err.message ? err.message : err));
+    starting = true;
+    dress(install ? "Fetching the language, once" : (text || (ready ? "" : "Recording")));
+    first.then(listening).then(function () {
+      starting = false;
+      dress(text || undefined);
+    }).catch(function (err) {
+      starting = false;
+      refused(err);
     });
   }
 
-  // fault ends the recording and leaves the window open with the reason in
-  // it. Closing on its own would take the message with it.
-  function fault(why) {
+  // pause closes the microphone and keeps everything heard and captured.
+  function pause() {
+    starting = false;
     if (rec) {
       rec.onresult = null;
       rec.onerror = null;
@@ -378,38 +388,85 @@
       rec = null;
     }
     release();
-    media = null;
-    said.textContent = why;
-    where.textContent = "";
+    dress();
   }
 
-  // stop ends the session. send puts the words where target named and keeps
-  // the recording; discard writes nothing anywhere.
-  function stop(send) {
+  // listening opens the recogniser and the microphone, and returns once both
+  // are running or the microphone alone where there is no recogniser.
+  //
+  // The recogniser opens its own microphone and is what dictation is; the
+  // analyser and the worklet are a second consumer of the same device, so
+  // they come after and are allowed to fail.
+  function listening() {
+    var SR = window.SpeechRecognition;
+    if (!ready) {
+      return listen().then(function () {
+        if (!media || !media.node) throw new Error("this browser cannot record");
+      }).catch(refused);
+    }
+    rec = new SR();
+    rec.lang = lang;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.processLocally = true;
+    rec.onresult = function (event) {
+      var partial = "";
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        var r = event.results[i];
+        if (r.isFinal) text += (text ? " " : "") + r[0].transcript.trim();
+        else partial += r[0].transcript;
+      }
+      heard(text, partial.trim());
+    };
+    rec.onerror = function (event) {
+      fault(event.error === "not-allowed"
+        ? "The microphone was refused. Allow it for this site and press again."
+        : "Dictation stopped: " + event.error);
+    };
+    rec.start();
+    return listen().catch(function (err) {
+      console.info("voice: no level and no recording", err);
+    });
+  }
+
+  // refused reports a microphone the browser or the reader would not open.
+  function refused(err) {
+    fault(err && err.name === "NotAllowedError"
+      ? "The microphone was refused. Allow it for this site and press again."
+      : "Dictation could not start: " + (err && err.message ? err.message : err));
+  }
+
+  // fault pauses and leaves the window open with the reason in it, because
+  // closing on its own would take the message with it.
+  function fault(why) {
+    pause();
+    dress(why);
+  }
+
+  // trash drops the recording and the words and closes the window.
+  function trash() {
+    pause();
+    buffer = null;
+    text = "";
+    show(false);
+  }
+
+  // send delivers the words, writes the file and leaves the window open on
+  // an empty buffer, so the next sentence is one press away.
+  function send() {
+    if (state() === "idle") return;
     var words = sanitize(text);
-    if (rec) {
-      rec.onresult = null;
-      rec.onerror = null;
-      try { rec.stop(); } catch (e) { /* already stopped */ }
-      rec = null;
-    }
-    if (!send) {
-      release();
-      media = null;
-      show(false);
-      return;
-    }
     var to = target();
     var done = keep(words);
-    release();
-    media = null;
-    show(false);
+    pause();
+    buffer = null;
+    text = "";
     if (words && to.kind === "run") window.taskUI.paste(words);
     if (words && to.kind === "prompt") {
       to.el.value = to.el.value ? to.el.value + " " + words : words;
-      to.el.focus();
       to.el.dispatchEvent(new Event("input", { bubbles: true }));
     }
+    dress();
     done.then(function (saved) {
       say(saved ? "Recording kept in artifacts, under voice/" : "The recording was not kept", saved ? "ok" : "bad");
     });
@@ -424,35 +481,37 @@
 
   // ------------------------------------------------------------------ bind
 
-  function toggle() {
-    if (rec || overlay.open) {
-      stop(false);
-      return;
-    }
-    start();
+  // The orb in the corner opens and closes the window; the orb in the middle
+  // of it records, pauses and resumes.
+  function visit() {
+    if (overlay.open) trash();
+    else open();
   }
 
-  orb.addEventListener("click", toggle);
-  if (mic) mic.addEventListener("click", toggle);
-  sendBtn.addEventListener("click", function () { stop(true); });
-  discardBtn.addEventListener("click", function () { stop(false); });
+  orb.addEventListener("click", visit);
+  if (mic) mic.addEventListener("click", visit);
+  stage.addEventListener("click", function () {
+    if (media || starting) pause();
+    else record();
+  });
+  sendBtn.addEventListener("click", send);
+  discardBtn.addEventListener("click", trash);
 
-  // Escape closes a modal dialog on its own, and a close with a recording
-  // running is a discard.
   overlay.addEventListener("cancel", function (event) {
     event.preventDefault();
-    stop(false);
+    trash();
   });
   overlay.addEventListener("close", function () {
-    if (rec || media) stop(false);
+    if (media || buffer) trash();
   });
 
   if (dialog) {
     dialog.addEventListener("run-buttons", paint);
-    dialog.addEventListener("close", function () { if (rec) stop(false); });
+    dialog.addEventListener("close", function () { if (overlay.open) trash(); });
   }
+  // A page sent to the background keeps the words and stops the microphone.
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden && rec) stop(false);
+    if (document.hidden && media) pause();
   });
   probe();
 // document.currentScript names this tag only while the file runs, so it is
