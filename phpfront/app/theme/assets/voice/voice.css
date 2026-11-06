@@ -57,6 +57,12 @@ body:has(.voice-orb:not([hidden])) .toasts {
   bottom: 5.4rem;
 }
 
+/* The window the orb opens draws over it, and a translucent backdrop leaves
+   its glow showing through in the corner. */
+body:has(.voice[open]) .voice-orb {
+  display: none;
+}
+
 @keyframes voice-breathe {
   0%,
   100% {
@@ -85,6 +91,10 @@ body:has(.voice-orb:not([hidden])) .toasts {
   border: 0;
   color: var(--text);
   background: transparent;
+  /* The dark around the orb is drawn by a box wider than the orb, which on a
+     phone reaches past the screen. Without this the window scrolls sideways
+     and a thumb slides the whole thing off. */
+  overflow: clip;
 
   &[open] {
     display: flex;
@@ -100,7 +110,10 @@ body:has(.voice-orb:not([hidden])) .toasts {
      by that much, by more on a phone where the words take two lines. What is
      left here is the even wash that keeps white text legible. */
   &::backdrop {
-    background: rgba(2, 5, 9, 0.45);
+    background: linear-gradient(to bottom,
+      rgba(2, 5, 9, 0.3) 0,
+      rgba(2, 5, 9, 0.94) 3.6rem,
+      rgba(2, 5, 9, 0.94) 100%);
   }
 }
 
@@ -136,8 +149,10 @@ body:has(.voice-orb:not([hidden])) .toasts {
     pointer-events: none;
   }
 
-  &:hover,
-  &:focus-visible {
+  /* Hover alone grows it. The window opens with this focused, and on a phone
+     it is already the width of the screen: scaling it there pushes the canvas
+     past both edges. */
+  &:hover {
     scale: 1.02;
   }
 
