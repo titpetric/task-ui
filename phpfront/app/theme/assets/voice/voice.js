@@ -14,10 +14,13 @@
 // otherwise: the window then shows what the request is doing and reads the
 // reply out through a voice this device holds.
 //
-// A device with no recogniser sends the recording alone and the instance does
-// the rest: the Orb input workflow transcribes it, answers the question in it
-// and synthesises a reply the window plays. See
-// docs/guide/voice.md.
+// Everything but a run goes to one prompt thread, which is the session: the
+// first clip opens it and every later one replies in it, so Claude reads the
+// conversation so far and holds the task tools to do what is asked with. The
+// window follows the thread over the notes event stream for as long as it is
+// open, so a reply Claude writes after the work it started finishes arrives
+// and plays on its own. A device with no recogniser sends the clip alone and
+// the session transcribes it. See docs/guide/voice.md.
 (function (TAP) {
   "use strict";
 
@@ -47,17 +50,33 @@
   // dictation left running cannot fail its upload after the fact.
   var MAX = 16 << 20;
 
-  // BRIEF rides with a dictated question: the reply is read aloud, and a page
-  // of markdown takes minutes to speak.
-  var BRIEF = "Answer in one or two sentences.";
+  // BRIEF opens the session, once, with the first thing said into it. The
+  // thread that follows is one conversation: Claude reads everything said in
+  // it so far, holds the task tools, and may reply again long after the
+  // first answer. A later reply is how finished work reaches the window.
+  var BRIEF = [
+    "You are answering by voice, in a window that plays what you write here.",
+    "",
+    "Every reply: two or three spoken sentences, plain words, no markdown, no lists, no code.",
+    "You hold the task tools. Run jobs, start workflows and read artifacts to answer or to do what is asked.",
+    "Work that takes a while: leave one sentence with note_comment saying what you started, do the work,",
+    "then answer with what came of it. Both reach the window, the second whenever it is ready.",
+    "After each reply, write the same sentences to <base>.N.reply.txt with write_artifact, N counting",
+    "your replies in this thread from 1, then run the speak job of titpetric/stt so the window has the",
+    "audio. The window plays <base>.N.reply.wav and nothing else, so a reply without one is never heard.",
+  ].join("\n");
 
-  // FLOW is the workflow that answers a recording on a device that cannot
-  // transcribe: it reads the recordings with no answer beside them, so it
-  // takes no argument and the orb starts it and watches the artifacts.
-  var FLOW = "Orb input";
+  // HEARD rides with a clip this device could not transcribe: the words it
+  // holds are the question, so the session reads them first.
+  var HEARD = "The clip is at <clip>.wav. Transcribe it with the transcribe-audio workflow and answer what it asks.";
 
-  // STAGES name what FLOW is doing, by the step it is on.
+  // STAGES name what the thread is doing while nothing has come back.
   var STAGES = ["Transcribing", "Thinking", "Speaking"];
+
+  // TRIES is how many times a reply's audio is looked for, half a second
+  // apart: piper takes seconds over a sentence, and a cold voice download
+  // takes longer the first time.
+  var TRIES = 120;
 
   var lang = document.documentElement.lang || navigator.language || "en-US";
   // canRecord is what the orb needs: a microphone and a secure page. ready is
@@ -76,7 +95,10 @@
   var pending = false;  // a question is out and the window is following it
   var reply = "";       // the reply as audio the instance made, for replay
   var player = null;    // the element playing that audio
-  var flowID = "";      // FLOW's ID, read once
+  var thread = "";      // the session, one thread for as long as the window is open
+  var stamp = "";       // the clip the session opened on, which names its audio
+  var heard = 0;        // how many replies of the thread have been played
+  var source = null;    // the event stream the thread is followed over
   var gen = 0;          // a send or a discard retires the watch before it
   var since = 0;        // when the request went out, for the counter
   var clock = 0;        // the interval writing the counter
@@ -318,11 +340,8 @@
   // keep writes the recording and the words beside each other in the artifact
   // tree, which versions them and ages them out on its own schedule. It
   // returns the path the pair shares, or empty when a write failed: a reader
-  // without artifact/edit dictates all the same.
-  //
-  // With no words there is no .txt, and that absence is the queue FLOW reads.
-  // An empty file here would take a recording out of it and leave it
-  // transcribed by nobody.
+  // without artifact/edit dictates all the same. With no words there is no
+  // .txt, and the clip alone is what the session is asked to transcribe.
   function keep(words) {
     var audio = wav();
     if (!audio) return Promise.resolve("");
@@ -565,18 +584,13 @@
     clock = 0;
   }
 
-  // asked puts the question to Claude and follows it in the window, so the
-  // orb says what the request is doing and reads the reply out when it ends.
-  // The reply goes beside the recording at, once it is written, so the pair
-  // reads the same whichever path transcribed it.
-  function asked(words, at) {
-    var mine = ++gen;
-    answer = "";
-    reply = "";
-    pending = true;
-    replayBtn.hidden = true;
+  // ------------------------------------------------------------------ flow
+
+  // asked puts something to the session: the first thing opens the thread
+  // with BRIEF, every later one is a reply in it, so Claude reads the whole
+  // conversation and keeps the tools it ran the last thing with.
+  function asked(words, clip) {
     if (!window.taskUI.ask) {
-      pending = false;
       var box = document.getElementById("header-prompt");
       if (box) {
         box.value = box.value ? box.value + " " + words : words;
@@ -584,146 +598,128 @@
       }
       return;
     }
-    ticking("Asking");
-    window.taskUI.ask(words + " " + BRIEF, function (update) {
-      if (mine !== gen) return;
-      if (update.state === "answered") {
-        pending = false;
-        answer = plain(update.body);
-        said.textContent = answer.slice(0, 400);
-        ended("Answered");
-        speak(answer);
-        at.then(function (base) { if (base) put(base + ".reply.txt", answer, "text/plain"); });
-        return;
-      }
-      if (update.state === "failed") {
-        pending = false;
-        var why = update.text && update.text !== "failed" ? update.text : "";
-        stopped();
-        where.textContent = why || "The request failed";
-        return;
-      }
-      if (update.state === "done") return;
-      tell(label(update.text || update.state));
-    });
-  }
-
-  // ------------------------------------------------------------------ flow
-
-  // flow returns FLOW's ID, or empty where the instance has no such workflow.
-  function flow() {
-    if (flowID) return Promise.resolve(flowID);
-    return fetch("/api/workflows", { credentials: "same-origin" })
-      .then(function (res) { return res.ok ? res.json() : null; })
-      .then(function (data) {
-        ((data && data.workflows) || []).forEach(function (wf) {
-          if (wf.name === FLOW) flowID = wf.id;
-        });
-        return flowID;
-      });
-  }
-
-  // handed starts FLOW over the recording at and watches for the reply it
-  // writes beside it, which is the whole of a device that cannot transcribe.
-  function handed(at) {
     var mine = ++gen;
     answer = "";
     reply = "";
     pending = true;
+    failed = false;
     replayBtn.hidden = true;
     said.textContent = "";
-    ticking(STAGES[0]);
-    flow().then(function (id) {
-      if (!id) throw new Error("this instance has no " + FLOW + " workflow");
-      return fetch("/api/workflows/" + encodeURIComponent(id) + "/runs", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-      }).then(function (res) {
-        if (res.status === 403) throw new Error("you may not run " + FLOW);
-        return res.json().then(function (body) { return { id: id, run: body.run_id || body.id }; });
-      });
-    }).then(function (started) {
-      if (mine === gen) watch(mine, started.id, started.run, at);
-    }).catch(function (err) { if (mine === gen) fell(err); });
-  }
-
-  // watch polls for the reply FLOW writes beside the recording, then for the
-  // audio of it, and says which step the run is on while neither is there.
-  // It stops after TRIES polls, a transcription and a reply over a cold
-  // whisper build with room to spare.
-  function watch(mine, id, runID, at) {
-    var TRIES = 200;
-    var tries = 0;
-    var tick = function () {
+    ticking(clip && !words ? STAGES[0] : "Asking");
+    var body = words;
+    if (clip && !words) body = HEARD.replace("<clip>", clip);
+    else if (clip) body = words + "\n\n" + HEARD.replace("<clip>", clip);
+    if (!thread) {
+      stamp = clip || "voice/" + new Date().toISOString().replace(/[:.]/g, "-").replace("Z", "");
+      body = body + "\n\n" + BRIEF.replace("<base>", stamp);
+    }
+    window.taskUI.ask(body, function (update) {
       if (mine !== gen) return;
-      if (++tries > TRIES) {
-        done(mine);
+      if (update.thread) {
+        thread = update.thread;
+        listen();
         return;
       }
-      var again = function () { window.setTimeout(tick, 3000); };
-      if (!answer) {
-        read(at + ".reply.txt").then(function (data) {
-          if (mine !== gen) return;
-          if (data && data.text) {
-            answer = data.text.trim();
-            said.textContent = answer;
-            tell(STAGES[2]);
-            again();
-            return;
-          }
-          return onStep(id, runID).then(again);
-        }).catch(function (err) { if (mine === gen) fell(err); });
+      if (update.state === "answered") {
+        landed(update.body);
         return;
       }
-      read(at + ".reply.wav").then(function (data) {
-        if (mine !== gen) return;
-        if (!data) {
-          again();
-          return;
-        }
-        reply = file(at + ".reply.wav") + "?raw";
-        done(mine);
-      });
-    };
-    tick();
+      if (update.state === "failed") {
+        fell(new Error(update.text && update.text !== "failed" ? update.text : "The request failed"));
+        return;
+      }
+      if (update.state === "done") return;
+      tell(label(update.text || update.state));
+    }, thread);
   }
 
-  // onStep writes the step the run is on onto the window, and fails the watch
-  // when the run ended with nothing beside the recording.
-  function onStep(id, runID) {
-    return fetch("/api/workflows/" + encodeURIComponent(id) + "/runs", { credentials: "same-origin" })
+  // listen follows the thread for as long as the window is open, so a reply
+  // Claude writes after the work it started finishes reaches the window on
+  // its own. It is one stream for the session.
+  function listen() {
+    if (source || !window.EventSource || !thread) return;
+    source = new EventSource("/api/sse/notes");
+    source.addEventListener("note", function (event) {
+      var note = {};
+      try { note = JSON.parse(event.data); } catch (e) { return; }
+      if (note.id !== thread && note.parent_id !== thread) return;
+      if (note.state === "working" || note.state === "open") {
+        if (!answer) tell(STAGES[1]);
+        return;
+      }
+      pull();
+    });
+  }
+
+  // hush drops the stream, for a window that closed or a session that ended.
+  function hush() {
+    if (source) source.close();
+    source = null;
+  }
+
+  // pull reads the thread and takes the newest reply it has not played yet.
+  // A reply that arrives with no state change still lands through it.
+  function pull() {
+    var mine = gen;
+    var place = window.taskUI.place ? window.taskUI.place() : null;
+    if (!place) return Promise.resolve();
+    var url = place.run
+      ? "/api/prompts?limit=20&run=" + encodeURIComponent(place.run)
+      : "/api/prompts?limit=20&folder=" + encodeURIComponent(place.folder) +
+        (place.dir ? "&dir=" + encodeURIComponent(place.dir) : "");
+    return fetch(url, { credentials: "same-origin" })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (data) {
-        var run = ((data && data.runs) || []).filter(function (r) { return r.id === runID; })[0];
-        if (!run) return;
-        var steps = run.steps || [];
-        for (var i = 0; i < steps.length; i++) {
-          if (steps[i].state === "running") {
-            tell(STAGES[i] || "Working");
-            return;
-          }
-        }
-        if (run.state === "running") return;
-        if (run.state !== "ok") throw new Error(FLOW + " " + run.state + (run.message ? ": " + run.message : ""));
-      });
+        if (mine !== gen) return;
+        var mineThread = ((data && data.notes) || []).filter(function (n) { return n.id === thread; })[0];
+        if (!mineThread) return;
+        var replies = mineThread.replies || [];
+        if (replies.length <= heard) return;
+        heard = replies.length;
+        landed(replies[replies.length - 1].body);
+      })
+      .catch(function () {});
   }
 
-  // done ends the watch with whatever arrived and plays it.
-  function done(mine) {
-    if (mine !== gen) return;
+  // landed shows a reply, looks for the audio of it beside the clip, and
+  // plays whichever arrives. The count in the name is the reply's place in
+  // the thread, the name BRIEF names.
+  function landed(body) {
+    var mine = gen;
+    var words = plain(body);
+    if (!words || words === answer) return;
     pending = false;
-    replayBtn.hidden = !answer && !reply;
-    if (!answer && !reply) {
-      failed = true;
-      ended("No answer came back");
-      shape();
+    answer = words;
+    said.textContent = answer.slice(0, 400);
+    if (heard < 1) heard = 1;
+    var base = stamp + "." + heard;
+    put(base + ".reply.txt", answer, "text/plain");
+    tell(STAGES[2]);
+    audio(mine, base, 0);
+  }
+
+  // audio waits for the wav of a reply and plays it, and reads the words out
+  // on this device when none arrives.
+  function audio(mine, base, tries) {
+    if (mine !== gen) return;
+    if (tries > TRIES) {
+      ended("Answered");
+      speak(answer);
+      replayBtn.hidden = !answer;
       return;
     }
-    ended("Answered");
-    shape();
-    play();
+    read(base + ".reply.wav").then(function (data) {
+      if (mine !== gen) return;
+      if (!data) {
+        window.setTimeout(function () { audio(mine, base, tries + 1); }, 500);
+        return;
+      }
+      reply = file(base + ".reply.wav") + "?raw";
+      ended("Answered");
+      replayBtn.hidden = false;
+      shape();
+      play();
+    });
   }
 
   // fell leaves the reason in the window and in a toast, since a phone shows
@@ -776,9 +772,15 @@
     text = "";
   }
 
-  // trash clears the window and closes it.
+  // trash clears the window, ends the session and closes it. The thread
+  // stays on the board: closing the window is leaving the conversation, and
+  // the next one starts a new one.
   function trash() {
     clear();
+    hush();
+    thread = "";
+    stamp = "";
+    heard = 0;
     show(false);
   }
 
@@ -802,8 +804,9 @@
   }
 
   // send delivers the words, writes the file and leaves the window open on
-  // an empty buffer, so the next sentence is one press away. A recording with
-  // no words of its own goes to FLOW, which answers it on the instance.
+  // an empty buffer, so the next sentence is one press away. Everything but
+  // a run goes to the session, with the clip for Claude to transcribe when
+  // this device could not.
   function send() {
     if (state() === "idle") return;
     var words = sanitize(text);
@@ -813,11 +816,20 @@
     buffer = null;
     text = "";
     dress();
-    if (words && to.kind === "run") window.taskUI.paste(words);
-    if (words && to.kind === "prompt") asked(words, at);
+    if (words && to.kind === "run") {
+      window.taskUI.paste(words);
+      at.then(function (base) {
+        say(base ? "Recording kept in artifacts, under voice/" : "The recording was not kept", base ? "ok" : "bad");
+      });
+      return;
+    }
     at.then(function (base) {
-      say(base ? "Recording kept in artifacts, under voice/" : "The recording was not kept", base ? "ok" : "bad");
-      if (!words && base) handed(base);
+      if (!base && !words) {
+        say("The recording was not kept, so there was nothing to send", "bad");
+        return;
+      }
+      if (base) say("Recording kept in artifacts, under voice/", "ok");
+      asked(words, base);
     });
   }
 

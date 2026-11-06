@@ -9,23 +9,23 @@ The orb shows wherever the browser can open a microphone: a secure page, so `htt
 Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifacts.md), which needs `artifact/edit`; without it you still dictate and a toast says the recording went nowhere. Where it goes next depends on the browser and the page:
 
 - **A run is attached and takes input.** The words go to the terminal as if typed, with no newline: punctuation is spelled out as `[dot]`, `[slash]` and the rest, so a dictated sentence cannot run a command.
-- **Anything else.** The words go to Claude as a prompt about the page you are on, and the window shows what the request is doing, then Claude's answer, read out by a voice the device holds.
+- **Anything else.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
 
 Chrome and Edge transcribe on the device, so the words never leave it: the orb reads `SpeechRecognition.available({processLocally: true})` and fetches the language the first time you press record. Safari and Firefox have no such recogniser, and neither do most phones. There the orb records and the instance does the rest.
 
-## The Orb input workflow
+## The session
 
-A recording with no words of its own is answered by a workflow named **Orb input**, which the orb starts and then watches. It is three steps:
+Everything the orb sends, bar a run's terminal, goes to one prompt thread. The first clip opens it; every later one replies in it. Claude reads the whole conversation each time and holds [the task tools](mcp.md), so it can run jobs, start workflows and read artifacts to answer, or to do the work itself.
 
-1. **transcribe-audio**, a workflow of its own: whisper.cpp over every recording in `voice/` with no subtitles beside it, writing `<stamp>.txt`, `.srt`, `.vtt` and an `.mp3`.
-2. **A prompt in the root**: Claude reads every `<stamp>.txt` with no `<stamp>.reply.txt` beside it, answers the question in it in one or two sentences of plain words, and writes each answer to `voice/<stamp>.reply.txt` with `write_artifact`.
-3. **A script**: piper over every `.reply.txt` with no `.reply.wav`, writing `voice/<stamp>.reply.wav`.
+The thread opens with an instruction the orb writes: reply in two or three spoken sentences of plain words; for work that takes a while, leave a sentence saying what you started, do it, then answer with what came of it; and after each reply write the same sentences to `<clip>.N.reply.txt` and run the `speak` job of `titpetric/stt`, so the window has the audio.
 
-Each step finds its own work by what the step before it left in the tree, so the chain takes no argument and a recording that arrives while a run is going is picked up by the next one. The window polls for its own `<stamp>.reply.txt`, shows it, waits for the `<stamp>.reply.wav` and plays it. The replay button plays it again.
+The window follows the thread over `/api/sse/notes` for as long as it is open. Nothing is polled: a reply pushes itself, and that holds for the second reply as much as the first, so work that finishes ten minutes later arrives and plays on its own. The replay button plays the last one again.
 
-The window says which step the run is on: Transcribing, Thinking, Speaking, then Answered. A run that ends with nothing beside the recording leaves the reason in the window and in a toast, and the recording stays in the artifacts.
+A clip from a device that cannot transcribe is sent with no words, and the thread is asked to run the `transcribe-audio` workflow over it first.
 
-An instance without the workflow says so on send and keeps the recording. Build it with the three steps above, or ask Claude to on the Workflows page: the names of the jobs it runs are an instance's own, and the transcriber and the synthesiser are the instance's to install.
+Closing the window ends the session. The thread stays on the board under the page it belongs to, and the next time the orb opens it starts a new one.
+
+The instance has to hold a transcriber and a synthesiser for the audio half of this: `transcribe-audio` over whisper.cpp, and a `speak` job over piper. Without them the conversation still works in text, read out by whatever voice the device holds.
 
 ## The orb itself
 

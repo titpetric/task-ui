@@ -281,10 +281,11 @@
   // ------------------------------------------------------------------ seam
 
   // window.taskUI is the whole of what the voice module may do: paste a
-  // string, and read whether there is a run to paste into. The socket and the
-  // session stay in this closure, so nothing outside can stream into a run -
-  // dictation reaches the process through paste and a button press or not at
-  // all.
+  // string, read whether there is a run to paste into, put a prompt or a
+  // reply to Claude, and read where a prompt from this page goes. The socket
+  // and the session stay in this closure, so nothing outside can stream into
+  // a run - dictation reaches the process through paste and a button press or
+  // not at all. ask and place are added by the header prompt below.
   //
   // #run-dialog fires a run-buttons event whenever the foot is redrawn, so a
   // module reads the gate below without reading the session.
@@ -4245,33 +4246,46 @@
         return load(here, mine.id);
       });
     };
-    var ask = function (text) {
+    // ask posts a prompt, or a reply in parent's thread. A reply runs in the
+    // thread's place, with everything said in the thread so far.
+    var ask = function (text, parent) {
       unfollow();
-      frame(here, text, "");
+      frame(here, text, parent || "");
       setOpen(true);
-      var body = here.run ? { run: here.run, prompt: text } : { folder: here.folder, dir: here.dir, prompt: text };
-      // An admin's pick of who the prompt runs as goes with it.
+      var body = { prompt: text };
+      if (parent) body.parent = parent;
+      else if (here.run) body.run = here.run;
+      else { body.folder = here.folder; body.dir = here.dir; }
+      // An admin's pick of who the prompt runs as goes with it. A reply
+      // takes none: the thread keeps its own user.
       var runAs = document.getElementById("header-prompt-user");
-      if (runAs && runAs.value) body.user = runAs.value;
+      if (!parent && runAs && runAs.value) body.user = runAs.value;
       api("POST", "/api/prompts", body).then(function (res) {
         if (res.status >= 300) {
           setState("failed", res.data.error || ("HTTP " + res.status));
           return;
         }
-        var id = res.data.id;
+        var id = parent || res.data.id;
+        tell({ state: "asked", thread: id });
         save({ open: true, thread: id, place: here });
         frame(here, text, id);
         setState(res.data.state || "open");
         watch(here, id);
       });
     };
-    // taskUI.ask posts a prompt the way Enter does and reports what the
-    // thread does next, so voice.js can follow a question it sent.
-    window.taskUI.ask = function (text, on) {
+    // taskUI.ask posts a prompt the way Enter does, or a reply in parent's
+    // thread, and reports what the thread does next, so voice.js can follow
+    // a question it sent and keep one session across several of them.
+    window.taskUI.ask = function (text, on, parent) {
       if (!text) return false;
       if (on) watchers.push(on);
-      ask(text);
+      ask(text, parent);
       return true;
+    };
+    // taskUI.place is where a prompt from this page goes. Reading a thread
+    // back needs it: /api/prompts lists by place and by nothing else.
+    window.taskUI.place = function () {
+      return { folder: here.folder, dir: here.dir, run: here.run, label: here.label, href: here.href };
     };
     if (headerToggle) {
       headerToggle.addEventListener("click", function (event) {
