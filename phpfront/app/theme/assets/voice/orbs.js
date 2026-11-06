@@ -38,19 +38,23 @@
   // overlaps runs past the top of it and goes white.
   var PEAK = 180;
 
-  // FLOOR is the field below which there is no blob: the palette starts
-  // there, so the band at the edge is the blob's outline.
-  var FLOOR = 56;
+  // FLOOR is the field below which there is no blob, and RISE how far above
+  // it the blob has faded in. Both are soft: a hard cut draws a ring at the
+  // edge of every orb.
+  var FLOOR = 30;
+  var RISE = 42;
 
-  // BANDS are the palette, as flat steps: a step draws the line where the
-  // summed field crosses it, so two orbs that overlap show one outline
-  // around the pair.
-  // They alternate dark and light as they climb, because a palette that only
-  // climbs reads as one smooth gradient and draws no line at all.
-  var BANDS = [
-    [34, 8, 66], [116, 30, 176], [52, 12, 96], [150, 52, 206],
-    [70, 18, 126], [182, 84, 226], [92, 26, 156], [212, 134, 240],
-    [118, 36, 188], [236, 180, 248], [150, 60, 214], [255, 255, 255],
+  // STOPS are the palette the summed field is read through, black to purple
+  // to white, and the steps between them are interpolated: one even climb,
+  // so a blob is a solid shape with a lit middle and not a set of rings.
+  var STOPS = [
+    [0, 0, 0, 0],
+    [48, 26, 6, 48],
+    [96, 74, 18, 120],
+    [144, 130, 40, 190],
+    [192, 180, 95, 225],
+    [224, 218, 158, 242],
+    [255, 255, 255, 255],
   ];
 
   // Each orb walks a circle of radius R in a plane tilted by tilt and turned
@@ -64,17 +68,20 @@
     { R: 66, tilt: 64, turn: -105, secs: 31, size: 22, at: 0.55 },
   ];
 
-  // ramp returns the palette as 256 entries of red, green, blue and alpha:
-  // nothing below FLOOR, and a flat band for each step above it.
+  // ramp returns the palette as 256 entries of red, green, blue and alpha,
+  // interpolated between the stops, with the alpha fading in over RISE.
   function ramp() {
     var map = new Uint8ClampedArray(256 * 4);
-    var step = (256 - FLOOR) / BANDS.length;
-    for (var v = FLOOR; v < 256; v++) {
-      var band = BANDS[Math.min(BANDS.length - 1, Math.floor((v - FLOOR) / step))];
-      map[v * 4] = band[0];
-      map[v * 4 + 1] = band[1];
-      map[v * 4 + 2] = band[2];
-      map[v * 4 + 3] = 255;
+    for (var v = 0; v < 256; v++) {
+      var i = 0;
+      while (i < STOPS.length - 2 && v > STOPS[i + 1][0]) i++;
+      var lo = STOPS[i];
+      var hi = STOPS[i + 1];
+      var t = (v - lo[0]) / (hi[0] - lo[0]);
+      map[v * 4] = lo[1] + (hi[1] - lo[1]) * t;
+      map[v * 4 + 1] = lo[2] + (hi[2] - lo[2]) * t;
+      map[v * 4 + 2] = lo[3] + (hi[3] - lo[3]) * t;
+      map[v * 4 + 3] = v <= FLOOR ? 0 : 255 * Math.min(1, (v - FLOOR) / RISE);
     }
     return map;
   }
