@@ -59,13 +59,14 @@
 
   // Each orb walks a circle of radius R in a plane tilted by tilt and turned
   // by turn, once every secs, starting at a different point of it. A
-  // negative secs walks it the other way.
+  // negative secs walks it the other way. Half of secs is the time it takes
+  // to cross the window, which reads best between two and three seconds.
   var ORBS = [
-    { R: 72, tilt: 72, turn: 15, secs: 19, size: 27, at: 0 },
-    { R: 62, tilt: 52, turn: -48, secs: -27, size: 23, at: 0.37 },
-    { R: 76, tilt: 81, turn: 70, secs: 37, size: 20, at: 0.11 },
-    { R: 52, tilt: 38, turn: 120, secs: -23, size: 29, at: 0.72 },
-    { R: 66, tilt: 64, turn: -105, secs: 31, size: 22, at: 0.55 },
+    { R: 72, tilt: 72, turn: 15, secs: 5, size: 27, at: 0 },
+    { R: 62, tilt: 52, turn: -48, secs: -6, size: 23, at: 0.37 },
+    { R: 76, tilt: 81, turn: 70, secs: 7, size: 20, at: 0.11 },
+    { R: 52, tilt: 38, turn: 120, secs: -5.5, size: 29, at: 0.72 },
+    { R: 66, tilt: 64, turn: -105, secs: 6.5, size: 22, at: 0.55 },
   ];
 
   // ramp returns the palette as 256 entries of red, green, blue and alpha,
