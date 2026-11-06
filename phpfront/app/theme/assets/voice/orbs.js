@@ -75,14 +75,21 @@
   // to cross the window, which reads best between three and four seconds.
   var ORBS = [
     // A radius of nothing leaves this one at the centre, which the others
-    // pass through and merge with. It puts in less field than they do, or
-    // the middle of the window is white whatever is happening there, and it
-    // breathes so a window with nothing in it is still alive.
-    { R: 0, tilt: 0, turn: 0, secs: 1, size: 38, at: 0, peak: 0.85, pulse: 0.12, pulseSecs: 4.5, meter: 0.6 },
+    // pass through and merge with, and it breathes so a window with nothing
+    // in it is still alive. tail of one is what keeps it off white: a trail
+    // of an orb that does not move stacks on the orb and nowhere else.
+    { R: 0, tilt: 0, turn: 0, secs: 1, size: 76, at: 0, tail: 1, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
     { R: 72, tilt: 72, turn: 15, secs: 6.3, size: 27, at: 0 },
     { R: 76, tilt: 81, turn: 70, secs: 8.8, size: 20, at: 0.11 },
     { R: 52, tilt: 38, turn: 120, secs: -6.9, size: 29, at: 0.72 },
   ];
+
+  // lift is the perspective at the near end of an orb's circle, and every orb
+  // is drawn at it: depth moves an orb and does not resize it, so the three
+  // that travel hold one size the whole way round.
+  ORBS.forEach(function (orb) {
+    orb.lift = DEPTH / (DEPTH - orb.R * Math.abs(Math.sin(orb.tilt * Math.PI / 180)));
+  });
 
   // ramp returns a palette as 256 entries of red, green, blue and alpha,
   // interpolated between the stops, with the alpha fading in over RISE.
@@ -142,7 +149,7 @@
     var y = orb.R * Math.sin(th) * Math.cos(tilt);
     var z = orb.R * Math.sin(th) * Math.sin(tilt);
     var near = DEPTH / (DEPTH - z);
-    var r = orb.size * near;
+    var r = orb.size * orb.lift;
     if (orb.pulse) r *= 1 + orb.pulse * Math.sin(2 * Math.PI * now / orb.pulseSecs);
     return {
       x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * near,
@@ -194,8 +201,9 @@
     for (var i = 0; i < ORBS.length; i++) {
       var orb = ORBS[i];
       var swell = bump * (orb.meter ? 1 + vu * orb.meter : 1);
-      for (var j = TRAIL - 1; j >= 0; j--) {
-        var back = 1 - j / TRAIL;
+      var tail = orb.tail || TRAIL;
+      for (var j = tail - 1; j >= 0; j--) {
+        var back = 1 - j / tail;
         // A trail sample is a tenth of the orb: a slow orb's trail sits on
         // top of the orb itself, and at full weight the sum of them all
         // would run the head past white wherever it lingers.
