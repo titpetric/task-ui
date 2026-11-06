@@ -199,110 +199,53 @@ Correction: `tools/precompile.php` calls `compile()` for every template, which c
 
 ## 17. An out parameter is lost inside a short circuit
 
-Specified: the names a note mentions, read with the shape a regex that both
-tests and captures is written in.
+Specified: the names a note mentions, read with the shape a regex that both tests and captures is written in.
 
-`preg_match_all(..., $names) && isset($names[1])` reads `$names` as unset. The
-write lands alone in an `if`, in a preceding assignment, and in the same `&&`
-where the right operand does not read it, so it is applied after the
-expression and not at the call. `php` 8.5.4 writes it at the call in all five
-shapes.
+`preg_match_all(..., $names) && isset($names[1])` reads `$names` as unset. The write lands alone in an `if`, in a preceding assignment, and in the same `&&` where the right operand does not read it, so it is applied after the expression and not at the call. `php` 8.5.4 writes it at the call in all five shapes.
 
-It fails quietly: the branch is skipped, the function answers empty and the
-column is written blank, which leaves a `LIKE` over it matching nothing.
+It fails quietly: the branch is skipped, the function answers empty and the column is written blank, which leaves a `LIKE` over it matching nothing.
 
-Correction: the call gets its own statement and the result is tested
-afterwards. `tests/notes.phpt` states the four shapes the column answers.
+Correction: the call gets its own statement and the result is tested afterwards. `tests/notes.phpt` states the four shapes the column answers.
 
 Filed as [phpscript#190](https://github.com/titpetric/phpscript/issues/190).
 
 ## 18. A timestamp column takes two shapes
 
-Specified: a row the front end writes read back by the Go pages while both
-answer.
+Specified: a row the front end writes read back by the Go pages while both answer.
 
-Two things about a timestamp column, found by posting a note in one front end
-and listing it in the other.
+Two things about a timestamp column, found by posting a note in one front end and listing it in the other.
 
-A nullable timestamp column holds null and not `""`. The Go side writes a nil
-`*time.Time` as null, and `""` in the column fails the scan into one.
-`storage.NoteStorage.List` discards its error, so the page answers an empty
-list and says nothing: a note written with `edited_at = ""` is invisible to
-`/notes` and the log is silent.
+A nullable timestamp column holds null and not `""`. The Go side writes a nil `*time.Time` as null, and `""` in the column fails the scan into one. `storage.NoteStorage.List` discards its error, so the page answers an empty list and says nothing: a note written with `edited_at = ""` is invisible to `/notes` and the log is silent.
 
-A write is `time.Time.String()`, `2026-11-02 10:32:12.414 +0000 UTC`, because
-that is what the Go side leaves in the column. A read is ISO seconds with no
-zone, because the driver parses the column and the bridge renders the time it
-got. Both sides read either shape, so ISO writes work; they leave two formats
-in one column, and the queries that compare a timestamp compare it as text.
+A write is `time.Time.String()`, `2026-11-02 10:32:12.414 +0000 UTC`, because that is what the Go side leaves in the column. A read is ISO seconds with no zone, because the driver parses the column and the bridge renders the time it got. Both sides read either shape, so ISO writes work; they leave two formats in one column, and the queries that compare a timestamp compare it as text.
 
-Correction: the generated model names its timestamp columns in `static
-$stamps`, and `Task\Row::values()` writes null for an empty one.
-`Task\Clock::STORED` is what a write leaves and `::READ` is what a read
-answers; `parse()` takes either by looking for the zone. `tests/clock.phpt` states both
-shapes, and that a whole second and a fraction of it sort the way they compare
-as numbers.
+Correction: the generated model names its timestamp columns in `static $stamps`, and `Task\Row::values()` writes null for an empty one. `Task\Clock::STORED` is what a write leaves and `::READ` is what a read answers; `parse()` takes either by looking for the zone. `tests/clock.phpt` states both shapes, and that a whole second and a fraction of it sort the way they compare as numbers.
 
-Recorded as a boundary and not a gap: two writers share one table and the
-format is the Go driver's. It is the first thing a module's write gets right,
-and the only sign of getting it wrong is a page that lists nothing.
+Recorded as a boundary and not a gap: two writers share one table and the format is the Go driver's. It is the first thing a module's write gets right, and the only sign of getting it wrong is a page that lists nothing.
 
 ## 19. A write inside a fixture fails silently
 
-Specified: a fixture renders a module's page and states the markup, since the
-template is the page.
+Specified: a fixture renders a module's page and states the markup, since the template is the page.
 
-A fixture runs under a sandbox that refuses a write. `file_put_contents`
-returns false and leaves no file, while `is_writable` on the same directory
-returns true. MiniTPL compiles inside `load()` where the source is newer than
-the compiled file, the write fails silently, and `_find_path` then reports
-`Template file 'run.tpl' doesn't exist! Is the compile dir writable?`, naming
-the condition the fixture reports as true. A page whose template is compiled
-renders in a fixture; a new template renders nowhere until `atkins precompile`
-writes it.
+A fixture runs under a sandbox that refuses a write. `file_put_contents` returns false and leaves no file, while `is_writable` on the same directory returns true. MiniTPL compiles inside `load()` where the source is newer than the compiled file, the write fails silently, and `_find_path` then reports `Template file 'run.tpl' doesn't exist! Is the compile dir writable?`, naming the condition the fixture reports as true. A page whose template is compiled renders in a fixture; a new template renders nowhere until `atkins precompile` writes it.
 
-Correction: a module holds what the template reads in a `scope()` method and
-`serve()` renders it, so `tests/run-page.phpt` and `tests/report-page.phpt`
-state every key of the scope and no fixture compiles anything.
-`is_writable` under the sandbox needs to answer what a write does.
+Correction: a module holds what the template reads in a `scope()` method and `serve()` renders it, so `tests/run-page.phpt` and `tests/report-page.phpt` state every key of the scope and no fixture compiles anything. `is_writable` under the sandbox needs to answer what a write does.
 
 ## 20. A modifier tokenizes as a name and the `T_STATIC` family is undefined
 
-Specified: the API table of a module's `README.md`, which carries each method's
-docblock, read with `token_get_all()` because [12](#12-phpscript-list-reports-no-methods)
-leaves nothing else to read it with.
+Specified: the API table of a module's `README.md`, which carries each method's docblock, read with `token_get_all()` because [12](#12-phpscript-list-reports-no-methods) leaves nothing else to read it with.
 
-`token_get_all` answers `T_STRING` for `static`, `public`, `private`,
-`protected`, `final` and `abstract`, and the constants that name them are not
-declared: `T_STATIC` raises `Undefined constant`. A reader that keeps a
-docblock until the token it documents cannot ask whether the token between the
-two is a modifier, so a documented static method reads as undocumented and the
-table prints `-`.
+`token_get_all` answers `T_STRING` for `static`, `public`, `private`, `protected`, `final` and `abstract`, and the constants that name them are not declared: `T_STATIC` raises `Undefined constant`. A reader that keeps a docblock until the token it documents cannot ask whether the token between the two is a modifier, so a documented static method reads as undocumented and the table prints `-`.
 
-Correction: `tools/docs.php` holds `MODIFIERS` and matches the token's text. It
-is the one place in the tree that reads a modifier, so the list is stated once.
+Correction: `tools/docs.php` holds `MODIFIERS` and matches the token's text. It is the one place in the tree that reads a modifier, so the list is stated once.
 
 ## 21. `fmt` drops the fraction of a whole float literal
 
-Specified: `Task\Chart`, whose share axis pins to 0/25/50/75/100 where the unit
-it draws is a percentage and reads against its own hundred, and scales to the
-data otherwise.
+Specified: `Task\Chart`, whose share axis pins to 0/25/50/75/100 where the unit it draws is a percentage and reads against its own hundred, and scales to the data otherwise.
 
-`phpscript fmt` rewrites `100.0` to `100` and `2.0` to `2`. That is not a
-format change: in PHP `100.0 === 100` is false, float against int, so a
-comparison the author wrote and tested stops matching the moment the formatter
-runs over the file. `1.50` to `1.5` is the same number of the same type and is
-the correct half of the rule. The probe is three lines — `$a = 100.0; if ($a
-=== 100.0)` comes back as `$a = 100; if ($a === 100)` — and nothing reports it:
-`fmt -l` is clean afterwards, the linter sees valid code, and the only symptom
-was a chart drawing 0/50/100 instead of 0/25/50/75/100, caught by a text diff
-of the SVG.
+`phpscript fmt` rewrites `100.0` to `100` and `2.0` to `2`. That is not a format change: in PHP `100.0 === 100` is false, float against int, so a comparison the author wrote and tested stops matching the moment the formatter runs over the file. `1.50` to `1.5` is the same number of the same type and is the correct half of the rule. The probe is three lines — `$a = 100.0; if ($a === 100.0)` comes back as `$a = 100; if ($a === 100)` — and nothing reports it: `fmt -l` is clean afterwards, the linter sees valid code, and the only symptom was a chart drawing 0/50/100 instead of 0/25/50/75/100, caught by a text diff of the SVG.
 
-Correction: `Task\Chart` casts both sides of the comparison,
-`(float)$unit["max"] === (float)self::SHARE`, with a comment saying why. It is
-the only place in the tree that compares a computed float against a
-whole-number literal. The fix belongs in Go: the formatter prints a float
-literal with its fraction.
+Correction: `Task\Chart` casts both sides of the comparison, `(float)$unit["max"] === (float)self::SHARE`, with a comment saying why. It is the only place in the tree that compares a computed float against a whole-number literal. The fix belongs in Go: the formatter prints a float literal with its fraction.
 
 ## 22. `self::` in a const array resolves against the reader
 
@@ -314,13 +257,9 @@ Correction: `Task\User::ROLES` and `::ASSIGNABLE` write the three strings out, w
 
 ## 23. `fmt` moves a comment out of the expression it sits in
 
-Specified: a comment sits beside the line it is about. In the thread page's
-`scope()` the two halves of a run's report — the images, which are looked at,
-and the prose, which is read — are two keys of one array, and which of them the
-page draws is the thing to say beside them.
+Specified: a comment sits beside the line it is about. In the thread page's `scope()` the two halves of a run's report — the images, which are looked at, and the prose, which is read — are two keys of one array, and which of them the page draws is the thing to say beside them.
 
-`phpscript fmt` relocates a comment written anywhere inside an expression to
-**after the statement that holds it**. Both of these are one pass:
+`phpscript fmt` relocates a comment written anywhere inside an expression to **after the statement that holds it**. Both of these are one pass:
 
 ```php
 return array(
@@ -335,26 +274,15 @@ return array("thread" => $folder, "visual" => $report["images"] !== "");
 // The images are the thing to look at and the prose the thing to read.
 ```
 
-The same happens in an argument list, and in a literal nested one deeper: the
-comment leaves every level and lands after the statement. A comment at the head
-of a block stays where it is written, so the rule is expressions, not comments.
-The result is stable — a second pass changes nothing — which is what makes it
-quiet: the comment now reads as being about the statement after it, and the
-author who moved it next sees no diff.
+The same happens in an argument list, and in a literal nested one deeper: the comment leaves every level and lands after the statement. A comment at the head of a block stays where it is written, so the rule is expressions, not comments. The result is stable — a second pass changes nothing — which is what makes it quiet: the comment now reads as being about the statement after it, and the author who moved it next sees no diff.
 
-`fmt -l` does report the file, so the pipeline does catch it. It cost one
-round trip per file and nothing silent.
+`fmt -l` does report the file, so the pipeline does catch it. It cost one round trip per file and nothing silent.
 
-Correction: nothing in the tree writes a comment inside an expression. Where one
-is wanted it goes above the statement, or into the docblock of the method, or
-into the template that draws the thing. The fix belongs in Go: a comment inside
-an expression keeps its position, the way `gofmt` keeps one inside a composite
-literal.
+Correction: nothing in the tree writes a comment inside an expression. Where one is wanted it goes above the statement, or into the docblock of the method, or into the template that draws the thing. The fix belongs in Go: a comment inside an expression keeps its position, the way `gofmt` keeps one inside a composite literal.
 
 ## 24. An empty path parameter lets the query string stand in for it
 
-`runner/request.go:479` writes a path parameter into `$_REQUEST` only when it
-matched something:
+`runner/request.go:479` writes a path parameter into `$_REQUEST` only when it matched something:
 
 ```go
 value := r.PathValue(param.Name)
@@ -366,63 +294,29 @@ if value != "" {
 }
 ```
 
-A `{rest...}` wildcard that matched nothing is therefore absent, and `$_REQUEST`
-merges the path over the query, so `param("rest")` answers with whatever the
-query string called `rest`. The route `/settings/projects/{rest...}` and the URL
-`/settings/projects/?rest=widget` drew the edit page for `widget`, where Go
-answers 404: the caller supplied a path segment through the query string.
+A `{rest...}` wildcard that matched nothing is therefore absent, and `$_REQUEST` merges the path over the query, so `param("rest")` answers with whatever the query string called `rest`. The route `/settings/projects/{rest...}` and the URL `/settings/projects/?rest=widget` drew the edit page for `widget`, where Go answers 404: the caller supplied a path segment through the query string.
 
-Nothing is escalated by it here — the page the parameter reaches is one the
-caller may already ask for by its real URL — but a path parameter that an
-untrusted query can set is the wrong shape for any check written over it.
+Nothing is escalated by it here — the page the parameter reaches is one the caller may already ask for by its real URL — but a path parameter that an untrusted query can set is the wrong shape for any check written over it.
 
-Correction: a wildcard is read from `Task\Route::path()` with the literal prefix
-cut, never with `param()`. `/settings/projects/?rest=widget` is 404 on both
-front ends, verified. The fix belongs in Go: an empty match of a parameter the
-pattern declares should be written as `""` and shadow the query, the way a
-matched one does. A declared parameter is either present or the route did not
-match, and either way the query has no say in it.
+Correction: a wildcard is read from `Task\Route::path()` with the literal prefix cut, never with `param()`. `/settings/projects/?rest=widget` is 404 on both front ends, verified. The fix belongs in Go: an empty match of a parameter the pattern declares should be written as `""` and shadow the query, the way a matched one does. A declared parameter is either present or the route did not match, and either way the query has no say in it.
 
 ## 25. `html/template` normalises a URL attribute and not a data attribute
 
-`href="{{.}}"` puts Go's escaper in a URL context: it percent-escapes what is
-outside the unreserved set and the URL delimiters, and leaves an existing `%XX`
-alone. The same value in `data-next="{{.}}"` is plain attribute escaping, which
-normalises nothing. MiniTPL has one escaper and applies it to both, so a link
-carrying `?workspace=%20labs` matched in the `data-` attribute and diverged in
-the `href`.
+`href="{{.}}"` puts Go's escaper in a URL context: it percent-escapes what is outside the unreserved set and the URL delimiters, and leaves an existing `%XX` alone. The same value in `data-next="{{.}}"` is plain attribute escaping, which normalises nothing. MiniTPL has one escaper and applies it to both, so a link carrying `?workspace=%20labs` matched in the `data-` attribute and diverged in the `href`.
 
-Correction: `Task\Route::linked()` does the URL normalisation, and a template
-asks for it per link rather than having `href()` fold it in — the two attributes
-want different answers for one value, so the choice belongs at the call site.
-Not a runtime gap in the end, but it is the one place where matching Go's output
-needs a second escaper, and it is invisible until a path carries a `%XX` or a
-space.
+Correction: `Task\Route::linked()` does the URL normalisation, and a template asks for it per link rather than having `href()` fold it in — the two attributes want different answers for one value, so the choice belongs at the call site. Not a runtime gap in the end, but it is the one place where matching Go's output needs a second escaper, and it is invisible until a path carries a `%XX` or a space.
 
 ## 26. A host binding cannot declare that it takes an array
 
-The runtime has two spellings of a PHP list. An array a script writes is a
-`*model.Array`; what `array_keys`, `array_values` or `explode` answer is a Go
-`[]any` (`stdlib/core/arrays.go:69`). `runner/invoke.go:345 coerceArg` converts
-neither into the other, and a binding declaring `*model.Array` refuses the
-slice. The TypeError it raises names one word twice, because both spellings
-print as `array` (`runner/dispatch.go:120`):
+The runtime has two spellings of a PHP list. An array a script writes is a `*model.Array`; what `array_keys`, `array_values` or `explode` answer is a Go `[]any` (`stdlib/core/arrays.go:69`). `runner/invoke.go:345 coerceArg` converts neither into the other, and a binding declaring `*model.Array` refuses the slice. The TypeError it raises names one word twice, because both spellings print as `array` (`runner/dispatch.go:120`):
 
 ```
 call(): Argument #1 must be of type array, array given
 ```
 
-`Task\Folders::warm` asks `Host::folderDirs(array_keys($ask), ...)`. The folder
-tree is drawn on every page, and every page answered 500. No fixture saw it:
-`stubs/host.php` answers in PHP, where both spellings are one type.
+`Task\Folders::warm` asks `Host::folderDirs(array_keys($ask), ...)`. The folder tree is drawn on every page, and every page answered 500. No fixture saw it: `stubs/host.php` answers in PHP, where both spellings are one type.
 
-Correction: every binding parameter that takes a list is declared `any` and read
-in `phpfront/names` or `phpfront/fields` with `model.LenValues` and
-`model.RangeValues`, the runtime's own readers of both spellings. The fix belongs
-in Go, in `coerceArg`: a `[]any` bound for a `*model.Array` parameter wraps, the
-way an `int` bound for a `float64` converts. Until then a binding signature
-states nothing about what it takes, and the error message states nothing about
-the fault.
+Correction: every binding parameter that takes a list is declared `any` and read in `phpfront/names` or `phpfront/fields` with `model.LenValues` and `model.RangeValues`, the runtime's own readers of both spellings. The fix belongs in Go, in `coerceArg`: a `[]any` bound for a `*model.Array` parameter wraps, the way an `int` bound for a `float64` converts. Until then a binding signature states nothing about what it takes, and the error message states nothing about the fault.
 
 ## Not a runtime gap
 

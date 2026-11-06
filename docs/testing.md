@@ -4,20 +4,14 @@ task-ui has two kinds of tests, and `go test ./...` runs only the first.
 
 ## The budget
 
-**A test takes under a second.** One that takes longer is waiting on
-something it could be told about, and the run says which:
+**A test takes under a second.** One that takes longer is waiting on something it could be told about, and the run says which:
 
 ```bash
 atkins test:scope      # the packages a change touched, inside the budget
 atkins test:budget     # every package, inside the budget
 ```
 
-`scripts/test.sh` is both. It scopes by asking git what changed and `go
-list` what imports it, so a change to one package runs that package and
-the packages built on it rather than the ninety that cannot have
-noticed. It then reads its own run through `gotestsum tool slowest` and
-fails on anything over the budget, which is measured on the machine that
-ran it rather than taken from a table.
+`scripts/test.sh` is both. It scopes by asking git what changed and `go list` what imports it, so a change to one package runs that package and the packages built on it rather than the ninety that cannot have noticed. It then reads its own run through `gotestsum tool slowest` and fails on anything over the budget, which is measured on the machine that ran it rather than taken from a table.
 
 ```bash
 scripts/test.sh --all                 # every package
@@ -28,30 +22,21 @@ scripts/test.sh --tag integration ./storage/...
 
 ### What a test must not wait on
 
-- **No `time.Sleep`.** Sleeping for a thing to happen is slow when it
-  works and flaky when it does not. Wait on the channel, the subscription
-  or the `Done()` the code already offers; to prove something did *not*
-  happen, read the channel with a `default` and assert it was empty.
-- **No `sleep` in a fixture's script.** A job that has to still be
-  running when the test looks writes a file and waits for another to
-  appear; the test writes that file when it is ready. A gate is
-  immediate, a sleep is a guess.
-- **Nothing that calls out to Claude or to a real host.** A fake on the
-  PATH answers in microseconds and asserts what was asked of it.
+- **No `time.Sleep`.** Sleeping for a thing to happen is slow when it works and flaky when it does not. Wait on the channel, the subscription or the `Done()` the code already offers; to prove something did *not* happen, read the channel with a `default` and assert it was empty.
+- **No `sleep` in a fixture's script.** A job that has to still be running when the test looks writes a file and waits for another to appear; the test writes that file when it is ready. A gate is immediate, a sleep is a guess.
+- **Nothing that calls out to Claude or to a real host.** A fake on the PATH answers in microseconds and asserts what was asked of it.
 
 ### What a fixture must not build twice
 
-Two costs were measured and both are now paid once per test binary
-rather than once per test:
+Two costs were measured and both are now paid once per test binary rather than once per test:
 
-| What | Was | Is | How |
-|------|-----|----|-----|
-| a migrated database | 64ms | 0.22ms | `internal/testdb.New(t)` copies a template migrated once |
-| a 4096 bit RSA key | 1.5s | 0ms | `internal/testkey.RSA(t)` reads one generated once into `testdata` |
-| the parsed templates | 65ms | once | `shared(t)` in the view tests |
+| What                 | Was  | Is     | How                                                                |
+|----------------------|------|--------|--------------------------------------------------------------------|
+| a migrated database  | 64ms | 0.22ms | `internal/testdb.New(t)` copies a template migrated once           |
+| a 4096 bit RSA key   | 1.5s | 0ms    | `internal/testkey.RSA(t)` reads one generated once into `testdata` |
+| the parsed templates | 65ms | once   | `shared(t)` in the view tests                                      |
 
-Reach for the same shape when a fixture builds something expensive and
-unchanging: build it once behind a `sync.Once`, hand out a copy.
+Reach for the same shape when a fixture builds something expensive and unchanging: build it once behind a `sync.Once`, hand out a copy.
 
 ### Finding the waste
 
@@ -60,10 +45,7 @@ atkins test:duplicate            # which two tests cover the same lines
 scripts/test-duplicate.sh ./runner/... --overlap 90
 ```
 
-It runs each test alone with a coverage profile of its own and compares
-the line sets. A pair over the threshold is a candidate and not a
-verdict: two tests may cover one function and assert different things
-about it. The report is for finding the pairs worth reading.
+It runs each test alone with a coverage profile of its own and compares the line sets. A pair over the threshold is a candidate and not a verdict: two tests may cover one function and assert different things about it. The report is for finding the pairs worth reading.
 
 ## Unit tests
 
@@ -101,9 +83,7 @@ scripts/test-integration.sh ./storage/...    # one package or pattern
 task test:integration -- ./frontend/...      # the same, through task
 ```
 
-An integration test gets five seconds rather than one, because it starts
-processes; `TASK_UI_TEST_BUDGET` moves that, and the run names anything
-over it. What takes longer than five seconds is waiting.
+An integration test gets five seconds rather than one, because it starts processes; `TASK_UI_TEST_BUDGET` moves that, and the run names anything over it. What takes longer than five seconds is waiting.
 
 One `go test` per package, and a package holding more tests than the batch size is split by test name into batches of that size. The names come from `go test -list`, so a test added to a split package runs without the script being edited. Three variables set the bounds:
 
@@ -193,12 +173,12 @@ phpscript is the runtime, not the instance. It carries the PHP standard library 
 
 So a fixture covers what stands on its own, which is most of what a module decides:
 
-| Runs under phpscript | Does not |
-|----------------------|----------|
-| a manager's static side: routing a path, a title, grouping rows for a page | a manager's instance methods, which reach `Task::` |
-| composing a prompt out of rows, over plain arrays | the store, a class over a `Database` |
-| the stamp functions, over the runtime's own `DateTime` | `modinfo.php`, which is `Task::` from its first line |
-| MiniTPL: compiling a template, rendering one with data | |
+| Runs under phpscript                                                       | Does not                                             |
+|----------------------------------------------------------------------------|------------------------------------------------------|
+| a manager's static side: routing a path, a title, grouping rows for a page | a manager's instance methods, which reach `Task::`   |
+| composing a prompt out of rows, over plain arrays                          | the store, a class over a `Database`                 |
+| the stamp functions, over the runtime's own `DateTime`                     | `modinfo.php`, which is `Task::` from its first line |
+| MiniTPL: compiling a template, rendering one with data                     |                                                      |
 
 Naming a class is not constructing one, which is why the static side is static: `RefinementManager::title` and `RefinementPrompt::flatten` are called straight off the class, and the fixture never reaches the constructor that wants a `Database`.
 

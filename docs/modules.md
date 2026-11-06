@@ -73,15 +73,15 @@ A startup file that throws keeps the module from registering, which is what shou
 
 These reach the PHP of every module.
 
-| Symbol                              | What it does                                                                           |
-|-------------------------------------|----------------------------------------------------------------------------------------|
-| `new Task\Module`                   | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion` |
-| `Task::register($module)`           | records the module and its root in the `module` table, and adds its sidebar row        |
+| Symbol                                       | What it does                                                                                     |
+|----------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `new Task\Module`                            | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion`           |
+| `Task::register($module)`                    | records the module and its root in the `module` table, and adds its sidebar row                  |
 | `Task::dispatch($comment, $action, $folder)` | starts a Claude run in that folder of the tree, returns the identifier of the note that holds it |
-| `Task::artifacts($folder)`          | the files under one folder of the artifact tree, by path relative to it                |
-| `Task::artifact($path)`             | the text of one artifact, from the top of the tree, or `""`                            |
-| `Task::markdown($src, $folder)`     | markdown as HTML, through the renderer that owns the content policy                    |
-| `new Database("task-ui")`           | the instance's database, with `query`, `get`, `get_all` and `insert`                   |
+| `Task::artifacts($folder)`                   | the files under one folder of the artifact tree, by path relative to it                          |
+| `Task::artifact($path)`                      | the text of one artifact, from the top of the tree, or `""`                                      |
+| `Task::markdown($src, $folder)`              | markdown as HTML, through the renderer that owns the content policy                              |
+| `new Database("task-ui")`                    | the instance's database, with `query`, `get`, `get_all` and `insert`                             |
 
 `Task::VERSION` is the instance's version and `Task::PREFIX` is `/m`.
 
@@ -158,9 +158,7 @@ So a module dropped in at runtime, from outside the binary, cannot create a tabl
 
 ### The store, and the manager over it
 
-Every statement a module runs lives in one class, `<Module>Store`, the
-way a Go package keeps its queries in `storage/` and nothing outside it
-issues one. A page that writes its own SQL is the thing this stops.
+Every statement a module runs lives in one class, `<Module>Store`, the way a Go package keeps its queries in `storage/` and nothing outside it issues one. A page that writes its own SQL is the thing this stops.
 
 ```php
 class RefinementStore {
@@ -180,24 +178,13 @@ class RefinementStore {
 }
 ```
 
-- A read is `get<Thing>()` and answers rows or a value. One that needs
-  more than one statement composes them in the class, not in the page.
-- A write is a CRUD verb and the table it writes:
-  `createRefinementThread`, `updateRefinementThread`. It takes one array
-  whose keys are the table's columns, so the call site reads as the row
-  it writes and a new column is a new key rather than a new argument.
-- A statement that returns no rows goes through `query()`. The binding
-  has no `delete`.
-- `get()` answers a missing row with `false`. A caller tests
-  `is_array($row)`.
+- A read is `get<Thing>()` and answers rows or a value. One that needs more than one statement composes them in the class, not in the page.
+- A write is a CRUD verb and the table it writes: `createRefinementThread`, `updateRefinementThread`. It takes one array whose keys are the table's columns, so the call site reads as the row it writes and a new column is a new key rather than a new argument.
+- A statement that returns no rows goes through `query()`. The binding has no `delete`.
+- `get()` answers a missing row with `false`. A caller tests `is_array($row)`.
 - Nothing in the store renders, routes or dispatches.
 
-`<Module>Manager` is what decides. It holds the store, it is made once
-per request, and the work of the module is its methods: what a thread
-does, what a correction is counted against, what a page load reconciles.
-Its static side is the part that needs no host binding — parsing a
-title, grouping rows for a page — and that is the part a `.phpt` fixture
-calls, which is why it is static rather than free.
+`<Module>Manager` is what decides. It holds the store, it is made once per request, and the work of the module is its methods: what a thread does, what a correction is counted against, what a page load reconciles. Its static side is the part that needs no host binding — parsing a title, grouping rows for a page — and that is the part a `.phpt` fixture calls, which is why it is static rather than free.
 
 The rules are the instance's:
 
@@ -258,14 +245,8 @@ phpscript decided against these, and they will not arrive. The full list is in t
 - Generators, `yield`, fibers, `eval`, `goto`, `global`, references outside `foreach`, `$$name`.
 - `??` and `??=`, the null coalescing operators: the parser refuses the second `?`. Write `isset($a["k"]) ? $a["k"] : $fallback`. The short ternary, `$a ?: $b`, does parse.
 - `strtok`. Use `explode` and take the first entry.
-- `date()`, which answers with the layout it was handed rather than a
-  time. `DateTime::now()->format("2006-01-02 15:04:05.000000")` is the
-  one that reads the clock, and a row written through `date()` carries
-  the layout as its timestamp with nothing to say it went wrong.
-- A monotonic `ulid()`. Two in one millisecond share the timestamp and
-  carry unordered random tails, so an identifier is no tiebreak for a
-  second-resolution stamp: order rows by a timestamp that holds
-  microseconds.
+- `date()`, which answers with the layout it was handed rather than a time. `DateTime::now()->format("2006-01-02 15:04:05.000000")` is the one that reads the clock, and a row written through `date()` carries the layout as its timestamp with nothing to say it went wrong.
+- A monotonic `ulid()`. Two in one millisecond share the timestamp and carry unordered random tails, so an identifier is no tiebreak for a second-resolution stamp: order rows by a timestamp that holds microseconds.
 - `session_start` and `$_SESSION`, PDO, `mysqli_*`, `curl_*`, `proc_*`, `uniqid`, `strftime`, `mktime`, the spaceship operator. `ulid()` is there, which is what a primary key wants.
 
 `$db->get()` answers a missing row with `false`, the way PHP does, and not with `null`. Test it with `is_array($row)`: a `=== null` reads every missing row as a hit, and the page draws an empty one.

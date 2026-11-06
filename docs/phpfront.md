@@ -212,56 +212,56 @@ A number a page prints is Go's arithmetic and not an equivalent of it. `Task\Act
 
 All fifty-two of them, in the order `phpfront/bind.go` registers them. Calls sharing a reason share a row.
 
-| Call                                            | Why it is not PHP                                                          |
-|-------------------------------------------------|----------------------------------------------------------------------------|
-| `base()`                                        | where the router is mounted                                                |
-| `version()`                                     | the instance's version                                                     |
-| `now()`                                         | the instance's clock, which `TASK_UI_NOW` pins                             |
-| `login()`                                       | whether a sign in is required, which the Guard decides                     |
-| `assets()`, `assetVersion()`                    | where the static files answer, and their content hash                      |
-| `whoami()`                                      | the name the Guard resolved; the row behind it is `Task\User`              |
-| `folders()`                                     | `folder.Catalogue` parses Taskfiles to find jobs                           |
-| `job($folder, $dir, $id)`                       | the job a run names, read off that directory's own Taskfile                |
-| `projects($workspace)`                          | the directories under a workspace's `src`, a walk of the filesystem        |
-| `folderDir($id, $workspaces)`                   | the directory a folder ID names, the catalogue's or the layout's           |
-| `isDir($folder, $rel)`                          | whether a directory a pin names is there, outside the PHP root             |
-| `commit($dir)`                                  | git's last commit time, through the cache both front ends read             |
-| `running()`                                     | the runner's memory, where a run lives until it ends                       |
-| `flows()`                                       | the workflow runner's memory, by the workflow each run is of               |
-| `session($id)`                                  | one run as the runner holds it, which is ahead of its row                  |
-| `frame($id)`                                    | the last screen of a live run, as the SVG the page embeds                  |
-| `screen($id, $cast, $cols)`                     | the last screen of a run that ended, replayed from its recording           |
-| `expired($cast, $state)`                        | whether the recording a run names is still on disk                         |
-| `claude()`                                      | whether the reader has a token for Claude, which the integration holds     |
-| `dirty($dir)`                                   | git's answer, not a row                                                    |
-| `rules()`                                       | `config/permissions.yml`, embedded in the binary                           |
-| `publish($topic, $payload)`                     | the stream every live label reads                                          |
-| `dispatch($comment, $action, $folder)`          | starting a run is the runner's, and the prompt reads a file outside the PHP root |
-| `run($note)`                                    | which run a dispatch turned into, asked once the board has started one     |
-| `markdown($src, $prefix, $dir)`                 | the renderer that owns the content security policy                         |
-| `message($src, $prefix, $link)`                 | the same, with a line break kept and `@name` marked                        |
-| `artifacts($folder)`, `artifact($path)`         | the artifact tree, outside the directory the PHP may open                  |
-| `tree($dir)`                                    | one directory of that tree, listed a level at a time                       |
-| `space()`, `spaces($dirs)`                      | `diskusage`, which walks the folders                                       |
-| `inventory($hosts)`, `host($n, $hosts)`         | `beszel`, `hostinfo` and the ssh prober, one instance of each              |
-| `reachable()`                                   | the same prober, for the hosts a command can run on                        |
-| `tooling()`                                     | atkins' report, which task-ui reads by running atkins                      |
-| `place($folder, $rel)`                          | a folder of the catalogue, or a directory inside one                       |
-| `groups($folder, $rel, $seen, $shell, $claude)` | the Jobs table of a place: a row per pipeline file the walk found          |
-| `listing($folder, $rel, $seen)`                 | a directory as the Files panel draws it                                    |
-| `rootTree($named, $seen)`                       | the root's own directories, as the root's page draws them                  |
-| `modTime($dir)`                                 | when a directory last changed, which no row records                        |
-| `status($dir)`                                  | git's branch, ahead, behind and remote of a checkout                       |
-| `checkout($dir)`                                | the commit a checkout is at and the space it takes                         |
-| `hours($text)`                                  | an hours rule read, by the parser the scheduler obeys                      |
-| `keys()`                                        | `keystore` holds private key material, which does not enter PHP            |
-| `keyFolders()`                                  | the `.ssh` of a checkout that keeps keys of its own, which no run is given |
-| `instance($admin)`                              | what the server runs with: its flags, its environment, its paths           |
-| `usage()`                                       | what each area of the retention table holds now, measured off disk         |
-| `telemetry()`                                   | the options the tracer runs on, which the tracer owns                      |
+| Call                                            | Why it is not PHP                                                                    |
+|-------------------------------------------------|--------------------------------------------------------------------------------------|
+| `base()`                                        | where the router is mounted                                                          |
+| `version()`                                     | the instance's version                                                               |
+| `now()`                                         | the instance's clock, which `TASK_UI_NOW` pins                                       |
+| `login()`                                       | whether a sign in is required, which the Guard decides                               |
+| `assets()`, `assetVersion()`                    | where the static files answer, and their content hash                                |
+| `whoami()`                                      | the name the Guard resolved; the row behind it is `Task\User`                        |
+| `folders()`                                     | `folder.Catalogue` parses Taskfiles to find jobs                                     |
+| `job($folder, $dir, $id)`                       | the job a run names, read off that directory's own Taskfile                          |
+| `projects($workspace)`                          | the directories under a workspace's `src`, a walk of the filesystem                  |
+| `folderDir($id, $workspaces)`                   | the directory a folder ID names, the catalogue's or the layout's                     |
+| `isDir($folder, $rel)`                          | whether a directory a pin names is there, outside the PHP root                       |
+| `commit($dir)`                                  | git's last commit time, through the cache both front ends read                       |
+| `running()`                                     | the runner's memory, where a run lives until it ends                                 |
+| `flows()`                                       | the workflow runner's memory, by the workflow each run is of                         |
+| `session($id)`                                  | one run as the runner holds it, which is ahead of its row                            |
+| `frame($id)`                                    | the last screen of a live run, as the SVG the page embeds                            |
+| `screen($id, $cast, $cols)`                     | the last screen of a run that ended, replayed from its recording                     |
+| `expired($cast, $state)`                        | whether the recording a run names is still on disk                                   |
+| `claude()`                                      | whether the reader has a token for Claude, which the integration holds               |
+| `dirty($dir)`                                   | git's answer, not a row                                                              |
+| `rules()`                                       | `config/permissions.yml`, embedded in the binary                                     |
+| `publish($topic, $payload)`                     | the stream every live label reads                                                    |
+| `dispatch($comment, $action, $folder)`          | starting a run is the runner's, and the prompt reads a file outside the PHP root     |
+| `run($note)`                                    | which run a dispatch turned into, asked once the board has started one               |
+| `markdown($src, $prefix, $dir)`                 | the renderer that owns the content security policy                                   |
+| `message($src, $prefix, $link)`                 | the same, with a line break kept and `@name` marked                                  |
+| `artifacts($folder)`, `artifact($path)`         | the artifact tree, outside the directory the PHP may open                            |
+| `tree($dir)`                                    | one directory of that tree, listed a level at a time                                 |
+| `space()`, `spaces($dirs)`                      | `diskusage`, which walks the folders                                                 |
+| `inventory($hosts)`, `host($n, $hosts)`         | `beszel`, `hostinfo` and the ssh prober, one instance of each                        |
+| `reachable()`                                   | the same prober, for the hosts a command can run on                                  |
+| `tooling()`                                     | atkins' report, which task-ui reads by running atkins                                |
+| `place($folder, $rel)`                          | a folder of the catalogue, or a directory inside one                                 |
+| `groups($folder, $rel, $seen, $shell, $claude)` | the Jobs table of a place: a row per pipeline file the walk found                    |
+| `listing($folder, $rel, $seen)`                 | a directory as the Files panel draws it                                              |
+| `rootTree($named, $seen)`                       | the root's own directories, as the root's page draws them                            |
+| `modTime($dir)`                                 | when a directory last changed, which no row records                                  |
+| `status($dir)`                                  | git's branch, ahead, behind and remote of a checkout                                 |
+| `checkout($dir)`                                | the commit a checkout is at and the space it takes                                   |
+| `hours($text)`                                  | an hours rule read, by the parser the scheduler obeys                                |
+| `keys()`                                        | `keystore` holds private key material, which does not enter PHP                      |
+| `keyFolders()`                                  | the `.ssh` of a checkout that keeps keys of its own, which no run is given           |
+| `instance($admin)`                              | what the server runs with: its flags, its environment, its paths                     |
+| `usage()`                                       | what each area of the retention table holds now, measured off disk                   |
+| `telemetry()`                                   | the options the tracer runs on, which the tracer owns                                |
 | `integrations()`                                | the services' registry, Go data, and their settings, which the instance key encrypts |
-| `modules()`                                     | the plugins the instance serves under `/m`, which the module host loaded   |
-| `entries($workspaces)`                          | the project directories under each workspace's `src`, a walk               |
+| `modules()`                                     | the plugins the instance serves under `/m`, which the module host loaded             |
+| `entries($workspaces)`                          | the project directories under each workspace's `src`, a walk                         |
 
 A Go slice crosses as a PHP array and a Go struct crosses as a host object whose fields no key reaches, so `phpfront/convert.go` converts: everything that arrives is an array all the way down, keyed by the names `phpfront/host.go` declares as json tags. A binding that answers a shape adds a converter there and a case to `bind_test`.
 

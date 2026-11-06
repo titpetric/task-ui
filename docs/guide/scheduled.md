@@ -47,11 +47,11 @@ When task-ui first starts it schedules `@cleanup` `@daily` as the first admin, o
 
 The triage is a prompt thread on the failed run's page, which Claude answers in the run's folder with the run's details and the end of its output. Claude reads the job in the folder, finds the root cause and, when the fix is inside the folder, in its code, its pipeline file or configuration it may edit, makes it and commits it. It changes no task-ui setting, user or secret, and runs the job again only when the fix is trivially safe. Its answer ends with one of three results:
 
-| Result         | Meaning                                                               |
-|----------------|-----------------------------------------------------------------------|
-| `resolved`     | Claude found the cause and fixed it in the folder                     |
-| `not resolved` | Claude found no fix it could make, or the prompt itself failed        |
-| `no action`    | the cause is outside the folder, or transient                         |
+| Result         | Meaning                                                        |
+|----------------|----------------------------------------------------------------|
+| `resolved`     | Claude found the cause and fixed it in the folder              |
+| `not resolved` | Claude found no fix it could make, or the prompt itself failed |
+| `no action`    | the cause is outside the folder, or transient                  |
 
 The thread on the run's page keeps the full record of what Claude read and did. Once it answered, the schedule's user leaves a note on the [Notes](notes.md) board that names the task, the result and the run:
 

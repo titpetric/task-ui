@@ -54,16 +54,16 @@ Below the choice, an admin sees every variable of the server by name, never its 
 
 `/settings/retention` is one table of what the instance keeps, a row per area, with the columns **Area**, **What goes**, **Keep**, **Size limit** and **Holds now**. The line above the table names `@cleanup`, the job of the root folder that applies the rules, linking its runs, and says when it last ran and how it ended, linking the run. Every area the instance records has a row, and every area grows under a rule:
 
-| Area                     | What goes                                                                                                                                     | What stays                                                                                                        | Rule                                     |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|------------------------------------------|
-| **Run recordings**       | the `.cast` file of a finished run, its output                                                                                                | the run, who started it and how it ended; its page says the recording expired                                     | age and size                             |
-| **Run history**          | the rows of runs older than the age, with their recordings, summaries and the prompt threads about them                                       | runs in progress or queued, and the cleanup's own                                                                 | age and size, the size their recordings' |
-| **Prompt threads**       | prompt threads whose last reply is older than the age, with their replies                                                                     | the runs; the board's notes, which people write, at any age; a thread with an open or working instruction         | age                                      |
-| **Workflow run history** | workflow runs older than the age, with their steps, answers and the threads of their prompts                                                  | the workflows; a workflow run in progress                                                                         | age                                      |
-| **Artifact history**     | earlier versions of the artifact tree's files, with their records                                                                             | the latest version of every file in the tree                                                                      | age and size                             |
-| **Secret read log**      | which run got which secret                                                                                                                    | the last 1000 reads of each secret, which the log always keeps                                                    | age                                      |
-| **Expired sign-ins**     | tokens and browser sessions past their expiry                                                                                                 | the ones still signing in                                                                                         | fixed: removed every cleanup, no setting |
-| **Tool history**         | the runs and commands older than the age in `atkins.db` of each workspace's home and the instance's own copy, which atkins prunes and vacuums | the newer runs and commands, the databases                                                                        | age                                      |
+| Area                     | What goes                                                                                                                                     | What stays                                                                                                | Rule                                     |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|------------------------------------------|
+| **Run recordings**       | the `.cast` file of a finished run, its output                                                                                                | the run, who started it and how it ended; its page says the recording expired                             | age and size                             |
+| **Run history**          | the rows of runs older than the age, with their recordings, summaries and the prompt threads about them                                       | runs in progress or queued, and the cleanup's own                                                         | age and size, the size their recordings' |
+| **Prompt threads**       | prompt threads whose last reply is older than the age, with their replies                                                                     | the runs; the board's notes, which people write, at any age; a thread with an open or working instruction | age                                      |
+| **Workflow run history** | workflow runs older than the age, with their steps, answers and the threads of their prompts                                                  | the workflows; a workflow run in progress                                                                 | age                                      |
+| **Artifact history**     | earlier versions of the artifact tree's files, with their records                                                                             | the latest version of every file in the tree                                                              | age and size                             |
+| **Secret read log**      | which run got which secret                                                                                                                    | the last 1000 reads of each secret, which the log always keeps                                            | age                                      |
+| **Expired sign-ins**     | tokens and browser sessions past their expiry                                                                                                 | the ones still signing in                                                                                 | fixed: removed every cleanup, no setting |
+| **Tool history**         | the runs and commands older than the age in `atkins.db` of each workspace's home and the instance's own copy, which atkins prunes and vacuums | the newer runs and commands, the databases                                                                | age                                      |
 
 Every rule keeps 31 days at the start. **Keep** picks 24 hours, 7 days, 31 days, 90 days, 365 days or Never; **Size limit**, in the rows whose items have a size, picks one of these, and a limit saved through the API that is none of them shows as an option of its own. The closed select always shows the saved limit:
 
@@ -87,48 +87,30 @@ Anyone who may open a step of the settings reads the page; an admin saves the ru
 
 ## Telemetry
 
-`/settings/telemetry` is the one form that configures what the instance
-records of its own work. With it on, every sampled request becomes a
-trace: the spans of the handler, the spans of the database calls under
-it and, on a [module](modules.md) page, the spans of the PHP that ran
-inside the request, in the same trace. `/debug/oida` is where the traces
-are read, and an admin alone may open it.
+`/settings/telemetry` is the one form that configures what the instance records of its own work. With it on, every sampled request becomes a trace: the spans of the handler, the spans of the database calls under it and, on a [module](modules.md) page, the spans of the PHP that ran inside the request, in the same trace. `/debug/oida` is where the traces are read, and an admin alone may open it.
 
-| Setting              | What it does                                                                        |
-|----------------------|-------------------------------------------------------------------------------------|
-| **Enabled**          | records traces. Off, a request passes through and costs nothing                     |
-| **Service name**     | the name on every trace and in the heading of the dashboard                         |
-| **Sample rate**      | the percentage of requests traced, 0 to 100                                         |
-| **Retained traces**  | how many finished traces the ring buffer holds; the oldest go first                 |
-| **Top requests**     | how many groups the rolling statistics keep                                         |
-| **Spans per trace**  | the cap on one trace's spans. The rest are counted, not kept. Zero is no cap        |
+| Setting                 | What it does                                                                                                                                          |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Enabled**             | records traces. Off, a request passes through and costs nothing                                                                                       |
+| **Service name**        | the name on every trace and in the heading of the dashboard                                                                                           |
+| **Sample rate**         | the percentage of requests traced, 0 to 100                                                                                                           |
+| **Retained traces**     | how many finished traces the ring buffer holds; the oldest go first                                                                                   |
+| **Top requests**        | how many groups the rolling statistics keep                                                                                                           |
+| **Spans per trace**     | the cap on one trace's spans. The rest are counted, not kept. Zero is no cap                                                                          |
 | **Shortest debug span** | the shortest span marked as detail a trace keeps, spelled as a duration, `1ms` or `500us`. A shorter one is dropped and counted. Zero keeps every one |
-| **Refresh interval** | how often the live view reloads, in seconds, where the browser cannot stream        |
-| **Live stream**      | serves the live view over server sent events, so a trace appears as it happens      |
-| **Capture logs**     | records the log lines a trace writes. Off, an error still lands on its span         |
-| **Track memory use** | records the process's allocation change per trace                                   |
-| **Trust Request-Id** | reuses a client's `Request-Id` header as the trace identifier. Behind a trusted proxy alone |
-| **Ignored paths**    | the paths never traced, one per line. An entry ending in `/*` matches by prefix     |
-| **Allowed networks** | the CIDR ranges that may open the dashboard, empty for every network                |
+| **Refresh interval**    | how often the live view reloads, in seconds, where the browser cannot stream                                                                          |
+| **Live stream**         | serves the live view over server sent events, so a trace appears as it happens                                                                        |
+| **Capture logs**        | records the log lines a trace writes. Off, an error still lands on its span                                                                           |
+| **Track memory use**    | records the process's allocation change per trace                                                                                                     |
+| **Trust Request-Id**    | reuses a client's `Request-Id` header as the trace identifier. Behind a trusted proxy alone                                                           |
+| **Ignored paths**       | the paths never traced, one per line. An entry ending in `/*` matches by prefix                                                                       |
+| **Allowed networks**    | the CIDR ranges that may open the dashboard, empty for every network                                                                                  |
 
-A page served by the PHP front end reports a span per PHP frame and
-marks each as detail, which is what **Shortest debug span** decides on:
-a page calling two hundred methods would otherwise fill its trace with
-two hundred spans of a microsecond and the request they belong to would
-be somewhere underneath. The instance's default is a millisecond, and a
-dropped frame gives its slot in **Spans per trace** back to the work
-that needs it. How much the interpreter reports at all is the front
-end's `trace_level`, which is not a setting of this page.
+A page served by the PHP front end reports a span per PHP frame and marks each as detail, which is what **Shortest debug span** decides on: a page calling two hundred methods would otherwise fill its trace with two hundred spans of a microsecond and the request they belong to would be somewhere underneath. The instance's default is a millisecond, and a dropped frame gives its slot in **Spans per trace** back to the work that needs it. How much the interpreter reports at all is the front end's `trace_level`, which is not a setting of this page.
 
-**Enabled** takes effect on save and keeps the traces already recorded.
-Every other setting rebuilds the recorder, which empties the ring
-buffer: the page says so above the button. The settings live in the
-`setting` table as `telemetry.options`, so they survive a restart, and
-the `OIDA_*` variables of the environment set the first start of a fresh
-instance.
+**Enabled** takes effect on save and keeps the traces already recorded. Every other setting rebuilds the recorder, which empties the ring buffer: the page says so above the button. The settings live in the `setting` table as `telemetry.options`, so they survive a restart, and the `OIDA_*` variables of the environment set the first start of a fresh instance.
 
-Anyone who may open a step of the settings reads the page; an admin
-saves it, with `PUT /api/telemetry`.
+Anyone who may open a step of the settings reads the page; an admin saves it, with `PUT /api/telemetry`.
 
 ## Keys
 
@@ -415,12 +397,12 @@ A user's edit page has the same matrix under **Permissions**, for their own poli
 
 The application's permissions gate what the sections do not:
 
-| Permission             | Rule    | Gates                                                                                                                                                                                                                                                               |
-|------------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Run Jobs               | `run`   | starting a folder's jobs and ending their runs, from the pages, the API and `run_job`; a workflow takes it for every step, and a schedule for its job                                                                                                               |
-| Enter Shell            | `shell` | **Enter Shell**, the job `@shell`, an interactive `bash -l`, and **Enter Claude**, the job `@claude`, which also takes a Claude token; task-ui checks it besides their allow list, which names the admin role and no folder rule widens: admins alone start them   |
-| Run on Hosts           | `hosts` | the command form of [Inventory](inventory.md), which runs a command on its hosts over ssh, and its **Run and summarize**                                                                                                                                            |
-| Allow interactive mode | `input` | **Take input** in the run window: typing into a running run of a job that takes no input, to answer a prompt it waits on (see [Runs](runs.md#the-run-window))                                                                                                       |
+| Permission             | Rule    | Gates                                                                                                                                                                                                                                                            |
+|------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Run Jobs               | `run`   | starting a folder's jobs and ending their runs, from the pages, the API and `run_job`; a workflow takes it for every step, and a schedule for its job                                                                                                            |
+| Enter Shell            | `shell` | **Enter Shell**, the job `@shell`, an interactive `bash -l`, and **Enter Claude**, the job `@claude`, which also takes a Claude token; task-ui checks it besides their allow list, which names the admin role and no folder rule widens: admins alone start them |
+| Run on Hosts           | `hosts` | the command form of [Inventory](inventory.md), which runs a command on its hosts over ssh, and its **Run and summarize**                                                                                                                                         |
+| Allow interactive mode | `input` | **Take input** in the run window: typing into a running run of a job that takes no input, to answer a prompt it waits on (see [Runs](runs.md#the-run-window))                                                                                                    |
 
 The admin role may do everything and holds no policy. The other roles, and the `claude` user, start with these policies; everything else they lack until a policy allows it:
 
@@ -466,32 +448,15 @@ The API sets two more on a project: `commands`, the program a kind of job runs w
 
 ## Sidebar
 
-`/settings/sidebar` is the sidebar itself, as a table: a row per item,
-in the order the sidebar lists them, with the columns **Order**,
-**Item**, **Link** and **Shown**. Every item of the sidebar's top block
-has a row, Dashboard through Settings, and so does every
-[module](modules.md) the instance found.
+`/settings/sidebar` is the sidebar itself, as a table: a row per item, in the order the sidebar lists them, with the columns **Order**, **Item**, **Link** and **Shown**. Every item of the sidebar's top block has a row, Dashboard through Settings, and so does every [module](modules.md) the instance found.
 
-Drag a row by its grip to move it, or focus the grip and press the up
-and down arrows; **Move up** and **Move down** in the row's **⋯** menu
-do the same with the keyboard alone. The **Shown** switch leaves an item
-out of the sidebar without deleting it. Nothing is saved until **Save**
-at the bottom of the table, which writes the whole table at once with
-`PUT /api/sidebar`, so a change that goes wrong is one reload away from
-the state before it.
+Drag a row by its grip to move it, or focus the grip and press the up and down arrows; **Move up** and **Move down** in the row's **⋯** menu do the same with the keyboard alone. The **Shown** switch leaves an item out of the sidebar without deleting it. Nothing is saved until **Save** at the bottom of the table, which writes the whole table at once with `PUT /api/sidebar`, so a change that goes wrong is one reload away from the state before it.
 
-An item the sidebar hides is still reachable by its link, and the
-permission of the page behind it still decides: hiding Settings takes
-the row out of the sidebar and leaves `/settings` open to whoever may
-read it. A row names the rule of its page, and a user without that
-rule never sees the row at all.
+An item the sidebar hides is still reachable by its link, and the permission of the page behind it still decides: hiding Settings takes the row out of the sidebar and leaves `/settings` open to whoever may read it. A row names the rule of its page, and a user without that rule never sees the row at all.
 
-A module that registers gets a row at the end, shown. A module that is
-gone loses its row, and the order of the rest stays.
+A module that registers gets a row at the end, shown. A module that is gone loses its row, and the order of the rest stays.
 
-The order lives in the `sidebar` table as a position per row, written
-from the order of the rows the form posts. An instance with no rows
-seeds them from the fixed list the sidebar had before the table existed.
+The order lives in the `sidebar` table as a position per row, written from the order of the rows the form posts. An instance with no rows seeds them from the fixed list the sidebar had before the table existed.
 
 ---
 
