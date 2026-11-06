@@ -31,17 +31,24 @@ An instance without the workflow says so on send and keeps the recording. Build 
 
 Four orbs are drawn on one canvas. Each is a radial greyscale, white in the middle and black at the rim, and the four are summed, so two that overlap sum past white. The sum is read through a palette of black to colour to white, and the pair then draws as one body with one outline. Every orb keeps the path it came along: the trail is drawn out of it, and so is the chain.
 
-They take one of three formations, and one becomes the next over a second and a half:
+One formation per state of the window, and one becomes the next over a second and a half. The window names its state on every step of the run, so the three change flight path as the work moves on:
 
-| State                            | What the orbs do                                                                                                                                             |
-|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Waiting                          | The middle orb holds at the centre and the other three walk their own tilted circles around it.                                                              |
-| Recording, until the reply lands | The middle orb leads, sweeping twice across the canvas for once down, and the other three follow along the path it left, each a gap behind the one in front. |
-| Answered                         | The middle orb returns to the centre and the other three turn on one flat circle below it, drawn smaller because every z on that circle is negative.         |
+| State        | Colour  | What the orbs do                                                                                                                                             |
+|--------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Idle         | violet  | The middle orb holds at the centre and the other three walk their own tilted rosettes around it, each swinging in and out on its own period.                 |
+| Recording    | red     | The middle orb leads, sweeping twice across the canvas for once down, and the other three follow along the path it left, each a gap behind the one in front. |
+| Paused       | orange  | The chain curls onto one upright circle around the middle orb and turns slowly on it.                                                                        |
+| Transcribing | teal    | The three stack into a column and sweep across the canvas, through the middle orb.                                                                           |
+| Thinking     | blue    | The three turn fast and close around the middle orb, each on its own tilted plane.                                                                           |
+| Speaking     | magenta | Each of the three runs out from the middle orb along its own spoke, swelling from nothing and back to nothing, one after the other.                          |
+| Answered     | green   | The middle orb returns to the centre and the other three turn on one flat circle below it, drawn smaller because every z on that circle is negative.         |
+| Failed       | grey    | The three stand off at the rim and turn there, and the middle orb is left alone.                                                                             |
 
-No orbit crosses the middle orb. Each is tilted until its closest approach leaves a thin neck of field between the two, so a pass draws a drop that forms and breaks. The distance is solved from the orb radii when the page loads.
+Two of the three orbits hold off the middle orb. Each is pulled in and tilted until its closest approach leaves a thin neck of field between the two, so a pass draws a drop that forms and breaks; the distance is solved from the orb radii when the page loads. The third dives: its path runs from the centre out past the middle orb and back, so the pair merges at the inner end of every swing.
 
-The middle orb is the one that answers you. Its radius swings 12% over four and a half seconds while nothing is happening, rises with how loud you are while recording, and swells a quarter and settles when you press it. Its colour is the state: purple waiting, red recording, green once a reply has landed.
+The middle orb is the one that answers you. Its radius swings 12% over four and a half seconds while nothing is happening, rises with how loud you are while recording, and swells a quarter and settles when you press it.
+
+Every orb puts the same field into the middle of itself. The trail is normalised: an orb's samples land on the orb wherever it is slow, so a long trail would otherwise draw a third brighter than a short one.
 
 Reduced motion draws one frame and runs no loop.
 

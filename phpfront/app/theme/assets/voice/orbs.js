@@ -32,6 +32,13 @@
   var STEP = 0.03;
   var SPAN = 4;
 
+  // WAKE is the field a trail adds over the orb that laid it, as a fraction
+  // of the orb. The samples fall on the orb itself wherever it is slow, so
+  // the weights are normalised to WAKE whatever TRAIL is and whatever an
+  // orb's own tail is: an orb with a long trail would otherwise draw a third
+  // brighter in the middle than one without.
+  var WAKE = 0.18;
+
   // SPRITE is the radius the one greyscale orb is drawn at. Every orb is that
   // image scaled, so a frame costs one drawImage per orb per trail sample.
   var SPRITE = 64;
@@ -66,6 +73,28 @@
       [0, 0, 0, 0], [40, 4, 36, 16], [90, 12, 98, 44], [140, 28, 158, 78],
       [190, 80, 206, 124], [228, 150, 234, 180], [248, 215, 250, 230], [255, 255, 255, 255],
     ],
+    paused: [
+      [0, 0, 0, 0], [40, 44, 18, 2], [90, 114, 48, 6], [140, 178, 84, 12],
+      [190, 226, 128, 36], [228, 244, 176, 96], [248, 252, 224, 190], [255, 255, 255, 255],
+    ],
+    transcribing: [
+      [0, 0, 0, 0], [40, 4, 36, 34], [90, 10, 92, 86], [140, 20, 148, 138],
+      [190, 56, 196, 184], [228, 130, 228, 218], [248, 208, 248, 244], [255, 255, 255, 255],
+    ],
+    thinking: [
+      [0, 0, 0, 0], [40, 6, 14, 44], [90, 14, 38, 110], [140, 28, 70, 172],
+      [190, 62, 116, 214], [228, 128, 170, 238], [248, 206, 224, 250], [255, 255, 255, 255],
+    ],
+    speaking: [
+      [0, 0, 0, 0], [40, 40, 4, 34], [90, 104, 12, 90], [140, 164, 26, 142],
+      [190, 212, 70, 190], [228, 238, 134, 222], [248, 250, 208, 244], [255, 255, 255, 255],
+    ],
+    // A run that answered with nothing drops the hue: grey with a trace of
+    // blue, which separates it from a canvas that failed to paint.
+    failed: [
+      [0, 0, 0, 0], [40, 36, 38, 40], [90, 88, 90, 94], [140, 138, 140, 144],
+      [190, 186, 188, 192], [228, 222, 224, 226], [248, 244, 245, 246], [255, 255, 255, 255],
+    ],
   };
 
   // BLEND is how long one palette takes to become the next, MORPH how long
@@ -73,18 +102,26 @@
   var BLEND = 0.4;
   var MORPH = 1.6;
 
-  // Each orb walks a circle of radius R in a plane turned by turn degrees,
-  // once every secs, starting at the fraction at of it. A negative secs walks
-  // it the other way, and half of secs is the time it takes to cross the
-  // window. tilt and size are solved below.
+  // Each orb walks a plane turned by turn degrees, once every secs, starting
+  // at the fraction at of the turn. A negative secs walks it the other way.
+  // Its distance from the middle swings between low of R and R every swing
+  // seconds, starting at the fraction swingAt of that, and sway rocks the
+  // angle by that many radians every swaySecs, so the path draws a rosette
+  // whose lobes move. None of the periods share a factor, and the three
+  // swingAt hold the three orbs off one radius at a time. tilt and size are
+  // solved below.
   var ORBS = [
-    // An R of nothing holds this one at the centre. tail of one keeps the
-    // wake off it: a trail of an orb that does not move stacks on the orb
-    // itself and drives the middle of the field to white.
-    { R: 0, turn: 0, secs: 1, size: 0, at: 0, tail: 1, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
-    { R: 72, turn: 15, secs: 6.3, size: 34, at: 0 },
-    { R: 76, turn: 70, secs: 8.8, size: 26, at: 0.11 },
-    { R: 52, turn: 120, secs: -6.9, size: 32, at: 0.72 },
+    // An R of nothing holds this one at the centre. A tail of two is the
+    // shortest there is: it holds still in two of the formations, where
+    // fourteen samples of a trail would land on it and nowhere else.
+    { R: 0, turn: 0, secs: 1, size: 0, at: 0, tail: 2, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
+    { R: 72, turn: 15, secs: 6.3, size: 34, at: 0, low: 0.55, swing: 9.7, swingAt: 0, sway: 0.35, swaySecs: 5.1 },
+    { R: 66, turn: 70, secs: 8.8, size: 26, at: 0.11, low: 0.45, swing: 7.3, swingAt: 0.38, sway: 0.5, swaySecs: 6.7 },
+    // dive takes this one through 0,0,0 and back out past the middle orb, so
+    // the pair merges at the inner end of every swing and parts again. Its R
+    // is the shortest of the three, about four fifths of the longest, and its
+    // tilt is written down: no tilt clears a path that reaches the centre.
+    { R: 58, turn: 120, secs: -6.9, size: 32, at: 0.72, low: 0, dive: true, tilt: 34, swing: 8.6, swingAt: 0.71, sway: 0.28, swaySecs: 4.3 },
   ];
 
   // NECK is the field wanted at the thinnest point between two orbs at their
@@ -108,6 +145,18 @@
   var RINGR = 66;
   var RINGZ = -86;
   var RINGY = 0;
+
+  // One period each for the formations the three take while the instance
+  // works, and the reach of the two that leave the middle.
+  var COIL = 7.4;
+  var SCAN = 3.1;
+  var SCANY = 44;
+  var SWARM = 1.35;
+  var SWARMT = 1.1;
+  var BEAT = 1.9;
+  var BEATR = 96;
+  var LOST = 16;
+  var FAR = 84;
 
   // near is how much closer to the camera a z puts something.
   function near(z) {
@@ -171,13 +220,14 @@
   }
 
   // The orb in the middle is the mean of the three that travel. Each of those
-  // is tilted until its orbit clears it by bridge's distance, and lift is the
-  // perspective at the near end of that orbit, which every sample of the orb
-  // is drawn at, so depth moves an orb and holds its size. Size and tilt each
-  // read the other, so two passes settle them.
+  // is held off it by bridge's distance, by raising low until the inner end
+  // of the swing clears it and tilting the plane until the far side of the
+  // turn does too. lift is the perspective at the near end of the orbit,
+  // which every sample of the orb is drawn at, so depth moves an orb and
+  // holds its size. Size and distance each read the other, so two passes
+  // settle them.
   ORBS.forEach(function (orb) {
     orb.lift = 1;
-    orb.tilt = 0;
     orb.path = [];
   });
   for (var pass = 0; pass < 2; pass++) {
@@ -185,7 +235,11 @@
       return sum + orb.size * orb.lift;
     }, 0) / (ORBS.length - 1);
     ORBS.slice(1).forEach(function (orb) {
-      orb.tilt = lean(orb.R, bridge(ORBS[0].size, orb.size));
+      orb.clear = bridge(ORBS[0].size, orb.size);
+      if (!orb.dive) {
+        orb.low = Math.max(orb.low, Math.min(1, orb.clear / orb.R));
+        orb.tilt = lean(orb.R * orb.low, orb.clear);
+      }
       orb.lift = near(orb.R * Math.sin(orb.tilt * Math.PI / 180));
     });
   }
@@ -253,12 +307,15 @@
   // spin is the formation of an idle window: the middle orb holds at the
   // centre and each of the others walks its own tilted circle.
   function spin(orb, i, now) {
-    var th = TWO * (now / orb.secs + orb.at);
+    if (!orb.R) return { x: MID, y: MID, r: wide(orb, now) };
+    var th = TWO * (now / orb.secs + orb.at) + orb.sway * Math.sin(TWO * now / orb.swaySecs);
     var tilt = orb.tilt * Math.PI / 180;
     var turn = orb.turn * Math.PI / 180;
-    var x = orb.R * Math.cos(th);
-    var y = orb.R * Math.sin(th) * Math.cos(tilt);
-    var look = near(orb.R * Math.sin(th) * Math.sin(tilt));
+    var reach = 0.5 + 0.5 * Math.sin(TWO * (now / orb.swing + orb.swingAt));
+    var rad = orb.R * (orb.low + (1 - orb.low) * reach);
+    var x = rad * Math.cos(th);
+    var y = rad * Math.sin(th) * Math.cos(tilt);
+    var look = near(rad * Math.sin(th) * Math.sin(tilt));
     return {
       x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * look,
       y: MID + (x * Math.sin(turn) + y * Math.cos(turn)) * look,
@@ -300,7 +357,77 @@
     };
   }
 
-  var FORMS = { idle: spin, recording: snake, waiting: snake, answered: ring };
+  // coil is the formation of a held recording: the chain curls onto one
+  // upright circle around the middle orb and turns slowly on it.
+  function coil(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) return { x: MID, y: MID, r: r };
+    var th = TWO * now / COIL + (i - 1) * TWO / (ORBS.length - 1);
+    return { x: MID + orb.clear * Math.cos(th), y: MID + orb.clear * Math.sin(th), r: r };
+  }
+
+  // scan is the formation while the recording is transcribed: the three stack
+  // into a column and sweep across the canvas, through the middle orb.
+  function scan(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) return { x: MID, y: MID, r: r };
+    var walk = (now / SCAN) % 1;
+    return { x: -SPRITE + walk * (SIZE + SPRITE * 2), y: MID + (i - 2) * SCANY, r: r };
+  }
+
+  // swarm is the formation while Claude holds the question: the three turn
+  // fast and close around the middle orb, each on its own tilted plane.
+  function swarm(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) return { x: MID, y: MID, r: r };
+    var th = TWO * now / SWARM + (i - 1) * TWO / (ORBS.length - 1);
+    var turn = (i - 1) * Math.PI / 3;
+    var x = orb.clear * Math.cos(th);
+    var y = orb.clear * Math.sin(th) * Math.cos(SWARMT);
+    var look = near(orb.clear * Math.sin(th) * Math.sin(SWARMT));
+    return {
+      x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * look,
+      y: MID + (x * Math.sin(turn) + y * Math.cos(turn)) * look,
+      r: r * look,
+    };
+  }
+
+  // beat is the formation while the instance synthesises speech: each of the
+  // three runs out from the middle orb along its own spoke, swelling from
+  // nothing and back to nothing, one after the other.
+  function beat(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) return { x: MID, y: MID, r: r };
+    var walk = (now / BEAT + (i - 1) / (ORBS.length - 1)) % 1;
+    var th = (i - 1) * TWO / (ORBS.length - 1) + TWO * now / LOST;
+    return {
+      x: MID + walk * BEATR * Math.cos(th),
+      y: MID + walk * BEATR * Math.sin(th),
+      r: r * Math.sin(Math.PI * walk),
+    };
+  }
+
+  // scatter is the formation of a run that answered with nothing: the three
+  // stand off at the rim and turn there, and the middle orb is left alone.
+  function scatter(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) return { x: MID, y: MID, r: r };
+    var th = TWO * now / LOST + (i - 1) * TWO / (ORBS.length - 1);
+    return { x: MID + FAR * Math.cos(th), y: MID + FAR * Math.sin(th), r: r };
+  }
+
+  // One formation per state of the window. voice.js names the state on every
+  // step of the run, so the three change flight path as the work moves on.
+  var FORMS = {
+    idle: spin,
+    recording: snake,
+    paused: coil,
+    transcribing: scan,
+    thinking: swarm,
+    speaking: beat,
+    answered: ring,
+    failed: scatter,
+  };
 
   // remember keeps where an orb is, and drops what is older than SPAN.
   function remember(orb, secs, spot) {
@@ -350,12 +477,12 @@
     return window.performance.now() / 1000;
   }
 
-  var PALETTE = {
-    idle: ramp(MOODS.idle),
-    waiting: ramp(MOODS.idle),
-    recording: ramp(MOODS.recording),
-    answered: ramp(MOODS.answered),
-  };
+  // One palette per state, so a step of the run changes the colour and the
+  // flight path together.
+  var PALETTE = {};
+  Object.keys(MOODS).forEach(function (name) {
+    PALETTE[name] = ramp(MOODS[name]);
+  });
   var mix = new Uint8ClampedArray(256 * 4);
   var from = PALETTE.idle;
   var into = PALETTE.idle;
@@ -419,12 +546,11 @@
     for (i = 0; i < ORBS.length; i++) {
       orb = ORBS[i];
       var tail = orb.tail || TRAIL;
+      var sum = 0;
+      for (var s = 1; s < tail; s++) sum += Math.pow(1 - s / tail, 3);
       for (var j = tail - 1; j >= 0; j--) {
         var back = 1 - j / tail;
-        // A trail sample is a tenth of the orb. A slow orb's trail sits on
-        // top of the orb itself, and at full weight the 13 of them sum the
-        // head past white wherever it lingers.
-        paint.globalAlpha = j === 0 ? 1 : 0.1 * back * back * back;
+        paint.globalAlpha = j === 0 ? 1 : WAKE * back * back * back / sum;
         var spot = at(orb, secs - j * STEP);
         if (!spot) continue;
         var r = spot.r * (0.45 + 0.55 * back);
@@ -502,9 +628,9 @@
       tapAt = clock();
       if (still) draw(tapAt);
     },
-    // mood is what the window is doing: idle, recording, waiting or
-    // answered. It picks the palette and the formation, and fades over BLEND
-    // and MORPH from the pair in use.
+    // mood is what the window is doing, one of the keys of FORMS. It picks
+    // the palette and the formation, and fades over BLEND and MORPH from the
+    // pair in use.
     mood: function (name) {
       var next = PALETTE[name] || PALETTE.idle;
       var shape = FORMS[name] || FORMS.idle;

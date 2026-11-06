@@ -81,6 +81,7 @@
   var since = 0;        // when the request went out, for the counter
   var clock = 0;        // the interval writing the counter
   var doing = "";       // the step the counter sits beside
+  var failed = false;   // the run ended and left nothing beside the recording
 
   // ------------------------------------------------------------------ gate
 
@@ -368,6 +369,31 @@
     return buffer || text ? "paused" : "idle";
   }
 
+  // FLIGHT is the formation each step of a run puts the orbs into, keyed by
+  // the word the window writes beside the counter.
+  var FLIGHT = {
+    Asking: "thinking",
+    Transcribing: "transcribing",
+    Thinking: "thinking",
+    Speaking: "speaking",
+    Answered: "answered",
+    Working: "thinking",
+  };
+
+  // shape tells the orbs which formation the window is in. Every path the
+  // window can be on ends here: a press, a step of the run, an answer, a
+  // failure.
+  function shape() {
+    if (!window.voiceOrbs) return;
+    var now = state();
+    if (now === "recording") return window.voiceOrbs.mood("recording");
+    if (answer || reply) return window.voiceOrbs.mood("answered");
+    if (failed) return window.voiceOrbs.mood("failed");
+    if (pending) return window.voiceOrbs.mood(FLIGHT[doing] || "thinking");
+    if (now === "paused" || buffer) return window.voiceOrbs.mood("paused");
+    window.voiceOrbs.mood("idle");
+  }
+
   // dress writes the state onto the window and says what the orb will do.
   function dress(note) {
     var now = state();
@@ -384,15 +410,7 @@
     discardBtn.title = !shut ? "Discard" : (told ? "Back" : "Close");
     discardBtn.setAttribute("aria-label", discardBtn.title);
     discardBtn.classList.toggle("shut", shut);
-    // The orbs hold the chain from the first word to the reply: a question
-    // in flight keeps the recording's formation, in the idle colour.
-    if (window.voiceOrbs) {
-      var mood = "idle";
-      if (now === "recording") mood = "recording";
-      else if (told) mood = "answered";
-      else if (pending || now === "paused" || buffer) mood = "waiting";
-      window.voiceOrbs.mood(mood);
-    }
+    shape();
     // A question in flight owns the line; the state does not take it back.
     if (!pending) where.textContent = now === "idle" ? "" : target().say;
     if (note !== undefined) {
@@ -520,7 +538,10 @@
   // tell writes the step and how long it has been going. A transcription on a
   // busy machine takes a minute, and a line that does not move reads as stuck.
   function tell(now) {
-    if (now !== undefined) doing = now;
+    if (now !== undefined) {
+      doing = now;
+      shape();
+    }
     where.textContent = doing + " · " + span(Math.round((Date.now() - since) / 1000));
   }
 
@@ -695,10 +716,13 @@
     pending = false;
     replayBtn.hidden = !answer && !reply;
     if (!answer && !reply) {
+      failed = true;
       ended("No answer came back");
+      shape();
       return;
     }
     ended("Answered");
+    shape();
     play();
   }
 
@@ -707,7 +731,9 @@
   function fell(err) {
     var why = (err && err.message) || String(err);
     pending = false;
+    failed = true;
     stopped();
+    shape();
     where.textContent = why;
     say("The recording was kept but not answered: " + why, "bad");
   }
@@ -734,6 +760,8 @@
     answer = "";
     reply = "";
     pending = false;
+    failed = false;
+    doing = "";
     replayBtn.hidden = true;
     if (player) player.pause();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
