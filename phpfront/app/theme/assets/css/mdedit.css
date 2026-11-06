@@ -1,0 +1,77 @@
+/* mdedit, the markdown editor drawn over a field: its own variables, set to
+   the theme's tokens, and the pictures a document holds. */
+.mdedit {
+  --mdedit-font: var(--font);
+  --mdedit-code-font: var(--font);
+  --mdedit-prose-font: var(--font-ui);
+  --mdedit-ui-font: var(--font-ui);
+  --mdedit-size: var(--fs-md);
+  --mdedit-ui-size: var(--fs-xs);
+  --mdedit-radius: var(--radius);
+  --mdedit-min-height: 4rem;
+  --mdedit-paper: var(--ink-0);
+  --mdedit-ink: var(--text);
+  --mdedit-ink-soft: var(--text-dim);
+  --mdedit-line: var(--line);
+  --mdedit-line-strong: var(--line-2);
+  --mdedit-bar: var(--ink-2);
+  --mdedit-code: var(--ink-1);
+  --mdedit-accent: var(--signal);
+  --mdedit-accent-ink: var(--signal-ink);
+  --mdedit-accent-text: var(--signal);
+  --mdedit-keyword: var(--series-4);
+  --mdedit-string: var(--ok);
+  --mdedit-number: var(--series-5);
+  --mdedit-comment: var(--text-faint);
+}
+
+/* The window's own editor fills the body it opens in. */
+.preview-doc.editing {
+  padding: 0;
+}
+
+.preview-doc.editing .mdedit {
+  height: 100%;
+}
+
+/* What a picture written in a note or a document is laid out by, which is
+   the stylesheet mdedit publishes: an anchor on the address floats it, and
+   nothing grows past the column it sits in. See docs/guide/artifacts.md. */
+:is(.note-body, .preview-doc.markdown) img {
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  border-radius: var(--radius);
+}
+
+:is(.note-body, .preview-doc.markdown) img[src*="#left"] {
+  float: left;
+  max-width: min(45%, 20rem);
+  margin: 0.4em 1.3em 1.3em 0;
+}
+
+:is(.note-body, .preview-doc.markdown) img[src*="#right"] {
+  float: right;
+  max-width: min(45%, 20rem);
+  margin: 0.4em 0 1.3em 1.3em;
+}
+
+:is(.note-body, .preview-doc.markdown) img[src*="#center"] {
+  display: block;
+  margin: 1.3em auto;
+}
+
+/* A float beside three words is a column of nothing, so on a narrow page
+   the picture takes the width and the text goes under it. */
+@media (max-width: 30rem) {
+  :is(.note-body, .preview-doc.markdown) img[src*="#left"],
+  :is(.note-body, .preview-doc.markdown) img[src*="#right"] {
+    float: none;
+    max-width: 100%;
+    margin: 1.3em 0;
+  }
+}
+
+:is(.note-body, .preview-doc.markdown) :is(h1, h2, h3, pre, table) {
+  clear: both;
+}

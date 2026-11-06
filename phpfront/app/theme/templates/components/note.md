@@ -19,6 +19,7 @@ Input scope: `data_note`, one note with its replies.
 | `short`       | string | The first eight characters of the run                   |
 | `menu`        | object | The row's `[...]` menu, from `Task\Menu::data()`         |
 | `replies`     | list   | The replies, oldest first, each the same less `replies`  |
+| `editor`      | object | The Reply field, read by `editor`                        |
 
 `Task\Note::card()` builds every field of it and `Task\Note::thread()` adds
 `replies`, so the board and a run's prompt box draw one markup over one scope.
@@ -37,6 +38,6 @@ script posts it to `/api/notes` and refreshes the list in place. `edits` is
 what opens the same form over the text, which is why `raw` is in the scope
 beside `body`.
 
-The scopes are `data_note`, `data_user` for the author and `data_menu` for a
-menu, so a note, the user it names and either menu do not overwrite each
-other.
+The scopes are `data_note`, `data_user` for the author, `data_menu` for a menu
+and `data_markdown` for the Reply field, so a note, the user it names, either
+menu and the field do not overwrite each other.

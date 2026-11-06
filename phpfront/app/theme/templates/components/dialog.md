@@ -14,6 +14,11 @@ the API and shows it, and a reader with no JavaScript never sees one.
 | `summary-dialog`  | `data-summary`        | Claude's summary of a run or a workflow run        |
 | `source-dialog`   | `data-source`         | A file a folder's pipeline reads, coloured         |
 
+The preview window's Edit and Save are hidden until a markdown file of the
+artifact tree is open at its latest version and the body says the reader may
+write one, `data-artifact-edit`. Edit draws the editor over the rendered
+document and Save puts the markdown back at the same path.
+
 The run window's foot is every action a run takes, each hidden until the state
 says it applies: Attach, Run again, Take input, Stop, Kill, Pause, Restart and
 Run force. `run-reason` asks why a job runs outside its hours, and the instance

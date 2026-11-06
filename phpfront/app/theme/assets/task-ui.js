@@ -1387,6 +1387,7 @@
       if (form.hasAttribute("data-refresh-notes")) {
         if (button) button.disabled = false;
         form.reset();
+        syncEditors(form);
         refreshNotes();
         return;
       }
@@ -3544,9 +3545,16 @@
     var previewFrame = document.getElementById("preview-frame");
     var previewVersion = document.getElementById("preview-version");
     var previewDownload = document.getElementById("preview-download");
+    var previewEdit = document.getElementById("preview-edit");
+    var previewSave = document.getElementById("preview-save");
+    // Whether this reader may write a file of the tree, which is what the
+    // body says and what the API refuses whatever the body says.
+    var edits = document.body.hasAttribute("data-artifact-edit");
+    var editing = null;
     var previewPath = "";
     document.getElementById("preview-close").addEventListener("click", function () { previewDialog.close(); });
     previewDialog.addEventListener("close", function () {
+      closeEditing();
       previewImage.removeAttribute("src");
       previewDoc.innerHTML = "";
       // A frame left standing keeps the page it holds loaded, which for
@@ -3626,6 +3634,8 @@
     // openCheckout opens a file of a folder's checkout: its link is where
     // it opens on its own, and the API answers the same path.
     var openCheckout = function (href, rel) {
+      closeEditing();
+      previewEdit.hidden = true;
       previewPath = href;
       previewLabel.textContent = "File";
       previewVersion.hidden = true;
@@ -3643,6 +3653,8 @@
       });
     };
     var openFile = function (rel, version) {
+      closeEditing();
+      previewEdit.hidden = true;
       previewPath = rel;
       previewLabel.textContent = "Artifact";
       previewActions.innerHTML = "";
@@ -3663,9 +3675,66 @@
         }).join("");
         previewVersion.hidden = view.versions.length < 2;
         showView(view, fileURL(rel, view.version));
+        // An older version opens read only: writing it back would be a
+        // restore, which is not what the Edit of a window says.
+        var latest = view.versions.length === 0 || view.versions[0].commit === view.version;
+        previewEdit.hidden = !(edits && latest && view.kind === "markdown");
       });
     };
     previewVersion.addEventListener("change", function () { openFile(previewPath, previewVersion.value); });
+
+    // Editing a markdown file of the tree: the file opens in the editor
+    // over the window's body, and Save puts it back at the same path, which
+    // the history keeps the version before of. A file dropped in lands
+    // beside it, in the directory the file itself is in.
+    function closeEditing() {
+      destroyEditors(previewDoc);
+      editing = null;
+      previewSave.hidden = true;
+    }
+
+    var editArtifact = function (rel) {
+      fetch("/api" + fileURL(rel) + "?raw", { credentials: "same-origin" })
+        .then(function (res) { return res.ok ? res.text() : Promise.reject(res.status); })
+        .then(function (text) {
+          if (rel !== previewPath) return;
+          showDoc("", "markdown editing");
+          var area = document.createElement("textarea");
+          area.setAttribute("data-markdown", "");
+          area.setAttribute("aria-label", rel);
+          area.dataset.upload = rel.indexOf("/") < 0 ? "" : rel.slice(0, rel.lastIndexOf("/"));
+          area.value = text;
+          previewDoc.appendChild(area);
+          editing = area;
+          mountEditor(area);
+          previewEdit.hidden = true;
+          previewSave.hidden = false;
+        })
+        .catch(function (status) { toast("The file did not open, HTTP " + status, "bad"); });
+    };
+
+    var saveArtifact = function (rel) {
+      if (!editing) return;
+      previewSave.disabled = true;
+      fetch("/api" + fileURL(rel), {
+        method: "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "text/markdown; charset=utf-8" },
+        body: editing.value,
+      }).then(function (res) {
+        previewSave.disabled = false;
+        if (!res.ok) {
+          toast("The file was not written, HTTP " + res.status, "bad");
+          return;
+        }
+        closeEditing();
+        toast("Saved " + rel);
+        openFile(rel, "");
+      });
+    };
+
+    previewEdit.addEventListener("click", function () { editArtifact(previewPath); });
+    previewSave.addEventListener("click", function () { saveArtifact(previewPath); });
 
     document.addEventListener("click", function (event) {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
@@ -3751,6 +3820,115 @@
     });
   }
 
+  // The markdown editor: mdedit over every field marked data-markdown. The
+  // textarea stays under it holding what the form posts, so nothing else
+  // here reads the field differently for being drawn over.
+  //
+  // A file pasted, dropped or picked uploads into the artifact tree under
+  // the directory the nearest data-upload names - the page's own, off the
+  // body, or the artifact window's - and lands in the text as the markdown
+  // that draws it.
+  var ARTIFACT_FILES = "/artifacts/files/";
+
+  function artifactURL(rel) {
+    return ARTIFACT_FILES + rel.split("/").map(encodeURIComponent).join("/");
+  }
+
+  // uploadName is a file's name as a step of the tree: the characters a path
+  // of it may hold, and no leading dot, which the store refuses.
+  function uploadName(file) {
+    var name = String(file.name || "").toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^[-.]+/, "");
+    return name === "" ? "file" : name;
+  }
+
+  // uploadDir is the directory of the tree a field writes into, or null
+  // where nothing says: the top of the tree is "" and uploads there.
+  function uploadDir(area) {
+    var named = area.closest("[data-upload]");
+    return named ? named.dataset.upload : null;
+  }
+
+  // uploads is what a field sends a file with: the artifact API, which puts
+  // the bytes at the path and answers the record it wrote.
+  function uploads(dir) {
+    return {
+      endpoint: function (file) {
+        var name = uploadName(file);
+        return "/api" + artifactURL(dir === "" ? name : dir + "/" + name);
+      },
+      method: "PUT",
+      encoding: "raw",
+      // The tree takes any file a run may leave, so the field does too; the
+      // API refuses one over 16 MiB and the editor refuses it before that.
+      accept: [],
+      maxBytes: 16 * 1024 * 1024,
+      url: function (answer) { return artifactURL(answer.path || ""); },
+    };
+  }
+
+  // mountEditor draws the editor over one field and answers it, or null
+  // where the bundle did not load, which leaves the textarea as it was.
+  function mountEditor(area) {
+    if (area.mdeditor) return area.mdeditor;
+    if (!window.mdedit) return null;
+    var dir = uploadDir(area);
+    var options = {};
+    if (area.dataset.toolbar === "inline") options.toolbar = window.mdedit.TOOLBAR_INLINE.concat("upload");
+    if (dir !== null) options.uploads = uploads(dir);
+    area.mdeditor = new window.mdedit.MarkdownEditor(area, options);
+    return area.mdeditor;
+  }
+
+  function mountEditors(root) {
+    (root || document).querySelectorAll("textarea[data-markdown]").forEach(mountEditor);
+  }
+
+  // destroyEditors drops the editors of a part of the page about to be
+  // replaced. An editor listens on the document for the caret moving, which
+  // outlives the markup it was drawn in; the list of users goes with it.
+  function destroyEditors(root) {
+    root.querySelectorAll("textarea[data-markdown]").forEach(function (area) {
+      if (!area.mdeditor) return;
+      if (mention.area === area) closeMentions();
+      area.mdeditor.destroy();
+      area.mdeditor = null;
+    });
+  }
+
+  // syncEditors repaints the surfaces of a form whose fields were written
+  // from outside - a reset, or a post clearing one - because writing the
+  // textarea tells the editor drawn over it nothing.
+  function syncEditors(root) {
+    (root || document).querySelectorAll("textarea[data-markdown]").forEach(function (area) {
+      if (area.mdeditor) area.mdeditor.refresh();
+    });
+  }
+
+  // editorField answers the element a field's keys and input arrive on,
+  // which is the surface where the editor is mounted.
+  function editorField(area) {
+    return area.mdeditor ? area.mdeditor.surface : area;
+  }
+
+  // writtenIn is a field's text and where the caret is in it, off the editor
+  // where one is mounted and off the textarea where none is.
+  function writtenIn(area) {
+    if (!area.mdeditor) return { value: area.value, start: area.selectionStart, end: area.selectionEnd };
+    var at = area.mdeditor.selection;
+    return { value: area.mdeditor.value, start: at.start, end: at.end };
+  }
+
+  // fieldOf answers the field an event landed in: the textarea itself, or
+  // the one under the surface the editor drew over it.
+  function fieldOf(target) {
+    if (!target || !target.closest) return null;
+    var surface = target.closest(".mdedit");
+    var area = surface ? surface.querySelector("textarea[data-markdown]") : target.closest("textarea");
+    return area || null;
+  }
+
+  mountEditors(document);
+
   // Notes: a form posts a note or a reply, and the list follows the notes
   // topic, fetched again when a note arrives or changes. A reply form
   // being written keeps its text.
@@ -3771,6 +3949,7 @@
         notesList.querySelectorAll("form[data-note-edit]").forEach(function (form) {
           edits[form.dataset.noteEdit] = form.elements.body.value;
         });
+        destroyEditors(notesList);
         notesList.innerHTML = fresh.innerHTML;
         // A hidden box, a running run's, shows once a thread comes.
         var box = notesList.closest(".promptbox");
@@ -3781,6 +3960,7 @@
           form.elements.body.value = drafts[parent];
           form.closest("details").open = true;
         });
+        mountEditors(notesList);
         mentionFields(notesList);
         Object.keys(edits).forEach(function (id) {
           var body = notesList.querySelector('[data-edit="' + id + '"]');
@@ -3805,6 +3985,7 @@
           return;
         }
         form.elements.body.value = "";
+        syncEditors(form);
         if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
         refreshNotes();
       });
@@ -3816,18 +3997,22 @@
     var form = document.createElement("form");
     form.className = "note-form note-edit";
     form.dataset.noteEdit = body.dataset.edit;
-    form.innerHTML = '<textarea name="body" rows="3" required data-mentions aria-label="The note"></textarea>' +
+    form.innerHTML = '<textarea name="body" rows="3" spellcheck="false" data-markdown data-toolbar="inline" data-mentions aria-label="The note"></textarea>' +
       '<div class="form-foot note"><span class="faint">Ctrl+Enter saves, Esc cancels.</span>' +
       '<span><button class="btn" type="button" data-edit-cancel>Cancel</button> <button class="btn btn-primary" type="submit">Save</button></span></div>';
     form.elements.body.value = value === undefined ? body.dataset.body : value;
     body.hidden = true;
     body.after(form);
+    // The field is in the page before the editor is drawn over it, so the
+    // surface opens on the note as it stands.
+    mountEditor(form.elements.body);
     mentionField(form.elements.body);
-    form.elements.body.focus();
+    editorField(form.elements.body).focus();
   }
   function closeEdit(form) {
     var body = form.previousElementSibling;
     if (body && body.hasAttribute("data-edit")) body.hidden = false;
+    destroyEditors(form);
     form.remove();
   }
   document.addEventListener("click", function (event) {
@@ -3868,25 +4053,25 @@
         refreshNotes();
       });
   });
+  // Ctrl+Enter and Esc are read before the editor sees them: Enter in a
+  // drawn surface writes a line, and Esc there releases the Tab key.
   document.addEventListener("keydown", function (event) {
-    var editing = event.target.closest && event.target.closest("form[data-note-edit] textarea");
-    if (editing && event.key === "Escape") {
+    var area = fieldOf(event.target);
+    if (!area) return;
+    var editing = area.closest("form[data-note-edit]");
+    // Esc with the user list open closes the list, which is the list's own
+    // key: the edit stays open and the next Esc leaves it.
+    var listing = mention.area === area && mention.list && !mention.list.hidden;
+    if (editing && event.key === "Escape" && !listing) {
       event.preventDefault();
-      closeEdit(editing.form);
+      closeEdit(editing);
       return;
     }
-    if (editing && event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-      event.preventDefault();
-      editing.form.requestSubmit();
-      return;
-    }
-    var area = event.target.closest && event.target.closest("form[data-note-form] textarea");
-    if (!area || event.key !== "Enter") return;
-    if (event.ctrlKey || event.metaKey) {
-      event.preventDefault();
-      area.form.requestSubmit();
-    }
-  });
+    var posts = editing || area.closest("form[data-note-form]");
+    if (!posts || event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
+    event.preventDefault();
+    posts.requestSubmit();
+  }, true);
   // A note's field, data-mentions, lists the users whose name follows an
   // @ as model.Mentions reads one, and draws a mention of a user in the
   // colour of a link on a layer behind its clear text. The list opens
@@ -3904,8 +4089,11 @@
     return Object.prototype.hasOwnProperty.call(roles, name);
   }
 
-  // mentionField wraps a field once with its layer and draws it.
+  // mentionField wraps a field once with its layer and draws it. A field
+  // the editor drew over has no layer: the surface draws the text, and the
+  // list reads the caret off the editor instead.
   function mentionField(area) {
+    if (area.mdeditor) return;
     if (!area.parentNode.classList.contains("mention-field")) {
       var wrap = document.createElement("div");
       wrap.className = "mention-field";
@@ -3944,9 +4132,21 @@
     back.scrollLeft = area.scrollLeft;
   }
 
+  // surfacePoint is where the caret stands on the screen in a drawn
+  // surface, which is the selection's own rectangle.
+  function surfacePoint(area) {
+    var box = area.mdeditor.surface.getBoundingClientRect();
+    var selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return { left: box.left, top: box.top };
+    var rect = selection.getRangeAt(0).getBoundingClientRect();
+    if (!rect.height) return { left: box.left, top: box.top };
+    return { left: rect.left, top: rect.bottom };
+  }
+
   // caretPoint returns where the caret of a field is on the screen, from
   // a copy of the field's text up to it in a hidden element of its box.
   function caretPoint(area, at) {
+    if (area.mdeditor) return surfacePoint(area);
     var style = getComputedStyle(area), copy = document.createElement("div");
     mentionCopy.forEach(function (prop) { copy.style[prop] = style[prop]; });
     copy.style.position = "absolute";
@@ -3969,8 +4169,8 @@
 
   function closeMentions() {
     if (mention.area) {
-      mention.area.removeAttribute("aria-activedescendant");
-      mention.area.removeAttribute("aria-controls");
+      editorField(mention.area).removeAttribute("aria-activedescendant");
+      editorField(mention.area).removeAttribute("aria-controls");
     }
     if (mention.list) mention.list.hidden = true;
     mention.area = null;
@@ -3986,8 +4186,9 @@
   }
 
   function showMentions(area) {
-    var at = area.selectionStart;
-    var found = area.selectionStart === area.selectionEnd && mentionAt.exec(area.value.slice(0, at));
+    var written = writtenIn(area);
+    var at = written.start;
+    var found = written.start === written.end && mentionAt.exec(written.value.slice(0, at));
     var names = found ? findMentions(found[1]) : [];
     if (!names.length) {
       closeMentions();
@@ -4020,47 +4221,56 @@
     var point = caretPoint(area, mention.start);
     mention.list.style.top = point.top + 4 + "px";
     mention.list.style.left = Math.max(8, Math.min(point.left, window.innerWidth - mention.list.offsetWidth - 8)) + "px";
-    area.setAttribute("aria-controls", "mention-list");
-    area.setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
+    editorField(area).setAttribute("aria-controls", "mention-list");
+    editorField(area).setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
   }
 
   function moveMention(by) {
     var n = mention.names.length;
     mention.at = (mention.at + by + n) % n;
     mention.list.querySelectorAll("li").forEach(function (li, i) { li.setAttribute("aria-selected", String(i === mention.at)); });
-    mention.area.setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
+    editorField(mention.area).setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
   }
 
   // takeMention replaces the word being typed with @name and a space.
   function takeMention(i) {
     var area = mention.area, name = mention.names[i];
     if (!area || !name) return;
-    var end = area.selectionStart, rest = /^[A-Za-z0-9._-]*/.exec(area.value.slice(end))[0];
-    area.setRangeText("@" + name + " ", mention.start, end + rest.length, "end");
+    var written = writtenIn(area), end = written.start;
+    var rest = /^[A-Za-z0-9._-]*/.exec(written.value.slice(end))[0];
+    var text = "@" + name + " ";
+    if (area.mdeditor) {
+      area.mdeditor.source.replace(mention.start, end + rest.length, text, mention.start + text.length);
+    } else {
+      area.setRangeText(text, mention.start, end + rest.length, "end");
+    }
     closeMentions();
     paintMentions(area);
-    area.focus();
+    editorField(area).focus();
   }
 
   mentionFields(document);
+  // The events arrive on the field, or on the surface drawn over it, so
+  // every one of these reads the field they belong to.
   document.addEventListener("input", function (event) {
-    var area = event.target;
-    if (!area.matches || !area.matches("textarea[data-mentions]")) return;
+    var area = fieldOf(event.target);
+    if (!area || !area.hasAttribute("data-mentions")) return;
     paintMentions(area);
     showMentions(area);
   });
   document.addEventListener("click", function (event) {
-    if (event.target.matches && event.target.matches("textarea[data-mentions]")) showMentions(event.target);
+    var area = fieldOf(event.target);
+    if (area && area.hasAttribute("data-mentions")) showMentions(area);
   });
   document.addEventListener("focusout", function (event) {
-    if (event.target === mention.area) closeMentions();
+    if (fieldOf(event.target) === mention.area) closeMentions();
   });
-  window.addEventListener("scroll", function (event) { if (mention.area && event.target !== mention.area) closeMentions(); }, true);
+  window.addEventListener("scroll", function (event) { if (mention.area && fieldOf(event.target) !== mention.area) closeMentions(); }, true);
   window.addEventListener("resize", closeMentions);
   // The list takes its keys before the field's own: Enter does not post,
   // Esc does not cancel an edit, while it is open.
   document.addEventListener("keydown", function (event) {
-    if (!mention.area || event.target !== mention.area || mention.list.hidden) return;
+    if (!mention.area || fieldOf(event.target) !== mention.area || mention.list.hidden) return;
     var key = event.key;
     if (key === "ArrowDown" || key === "ArrowUp") {
       moveMention(key === "ArrowDown" ? 1 : -1);
@@ -4075,9 +4285,9 @@
     event.stopPropagation();
   }, true);
   document.addEventListener("keyup", function (event) {
-    var area = event.target;
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
-    if (area.matches && area.matches("textarea[data-mentions]")) showMentions(area);
+    var area = fieldOf(event.target);
+    if (area && area.hasAttribute("data-mentions")) showMentions(area);
   });
 
   // The board follows its own notes, a prompt box the notes of its

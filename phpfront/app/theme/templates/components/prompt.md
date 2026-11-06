@@ -11,7 +11,7 @@ Input scope: `data_prompt`, the prompt box of a page.
 | `watch`         | bool   | Whether the reader only reads, so there is no form   |
 | `api`           | string | The route the form posts to, under `/api/`           |
 | `fields`        | list   | The hidden fields: `name` and `value` each           |
-| `placeholder`   | string | What the empty textarea says                         |
+| `editor`        | object | The field the question is written in, read by `editor` |
 | `lead`          | string | The foot up to who the prompt runs as                |
 | `tail`          | string | The foot after it                                    |
 | `picks`         | list   | The folders the box offers to run in: `value` and `text` each; empty draws no select |

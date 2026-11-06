@@ -182,8 +182,15 @@ nobody attached<?php }?></small></h3>
 <?php if(!empty($_v['data_prompt']['fields']))foreach($_v['data_prompt']['fields'] as $_v['field']){?>		<input type="hidden" name="<?php echo htmlspecialchars($_v['field']['name'], ENT_QUOTES);?>
 " value="<?php echo htmlspecialchars($_v['field']['value'], ENT_QUOTES);?>
 ">
-<?php }?>		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="<?php echo htmlspecialchars($_v['data_prompt']['placeholder'], ENT_QUOTES);?>
-" aria-label="The prompt"></textarea>
+<?php }?>		<?php $_v['data_markdown'] = $_v['data_prompt']['editor'];?>
+<textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
+" rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
+" spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
+"<?php if($_v['data_markdown']['mentions']){?>
+ data-mentions<?php }?><?php if($_v['data_markdown']['placeholder']){?>
+ placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
+"<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
+"></textarea>
 		<div class="form-foot note"><span class="faint run-in"><?php echo htmlspecialchars($_v['data_prompt']['lead'], ENT_QUOTES); if($_v['data_prompt']['options']['users']){?>
 <select name="user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data_prompt']['options']; if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
 "<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
@@ -441,7 +448,15 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
 			<summary>Reply</summary>
 			<form class="note-form" data-note-form data-parent="<?php echo htmlspecialchars($_v['data_note']['id'], ENT_QUOTES);?>
 ">
-				<textarea name="body" rows="2" required data-mentions aria-label="A reply"></textarea>
+				<?php $_v['data_markdown'] = $_v['data_note']['editor'];?>
+<textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
+" rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
+" spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
+"<?php if($_v['data_markdown']['mentions']){?>
+ data-mentions<?php }?><?php if($_v['data_markdown']['placeholder']){?>
+ placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
+"<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
+"></textarea>
 				<div class="form-foot note"><span></span><button class="btn" type="submit">Reply</button></div>
 			</form>
 		</details>

@@ -2,7 +2,7 @@
 <html lang="en">
 {eval $data = $chrome}
 {include components/head.tpl}
-<body data-roles='{chrome.roles}' data-workspaces='{chrome.workspaces}'{if $chrome.user} data-me="{chrome.user.name}"{/if} data-user-menu="{if $chrome.can['user/edit']}edit{elseif $chrome.can['user/view']}view{/if}">
+<body data-roles='{chrome.roles}' data-workspaces='{chrome.workspaces}'{if $chrome.user} data-me="{chrome.user.name}" data-upload="{chrome.upload}"{/if}{if $chrome.can['artifact/edit']} data-artifact-edit{/if} data-user-menu="{if $chrome.can['user/edit']}edit{elseif $chrome.can['user/view']}view{/if}">
 {include components/icons.tpl}
 {if $chrome.user}
 <a class="skip-link" href="#main">Skip to content</a>

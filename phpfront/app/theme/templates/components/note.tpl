@@ -19,7 +19,7 @@
 {/if}		<details class="reply">
 			<summary>Reply</summary>
 			<form class="note-form" data-note-form data-parent="{data_note.id}">
-				<textarea name="body" rows="2" required data-mentions aria-label="A reply"></textarea>
+				{eval $data_markdown = $data_note.editor}{include components/editor.tpl}
 				<div class="form-foot note"><span></span><button class="btn" type="submit">Reply</button></div>
 			</form>
 		</details>

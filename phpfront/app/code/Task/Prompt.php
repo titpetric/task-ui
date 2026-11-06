@@ -79,6 +79,24 @@ class Prompt {
 		return $place;
 	}
 
+	/**
+	 * field is the box's own markdown field, as components/editor.tpl reads
+	 * it: three rows, and the question the empty one asks.
+	 *
+	 * A prompt names nobody, so there is no list of users on an `@`: the
+	 * mentions are the board's, where a note is written to someone.
+	 */
+	static function field($placeholder) {
+		return array(
+			"name" => "prompt",
+			"rows" => 3,
+			"label" => "The prompt",
+			"placeholder" => $placeholder,
+			"mentions" => false,
+			"toolbar" => "full",
+		);
+	}
+
 	/** short is the start of a run's ID, which is what the panel's line names it by. */
 	static function short($id) {
 		return strlen($id) > 4 ? substr($id, 0, 4) . "…" : $id;
@@ -156,7 +174,7 @@ class Prompt {
 			"watch" => false,
 			"api" => $api,
 			"fields" => $fields,
-			"placeholder" => "what does this directory build, and how",
+			"editor" => self::field("what does this directory build, and how"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in " . $where . ", one prompt at a time. Claude replies under your question.",
 			"picks" => array(),
@@ -221,7 +239,7 @@ class Prompt {
 			"watch" => !$asks,
 			"api" => self::API,
 			"fields" => array(array("name" => "run", "value" => $about)),
-			"placeholder" => "why did this run end the way it did",
+			"editor" => self::field("why did this run end the way it did"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in " . $where . "/, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.",
 			"picks" => array(),
@@ -280,7 +298,7 @@ class Prompt {
 			"watch" => true,
 			"api" => "",
 			"fields" => array(),
-			"placeholder" => "",
+			"editor" => self::field(""),
 			"lead" => "",
 			"tail" => "",
 			"picks" => array(),

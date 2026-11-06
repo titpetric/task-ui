@@ -1,0 +1,1 @@
+<textarea name="{data_markdown.name}" rows="{data_markdown.rows}" spellcheck="false" data-markdown data-toolbar="{data_markdown.toolbar}"{if $data_markdown.mentions} data-mentions{/if}{if $data_markdown.placeholder} placeholder="{data_markdown.placeholder}"{/if} aria-label="{data_markdown.label}"></textarea>

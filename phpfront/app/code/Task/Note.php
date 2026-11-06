@@ -347,6 +347,23 @@ class Note {
 			"editedStamp" => Clock::read($note->getEditedAt()),
 			"edits" => $edits,
 			"menu" => $menu->data(),
+			"editor" => self::field(),
+		);
+	}
+
+	/**
+	 * field is the Reply field of a card, as components/editor.tpl reads it:
+	 * two rows and no placeholder, with an `@` opening the list of users,
+	 * because a reply is where an agent is named.
+	 */
+	static function field() {
+		return array(
+			"name" => "body",
+			"rows" => 2,
+			"label" => "A reply",
+			"placeholder" => "",
+			"mentions" => true,
+			"toolbar" => "inline",
 		);
 	}
 
