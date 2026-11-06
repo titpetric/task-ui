@@ -33,6 +33,7 @@
   var sendBtn = document.getElementById("voice-send");
   var discardBtn = document.getElementById("voice-discard");
   var replayBtn = document.getElementById("voice-replay");
+  var avatar = document.getElementById("voice-avatar");
   if (!stage || !replayBtn || !discardBtn) return;
   var discardIcon = discardBtn.querySelector("use");
 
@@ -140,6 +141,7 @@
       var now = Math.min(1, rms * 7);
       smoothed += (now - smoothed) * (now > smoothed ? 0.5 : 0.12);
       overlay.style.setProperty("--voice-level", smoothed.toFixed(3));
+      if (window.voiceOrbs) window.voiceOrbs.level(smoothed);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -205,6 +207,7 @@
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
     overlay.style.setProperty("--voice-level", "0");
+    if (window.voiceOrbs) window.voiceOrbs.level(0);
     if (!media) return;
     if (media.node) media.node.port.onmessage = null;
     media.stream.getTracks().forEach(function (t) { t.stop(); });
@@ -345,14 +348,17 @@
   }
 
   // show opens and closes the window. showModal puts it in the top layer, so
-  // it draws over a run window, which is a modal dialog of its own.
+  // it draws over a run window, which is a modal dialog of its own. The orbs
+  // draw only while the window is open: nothing of them is seen after.
   function show(on) {
     if (on) {
       if (!overlay.open) overlay.showModal();
+      if (window.voiceOrbs) window.voiceOrbs.start(avatar);
       return;
     }
     said.textContent = "";
     where.textContent = "";
+    if (window.voiceOrbs) window.voiceOrbs.stop();
     if (overlay.open) overlay.close();
   }
 
