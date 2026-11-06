@@ -138,7 +138,8 @@ body:has(.voice-orb:not([hidden])) .toasts {
   filter: saturate(0.35);
 
   & .voice-orbits,
-  & .voice-comet,
+  & .ball,
+  & .wake,
   & .voice-haze ellipse {
     animation-play-state: paused;
   }
@@ -179,7 +180,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
   & .voice-haze {
     fill: color-mix(in srgb, var(--voice-cool) 30%, transparent);
     mix-blend-mode: plus-lighter;
-    opacity: calc(0.3 + var(--voice-level) * 0.45);
+    opacity: calc(0.22 + var(--voice-level) * 0.35);
 
     & ellipse {
       animation: voice-drift 54s ease-in-out infinite alternate;
@@ -192,30 +193,49 @@ body:has(.voice-orb:not([hidden])) .toasts {
     }
   }
 
+  /* The core is the cloud the balls move in, not a body of its own: it sits
+     under them and keeps its share of the light. */
   & .voice-core {
     mix-blend-mode: plus-lighter;
     transform-origin: 160px 160px;
     transform: scale(calc(0.72 + var(--voice-level) * 0.3));
-    opacity: calc(0.6 + var(--voice-level) * 0.4);
+    opacity: calc(0.4 + var(--voice-level) * 0.35);
     transition: transform 90ms ease-out, opacity 90ms ease-out;
   }
 
-  /* The nucleus is the body the orbits are around: a small hard light under
-     the cloud, so the middle reads as a thing and not as more fog. */
-  & .voice-nucleus {
-    mix-blend-mode: plus-lighter;
+  /* The balls are one greyscale sprite each, summed where they overlap and
+     read back through a palette: two that meet make one brighter shape, and
+     the palette turns the brighter sum hot, so the pair reads as one body.
+     The nucleus is a ball that does not move. */
+  & .voice-balls {
+    isolation: isolate;
     transform-origin: 160px 160px;
-    transform: scale(calc(0.88 + var(--voice-level) * 0.34));
-    opacity: calc(0.78 + var(--voice-level) * 0.22);
-    transition: transform 70ms ease-out, opacity 70ms ease-out;
+    transform: scale(calc(0.9 + var(--voice-level) * 0.2));
+    transition: transform 90ms ease-out;
   }
 
-  /* The rim is the edge of that body, lit on one side. */
-  & .voice-rim {
+  /* fill-box keeps the swell about each ball's own centre: the motion is a
+     transform of its own and scaling the SVG origin would fling it. */
+  & .ball {
+    transform-box: fill-box;
+    transform-origin: center;
     mix-blend-mode: plus-lighter;
-    transform-origin: 160px 160px;
-    opacity: calc(0.3 + var(--voice-level) * 0.4);
-    animation: voice-spin 90s linear infinite reverse;
+    animation: voice-fade 19s ease-in-out -3s infinite, voice-swell 11s ease-in-out infinite;
+  }
+
+  & .nucleus {
+    animation: voice-swell 23s ease-in-out infinite;
+    opacity: calc(0.82 + var(--voice-level) * 0.18);
+  }
+
+  & .ball-b {
+    animation-duration: 31s, 13s;
+    animation-delay: -19s, -4s;
+  }
+
+  & .ball-c {
+    animation-duration: 47s, 17s;
+    animation-delay: -34s, -9s;
   }
 
   /* A wake is the orbit drawn as one dash chasing the comet round it, so the
@@ -281,40 +301,23 @@ body:has(.voice-orb:not([hidden])) .toasts {
     opacity: calc(0.55 + var(--voice-level) * 0.45);
   }
 
-  & .voice-comets {
-    mix-blend-mode: plus-lighter;
-  }
-
-  /* Each comet dims and shrinks on its far half, which is the whole of the
-     depth: a flat ellipse read as an orbit once the body behind it fades. The
-     delay matches its motion's begin, so the dimming is the far half and not
-     an arbitrary quarter of the way round. */
-  & .voice-comet {
-    animation: voice-depth 19s ease-in-out -3s infinite;
-
-    & .coma {
-      opacity: 0.4;
-      filter: blur(2.6px);
-    }
-
-    & .head {
-      filter: drop-shadow(0 0 4px var(--voice-hot));
-    }
-  }
-
-  & .comet-b {
-    animation-duration: 31s;
-    animation-delay: -19s;
-  }
-
-  & .comet-c {
-    animation-duration: 47s;
-    animation-delay: -34s;
-  }
 }
 
 /* A wake fades with the comet it belongs to and keeps its width: the whole
    orbit is one element, and scaling it would scale the path. */
+/* Each ball swells and shrinks on its own period, so the overlaps land at a
+   different size every pass and never read as a loop. */
+@keyframes voice-swell {
+  0%,
+  100% {
+    scale: 0.84;
+  }
+
+  50% {
+    scale: 1.16;
+  }
+}
+
 @keyframes voice-fade {
   0%,
   100% {
@@ -322,26 +325,13 @@ body:has(.voice-orb:not([hidden])) .toasts {
   }
 
   50% {
-    opacity: 0.35;
+    opacity: 0.45;
   }
 }
 
 @keyframes voice-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes voice-depth {
-  0%,
-  100% {
-    opacity: 1;
-    scale: 1.15;
-  }
-
-  50% {
-    opacity: 0.28;
-    scale: 0.72;
   }
 }
 
@@ -477,14 +467,13 @@ body:has(.voice-orb:not([hidden])) .toasts {
 
   .voice-avatar .voice-haze ellipse,
   .voice-avatar .voice-orbits,
-  .voice-avatar .voice-rim,
   .voice-avatar .wake,
-  .voice-avatar .voice-comet {
+  .voice-avatar .ball {
     animation: none;
   }
 
-  /* A comet that does not move leaves no wake, so the dashes come off the
-     orbits and the heads stand still on them. */
+  /* A ball that does not move leaves no wake, so the dashes come off the
+     orbits and the balls stand still on them. */
   .voice-avatar .voice-wakes {
     display: none;
   }
