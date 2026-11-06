@@ -58,6 +58,30 @@ func TestUserSessionStorage(t *testing.T) {
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
 
+// Extend moves a session's expiry and records the use with it, so a
+// session in hand outlives the window it was issued for.
+func TestUserSessionStorage_Extend(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	sessions := storage.NewUserSessionStorage(newDB(t))
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	session, err := sessions.Create(ctx, "u1", "h1", now.Add(time.Hour))
+	assert.NoError(t, err)
+	assert.Nil(t, session.UsedAt)
+
+	later := now.Add(12 * time.Hour)
+	assert.NoError(t, sessions.Extend(ctx, session.ID, later))
+	session, err = sessions.Find(ctx, "h1")
+	assert.NoError(t, err)
+	assert.NotNil(t, session.UsedAt)
+	assert.Equal(t, later, session.ExpiresAt.UTC())
+
+	assert.NoError(t, sessions.DeleteExpired(ctx, now.Add(time.Hour)))
+	_, err = sessions.Find(ctx, "h1")
+	assert.NoError(t, err, "the extended session is past the old expiry")
+}
+
 // Expired lists the sessions past their expiry, which DeleteExpired removes.
 func TestUserSessionStorage_Expired(t *testing.T) {
 	t.Parallel()

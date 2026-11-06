@@ -36,9 +36,10 @@ type Guard struct {
 	Now func() time.Time
 }
 
-// NewGuard returns a guard over the users and the sessions.
-func NewGuard(users *storage.UserStorage, sessions *Sessions) *Guard {
-	return &Guard{Sessions: sessions, Users: users, LoginPath: "/login"}
+// NewGuard returns a guard over the sessions, reading the users they name
+// rather than a second set that could differ from them.
+func NewGuard(sessions *Sessions) *Guard {
+	return &Guard{Sessions: sessions, Users: sessions.Users, LoginPath: "/login"}
 }
 
 // LoginRequired reports whether requests have to carry a session.
@@ -48,14 +49,14 @@ func (g *Guard) LoginRequired() bool {
 
 // User resolves the user of a request from a bearer token, the auto login or the session cookie, nil for nobody.
 func (g *Guard) User(r *http.Request) *model.User {
-	user, _, _ := g.resolve(r)
+	user, _, _ := g.resolve(nil, r)
 	return user
 }
 
 // resolve is User, with the ID of the token it signed in with and why
 // a bearer token signs in nobody: ErrTokenExpired for one past its
-// expiry.
-func (g *Guard) resolve(r *http.Request) (*model.User, string, error) {
+// expiry. A writer takes the cookie of a session whose expiry moved.
+func (g *Guard) resolve(w http.ResponseWriter, r *http.Request) (*model.User, string, error) {
 	if token := BearerToken(r); token != "" {
 		return g.bearer(r.Context(), token)
 	}
@@ -66,11 +67,38 @@ func (g *Guard) resolve(r *http.Request) (*model.User, string, error) {
 	if err != nil {
 		return nil, "", nil
 	}
-	user, err := g.Sessions.Resolve(r.Context(), cookie.Value)
+	user, until, err := g.Sessions.Resolve(r.Context(), cookie.Value)
 	if err != nil {
 		return nil, "", nil
 	}
+	if w != nil && !until.IsZero() {
+		g.renew(w, r, cookie.Value, until)
+	}
 	return user, "", nil
+}
+
+// renew writes the cookie of a session whose expiry moved, so the browser
+// keeps it as long as the row does.
+func (g *Guard) renew(w http.ResponseWriter, r *http.Request, token string, until time.Time) {
+	seconds := int(until.Sub(g.now()).Seconds())
+	if seconds <= 0 {
+		return
+	}
+	http.SetCookie(w, cookie(r, token, seconds))
+}
+
+// cookie is the session cookie: the one place its scope is written, so a
+// sign in, a renewal and a sign out cannot disagree on it.
+func cookie(r *http.Request, token string, maxAge int) *http.Cookie {
+	return &http.Cookie{
+		Name:     Cookie,
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   IsHTTPS(r),
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   maxAge,
+	}
 }
 
 // bearer resolves the user of a token, and records its use. A token
@@ -120,7 +148,7 @@ func (g *Guard) lookup(ctx context.Context, name string) *model.User {
 // Require sends visitors without a session to the login screen and answers API and websocket requests with 401.
 func (g *Guard) Require(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, token, err := g.resolve(r)
+		user, token, err := g.resolve(w, r)
 		if user == nil {
 			if errors.Is(err, ErrTokenExpired) {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -147,7 +175,7 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 // sign in page would be redirected to the page they are already asking for.
 func (g *Guard) Attach(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, token, _ := g.resolve(r)
+		user, token, _ := g.resolve(w, r)
 		if user == nil {
 			next.ServeHTTP(w, r)
 			return
@@ -182,15 +210,7 @@ func (g *Guard) SetCookie(w http.ResponseWriter, r *http.Request, user *model.Us
 	if err != nil {
 		return err
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     Cookie,
-		Value:    token,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   IsHTTPS(r),
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   int(g.Sessions.TTL().Seconds()),
-	})
+	http.SetCookie(w, cookie(r, token, int(g.Sessions.Policy().TTL.Seconds())))
 	return nil
 }
 
@@ -200,15 +220,7 @@ func (g *Guard) ClearCookie(w http.ResponseWriter, r *http.Request) error {
 	if cookie, cerr := r.Cookie(Cookie); cerr == nil {
 		err = g.Sessions.Revoke(r.Context(), cookie.Value)
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     Cookie,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   IsHTTPS(r),
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   -1,
-	})
+	http.SetCookie(w, cookie(r, "", -1))
 	return err
 }
 

@@ -50,8 +50,13 @@ type Config struct {
 	// it, for a run's docker run -v. TASK_UI_HOST_DATA; empty reads the
 	// mounts of the container task-ui runs in.
 	HostData string
-	// SessionTTL is the session lifetime. TASK_UI_SESSION_TTL, default 12h.
+	// SessionTTL is how far ahead of its last use a session stays valid.
+	// TASK_UI_SESSION_TTL, default 7d.
 	SessionTTL time.Duration
+	// SessionMax is the ceiling an extended session cannot pass, from the
+	// sign in. TASK_UI_SESSION_MAX, default 30d; at or below SessionTTL
+	// nothing slides.
+	SessionMax time.Duration
 	// AutoLogin signs every request in as this user, without a password.
 	// TASK_UI_AUTOLOGIN. For development and the screenshot scripts.
 	AutoLogin string
@@ -181,7 +186,10 @@ func NewConfigAt(base string, args []string) (*Config, error) {
 		URL:            strings.TrimRight(strings.TrimSpace(env("TASK_UI_URL", "")), "/"),
 	}
 	var err error
-	if cfg.SessionTTL, err = envDuration("TASK_UI_SESSION_TTL", 12*time.Hour); err != nil {
+	if cfg.SessionTTL, err = envDuration("TASK_UI_SESSION_TTL", 7*24*time.Hour); err != nil {
+		return nil, err
+	}
+	if cfg.SessionMax, err = envDuration("TASK_UI_SESSION_MAX", 30*24*time.Hour); err != nil {
 		return nil, err
 	}
 	if cfg.Keep, err = envDuration("TASK_UI_KEEP", 15*time.Minute); err != nil {

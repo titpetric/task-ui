@@ -11,29 +11,40 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// ErrInvalidToken reports a session token that names no session, or one
-// that has expired.
+// ErrInvalidToken reports a session token that names no session or has expired.
 var ErrInvalidToken = errors.New("invalid session")
-
-// touchEvery is how stale a session's last use gets before a request
-// records it again, so page loads do not write on every click.
-const touchEvery = time.Minute
 
 // Sessions issues and resolves the session cookie: an opaque random
 // token the server looks up by its hash. The database holds the hash
 // alone, and the user it names, so a user removed or given a new
 // password loses their sessions with it.
 type Sessions struct {
-	Store *storage.UserSessionStorage
-	Users *storage.UserStorage
-	ttl   time.Duration
+	Store  *storage.UserSessionStorage
+	Users  *storage.UserStorage
+	policy SessionPolicy
 	// Now is the clock; tests move it.
 	Now func() time.Time
 }
 
-// NewSessions returns the sessions over their storage and the users.
-func NewSessions(store *storage.UserSessionStorage, users *storage.UserStorage, ttl time.Duration) *Sessions {
-	return &Sessions{Store: store, Users: users, ttl: ttl, Now: time.Now}
+// SessionPolicy is how long a session lives and how often a use is written.
+//
+// TTL is the window a session in use keeps ahead of it and Max the ceiling
+// from the sign in, which an extension cannot pass; a Max at or below TTL
+// pins the session to one TTL from the sign in. Touch is how stale a use
+// gets before a request records it, so a click is not a write.
+type SessionPolicy struct {
+	TTL   time.Duration
+	Max   time.Duration
+	Touch time.Duration
+}
+
+// NewSessions returns the sessions over their storage and the users. A
+// policy with no Touch records a use at most once a minute.
+func NewSessions(store *storage.UserSessionStorage, users *storage.UserStorage, policy SessionPolicy) *Sessions {
+	if policy.Touch <= 0 {
+		policy.Touch = time.Minute
+	}
+	return &Sessions{Store: store, Users: users, policy: policy, Now: time.Now}
 }
 
 // Issue opens a session for a user and returns its token, 256 random
@@ -48,38 +59,62 @@ func (s *Sessions) Issue(ctx context.Context, user *model.User) (string, error) 
 		return "", err
 	}
 	token := base64.RawURLEncoding.EncodeToString(buf)
-	if _, err := s.Store.Create(ctx, user.ID, HashToken(token), now.Add(s.ttl)); err != nil {
+	if _, err := s.Store.Create(ctx, user.ID, HashToken(token), now.Add(s.policy.TTL)); err != nil {
 		return "", err
 	}
 	return token, nil
 }
 
-// Resolve returns the user of a session token, and records the use at
-// most once a minute.
-func (s *Sessions) Resolve(ctx context.Context, token string) (*model.User, error) {
+// Resolve returns the user of a session token, and the expiry it moved to
+// where the use extended it; a zero time is a session left as it was.
+func (s *Sessions) Resolve(ctx context.Context, token string) (*model.User, time.Time, error) {
 	if token == "" {
-		return nil, ErrInvalidToken
+		return nil, time.Time{}, ErrInvalidToken
 	}
 	row, err := s.Store.Find(ctx, HashToken(token))
 	if errors.Is(err, storage.ErrNotFound) {
-		return nil, ErrInvalidToken
+		return nil, time.Time{}, ErrInvalidToken
 	} else if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 	now := s.Now()
 	if row.ExpiresAt == nil || !now.Before(*row.ExpiresAt) {
-		return nil, ErrInvalidToken
+		return nil, time.Time{}, ErrInvalidToken
 	}
 	user, err := s.Users.Get(ctx, row.UserID)
 	if errors.Is(err, storage.ErrNotFound) {
-		return nil, ErrInvalidToken
+		return nil, time.Time{}, ErrInvalidToken
 	} else if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
-	if row.UsedAt == nil || now.Sub(*row.UsedAt) >= touchEvery {
+	if row.UsedAt != nil && now.Sub(*row.UsedAt) < s.policy.Touch {
+		return user, time.Time{}, nil
+	}
+	until := s.until(row, now)
+	if until.IsZero() {
 		_ = s.Store.Touch(ctx, row.ID)
+		return user, time.Time{}, nil
 	}
-	return user, nil
+	if err := s.Store.Extend(ctx, row.ID, until); err != nil {
+		return nil, time.Time{}, err
+	}
+	return user, until, nil
+}
+
+// until is the expiry a session in use moves to, one TTL ahead and no
+// further than Max from the sign in; a zero time leaves the row alone.
+func (s *Sessions) until(row *model.UserSession, now time.Time) time.Time {
+	if s.policy.Max <= s.policy.TTL || row.CreatedAt == nil {
+		return time.Time{}
+	}
+	until := now.Add(s.policy.TTL)
+	if ceiling := row.CreatedAt.Add(s.policy.Max); until.After(ceiling) {
+		until = ceiling
+	}
+	if !until.After(*row.ExpiresAt) {
+		return time.Time{}
+	}
+	return until
 }
 
 // Revoke ends the session of a token. A token that names none is fine.
@@ -90,7 +125,7 @@ func (s *Sessions) Revoke(ctx context.Context, token string) error {
 	return s.Store.Delete(ctx, HashToken(token))
 }
 
-// TTL is how long an issued session stays valid.
-func (s *Sessions) TTL() time.Duration {
-	return s.ttl
+// Policy is the lifetime the sessions were opened with.
+func (s *Sessions) Policy() SessionPolicy {
+	return s.policy
 }

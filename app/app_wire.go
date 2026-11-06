@@ -143,7 +143,8 @@ func (a *App) wire(version string) error {
 	events := event.NewBus()
 	a.Workflows.Events = events
 	a.Runner.Events = events
-	a.Guard = access.NewGuard(a.Users, access.NewSessions(storage.NewUserSessionStorage(a.DB), a.Users, cfg.SessionTTL))
+	a.Guard = access.NewGuard(access.NewSessions(storage.NewUserSessionStorage(a.DB), a.Users,
+		access.SessionPolicy{TTL: cfg.SessionTTL, Max: cfg.SessionMax}))
 	a.Guard.AutoLogin = cfg.AutoLogin
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
 	a.Guard.Now = cfg.Clock()

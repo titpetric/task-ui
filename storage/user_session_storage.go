@@ -42,6 +42,13 @@ func (s *UserSessionStorage) Touch(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "UPDATE user_session SET used_at = ?, updated_at = ? WHERE id = ?", now, now, id)
 }
 
+// Extend records a session's use and moves its expiry, in one write.
+func (s *UserSessionStorage) Extend(ctx context.Context, id string, expires time.Time) error {
+	now := stamp()
+	return client(s.db).Exec(ctx, "UPDATE user_session SET expires_at = ?, used_at = ?, updated_at = ? WHERE id = ?",
+		expires.UTC().Truncate(time.Millisecond), now, now, id)
+}
+
 // Delete removes the session with a hash.
 func (s *UserSessionStorage) Delete(ctx context.Context, hash string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM user_session WHERE hash = ?", hash)
