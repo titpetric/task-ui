@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Notes</h2>
-		<p>Leave a note for someone with <code>@name</code>. If you can run jobs, the note is an instruction to the people it names. It stays open until they mark it working, and then done or failed, here or over MCP.{{ if .Agent }} Name <span class="mention">@{{ .Agent }}</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can't.{{ end }}</p>
+		<p>Leave a note for someone with <code>@name</code>. If you can run jobs, the note is an instruction to the people it names, and naming several splits one request between them. It stays open until they mark it working, and then done or failed, here or over MCP.{{ if .Agent }} Name <span class="mention">@{{ .Agent }}</span> in a note to start the agent on the thread, and reply to follow up: a reply goes to it without naming it again. It works on the request and replies here when it finishes, or explains why it can't.{{ end }}</p>
 	</div>
 </div>
 

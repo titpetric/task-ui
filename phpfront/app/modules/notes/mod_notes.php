@@ -11,16 +11,16 @@ require "ext/autoload.php";
 // mod_notes is the notes board: the notes newest first, each with its
 // replies, and the agent a note names to start work.
 //
-// The page reads and does not write. Both forms it draws carry
+// The page reads and does not write. Both forms it draws hold
 // data-note-form, which the script posts to /api/notes and then refreshes the
 // list in place; a POST route here would reload the whole page instead, and
 // the Go page has none either.
 class mod_notes implements Module {
 	/** LEAD is the sentence under the heading, as HTML: it names a tag. */
-	const LEAD = 'Leave a note for someone with <code>@name</code>. If you can run jobs, the note is an instruction to the people it names. It stays open until they mark it working, and then done or failed, here or over MCP.';
+	const LEAD = 'Leave a note for someone with <code>@name</code>. If you can run jobs, the note is an instruction to the people it names, and naming several splits one request between them. It stays open until they mark it working, and then done or failed, here or over MCP.';
 
 	/** AGENT is what the sentence says further where an agent answers notes. */
-	const AGENT = ' Name <span class="mention">@%s</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can\'t.';
+	const AGENT = ' Name <span class="mention">@%s</span> in a note to start the agent on the thread, and reply to follow up: a reply goes to it without naming it again. It works on the request and replies here when it finishes, or explains why it can\'t.';
 
 	function name() {
 		return "notes";

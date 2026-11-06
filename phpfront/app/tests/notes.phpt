@@ -23,5 +23,5 @@ notes Notes note
 note,run,user
 true
 true
- Name <span class="mention">@claude</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can't.
- Name <span class="mention">@a&lt;b</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can't.
+ Name <span class="mention">@claude</span> in a note to start the agent on the thread, and reply to follow up: a reply goes to it without naming it again. It works on the request and replies here when it finishes, or explains why it can't.
+ Name <span class="mention">@a&lt;b</span> in a note to start the agent on the thread, and reply to follow up: a reply goes to it without naming it again. It works on the request and replies here when it finishes, or explains why it can't.
