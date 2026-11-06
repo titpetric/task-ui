@@ -162,7 +162,7 @@
   var COIL = 7.4;
   var SCAN = 3.1;
   var SCANY = 44;
-  var SWARM = 1.35;
+  var SWARM = 3.2;
   var SWARMT = 1.1;
   var BEAT = 1.9;
   var BEATR = 96;
@@ -393,11 +393,17 @@
   function swarm(orb, i, now) {
     var r = wide(orb, now);
     if (i === 0) return { x: MID, y: MID, r: r };
-    var th = TWO * now / SWARM + (i - 1) * TWO / MOVERS.length;
-    var turn = (i - 1) * Math.PI / 3;
-    var x = orb.clear * Math.cos(th);
-    var y = orb.clear * Math.sin(th) * Math.cos(SWARMT);
-    var look = near(orb.clear * Math.sin(th) * Math.sin(SWARMT));
+    // Each takes its own period, its own tilt, a plane that turns and a
+    // radius that breathes, all off the orb's own numbers. Three on one
+    // period at one tilt draw a mechanism turning.
+    var th = TWO * now / (SWARM * (0.8 + 0.25 * i)) + (i - 1) * TWO / MOVERS.length
+      + orb.sway * Math.sin(TWO * now / orb.swaySecs);
+    var turn = (i - 1) * Math.PI / 3 + 0.4 * Math.sin(TWO * now / orb.swing);
+    var tilt = SWARMT * (0.65 + 0.22 * i);
+    var rad = orb.clear * (1 + 0.18 * Math.sin(TWO * (now / orb.swing + orb.swingAt)));
+    var x = rad * Math.cos(th);
+    var y = rad * Math.sin(th) * Math.cos(tilt);
+    var look = near(rad * Math.sin(th) * Math.sin(tilt));
     return {
       x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * look,
       y: MID + (x * Math.sin(turn) + y * Math.cos(turn)) * look,

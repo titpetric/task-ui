@@ -205,6 +205,16 @@ body:has(.voice[open]) .voice-orb {
 }
 
 /* .voice-said is the words as they are heard, which is the proof it listens. */
+/* The stage's dark reaches well past the stage, over the words and the acts
+   under it, and it paints above anything the window leaves at the default
+   level. These three sit above it or they are read through black. */
+.voice-said,
+.voice-where,
+.voice-acts {
+  position: relative;
+  z-index: 2;
+}
+
 .voice-said {
   margin: 0;
   padding-inline: 1.2rem;
