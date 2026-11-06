@@ -20,20 +20,20 @@ Two kinds of path are not compared, and the run names each one it dropped. A byt
 
 ## The tree
 
-| Path                          | What it is                                                                        |
-|-------------------------------|-----------------------------------------------------------------------------------|
-| `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/` |
-| `ext/`                        | what `composer install` wrote, the autoloader among it                            |
-| `code/Module.php`             | the interface every `mod_` class declares                                         |
-| `code/Task/`                  | the task-ui domain: a DAO per table, and the helpers every page shares            |
-| `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                   |
-| `theme/templates/index.tpl`   | the page shell, which places the components                                       |
-| `theme/templates/components/` | a component and its `.md` per piece of shared markup                              |
-| `theme/assets/`               | the stylesheet, the script, the fonts and the icon, served at `/assets/theme/`    |
-| `modules/<name>/`             | one directory per sidebar entry                                                   |
-| `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime |
-| `tools/`                      | the generators and the precompiler                                                |
-| `tests/`                      | the `.phpt` fixtures, and `bootstrap.php`                                         |
+| Path                          | What it is                                                                         |
+|-------------------------------|------------------------------------------------------------------------------------|
+| `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/`  |
+| `ext/`                        | what `composer install` wrote, the autoloader among it                             |
+| `code/Module.php`             | the interface every `mod_` class declares                                          |
+| `code/Task/`                  | the task-ui domain: a DAO per table, and the helpers every page shares             |
+| `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                    |
+| `theme/templates/index.tpl`   | the page shell, which places the components                                        |
+| `theme/templates/components/` | a component and its `.md` per piece of shared markup                               |
+| `theme/assets/`               | the stylesheet, the script, the fonts, the icon and `vendor/`, at `/assets/theme/` |
+| `modules/<name>/`             | one directory per sidebar entry                                                    |
+| `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime  |
+| `tools/`                      | the generators and the precompiler                                                 |
+| `tests/`                      | the `.phpt` fixtures, and `bootstrap.php`                                          |
 
 A module directory holds:
 
@@ -301,6 +301,8 @@ A module's `templates/index.tpl` is the body. `Task\View` renders it with the mo
 **A component cannot include itself.** `{include}` is a compile-time pre-pass: `Compiler.php:62` runs `while (preg_match_all("/\{include (.*?)\}/s", …))` and `str_replace`s each tag with the file's text, so a template that names itself reintroduces its own tag on every turn of the loop and the compile never finishes. There is no depth cap and no error. `{load}` is no way round it either — `Template.php:65` pushes `$this->filename` onto the stack and leaves `$this->vars` alone, so a nested load renders against the caller's scope and overwrites it. A recursive Go partial is therefore unrolled into one component per level, each fed a scope the PHP flattened for it; the class that builds the scope may recurse as deep as it likes, because that is PHP and not the compiler.
 
 No `set_compile_location` is called. MiniTPL's default writes beside each search path, which is `modules/<name>/templates_c/` and `theme/templates_c/`.
+
+**A field somebody writes markdown in is `components/editor.tpl`.** The board's note, a reply, a prompt and the artifact window's own field are one component over one scope, and `task-ui.js` draws [mdedit](https://github.com/titpetric/mdedit) over each of them; the textarea stays under the surface holding what the form posts, so the forms and the fixtures read the field as they did. The bundle is vendored beside xterm's, `theme/assets/vendor/mdedit.js` and `.css`, and `atkins mdedit` refreshes it from a checkout. [The shared markup](framework.md#the-markdown-field) is the attribute contract and `Task\Upload` is where a file dropped into a field lands.
 
 **A module repeats no markup the theme has.** A piece of markup two views share is a component with a `.md`, and the component set starts from the `{{ define }}` list of `frontend/view/templates/_layout.tpl` and the shared parts table of [the sitemap](sitemap.md).
 
