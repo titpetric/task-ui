@@ -2,7 +2,7 @@
 {include components/page-head.tpl}
 
 <form class="note-form" data-note-form>
-	<textarea name="body" rows="3" required data-mentions aria-label="A new note"></textarea>
+	{eval $data_markdown = $data.editor}{include components/editor.tpl}
 	<div class="form-foot note"><span class="faint">Ctrl+Enter posts. Markdown: <code>**bold**</code>, <code>- lists</code>, <code>`code`</code> and <code>```</code> blocks.</span><button class="btn btn-primary" type="submit">Post note</button></div>
 </form>
 

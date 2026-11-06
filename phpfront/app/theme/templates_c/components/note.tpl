@@ -236,7 +236,15 @@
 			<summary>Reply</summary>
 			<form class="note-form" data-note-form data-parent="<?php echo htmlspecialchars($_v['data_note']['id'], ENT_QUOTES);?>
 ">
-				<textarea name="body" rows="2" required data-mentions aria-label="A reply"></textarea>
+				<?php $_v['data_markdown'] = $_v['data_note']['editor'];?>
+<textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
+" rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
+" spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
+"<?php if($_v['data_markdown']['mentions']){?>
+ data-mentions<?php }?><?php if($_v['data_markdown']['placeholder']){?>
+ placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
+"<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
+"></textarea>
 				<div class="form-foot note"><span></span><button class="btn" type="submit">Reply</button></div>
 			</form>
 		</details>

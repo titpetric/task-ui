@@ -298,6 +298,20 @@ class Chrome {
 		return $this;
 	}
 
+	/**
+	 * upload is the directory of the artifact tree the markdown fields of this
+	 * page write into, which is the place the page is about.
+	 *
+	 * The body carries it and every field reads it off the body, so a field
+	 * the script builds - the one an edit opens - writes where the field it
+	 * replaced would have.
+	 */
+	function upload() {
+		$prompt = $this->prompt === null ? Prompt::root() : $this->prompt;
+
+		return Upload::ofPlace(Route::place($prompt["folder"], $prompt["dir"]));
+	}
+
 	/** asksOfRun is where it asks on a run's page, which is about the run. */
 	function asksOfRun($run) {
 		$this->prompt = Prompt::ofRun($run, $this->folders(), $this->workspaces());
@@ -395,6 +409,7 @@ class Chrome {
 			"folders" => $this->folderTree(),
 			"workflows" => $this->workflows(),
 			"prompt" => $this->prompt === null ? Prompt::root() : $this->prompt,
+			"upload" => $this->upload(),
 			"runAs" => $this->runAs(),
 			"recents" => $this->recents(),
 			"running" => count($this->live()) > 0,

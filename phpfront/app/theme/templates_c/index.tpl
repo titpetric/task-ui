@@ -18,6 +18,9 @@
 /theme/vendor/xterm.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
+/theme/vendor/mdedit.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+">
+	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
@@ -31,7 +34,9 @@
 ' data-workspaces='<?php echo htmlspecialchars($_v['chrome']['workspaces'], ENT_QUOTES);?>
 '<?php if($_v['chrome']['user']){?>
  data-me="<?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
-"<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
+" data-upload="<?php echo htmlspecialchars($_v['chrome']['upload'], ENT_QUOTES);?>
+"<?php }?><?php if($_v['chrome']['can']['artifact/edit']){?>
+ data-artifact-edit<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
 edit<?php }elseif($_v['chrome']['can']['user/view']){?>
 view<?php }?>">
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
@@ -1033,6 +1038,8 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 			<a class="btn" id="preview-download" href="#" download>Download</a>
 			<span class="preview-actions" id="preview-actions"></span>
+			<button type="button" class="btn" id="preview-edit" hidden>Edit</button>
+			<button type="button" class="btn btn-primary" id="preview-save" hidden>Save</button>
 			<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 		</div>
 	</dialog>
@@ -1140,6 +1147,9 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/vendor/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+" defer></script>
+	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
+/theme/vendor/mdedit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>

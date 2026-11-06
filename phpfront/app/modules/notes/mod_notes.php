@@ -70,8 +70,25 @@ class mod_notes implements Module {
 		$view->page(array(
 			"head" => $head->data(),
 			"agent" => $agent,
+			"editor" => self::field(),
 			"threads" => $threads,
 		));
+	}
+
+	/**
+	 * field is the board's own field, as components/editor.tpl reads it: a
+	 * note is a document and takes every tool, and an `@` opens the list of
+	 * users, because a note is written to someone.
+	 */
+	static function field() {
+		return array(
+			"name" => "body",
+			"rows" => 3,
+			"label" => "A new note",
+			"placeholder" => "",
+			"mentions" => true,
+			"toolbar" => "full",
+		);
 	}
 
 	/**

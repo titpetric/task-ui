@@ -280,7 +280,7 @@ class mod_workflows implements Module {
 			"watch" => false,
 			"api" => Task\Prompt::API,
 			"fields" => array(array("name" => "area", "value" => Task\Note::AREA_WORKFLOWS)),
-			"placeholder" => "Describe a workflow to build or change",
+			"editor" => Task\Prompt::field("Describe a workflow to build or change"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in ",
 			"picks" => $this->picks($chrome),

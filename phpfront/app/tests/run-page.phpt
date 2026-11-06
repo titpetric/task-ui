@@ -326,7 +326,7 @@ echo count($none["rows"]), " [", $none["block"]["empty"], "]\n";
 $box = Task\Prompt::panel($chrome, $one, $seen);
 
 echo $box["title"], " [", $box["note"], "] ", var_export($box["hidden"], true), " ", var_export($box["watch"], true), " ", $box["api"], " ", $box["place"], "\n";
-echo $box["fields"][0]["name"], " ", $box["fields"][0]["value"], " [", $box["placeholder"], "]\n";
+echo $box["fields"][0]["name"], " ", $box["fields"][0]["value"], " [", $box["editor"]["placeholder"], "]\n";
 echo "[", $box["lead"], "] [", $box["tail"], "]\n";
 echo count($box["threads"]), " ", $box["threads"][0]["id"], " ", count($box["threads"][0]["replies"]), "\n";
 
