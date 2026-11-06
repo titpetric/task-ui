@@ -1137,21 +1137,17 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 						<stop offset="80%" stop-color="var(--voice-violet)" stop-opacity="0.4"/>
 						<stop offset="100%" stop-color="var(--voice-violet)" stop-opacity="0"/>
 					</linearGradient>
-					<linearGradient id="voice-tail-a" x1="1" y1="0" x2="0" y2="0">
-						<stop offset="0%" stop-color="#fff6e2" stop-opacity="0.85"/>
-						<stop offset="100%" stop-color="var(--voice-cool)" stop-opacity="0"/>
-					</linearGradient>
-					<linearGradient id="voice-tail-b" x1="1" y1="0" x2="0" y2="0">
-						<stop offset="0%" stop-color="#f3e9ff" stop-opacity="0.8"/>
-						<stop offset="100%" stop-color="var(--voice-violet)" stop-opacity="0"/>
-					</linearGradient>
-					<linearGradient id="voice-tail-c" x1="1" y1="0" x2="0" y2="0">
-						<stop offset="0%" stop-color="#fff3d6" stop-opacity="0.75"/>
-						<stop offset="100%" stop-color="var(--voice-hot)" stop-opacity="0"/>
-					</linearGradient>
-					<path id="voice-path-a" d="M160 46a62 114 0 1 1-0.1 0z" transform="rotate(14 160 160)"/>
-					<path id="voice-path-b" d="M160 58a104 102 0 1 1-0.1 0z" transform="rotate(-62 160 160)"/>
-					<path id="voice-path-c" d="M160 70a132 90 0 1 1-0.1 0z" transform="rotate(68 160 160)"/>
+					<radialGradient id="voice-nucleus">
+						<stop offset="0%" stop-color="#fffdf7" stop-opacity="1"/>
+						<stop offset="40%" stop-color="var(--voice-hot)" stop-opacity="0.72"/>
+						<stop offset="100%" stop-color="var(--voice-warm)" stop-opacity="0"/>
+					</radialGradient>
+					<filter id="voice-wake" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+						<feGaussianBlur stdDeviation="1.3"/>
+					</filter>
+					<path id="voice-path-a" pathLength="1000" d="M160 46a62 114 0 1 1-0.1 0z" transform="rotate(14 160 160)"/>
+					<path id="voice-path-b" pathLength="1000" d="M160 58a104 102 0 1 1-0.1 0z" transform="rotate(-62 160 160)"/>
+					<path id="voice-path-c" pathLength="1000" d="M160 70a132 90 0 1 1-0.1 0z" transform="rotate(68 160 160)"/>
 				</defs>
 				<circle class="voice-shadow" cx="160" cy="160" r="150" fill="url(#voice-shadow)"/>
 				<g class="voice-haze" filter="url(#voice-haze)">
@@ -1164,21 +1160,43 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 					<use class="voice-ring" href="#voice-path-c" stroke="url(#voice-ring-c)" stroke-width="1.2"/>
 				</g>
 				<circle class="voice-core" cx="160" cy="160" r="72" fill="url(#voice-core)"/>
+				<circle class="voice-rim" cx="160" cy="160" r="54" fill="none" stroke="url(#voice-ring-a)" stroke-width="1.1"/>
+				<circle class="voice-nucleus" cx="160" cy="160" r="27" fill="url(#voice-nucleus)"/>
+				<g class="voice-wakes" filter="url(#voice-wake)">
+					<g class="wake wake-a">
+						<use class="w1" href="#voice-path-a"><animate attributeName="stroke-dashoffset" dur="19s" begin="-3s" repeatCount="indefinite" from="90" to="-910"/></use>
+						<use class="w2" href="#voice-path-a"><animate attributeName="stroke-dashoffset" dur="19s" begin="-3s" repeatCount="indefinite" from="200" to="-800"/></use>
+						<use class="w3" href="#voice-path-a"><animate attributeName="stroke-dashoffset" dur="19s" begin="-3s" repeatCount="indefinite" from="380" to="-620"/></use>
+						<use class="w4" href="#voice-path-a"><animate attributeName="stroke-dashoffset" dur="19s" begin="-3s" repeatCount="indefinite" from="600" to="-400"/></use>
+					</g>
+					<g class="wake wake-b">
+						<use class="w1" href="#voice-path-b"><animate attributeName="stroke-dashoffset" dur="31s" begin="-19s" repeatCount="indefinite" from="-1000" to="0"/></use>
+						<use class="w2" href="#voice-path-b"><animate attributeName="stroke-dashoffset" dur="31s" begin="-19s" repeatCount="indefinite" from="-1000" to="0"/></use>
+						<use class="w3" href="#voice-path-b"><animate attributeName="stroke-dashoffset" dur="31s" begin="-19s" repeatCount="indefinite" from="-1000" to="0"/></use>
+						<use class="w4" href="#voice-path-b"><animate attributeName="stroke-dashoffset" dur="31s" begin="-19s" repeatCount="indefinite" from="-1000" to="0"/></use>
+					</g>
+					<g class="wake wake-c">
+						<use class="w1" href="#voice-path-c"><animate attributeName="stroke-dashoffset" dur="47s" begin="-34s" repeatCount="indefinite" from="90" to="-910"/></use>
+						<use class="w2" href="#voice-path-c"><animate attributeName="stroke-dashoffset" dur="47s" begin="-34s" repeatCount="indefinite" from="200" to="-800"/></use>
+						<use class="w3" href="#voice-path-c"><animate attributeName="stroke-dashoffset" dur="47s" begin="-34s" repeatCount="indefinite" from="380" to="-620"/></use>
+						<use class="w4" href="#voice-path-c"><animate attributeName="stroke-dashoffset" dur="47s" begin="-34s" repeatCount="indefinite" from="600" to="-400"/></use>
+					</g>
+				</g>
 				<g class="voice-comets">
 					<g class="voice-comet comet-a">
-						<path class="tail" d="M0 0 -34 -2.6 -34 2.6Z" fill="url(#voice-tail-a)"/>
-						<circle class="head" r="3.6" fill="#fff6e2"/>
-						<animateMotion dur="19s" begin="-3s" repeatCount="indefinite" rotate="auto"><mpath href="#voice-path-a"/></animateMotion>
+						<circle class="coma" r="9" fill="#fff6e2"/>
+						<circle class="head" r="3.2" fill="#fffdf4"/>
+						<animateMotion dur="19s" begin="-3s" repeatCount="indefinite"><mpath href="#voice-path-a"/></animateMotion>
 					</g>
 					<g class="voice-comet comet-b">
-						<path class="tail" d="M0 0 -44 -2.2 -44 2.2Z" fill="url(#voice-tail-b)"/>
-						<circle class="head" r="3" fill="#f3e9ff"/>
-						<animateMotion dur="31s" begin="-19s" repeatCount="indefinite" rotate="auto" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#voice-path-b"/></animateMotion>
+						<circle class="coma" r="7.5" fill="#f3e9ff"/>
+						<circle class="head" r="2.7" fill="#fdfaff"/>
+						<animateMotion dur="31s" begin="-19s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#voice-path-b"/></animateMotion>
 					</g>
 					<g class="voice-comet comet-c">
-						<path class="tail" d="M0 0 -56 -1.8 -56 1.8Z" fill="url(#voice-tail-c)"/>
-						<circle class="head" r="2.4" fill="#fff3d6"/>
-						<animateMotion dur="47s" begin="-34s" repeatCount="indefinite" rotate="auto"><mpath href="#voice-path-c"/></animateMotion>
+						<circle class="coma" r="6" fill="#fff3d6"/>
+						<circle class="head" r="2.2" fill="#fffaf0"/>
+						<animateMotion dur="47s" begin="-34s" repeatCount="indefinite"><mpath href="#voice-path-c"/></animateMotion>
 					</g>
 				</g>
 			</svg>

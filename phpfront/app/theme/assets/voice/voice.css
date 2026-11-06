@@ -200,6 +200,77 @@ body:has(.voice-orb:not([hidden])) .toasts {
     transition: transform 90ms ease-out, opacity 90ms ease-out;
   }
 
+  /* The nucleus is the body the orbits are around: a small hard light under
+     the cloud, so the middle reads as a thing and not as more fog. */
+  & .voice-nucleus {
+    mix-blend-mode: plus-lighter;
+    transform-origin: 160px 160px;
+    transform: scale(calc(0.88 + var(--voice-level) * 0.34));
+    opacity: calc(0.78 + var(--voice-level) * 0.22);
+    transition: transform 70ms ease-out, opacity 70ms ease-out;
+  }
+
+  /* The rim is the edge of that body, lit on one side. */
+  & .voice-rim {
+    mix-blend-mode: plus-lighter;
+    transform-origin: 160px 160px;
+    opacity: calc(0.3 + var(--voice-level) * 0.4);
+    animation: voice-spin 90s linear infinite reverse;
+  }
+
+  /* A wake is the orbit drawn as one dash chasing the comet round it, so the
+     trail bends with the path under it. Four of them, each longer, wider and
+     fainter, disperse it behind the head. */
+  & .voice-wakes {
+    fill: none;
+    mix-blend-mode: plus-lighter;
+    stroke-linecap: round;
+  }
+
+  & .wake {
+    animation: voice-fade 19s ease-in-out -3s infinite;
+  }
+
+  & .wake-a {
+    stroke: #fff6e2;
+  }
+
+  & .wake-b {
+    stroke: #f3e9ff;
+    animation-duration: 31s;
+    animation-delay: -19s;
+  }
+
+  & .wake-c {
+    stroke: #fff3d6;
+    animation-duration: 47s;
+    animation-delay: -34s;
+  }
+
+  & .w1 {
+    stroke-dasharray: 90 910;
+    stroke-width: 2.8;
+    opacity: 1;
+  }
+
+  & .w2 {
+    stroke-dasharray: 200 800;
+    stroke-width: 5;
+    opacity: 0.5;
+  }
+
+  & .w3 {
+    stroke-dasharray: 380 620;
+    stroke-width: 8.5;
+    opacity: 0.24;
+  }
+
+  & .w4 {
+    stroke-dasharray: 600 400;
+    stroke-width: 14;
+    opacity: 0.11;
+  }
+
   /* The orbits keep their shape and turn as a set, so three inclinations
      read as one body in three dimensions. */
   & .voice-orbits {
@@ -215,13 +286,15 @@ body:has(.voice-orb:not([hidden])) .toasts {
   }
 
   /* Each comet dims and shrinks on its far half, which is the whole of the
-     depth: a flat ellipse read as an orbit once the body behind it fades. */
+     depth: a flat ellipse read as an orbit once the body behind it fades. The
+     delay matches its motion's begin, so the dimming is the far half and not
+     an arbitrary quarter of the way round. */
   & .voice-comet {
-    animation: voice-depth 19s ease-in-out infinite;
+    animation: voice-depth 19s ease-in-out -3s infinite;
 
-    & .tail {
-      opacity: 0.5;
-      filter: blur(1.4px);
+    & .coma {
+      opacity: 0.4;
+      filter: blur(2.6px);
     }
 
     & .head {
@@ -231,10 +304,25 @@ body:has(.voice-orb:not([hidden])) .toasts {
 
   & .comet-b {
     animation-duration: 31s;
+    animation-delay: -19s;
   }
 
   & .comet-c {
     animation-duration: 47s;
+    animation-delay: -34s;
+  }
+}
+
+/* A wake fades with the comet it belongs to and keeps its width: the whole
+   orbit is one element, and scaling it would scale the path. */
+@keyframes voice-fade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
   }
 }
 
@@ -389,7 +477,15 @@ body:has(.voice-orb:not([hidden])) .toasts {
 
   .voice-avatar .voice-haze ellipse,
   .voice-avatar .voice-orbits,
+  .voice-avatar .voice-rim,
+  .voice-avatar .wake,
   .voice-avatar .voice-comet {
     animation: none;
+  }
+
+  /* A comet that does not move leaves no wake, so the dashes come off the
+     orbits and the heads stand still on them. */
+  .voice-avatar .voice-wakes {
+    display: none;
   }
 }

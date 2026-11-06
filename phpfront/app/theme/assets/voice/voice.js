@@ -77,6 +77,9 @@
   var player = null;    // the element playing that audio
   var flowID = "";      // FLOW's ID, read once
   var gen = 0;          // a send or a discard retires the watch before it
+  var since = 0;        // when the request went out, for the counter
+  var clock = 0;        // the interval writing the counter
+  var doing = "";       // the step the counter sits beside
 
   // ------------------------------------------------------------------ gate
 
@@ -492,6 +495,41 @@
     return say.charAt(0).toUpperCase() + say.slice(1);
   }
 
+  // ----------------------------------------------------------------- clock
+
+  // span is a number of seconds as the window writes it.
+  function span(secs) {
+    if (secs < 60) return secs + "s";
+    return Math.floor(secs / 60) + "m" + ("0" + (secs % 60)).slice(-2) + "s";
+  }
+
+  // tell writes the step and how long it has been going. A transcription on a
+  // busy machine takes a minute, and a line that does not move reads as stuck.
+  function tell(now) {
+    if (now !== undefined) doing = now;
+    where.textContent = doing + " · " + span(Math.round((Date.now() - since) / 1000));
+  }
+
+  // ticking starts the counter beside a step; ended stops it and leaves how
+  // long the whole thing took on the line.
+  function ticking(now) {
+    since = Date.now();
+    if (clock) window.clearInterval(clock);
+    clock = window.setInterval(function () { tell(); }, 1000);
+    tell(now);
+  }
+
+  function ended(word) {
+    var secs = Math.round((Date.now() - since) / 1000);
+    stopped();
+    where.textContent = since ? word + " · " + span(secs) : word;
+  }
+
+  function stopped() {
+    if (clock) window.clearInterval(clock);
+    clock = 0;
+  }
+
   // asked puts the question to Claude and follows it in the window, so the
   // orb says what the request is doing and reads the reply out when it ends.
   // The reply goes beside the recording at, once it is written, so the pair
@@ -511,13 +549,14 @@
       }
       return;
     }
+    ticking("Asking");
     window.taskUI.ask(words + " " + BRIEF, function (update) {
       if (mine !== gen) return;
       if (update.state === "answered") {
         pending = false;
         answer = plain(update.body);
         said.textContent = answer.slice(0, 400);
-        where.textContent = "Answered";
+        ended("Answered");
         speak(answer);
         at.then(function (base) { if (base) put(base + ".reply.txt", answer, "text/plain"); });
         return;
@@ -525,13 +564,13 @@
       if (update.state === "failed") {
         pending = false;
         var why = update.text && update.text !== "failed" ? update.text : "";
+        stopped();
         where.textContent = why || "The request failed";
         return;
       }
       if (update.state === "done") return;
-      where.textContent = label(update.text || update.state);
+      tell(label(update.text || update.state));
     });
-    where.textContent = "Asking";
   }
 
   // ------------------------------------------------------------------ flow
@@ -558,7 +597,7 @@
     pending = true;
     replayBtn.hidden = true;
     said.textContent = "";
-    where.textContent = STAGES[0];
+    ticking(STAGES[0]);
     flow().then(function (id) {
       if (!id) throw new Error("this instance has no " + FLOW + " workflow");
       return fetch("/api/workflows/" + encodeURIComponent(id) + "/runs", {
@@ -595,7 +634,7 @@
           if (data && data.text) {
             answer = data.text.trim();
             said.textContent = answer;
-            where.textContent = STAGES[2];
+            tell(STAGES[2]);
             again();
             return;
           }
@@ -627,7 +666,7 @@
         var steps = run.steps || [];
         for (var i = 0; i < steps.length; i++) {
           if (steps[i].state === "running") {
-            where.textContent = STAGES[i] || "Working";
+            tell(STAGES[i] || "Working");
             return;
           }
         }
@@ -642,10 +681,10 @@
     pending = false;
     replayBtn.hidden = !answer && !reply;
     if (!answer && !reply) {
-      where.textContent = "No answer came back";
+      ended("No answer came back");
       return;
     }
-    where.textContent = "Answered";
+    ended("Answered");
     play();
   }
 
@@ -654,6 +693,7 @@
   function fell(err) {
     var why = (err && err.message) || String(err);
     pending = false;
+    stopped();
     where.textContent = why;
     say("The recording was kept but not answered: " + why, "bad");
   }
@@ -675,6 +715,8 @@
   // window. It retires a watch, so an answer draws into no closed window.
   function trash() {
     gen++;
+    stopped();
+    since = 0;
     pause();
     buffer = null;
     text = "";
