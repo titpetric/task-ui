@@ -20,6 +20,7 @@ import (
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/spotify"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
@@ -71,6 +72,9 @@ type Options struct {
 	// host inventory through the Beszel one.
 	Integrations *integration.Store
 	Hosts        *beszel.Inventory
+	// Spotify links users' accounts and acts on them; nil turns the
+	// Spotify routes off.
+	Spotify *spotify.Service
 	// HostRuns start the runs of @host:<host>, a command on hosts of the
 	// inventory. Nil runs on no host.
 	HostRuns *hostrun.Starter

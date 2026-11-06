@@ -18,6 +18,9 @@ type Field struct {
 	// Who makes the value a comma separated list of roles and users, which
 	// the form shows as a box each.
 	Who bool `json:"who,omitempty"`
+	// WhoEmpty words what nothing checked means for a Who field; empty
+	// keeps "every run gets the token".
+	WhoEmpty string `json:"who_empty,omitempty"`
 	// Options are the values the setting takes, the first the default,
 	// which the form shows as a list to pick from.
 	Options []string `json:"options,omitempty"`

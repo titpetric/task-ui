@@ -332,7 +332,8 @@ class mod_integrations implements Module {
 	/** whose is the Who boxes of the setting: the roles and users its runs go to. */
 	function whose($service, $field, $everyone) {
 		$checked = $service["checked"];
-		$who = new Task\WhoField("values." . $field["name"], "joined", $checked, $checked, $everyone, self::EVERYONE);
+		$empty = isset($field["who_empty"]) ? $field["who_empty"] : self::EVERYONE;
+		$who = new Task\WhoField("values." . $field["name"], "joined", $checked, $checked, $everyone, $empty);
 
 		return $who->data();
 	}

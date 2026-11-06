@@ -78,6 +78,7 @@ Each row is a choice an operator makes. **Default** says where the image, the co
 - [ ] `/keys/known_hosts` holds the git remotes and inventory hosts before the first run ([D6](#decisions)).
 - [ ] Each SSH key links to the roles and users that need it; the git key exists; no production key goes to a role it doesn't need ([D7](#decisions)).
 - [ ] Beszel, when on, signs in as a read-only user, and `hosts` stays with admins ([D8](#decisions)).
+- [ ] Spotify, when on, is on `read` access unless users should control playback; `spotify_link` and `spotify_control` go to the roles that need them, and the redirect URI is the instance's https address. The tokens sit in each user's own `user:<name>` secret scope and reach no run.
 - [ ] The Claude Code integration's **Who** names the agent user and the roles that use Claude ([D9](#decisions)).
 - [ ] Each MCP agent user is an account of its own, with only what the agent needs, and its token rotates within 30 days ([D11](#decisions), [D18](#decisions)).
 - [ ] No private key leaves but inside an admin's export bundle ([D12](#decisions), [D19](#decisions)); `input` stays with admins ([D13](#decisions)).

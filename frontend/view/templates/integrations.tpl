@@ -46,7 +46,7 @@
 							{{- if .Who }}
 							<div class="field wf-wide">
 								<span class="label">{{ .Label }}</span>
-								{{- template "whofield" (who (print "values." .Name) "joined" $int.Checked $int.Checked $users "every run gets the token") }}
+								{{- template "whofield" (who (print "values." .Name) "joined" $int.Checked $int.Checked $users (or .WhoEmpty "every run gets the token")) }}
 								{{- with .Help }}<small class="faint">{{ . }}</small>{{ end }}
 							</div>
 							{{- else if or .Empty .Source }}

@@ -16,7 +16,7 @@ func TestKinds(t *testing.T) {
 	assert.True(t, kind.Field("token").Secret)
 	assert.Nil(t, kind.Field("colour"))
 	assert.Nil(t, integration.KindOf("nothing"))
-	assert.Len(t, integration.Kinds(), 4)
+	assert.Len(t, integration.Kinds(), 5)
 	assert.NotNil(t, integration.KindOf(integration.Claude).Field("who"))
 	openrouter := integration.KindOf(integration.OpenRouter)
 	assert.NotNil(t, openrouter)
@@ -71,4 +71,20 @@ func TestKind_Steps(t *testing.T) {
 	assert.Contains(t, forgejo.Steps[1], "`read:user`")
 	assert.Contains(t, forgejo.Field("token").Help, "read:user")
 	assert.Contains(t, forgejo.Steps[4], "`<login>/<login>`")
+}
+
+// Spotify keeps its credential out of every run: no setting sets a variable.
+func TestKind_Spotify(t *testing.T) {
+	t.Parallel()
+	kind := integration.KindOf(integration.Spotify)
+	assert.NotNil(t, kind)
+	assert.True(t, kind.Field("client_secret").Secret)
+	assert.False(t, kind.Field("client_id").Secret)
+	assert.Equal(t, "client secret", kind.Credential())
+	assert.Equal(t, []string{"read", "write"}, kind.Field("scopes").Options, "read is the default")
+	for _, field := range kind.Fields {
+		assert.Equal(t, "", field.Env, field.Name)
+	}
+	assert.False(t, integration.Configured(*kind, map[string]string{"client_id": "x"}))
+	assert.True(t, integration.Configured(*kind, map[string]string{"client_id": "x", "client_secret": "y"}))
 }

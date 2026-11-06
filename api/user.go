@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -152,6 +153,12 @@ func (h *Handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if err := h.opts.RemoveUser(r.Context(), user.Name); err != nil {
 		failErr(w, err)
 		return
+	}
+	// A deleted user leaves no Spotify tokens behind.
+	if h.opts.Spotify != nil {
+		if err := h.opts.Spotify.Unlink(r.Context(), user.Name, user.Name, true); err != nil {
+			slog.Warn("spotify tokens of a deleted user not removed", "user", user.Name, "err", err)
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
