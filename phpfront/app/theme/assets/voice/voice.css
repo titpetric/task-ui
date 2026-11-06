@@ -81,7 +81,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
   max-width: none;
   height: var(--app-vh, 100dvh);
   max-height: var(--app-vh, 100dvh);
-  padding: 1.2rem;
+  padding: 1.2rem 0;
   border: 0;
   color: var(--text);
   background: transparent;
@@ -94,10 +94,13 @@ body:has(.voice-orb:not([hidden])) .toasts {
     gap: 1rem;
   }
 
-  /* The page falls into the dark the orb sits in: untouched at the corners,
-     black across the middle 30%, which is the orb's own width on a phone. */
+  /* The dark the orb sits in is drawn on the stage, which shares the orb's
+     centre. The window is a column with the words under the orb, so the
+     window's own middle sits lower, and a gradient on the backdrop lands off
+     by that much, by more on a phone where the words take two lines. What is
+     left here is the even wash that keeps white text legible. */
   &::backdrop {
-    background: radial-gradient(circle farthest-side at 50% 50%, #000 0%, #000 30%, rgba(0, 0, 0, 0) 100%);
+    background: rgba(2, 5, 9, 0.45);
   }
 }
 
@@ -107,14 +110,31 @@ body:has(.voice-orb:not([hidden])) .toasts {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(68vmin, 24rem);
-  height: min(68vmin, 24rem);
+  /* The width of the screen on a phone and 24rem on a desktop, so the two
+     draw the same picture and the narrow one is the wide one cropped. The
+     13rem is the words, the acts and the window's own padding under it,
+     which a phone held sideways has to fit as well. */
+  width: max(6rem, min(100vw, calc(var(--app-vh, 100dvh) - 13rem), 24rem));
+  height: max(6rem, min(100vw, calc(var(--app-vh, 100dvh) - 13rem), 24rem));
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: none;
   cursor: pointer;
   transition: scale 0.18s ease-out;
+
+  /* The dark, concentric with the well under it and with the canvas over it,
+     because all three are this one square. It paints over the well and under
+     the canvas. */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -55%;
+    z-index: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle closest-side, #000 0%, #000 34%, rgba(0, 0, 0, 0) 100%);
+    pointer-events: none;
+  }
 
   &:hover,
   &:focus-visible {
@@ -123,7 +143,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
 
   &:focus-visible {
     outline: 1px solid color-mix(in srgb, var(--voice-warm) 60%, transparent);
-    outline-offset: 0.4rem;
+    outline-offset: -0.6rem;
   }
 }
 
@@ -147,7 +167,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
   inset: -6%;
   border-radius: 50%;
   backdrop-filter: url("#voice-gravity") brightness(0.42) saturate(0.7);
-  mask-image: radial-gradient(circle, #000 0%, #000 52%, transparent 78%);
+  mask-image: radial-gradient(circle, #000 0%, #000 40%, transparent 88%);
   pointer-events: none;
 }
 
@@ -156,6 +176,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
    scales it up for nothing. */
 .voice-avatar {
   position: relative;
+  z-index: 2;
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 0 1rem color-mix(in srgb, var(--voice-violet) 55%, transparent));
@@ -171,6 +192,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
 /* .voice-said is the words as they are heard, which is the proof it listens. */
 .voice-said {
   margin: 0;
+  padding-inline: 1.2rem;
   max-width: 34rem;
   min-height: 2.6em;
   color: var(--text);
@@ -200,6 +222,7 @@ body:has(.voice-orb:not([hidden])) .toasts {
    opens over a run and over a page with no run in it. */
 .voice-where {
   margin: 0;
+  padding-inline: 1.2rem;
   color: var(--text-faint);
   font-size: var(--fs-sm);
   letter-spacing: var(--ls-sm);
