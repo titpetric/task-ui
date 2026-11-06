@@ -97,7 +97,7 @@
   var player = null;    // the element playing that audio
   var thread = "";      // the session, one thread for as long as the window is open
   var stamp = "";       // the clip the session opened on, which names its audio
-  var heard = 0;        // how many replies of the thread have been played
+  var played = 0;       // how many answers of the thread have been played
   var source = null;    // the event stream the thread is followed over
   var gen = 0;          // a send or a discard retires the watch before it
   var since = 0;        // when the request went out, for the counter
@@ -673,20 +673,19 @@
         if (mine !== gen) return;
         var mineThread = ((data && data.notes) || []).filter(function (n) { return n.id === thread; })[0];
         if (!mineThread) return;
-        var replies = mineThread.replies || [];
-        if (replies.length <= heard) return;
-        heard = replies.length;
-        landed(replies[replies.length - 1].body);
+        var answers = (mineThread.replies || []).filter(function (reply) {
+          return reply.user_name !== mineThread.user_name;
+        });
+        if (answers.length <= played) return;
+        played = answers.length;
+        landed(answers[answers.length - 1].body);
       })
       .catch(function () {});
   }
 
-  // landed shows a reply, looks for the audio of it beside the clip, and
-  // plays whichever arrives. The count in the name is the reply's place in
-  // the thread, the name BRIEF names.
   // landed shows a reply and waits for the audio of it. The count in the name
-  // is the reply's place in the thread, the name BRIEF names; the file is
-  // Claude's to write, so the window writes nothing and only reads.
+  // is how many answers the thread holds, which is what BRIEF tells Claude to
+  // count; the window writes no file and only reads.
   function landed(body) {
     var mine = gen;
     var words = plain(body);
@@ -694,9 +693,9 @@
     pending = false;
     answer = words;
     said.textContent = answer.slice(0, 400);
-    if (heard < 1) heard = 1;
+    if (played < 1) played = 1;
     tell(STAGES[2]);
-    audio(mine, stamp + "." + heard, 0);
+    audio(mine, stamp + "." + played, 0);
   }
 
   // audio waits for the wav of a reply and plays it, and reads the words out
@@ -789,7 +788,7 @@
     hush();
     thread = "";
     stamp = "";
-    heard = 0;
+    played = 0;
     show(false);
   }
 
