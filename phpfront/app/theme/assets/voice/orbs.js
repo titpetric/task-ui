@@ -33,10 +33,11 @@
   // that image scaled: a gradient is smooth, so one is enough.
   var SPRITE = 64;
 
-  // PEAK is how much field one orb puts in at its middle. Short of 255 on
-  // purpose: a lone orb then reads most of the palette, and a pair that
-  // overlaps runs past the top of it and goes white.
-  var PEAK = 180;
+  // PEAK is how much field one orb puts in at its middle, and CORE the
+  // fraction of its radius that is all of it: an orb on its own is white in
+  // the middle, and a pair that overlaps runs past the top of the palette.
+  var PEAK = 255;
+  var CORE = 0.16;
 
   // FLOOR is the field below which there is no blob, and RISE how far above
   // it the blob has faded in. Both are soft: a hard cut draws a ring at the
@@ -60,13 +61,16 @@
   // Each orb walks a circle of radius R in a plane tilted by tilt and turned
   // by turn, once every secs, starting at a different point of it. A
   // negative secs walks it the other way. Half of secs is the time it takes
-  // to cross the window, which reads best between two and three seconds.
+  // to cross the window, which reads best between three and four seconds.
   var ORBS = [
-    { R: 72, tilt: 72, turn: 15, secs: 5, size: 27, at: 0 },
-    { R: 62, tilt: 52, turn: -48, secs: -6, size: 23, at: 0.37 },
-    { R: 76, tilt: 81, turn: 70, secs: 7, size: 20, at: 0.11 },
-    { R: 52, tilt: 38, turn: 120, secs: -5.5, size: 29, at: 0.72 },
-    { R: 66, tilt: 64, turn: -105, secs: 6.5, size: 22, at: 0.55 },
+    // A radius of nothing leaves this one at the centre, which the others
+    // pass through and merge with.
+    { R: 0, tilt: 0, turn: 0, secs: 1, size: 45, at: 0 },
+    { R: 72, tilt: 72, turn: 15, secs: 6.3, size: 27, at: 0 },
+    { R: 62, tilt: 52, turn: -48, secs: -7.5, size: 23, at: 0.37 },
+    { R: 76, tilt: 81, turn: 70, secs: 8.8, size: 20, at: 0.11 },
+    { R: 52, tilt: 38, turn: 120, secs: -6.9, size: 29, at: 0.72 },
+    { R: 66, tilt: 64, turn: -105, secs: 8.1, size: 22, at: 0.55 },
   ];
 
   // ramp returns the palette as 256 entries of red, green, blue and alpha,
@@ -92,8 +96,10 @@
   // the rim with no corner. Summing these is what rounds two orbs into one
   // blob; a straight gradient would leave a waist between them.
   function kernel(q) {
-    var q2 = q * q;
-    return 1 - (22 / 9) * q2 + (17 / 9) * q2 * q2 - (4 / 9) * q2 * q2 * q2;
+    if (q <= CORE) return 1;
+    var d = (q - CORE) / (1 - CORE);
+    var d2 = d * d;
+    return 1 - (22 / 9) * d2 + (17 / 9) * d2 * d2 - (4 / 9) * d2 * d2 * d2;
   }
 
   // sprite returns the one orb as a canvas of that field in grey, drawn once
@@ -103,8 +109,8 @@
     pad.width = pad.height = SPRITE * 2;
     var ctx = pad.getContext("2d");
     var fill = ctx.createRadialGradient(SPRITE, SPRITE, 0, SPRITE, SPRITE, SPRITE);
-    for (var i = 0; i <= 20; i++) {
-      var q = i / 20;
+    for (var i = 0; i <= 32; i++) {
+      var q = i / 32;
       var v = Math.round(PEAK * Math.max(0, kernel(q)));
       fill.addColorStop(q, "rgb(" + v + "," + v + "," + v + ")");
     }
