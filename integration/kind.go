@@ -23,6 +23,7 @@ const (
 	OpenRouter = "openrouter"
 	Forgejo    = "forgejo"
 	Beszel     = "beszel"
+	Spotify    = "spotify"
 )
 
 // WebhookPath is the path of the Forgejo webhook under the instance's
@@ -115,6 +116,26 @@ func Kinds() []Kind {
 				"Mint a token for the read-only user with it: `POST /api/collections/users/impersonate/<user id>` with `{\"duration\": 31536000}`, the seconds it lasts; the guide has both commands as curl.",
 				"Enter the hub's URL as task-ui reaches it, and the token.",
 				"Save. The Inventory page lists the hub's systems. Changing that user's password revokes the token.",
+			},
+		},
+		{
+			ID:          Spotify,
+			Title:       "Spotify",
+			Description: "Each user links their own Spotify account, then reads and controls playback, playlists and Liked Songs from prompts, runs and MCP as that user; the tokens are the user's own and reach no run.",
+			Fields: []Field{
+				{Name: "client_id", Label: "Client ID", Placeholder: "32 hex characters", Help: "From the app at developer.spotify.com."},
+				{Name: "client_secret", Label: "Client secret", Secret: true, Help: "From the same app; it stays on the server."},
+				{Name: "redirect_uri", Label: "Redirect URI", Optional: true, Placeholder: "https://task.example.com/api/integrations/spotify/callback", Help: "Register exactly this address in the app. Empty derives it from the instance URL (TASK_UI_URL); it has to be https, or http on a loopback host."},
+				{Name: "scopes", Label: "Access", Optional: true, Options: []string{"read", "write"}, Help: "read asks for the playback state, the playing track, private playlists and the library; write adds playback control, playlist changes and liking. Users link again after a change."},
+				{Name: "who", Label: "Who", Optional: true, Who: true, WhoEmpty: "everyone with the spotify_link permission may link", Help: "The roles and users who may link an account; none checked is everyone with the spotify_link permission."},
+			},
+			Steps: []string{
+				"At `https://developer.spotify.com/dashboard` create an app. The app is in Development mode: only the Spotify accounts you add under User Management, 25 at most, can link until Spotify approves an extension.",
+				"Under Redirect URIs add the address shown in Redirect URI above, exactly: `<instance URL>/api/integrations/spotify/callback`. It has to be https, or http on `127.0.0.1` for a local instance.",
+				"Copy the app's Client ID and Client secret here, leave Access on `read` unless users should control playback and playlists, and Save.",
+				"Playback control needs Spotify Premium and an active device; reading needs neither.",
+				"Allow the permission `spotify_link` to the roles or users who may connect an account, and `spotify_control` to those who may change playback, playlists and Liked Songs; both are denied until granted.",
+				"Each user then opens `/api/integrations/spotify/authorize` on the instance while signed in, agrees on Spotify's page and is sent back here. `DELETE /api/integrations/spotify/link` disconnects, and deletes the stored tokens.",
 			},
 		},
 	}

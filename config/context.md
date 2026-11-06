@@ -250,6 +250,21 @@ the hosts of the inventory. Their tokens are never shown; each kind
 carries the steps to get its key, which the page shows beside the form.
 Page: `/settings/integrations`; API: `/api/integrations`.
 
+## Spotify (`spotify_link`, `spotify_control`)
+
+A user's own Spotify account, linked from the Spotify integration with
+`GET /api/integrations/spotify/authorize` (OAuth with PKCE), read and
+controlled as that user and no one else. `spotify_link` connects and
+reads: what is playing, search, playlists and their tracks.
+`spotify_control` changes things: playback, playlists and the Liked
+Songs. Playback needs Spotify Premium and an active device, and writes an
+admin has to enable on the integration. The tokens are the user's own
+secrets, never shown and never in a run's environment. A user
+disconnects with `DELETE /api/integrations/spotify/link`. API:
+`/api/spotify`; MCP: `spotify_now_playing`, `spotify_search`,
+`spotify_playlists`, `spotify_playback`, `spotify_like`,
+`spotify_playlist_add` and `spotify_playlist_remove`.
+
 ## Inventory (`inventory`, `hosts`)
 
 The hosts Beszel watches, with their load and the ssh login task-ui
@@ -285,7 +300,8 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `get_workflow`, `create_workflow`,
 `update_workflow`, `list_notes`, `note_comment`, `post_note`,
-`ask_prompt`, `list_artifacts`, `read_artifact` and `write_artifact`.
+`ask_prompt`, `list_artifacts`, `read_artifact`, `write_artifact` and,
+for a user who linked Spotify, the seven `spotify_` tools of its section.
 A prompt's run and the Notes agent's reach these tools as their user
 for as long as they run, with no token of the user's.
 `task-ui channel`, a Claude Code channel, pushes the open notes naming

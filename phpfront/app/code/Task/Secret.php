@@ -18,6 +18,13 @@ class Secret {
 	 */
 	const OWNED = "integration:%";
 
+	/**
+	 * PERSONAL starts the scope of a user's own variables, such as the Spotify
+	 * link, as integration/store.go spells it. They are the user's and not a
+	 * workspace's, and the settings leave them out as they do OWNED.
+	 */
+	const PERSONAL = "user:%";
+
 	/** PAGE is the Secrets step of the settings, which a variable's pages hang under. */
 	const PAGE = "/settings/secrets";
 
@@ -44,7 +51,7 @@ class Secret {
 
 	/** count is how many variables the settings list, the integrations' apart. */
 	function count() {
-		$row = $this->db->get("SELECT COUNT(*) AS found FROM secret WHERE scope NOT LIKE ?", self::OWNED);
+		$row = $this->db->get("SELECT COUNT(*) AS found FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ?", self::OWNED, self::PERSONAL);
 
 		return Row::number($row, "found");
 	}
@@ -56,7 +63,7 @@ class Secret {
 	function scopes() {
 		$out = array();
 
-		foreach ($this->db->get_all("SELECT scope FROM secret WHERE scope NOT LIKE ?", self::OWNED) as $row) {
+		foreach ($this->db->get_all("SELECT scope FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ?", self::OWNED, self::PERSONAL) as $row) {
 			$out[] = Row::text($row, "scope");
 		}
 
@@ -72,9 +79,9 @@ class Secret {
 	 * which Task::variables() answers by row ID, and a secret has none to draw.
 	 */
 	function all() {
-		$sql = "SELECT * FROM secret WHERE scope NOT LIKE ? ORDER BY CASE WHEN scope = ? THEN 0 WHEN scope LIKE ? THEN 1 ELSE 2 END, scope, name";
+		$sql = "SELECT * FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ? ORDER BY CASE WHEN scope = ? THEN 0 WHEN scope LIKE ? THEN 1 ELSE 2 END, scope, name";
 
-		return Model\Secret::rows($this->db->get_all($sql, self::OWNED, Workspace::EVERY, Workspace::SCOPE . "%"));
+		return Model\Secret::rows($this->db->get_all($sql, self::OWNED, self::PERSONAL, Workspace::EVERY, Workspace::SCOPE . "%"));
 	}
 
 	/** counts is how many runs got each variable, by its ID. */
@@ -160,7 +167,7 @@ class Secret {
 	 * frontend/secret.go does with the list it filtered.
 	 */
 	function byId($id) {
-		$row = $this->db->get("SELECT * FROM secret WHERE id = ? AND scope NOT LIKE ?", $id, self::OWNED);
+		$row = $this->db->get("SELECT * FROM secret WHERE id = ? AND scope NOT LIKE ? AND scope NOT LIKE ?", $id, self::OWNED, self::PERSONAL);
 
 		if (!is_array($row)) {
 			return null;

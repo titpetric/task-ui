@@ -87,6 +87,6 @@ func TestIntegration_Page(t *testing.T) {
 	assert.Contains(t, body, "No sync ran yet")
 	assert.Contains(t, body, "The instance has no public URL")
 	assert.NotContains(t, body, `data-job="@forgejo-sync"`, "no sync while Forgejo is not set up")
-	// Only the Claude kind has a Who field.
-	assert.Equal(t, 1, strings.Count(body, `class="dim who-summary"`))
+	// Only the Claude and Spotify kinds have a Who field.
+	assert.Equal(t, 2, strings.Count(body, `class="dim who-summary"`))
 }

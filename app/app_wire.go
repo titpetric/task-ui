@@ -37,6 +37,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/spotify"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/tooling"
@@ -247,8 +248,19 @@ func (a *App) wire(version string) error {
 		}
 	}
 	pins := storage.NewPinStorage(db)
+	spotifyService := &spotify.Service{
+		Settings: func(ctx context.Context) (map[string]string, error) {
+			return integrations.Values(ctx, integration.Spotify)
+		},
+		Tokens:  spotify.SecretTokens{Secrets: secrets},
+		Client:  &spotify.Client{},
+		OAuth:   &spotify.OAuth{},
+		States:  &spotify.States{},
+		BaseURL: cfg.URL,
+	}
 	apiHandlers := api.New(api.Options{
-		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
+		Spotify: spotifyService,
+		Users:   a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs,
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
@@ -303,6 +315,9 @@ func (a *App) wire(version string) error {
 		Root:       cfg.Root,
 		Pull:       a.Runner.PullCheckout,
 	}).ServeHTTP)
+	// Spotify sends the browser back with the session cookie withheld
+	// (SameSite=Strict); the page hands it on to the route behind the Guard.
+	r.Get(spotify.CallbackPath, api.SpotifyCallback)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
 	// The ported front end, which answers at the root: it is the front end

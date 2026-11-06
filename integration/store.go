@@ -22,6 +22,12 @@ import (
 // ScopePrefix starts the scope of an integration's secrets.
 const ScopePrefix = "integration:"
 
+// UserScopePrefix starts the scope of a user's own secrets, user:<name>,
+// such as the tokens of a linked Spotify account. It is a service scope
+// like an integration's: encrypted with the instance key, listed on no
+// Secrets page and read by no run.
+const UserScopePrefix = "user:"
+
 // ErrUnknown reports an integration or a setting task-ui does not know.
 var ErrUnknown = errors.New("unknown integration")
 
@@ -229,9 +235,10 @@ func (s *Store) rows(ctx context.Context, id string) (map[string]model.Secret, e
 	return rows, nil
 }
 
-// Internal reports whether a secret's scope belongs to an integration, hidden from the secrets page.
+// Internal reports whether a secret's scope belongs to an integration or
+// to a user, hidden from the secrets page.
 func Internal(scope string) bool {
-	return strings.HasPrefix(scope, ScopePrefix)
+	return strings.HasPrefix(scope, ScopePrefix) || strings.HasPrefix(scope, UserScopePrefix)
 }
 
 // Configured reports whether every setting of an integration that is not
