@@ -767,21 +767,28 @@
     if (window.speechSynthesis) window.speechSynthesis.cancel();
   }
 
-  // trash drops the recording, the words and the reply, and closes the
-  // window.
-  function trash() {
+  // clear drops the recording, the words and the reply, and leaves the window
+  // open on an empty buffer.
+  function clear() {
     drop();
     pause();
     buffer = null;
     text = "";
+  }
+
+  // trash clears the window and closes it.
+  function trash() {
+    clear();
     show(false);
   }
 
   // back steps back through what the window holds: a recording, then a reply,
-  // then the window itself.
+  // then the window itself. Only the last step closes, so discarding a
+  // recording leaves the window open for the next one.
   function back() {
     if (state() !== "idle") {
-      trash();
+      clear();
+      dress();
       return;
     }
     if (!answer && !reply) {
