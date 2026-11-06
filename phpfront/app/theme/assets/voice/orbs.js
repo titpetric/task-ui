@@ -64,13 +64,12 @@
   // to cross the window, which reads best between three and four seconds.
   var ORBS = [
     // A radius of nothing leaves this one at the centre, which the others
-    // pass through and merge with.
-    { R: 0, tilt: 0, turn: 0, secs: 1, size: 45, at: 0 },
+    // pass through and merge with. It puts in less field than they do, or
+    // the middle of the window is white whatever is happening there.
+    { R: 0, tilt: 0, turn: 0, secs: 1, size: 38, at: 0, peak: 0.72 },
     { R: 72, tilt: 72, turn: 15, secs: 6.3, size: 27, at: 0 },
-    { R: 62, tilt: 52, turn: -48, secs: -7.5, size: 23, at: 0.37 },
     { R: 76, tilt: 81, turn: 70, secs: 8.8, size: 20, at: 0.11 },
     { R: 52, tilt: 38, turn: 120, secs: -6.9, size: 29, at: 0.72 },
-    { R: 66, tilt: 64, turn: -105, secs: 8.1, size: 22, at: 0.55 },
   ];
 
   // ramp returns the palette as 256 entries of red, green, blue and alpha,
@@ -161,7 +160,7 @@
         // A trail sample is a tenth of the orb: a slow orb's trail sits on
         // top of the orb itself, and at full weight the sum of them all
         // would run the head past white wherever it lingers.
-        paint.globalAlpha = j === 0 ? 1 : 0.1 * back * back * back;
+        paint.globalAlpha = (j === 0 ? 1 : 0.1 * back * back * back) * (ORBS[i].peak || 1);
         var spot = place(ORBS[i], secs - j * STEP);
         var r = spot.r * swell * (0.45 + 0.55 * back);
         paint.drawImage(ORB, spot.x - r, spot.y - r, r * 2, r * 2);
