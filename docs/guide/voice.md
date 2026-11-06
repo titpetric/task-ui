@@ -29,7 +29,7 @@ An instance without the workflow says so on send and keeps the recording. Build 
 
 ## The orb itself
 
-Four orbs are drawn on one canvas. Each is a radial greyscale, white in the middle and black at the rim, and the four are summed, so two that overlap sum past white. The sum is read through a palette of black to colour to white, and the pair then draws as one body with one outline. Every orb keeps the path it came along: the trail is drawn out of it, and so is the chain.
+Four orbs are drawn on one canvas, and two more join them on the ring an answer brings. Each is a radial greyscale, white in the middle and black at the rim, and the four are summed, so two that overlap sum past white. The sum is read through a palette of black to colour to white, and the pair then draws as one body with one outline. Every orb keeps the path it came along: the trail is drawn out of it, and so is the chain.
 
 One formation per state of the window, and one becomes the next over a second and a half. The window names its state on every step of the run, so the three change flight path as the work moves on:
 
@@ -41,7 +41,7 @@ One formation per state of the window, and one becomes the next over a second an
 | Transcribing | teal    | The three stack into a column and sweep across the canvas, through the middle orb.                                                                           |
 | Thinking     | blue    | The three turn fast and close around the middle orb, each on its own tilted plane.                                                                           |
 | Speaking     | magenta | Each of the three runs out from the middle orb along its own spoke, swelling from nothing and back to nothing, one after the other.                          |
-| Answered     | green   | The middle orb returns to the centre and the other three turn on one flat circle below it, drawn smaller because every z on that circle is negative.         |
+| Answered     | green   | The middle orb returns to the centre and five turn on one flat circle that runs over it, drawn smaller because every z on that circle is negative.           |
 | Failed       | grey    | The three stand off at the rim and turn there, and the middle orb is left alone.                                                                             |
 
 Two of the three orbits hold off the middle orb. Each is pulled in and tilted until its closest approach leaves a thin neck of field between the two, so a pass draws a drop that forms and breaks; the distance is solved from the orb radii when the page loads. The third dives: its path runs from the centre out past the middle orb and back, so the pair merges at the inner end of every swing.

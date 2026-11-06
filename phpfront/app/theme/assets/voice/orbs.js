@@ -122,7 +122,17 @@
     // is the shortest of the three, about four fifths of the longest, and its
     // tilt is written down: no tilt clears a path that reaches the centre.
     { R: 58, turn: 120, secs: -6.9, size: 32, at: 0.72, low: 0, dive: true, tilt: 34, swing: 8.6, swingAt: 0.71, sway: 0.28, swaySecs: 4.3 },
+    // only names the one formation these two are drawn in. Everywhere else
+    // their radius is nothing, so they grow out of the middle as the ring
+    // forms and shrink back into it when it breaks.
+    { R: 64, turn: 200, secs: 7.7, size: 24, at: 0.3, low: 0.5, swing: 9.1, swingAt: 0.2, sway: 0.3, swaySecs: 5.9, only: "answered" },
+    { R: 70, turn: 300, secs: -8.2, size: 22, at: 0.6, low: 0.5, swing: 8.3, swingAt: 0.55, sway: 0.4, swaySecs: 6.1, only: "answered" },
   ];
+
+  // MOVERS are the orbs every formation draws, and RINGERS how many the ring
+  // has: the two counts are what space a formation's orbs around it.
+  var MOVERS = ORBS.filter(function (orb) { return orb.R && !orb.only; });
+  var RINGERS = ORBS.length - 1;
 
   // NECK is the field wanted at the thinnest point between two orbs at their
   // closest. bridge solves the distance that leaves it, and lean tilts each
@@ -138,11 +148,12 @@
   var LEADY = 68;
   var DRIFT = 11.3;
 
-  // The ring is flat and behind the middle: every z on it is negative, so the
-  // three draw smaller than they do anywhere else and their screen y moves
-  // with the perspective. RINGY is solved below.
+  // The ring is flat and behind the middle: every z on it is negative, so its
+  // orbs draw smaller than they do anywhere else and their screen y moves
+  // with the perspective. RINGY is solved below, short enough that the ring
+  // runs over the middle orb at the front and the back of the turn.
   var RING = 6;
-  var RINGR = 66;
+  var RINGR = 79;
   var RINGZ = -86;
   var RINGY = 0;
 
@@ -231,9 +242,9 @@
     orb.path = [];
   });
   for (var pass = 0; pass < 2; pass++) {
-    ORBS[0].size = ORBS.slice(1).reduce(function (sum, orb) {
+    ORBS[0].size = MOVERS.reduce(function (sum, orb) {
       return sum + orb.size * orb.lift;
-    }, 0) / (ORBS.length - 1);
+    }, 0) / MOVERS.length;
     ORBS.slice(1).forEach(function (orb) {
       orb.clear = bridge(ORBS[0].size, orb.size);
       if (!orb.dive) {
@@ -244,9 +255,10 @@
     });
   }
 
-  // The ring hangs bridge's distance below the middle, measured at its far
-  // side, where the perspective draws it closest to the centre on screen.
-  RINGY = bridge(ORBS[0].size, ORBS[1].size * ORBS[1].lift) / near(RINGZ - RINGR);
+  // The ring hangs a tenth over the middle orb's radius below the middle,
+  // near enough that the two merge at the front and the back of every turn
+  // and far enough that the ring still reads as the lower plane.
+  RINGY = ORBS[0].size * 1.1;
 
   // ramp returns a palette as 256 entries of red, green, blue and alpha,
   // interpolated between the stops, with the alpha fading in over RISE.
@@ -297,8 +309,9 @@
   }
 
   // wide returns an orb's radius now: its size, its pulse, the meter and the
-  // press.
+  // press, and nothing at all for an orb outside the one formation it is in.
   function wide(orb, now) {
+    if (orb.only && drawing !== FORMS[orb.only]) return 0;
     var r = orb.size * orb.lift;
     if (orb.pulse) r *= 1 + orb.pulse * Math.sin(TWO * now / orb.pulseSecs);
     return r * swell * (orb.meter ? 1 + vu * orb.meter : 1);
@@ -348,7 +361,7 @@
   function ring(orb, i, now) {
     var r = wide(orb, now);
     if (i === 0) return { x: MID, y: MID, r: r };
-    var th = TWO * now / RING + (i - 1) * TWO / (ORBS.length - 1);
+    var th = TWO * now / RING + (i - 1) * TWO / RINGERS;
     var look = near(RINGZ + RINGR * Math.sin(th));
     return {
       x: MID + RINGR * Math.cos(th) * look,
@@ -362,7 +375,7 @@
   function coil(orb, i, now) {
     var r = wide(orb, now);
     if (i === 0) return { x: MID, y: MID, r: r };
-    var th = TWO * now / COIL + (i - 1) * TWO / (ORBS.length - 1);
+    var th = TWO * now / COIL + (i - 1) * TWO / MOVERS.length;
     return { x: MID + orb.clear * Math.cos(th), y: MID + orb.clear * Math.sin(th), r: r };
   }
 
@@ -380,7 +393,7 @@
   function swarm(orb, i, now) {
     var r = wide(orb, now);
     if (i === 0) return { x: MID, y: MID, r: r };
-    var th = TWO * now / SWARM + (i - 1) * TWO / (ORBS.length - 1);
+    var th = TWO * now / SWARM + (i - 1) * TWO / MOVERS.length;
     var turn = (i - 1) * Math.PI / 3;
     var x = orb.clear * Math.cos(th);
     var y = orb.clear * Math.sin(th) * Math.cos(SWARMT);
@@ -398,8 +411,8 @@
   function beat(orb, i, now) {
     var r = wide(orb, now);
     if (i === 0) return { x: MID, y: MID, r: r };
-    var walk = (now / BEAT + (i - 1) / (ORBS.length - 1)) % 1;
-    var th = (i - 1) * TWO / (ORBS.length - 1) + TWO * now / LOST;
+    var walk = (now / BEAT + (i - 1) / MOVERS.length) % 1;
+    var th = (i - 1) * TWO / MOVERS.length + TWO * now / LOST;
     return {
       x: MID + walk * BEATR * Math.cos(th),
       y: MID + walk * BEATR * Math.sin(th),
@@ -412,7 +425,7 @@
   function scatter(orb, i, now) {
     var r = wide(orb, now);
     if (i === 0) return { x: MID, y: MID, r: r };
-    var th = TWO * now / LOST + (i - 1) * TWO / (ORBS.length - 1);
+    var th = TWO * now / LOST + (i - 1) * TWO / MOVERS.length;
     return { x: MID + FAR * Math.cos(th), y: MID + FAR * Math.sin(th), r: r };
   }
 
@@ -490,6 +503,7 @@
   var tapAt = 0;
   var form = FORMS.idle;   // the formation the orbs are taking
   var fore = FORMS.idle;   // the one they are leaving
+  var drawing = FORMS.idle;  // the one being asked where an orb goes
   var morphAt = -1;
   var ORB = null;    // the greyscale sprite, made on the first frame
   var show = null;   // the canvas on the page
@@ -527,8 +541,10 @@
     var i, orb;
     for (i = 0; i < ORBS.length; i++) {
       orb = ORBS[i];
+      drawing = form;
       var goes = form(orb, i, secs);
       if (w < 1) {
+        drawing = fore;
         var came = fore(orb, i, secs);
         goes = {
           x: came.x + (goes.x - came.x) * w,
