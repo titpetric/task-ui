@@ -4,6 +4,27 @@ task-ui serves one stylesheet and one script, `frontend/view/assets/task-ui.css`
 
 This chapter is the contract of that markup. A page, a partial, a Go template or a PHP module writes it and the script does the rest.
 
+## The markdown field
+
+A field somebody writes markdown in, anywhere in the interface:
+
+```html
+<textarea name="body" rows="3" data-markdown data-toolbar="inline" data-mentions aria-label="A reply"></textarea>
+```
+
+The script draws [mdedit](https://github.com/titpetric/mdedit) over it: one surface holding the markdown itself, a bar over it, and each construct drawn where it stands. The textarea stays under the surface, hidden, holding what the form posts, so everything that read the field before reads it still. A browser that ran no script leaves the textarea as it was.
+
+| Attribute       | What it does                                                                                                |
+|-----------------|-------------------------------------------------------------------------------------------------------------|
+| `data-markdown` | Draw the editor over this field. Required.                                                                  |
+| `data-toolbar`  | `full`, every tool, or `inline`, the five of a one-paragraph field. Upload is added wherever a file can go. |
+| `data-mentions` | An `@` opens the list of users over the surface, as it did over the textarea.                               |
+| `data-upload`   | The directory of the artifact tree a file dropped in lands in, read off the nearest element carrying it.    |
+
+**The field is not `required`.** A browser refuses to post a form holding a required control nobody can focus, and the field the editor drew over is hidden; the script is what refuses an empty one, as it did before.
+
+**`data-upload` belongs to the page and not to the field.** The body carries the directory of the place the page is about, `prompts/<workspace>-<project>`, which `Task\Upload::ofPlace()` answers and every field on the page reads; a field naming its own writes there instead, which is what the artifact window does with the directory of the file it is editing. A file goes up with `PUT /api/artifacts/files/<dir>/<name>`, which takes `artifact/edit`, and the markdown that draws it lands at the caret. [Artifacts](guide/artifacts.md) says where each one goes.
+
 ## The run status label
 
 A run's state, live, anywhere in the interface:

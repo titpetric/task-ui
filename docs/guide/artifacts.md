@@ -23,6 +23,26 @@ When the run ends, task-ui moves the files into the artifact tree, at the same p
 
 You see the files of the folders you may see, in the table and in a `.tgz`. With Allow Edits on Artifacts, `artifact/edit`, you delete a file or a directory from the tree, with the button on its row: the history keeps its versions, and the preview window still shows them. With Allow Deletes on Artifacts, `artifact/delete`, you delete a record, and **Delete all**, in the **⋯** menu at the top right, deletes every file, its history and every record.
 
+## What a field uploads
+
+Every field somebody writes markdown in - a prompt, a note, a reply, a file of the tree being edited - takes a file by paste, by drop or from the picker, and puts it in the artifact tree. The markdown that draws it lands where the caret was, and the file is an artifact like any other: the history keeps the version it replaced, and a later upload of the same name replaces it again.
+
+Where it lands is the page's own directory and not the top of the tree:
+
+| Written from                       | Where it lands                  |
+|------------------------------------|---------------------------------|
+| A prompt, a note or a reply        | `prompts/<workspace>-<project>` |
+| A page about no place              | `prompts/internal`              |
+| A file open in the artifact window | the directory that file is in   |
+
+So a picture pasted into a prompt about `malta/apps` is at `prompts/malta-apps/`, and one dropped into `reports/weekly.md` while it is being edited is at `reports/`. The tree reads as what wrote it rather than as one directory of everything, which is also what a job should do with `$TASK_UI_ARTIFACTS`: write into a directory of its own and the Files table stays readable.
+
+An upload takes Allow Edits on Artifacts, `artifact/edit`, which is the same rule as writing one over the API; a reader without it has no upload tool on the bar.
+
+## Editing a file
+
+A markdown file of the tree opens in the preview window as a page. With Allow Edits on Artifacts, **Edit** draws the editor over it, and **Save** writes the markdown back to the same path, which the history keeps the version before of. Only the latest version opens for editing: an older one is there to be read, and writing it back would be a restore rather than an edit.
+
 ## Writing one
 
 An agent outside task-ui writes into the tree too, over MCP with `write_artifact`, or with `PUT /api/artifacts/files/<path>` and the file as the body: a relative path, with no `..` and no dot file, within the size limit the [API](../api.md) names. The file replaces the version at that path, which the history keeps, as a run's file would. Its record has no run, folder or job: the History names the user who wrote it, and whoever sees artifacts sees it. `list_artifacts` lists a directory and `read_artifact` reads a file, the latest version or an older one. Writing takes Allow Edits on Artifacts, `artifact/edit`, which the runner role holds; with it a runner also deletes a file from the tree (see [MCP](mcp.md#tools)).

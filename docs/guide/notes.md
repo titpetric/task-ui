@@ -40,6 +40,8 @@ curl -s -X PUT https://task.example.com/api/notes/$ID \
 
 The author of a note, or an admin, edits it and deletes it with its replies, and the author of a reply, or an admin, deletes that reply alone. The form posts with **Post note** or Ctrl+Enter; a reply opens under **Reply**. A note and a reply are markdown: `**bold**`, `*italic*`, lists, headings, links, quotes, tables, `code` and ````` blocks. A line break stays a line break, and HTML shows escaped, as text. Messages from others arrive the moment someone sends them.
 
+Every field here is the markdown editor: the heading, the bold and the list draw as you type them, the bar over the field writes the markers for you, and the pilcrow at its right shows or hides them. A picture pasted, dropped or picked goes into the artifact tree under the place the page is about, and the note holds the markdown that draws it — see [Artifacts](artifacts.md#what-a-field-uploads).
+
 ## The agent
 
 An admin makes a user an agent on the user's profile, under **Roles**: **MCP agent user**, then **Run instance Claude when mentioned**, which needs the first; `task-ui user agent <name> on` sets both (see [Running the server](../running.md#users-and-roles)). The agent's user has to exist in the password file, and its role decides what its runs may reach. The Claude Code integration under [Settings](settings.md#integrations) holds its token.
