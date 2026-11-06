@@ -73,9 +73,9 @@
   // STAGES name what the thread is doing while nothing has come back.
   var STAGES = ["Transcribing", "Thinking", "Speaking"];
 
-  // TRIES is how many times a reply's audio is looked for, half a second
-  // apart: piper takes seconds over a sentence, and a cold voice download
-  // takes longer the first time.
+  // TRIES is how many times a reply's audio is looked for, the first ten
+  // half a second apart and the rest every three seconds: piper takes
+  // seconds over a sentence, and minutes the first time, downloading a voice.
   var TRIES = 120;
 
   var lang = document.documentElement.lang || navigator.language || "en-US";
@@ -617,7 +617,7 @@
       if (mine !== gen) return;
       if (update.thread) {
         thread = update.thread;
-        listen();
+        follow();
         return;
       }
       if (update.state === "answered") {
@@ -633,10 +633,10 @@
     }, thread);
   }
 
-  // listen follows the thread for as long as the window is open, so a reply
+  // follow watches the thread for as long as the window is open, so a reply
   // Claude writes after the work it started finishes reaches the window on
   // its own. It is one stream for the session.
-  function listen() {
+  function follow() {
     if (source || !window.EventSource || !thread) return;
     source = new EventSource("/api/sse/notes");
     source.addEventListener("note", function (event) {
@@ -684,6 +684,9 @@
   // landed shows a reply, looks for the audio of it beside the clip, and
   // plays whichever arrives. The count in the name is the reply's place in
   // the thread, the name BRIEF names.
+  // landed shows a reply and waits for the audio of it. The count in the name
+  // is the reply's place in the thread, the name BRIEF names; the file is
+  // Claude's to write, so the window writes nothing and only reads.
   function landed(body) {
     var mine = gen;
     var words = plain(body);
@@ -692,16 +695,15 @@
     answer = words;
     said.textContent = answer.slice(0, 400);
     if (heard < 1) heard = 1;
-    var base = stamp + "." + heard;
-    put(base + ".reply.txt", answer, "text/plain");
     tell(STAGES[2]);
-    audio(mine, base, 0);
+    audio(mine, stamp + "." + heard, 0);
   }
 
   // audio waits for the wav of a reply and plays it, and reads the words out
-  // on this device when none arrives.
+  // on this device when none arrives. It asks often at first, for a reply
+  // already spoken, then every few seconds while piper works.
   function audio(mine, base, tries) {
-    if (mine !== gen) return;
+    if (mine !== gen || failed) return;
     if (tries > TRIES) {
       ended("Answered");
       speak(answer);
@@ -709,9 +711,9 @@
       return;
     }
     read(base + ".reply.wav").then(function (data) {
-      if (mine !== gen) return;
+      if (mine !== gen || failed) return;
       if (!data) {
-        window.setTimeout(function () { audio(mine, base, tries + 1); }, 500);
+        window.setTimeout(function () { audio(mine, base, tries + 1); }, tries < 10 ? 500 : 3000);
         return;
       }
       reply = file(base + ".reply.wav") + "?raw";
@@ -724,10 +726,17 @@
 
   // fell leaves the reason in the window and in a toast, since a phone shows
   // the window for as long as it is open and the toast after that.
+  // A failed run posts its reason as a reply, so the window has already taken
+  // it for an answer and gone looking for the audio of it. Letting go of the
+  // answer here is what stops that hunt and keeps the reason off the replay.
   function fell(err) {
     var why = (err && err.message) || String(err);
     pending = false;
     failed = true;
+    answer = "";
+    reply = "";
+    replayBtn.hidden = true;
+    said.textContent = "";
     stopped();
     shape();
     where.textContent = why;
