@@ -384,8 +384,14 @@
     discardBtn.title = !shut ? "Discard" : (told ? "Back" : "Close");
     discardBtn.setAttribute("aria-label", discardBtn.title);
     discardBtn.classList.toggle("shut", shut);
+    // The orbs hold the chain from the first word to the reply: a question
+    // in flight keeps the recording's formation, in the idle colour.
     if (window.voiceOrbs) {
-      window.voiceOrbs.mood(now === "recording" ? "recording" : (told ? "answered" : "idle"));
+      var mood = "idle";
+      if (now === "recording") mood = "recording";
+      else if (told) mood = "answered";
+      else if (pending || now === "paused" || buffer) mood = "waiting";
+      window.voiceOrbs.mood(mood);
     }
     // A question in flight owns the line; the state does not take it back.
     if (!pending) where.textContent = now === "idle" ? "" : target().say;

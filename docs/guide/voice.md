@@ -29,11 +29,21 @@ An instance without the workflow says so on send and keeps the recording. Build 
 
 ## The orb itself
 
-Four orbs circle one centre on a canvas. Each is drawn as a plain radial greyscale, white in the middle and black at the rim, and the four are added together, so where two overlap the sum runs past white. That sum is read through a palette of black to colour to white, and a pair that overlaps then reads as one body with one outline. Each orb is drawn again at the points it came through, dimmer each time, so it drags its own path behind it.
+Four orbs are drawn on one canvas. Each is a radial greyscale, white in the middle and black at the rim, and the four are summed, so two that overlap sum past white. The sum is read through a palette of black to colour to white, and the pair then draws as one body with one outline. Every orb keeps the path it came along: the trail is drawn out of it, and so is the chain.
 
-The orb at the centre is the one that answers you. It breathes while nothing is happening, swells with how loud you are while recording, and swells and settles when you press it. Its colour is what the window is doing: purple waiting, red recording, green when an answer has landed.
+They take one of three formations, and one becomes the next over a second and a half:
 
-Reduced motion draws one frame of it and runs no loop.
+| State                            | What the orbs do                                                                                                                                             |
+|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Waiting                          | The middle orb holds at the centre and the other three walk their own tilted circles around it.                                                              |
+| Recording, until the reply lands | The middle orb leads, sweeping twice across the canvas for once down, and the other three follow along the path it left, each a gap behind the one in front. |
+| Answered                         | The middle orb returns to the centre and the other three turn on one flat circle below it, drawn smaller because every z on that circle is negative.         |
+
+No orbit crosses the middle orb. Each is tilted until its closest approach leaves a thin neck of field between the two, so a pass draws a drop that forms and breaks. The distance is solved from the orb radii when the page loads.
+
+The middle orb is the one that answers you. Its radius swings 12% over four and a half seconds while nothing is happening, rises with how loud you are while recording, and swells a quarter and settles when you press it. Its colour is the state: purple waiting, red recording, green once a reply has landed.
+
+Reduced motion draws one frame and runs no loop.
 
 ## What the recording is
 

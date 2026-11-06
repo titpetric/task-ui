@@ -1,41 +1,44 @@
 // orbs: the avatar in the voice window.
 //
-// Five orbs circle one centre in tilted planes. Each is drawn as a plain
-// radial greyscale, white in the middle and black at the rim, and the five
-// are added together, so where two overlap the sum runs past white. That
-// summed field is read through a palette of black to purple to white, which
-// is what makes a pair read as one body with one outline.
+// Four orbs are drawn on one canvas, each a radial greyscale that is white in
+// the middle and black at the rim, summed with a composite operation of
+// "lighter". Two that overlap sum past 255. The sum is read through a palette
+// of 256 entries, black to colour to white, so the pair draws as one body
+// with one outline.
 //
-// Each orb is drawn again at the points it came through, dimmer each time, so
-// it drags the path it took behind it and the trail dims down the palette.
+// Every orb keeps the path it came along. The trail is drawn out of it, and
+// in the snake each follower sits one orb's width back along the path of the
+// orb in front.
 //
 // See docs/guide/voice.md.
 (function () {
   "use strict";
 
-  // SIZE is what the field is drawn at, whatever box it is shown in: the
-  // field is smooth, so scaling it up costs nothing to look at and holds the
-  // per-frame work still on a phone.
+  // SIZE is the field's own resolution, whatever box the canvas fills. The
+  // smallest feature in the field is an orb's radius, so the browser scales
+  // it up and a phone draws 256 square however large the window is.
   var SIZE = 256;
   var MID = SIZE / 2;
+  var TWO = Math.PI * 2;
 
   // DEPTH is the camera distance that turns an orb's z into its size.
   var DEPTH = 340;
 
-  // TRAIL is how many times behind now each orb is drawn again, STEP the
-  // seconds between them. The trail is read back out of the orbit, so it
-  // costs no memory: a field kept and decayed climbs to its own ceiling
-  // wherever an orb is slow, and every blob there goes white.
+  // TRAIL is how many times behind now each orb is drawn again and STEP the
+  // seconds between them. SPAN is how much path is kept: the trail reaches
+  // TRAIL * STEP back, and the last of the chain reaches however long the
+  // head takes to travel the chain's length.
   var TRAIL = 14;
   var STEP = 0.03;
+  var SPAN = 4;
 
-  // SPRITE is the radius the one greyscale orb is drawn at, and every orb is
-  // that image scaled: a gradient is smooth, so one is enough.
+  // SPRITE is the radius the one greyscale orb is drawn at. Every orb is that
+  // image scaled, so a frame costs one drawImage per orb per trail sample.
   var SPRITE = 64;
 
-  // PEAK is how much field one orb puts in at its middle, and CORE the
-  // fraction of its radius that is all of it: an orb on its own is white in
-  // the middle, and a pair that overlaps runs past the top of the palette.
+  // PEAK is the field one orb puts in at its middle and CORE the fraction of
+  // its radius that is all of it. One orb alone is white in the middle; two
+  // that overlap run past the top of the palette.
   var PEAK = 255;
   var CORE = 0.16;
 
@@ -45,12 +48,11 @@
   var FLOOR = 30;
   var RISE = 42;
 
-  // MOODS are the palettes the summed field is read through, one per thing
-  // the window is doing. Each is one even climb from black to white through
-  // its colour, so a blob is a solid shape with a lit middle and not rings.
-  // White is held back to the top of each ramp: an orb's own field is over
-  // three quarters across half its radius, so a palette that is pale by then
-  // draws a white disc with a coloured rim and no body.
+  // MOODS are the palettes the summed field is read through, one per state of
+  // the window. Each climbs evenly from black to white through its colour, so
+  // a blob draws as a solid shape with a lit middle. White is held to the top
+  // of the ramp: one orb's field is still 165 at half its radius, and a ramp
+  // pale by 165 draws a white disc with a coloured rim and no body.
   var MOODS = {
     idle: [
       [0, 0, 0, 0], [40, 22, 5, 42], [90, 66, 16, 112], [140, 116, 34, 176],
@@ -66,39 +68,131 @@
     ],
   };
 
-  // BLEND is how long one palette takes to become the next.
+  // BLEND is how long one palette takes to become the next, MORPH how long
+  // one formation takes.
   var BLEND = 0.4;
+  var MORPH = 1.6;
 
-  // Each orb walks a circle of radius R in a plane tilted by tilt and turned
-  // by turn, once every secs, starting at a different point of it. A
-  // negative secs walks it the other way. Half of secs is the time it takes
-  // to cross the window, which reads best between three and four seconds.
+  // Each orb walks a circle of radius R in a plane turned by turn degrees,
+  // once every secs, starting at the fraction at of it. A negative secs walks
+  // it the other way, and half of secs is the time it takes to cross the
+  // window. tilt and size are solved below.
   var ORBS = [
-    // A radius of nothing leaves this one at the centre, which the others
-    // pass through and merge with, and it breathes so a window with nothing
-    // in it is still alive. tail of one is what keeps the wake off it: a
-    // trail of an orb that does not move stacks on the orb and nowhere else.
-    // gain puts it in twice, so its middle is flat at the top of the field
-    // and the fall to nothing happens in the last fifth of its radius.
-    // size is written over below, out of the three that travel.
-    { R: 0, tilt: 0, turn: 0, secs: 1, size: 0, at: 0, tail: 1, gain: 2, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
-    { R: 72, tilt: 72, turn: 15, secs: 6.3, size: 27, at: 0 },
-    { R: 76, tilt: 81, turn: 70, secs: 8.8, size: 20, at: 0.11 },
-    { R: 52, tilt: 38, turn: 120, secs: -6.9, size: 29, at: 0.72 },
+    // An R of nothing holds this one at the centre. tail of one keeps the
+    // wake off it: a trail of an orb that does not move stacks on the orb
+    // itself and drives the middle of the field to white.
+    { R: 0, turn: 0, secs: 1, size: 0, at: 0, tail: 1, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
+    { R: 72, turn: 15, secs: 6.3, size: 34, at: 0 },
+    { R: 76, turn: 70, secs: 8.8, size: 26, at: 0.11 },
+    { R: 52, turn: 120, secs: -6.9, size: 32, at: 0.72 },
   ];
 
-  // lift is the perspective at the near end of an orb's circle, and every orb
-  // is drawn at it: depth moves an orb and does not resize it, so the three
-  // that travel hold one size the whole way round.
-  ORBS.forEach(function (orb) {
-    orb.lift = DEPTH / (DEPTH - orb.R * Math.abs(Math.sin(orb.tilt * Math.PI / 180)));
-  });
+  // NECK is the field wanted at the thinnest point between two orbs at their
+  // closest. bridge solves the distance that leaves it, and lean tilts each
+  // orbit so it comes no nearer than that to the middle.
+  var NECK = 96;
 
-  // The orb at the centre is twice the mean of the three that travel, and is
-  // read off them, so resizing one of those resizes it too.
-  ORBS[0].size = 2 * ORBS.slice(1).reduce(function (sum, orb) {
-    return sum + orb.size * orb.lift;
-  }, 0) / (ORBS.length - 1);
+  // LEADX and LEADY are the head's sweep, twice across the canvas for once
+  // down. A circular path turns tighter than the chain is long, and the
+  // followers then spread around the circle. DRIFT shares no factor with
+  // LEAD, so the path takes minutes to close on itself.
+  var LEAD = 4.3;
+  var LEADX = 76;
+  var LEADY = 68;
+  var DRIFT = 11.3;
+
+  // The ring is flat and behind the middle: every z on it is negative, so the
+  // three draw smaller than they do anywhere else and their screen y moves
+  // with the perspective. RINGY is solved below.
+  var RING = 6;
+  var RINGR = 66;
+  var RINGZ = -86;
+  var RINGY = 0;
+
+  // near is how much closer to the camera a z puts something.
+  function near(z) {
+    return DEPTH / (DEPTH - z);
+  }
+
+  // waist returns the least field along the line between two orbs this far
+  // apart.
+  function waist(d, r1, r2) {
+    var least = Infinity;
+    for (var i = 0; i <= 40; i++) {
+      var a = (d * i / 40) / r1;
+      var b = (d - d * i / 40) / r2;
+      var v = PEAK * ((a < 1 ? kernel(a) : 0) + (b < 1 ? kernel(b) : 0));
+      if (v < least) least = v;
+    }
+    return least;
+  }
+
+  // bridge returns how far apart two orbs leave NECK between them. The waist
+  // only falls as they part, so halving the span they can be apart finds it.
+  function bridge(r1, r2) {
+    var lo = 0;
+    var hi = r1 + r2;
+    for (var n = 0; n < 24; n++) {
+      var d = (lo + hi) / 2;
+      if (waist(d, r1, r2) > NECK) lo = d;
+      else hi = d;
+    }
+    return (lo + hi) / 2;
+  }
+
+  // nearest returns the smallest screen distance from the middle an orbit of
+  // this tilt reaches. It falls at the far side of the turn, where the
+  // perspective divisor is smallest.
+  function nearest(R, tilt) {
+    var least = Infinity;
+    for (var i = 0; i < 180; i++) {
+      var th = Math.PI * i / 90;
+      var x = R * Math.cos(th);
+      var y = R * Math.sin(th) * Math.cos(tilt);
+      var m = Math.sqrt(x * x + y * y) * near(R * Math.sin(th) * Math.sin(tilt));
+      if (m < least) least = m;
+    }
+    return least;
+  }
+
+  // lean returns the steepest tilt in degrees whose orbit still clears the
+  // middle by want. A plane near edge on crosses the middle on screen, and
+  // the two orbs draw as one body for the whole turn.
+  function lean(R, want) {
+    if (nearest(R, 0) <= want) return 0;
+    var lo = 0;
+    var hi = Math.PI / 2;
+    for (var n = 0; n < 20; n++) {
+      var t = (lo + hi) / 2;
+      if (nearest(R, t) > want) lo = t;
+      else hi = t;
+    }
+    return (lo + hi) / 2 * 180 / Math.PI;
+  }
+
+  // The orb in the middle is the mean of the three that travel. Each of those
+  // is tilted until its orbit clears it by bridge's distance, and lift is the
+  // perspective at the near end of that orbit, which every sample of the orb
+  // is drawn at, so depth moves an orb and holds its size. Size and tilt each
+  // read the other, so two passes settle them.
+  ORBS.forEach(function (orb) {
+    orb.lift = 1;
+    orb.tilt = 0;
+    orb.path = [];
+  });
+  for (var pass = 0; pass < 2; pass++) {
+    ORBS[0].size = ORBS.slice(1).reduce(function (sum, orb) {
+      return sum + orb.size * orb.lift;
+    }, 0) / (ORBS.length - 1);
+    ORBS.slice(1).forEach(function (orb) {
+      orb.tilt = lean(orb.R, bridge(ORBS[0].size, orb.size));
+      orb.lift = near(orb.R * Math.sin(orb.tilt * Math.PI / 180));
+    });
+  }
+
+  // The ring hangs bridge's distance below the middle, measured at its far
+  // side, where the perspective draws it closest to the centre on screen.
+  RINGY = bridge(ORBS[0].size, ORBS[1].size * ORBS[1].lift) / near(RINGZ - RINGR);
 
   // ramp returns a palette as 256 entries of red, green, blue and alpha,
   // interpolated between the stops, with the alpha fading in over RISE.
@@ -118,10 +212,10 @@
     return map;
   }
 
-  // kernel is the field one orb puts into the world at a fraction of its
-  // radius: Wyvill's polynomial, which is 1 at the middle and reaches 0 at
-  // the rim with no corner. Summing these is what rounds two orbs into one
-  // blob; a straight gradient would leave a waist between them.
+  // kernel is the field one orb puts in at a fraction of its radius:
+  // Wyvill's polynomial, 1 at the middle and 0 at the rim, with no corner at
+  // either. A straight gradient sums to a waist where two orbs meet; this
+  // bulges towards the other orb and rounds the pair into one blob.
   function kernel(q) {
     if (q <= CORE) return 1;
     var d = (q - CORE) / (1 - CORE);
@@ -129,8 +223,8 @@
     return 1 - (22 / 9) * d2 + (17 / 9) * d2 * d2 - (4 / 9) * d2 * d2 * d2;
   }
 
-  // sprite returns the one orb as a canvas of that field in grey, drawn once
-  // and scaled for each.
+  // sprite returns the one orb as a canvas of that field in grey, built once
+  // and scaled for every orb.
   function sprite() {
     var pad = document.createElement("canvas");
     pad.width = pad.height = SPRITE * 2;
@@ -148,23 +242,107 @@
     return pad;
   }
 
-  // place returns where an orb is now and how big: the circle in its tilted
-  // plane, turned into the view, with z read as distance from the camera.
-  function place(orb, now) {
-    var th = Math.PI * 2 * (now / orb.secs + orb.at);
+  // wide returns an orb's radius now: its size, its pulse, the meter and the
+  // press.
+  function wide(orb, now) {
+    var r = orb.size * orb.lift;
+    if (orb.pulse) r *= 1 + orb.pulse * Math.sin(TWO * now / orb.pulseSecs);
+    return r * swell * (orb.meter ? 1 + vu * orb.meter : 1);
+  }
+
+  // spin is the formation of an idle window: the middle orb holds at the
+  // centre and each of the others walks its own tilted circle.
+  function spin(orb, i, now) {
+    var th = TWO * (now / orb.secs + orb.at);
     var tilt = orb.tilt * Math.PI / 180;
     var turn = orb.turn * Math.PI / 180;
     var x = orb.R * Math.cos(th);
     var y = orb.R * Math.sin(th) * Math.cos(tilt);
-    var z = orb.R * Math.sin(th) * Math.sin(tilt);
-    var near = DEPTH / (DEPTH - z);
-    var r = orb.size * orb.lift;
-    if (orb.pulse) r *= 1 + orb.pulse * Math.sin(2 * Math.PI * now / orb.pulseSecs);
+    var look = near(orb.R * Math.sin(th) * Math.sin(tilt));
     return {
-      x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * near,
-      y: MID + (x * Math.sin(turn) + y * Math.cos(turn)) * near,
-      r: r,
+      x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * look,
+      y: MID + (x * Math.sin(turn) + y * Math.cos(turn)) * look,
+      r: wide(orb, now),
     };
+  }
+
+  // snake is the formation from the first word to the reply: the middle orb
+  // leads and each of the others sits a gap back along the path it left.
+  function snake(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) {
+      var drift = Math.sin(TWO * now / DRIFT);
+      return {
+        x: MID + LEADX * Math.sin(TWO * now / LEAD) * (0.8 + 0.2 * drift),
+        y: MID + LEADY * Math.sin(Math.PI * now / LEAD + drift),
+        r: r,
+      };
+    }
+    var gap = 0;
+    for (var k = 1; k <= i; k++) {
+      gap += ORBS[k - 1].size * ORBS[k - 1].lift + ORBS[k].size * ORBS[k].lift;
+    }
+    var spot = behind(ORBS[0], gap);
+    return { x: spot ? spot.x : MID, y: spot ? spot.y : MID, r: r };
+  }
+
+  // ring is the formation once a reply is in: the middle orb returns to the
+  // centre and the others turn on one flat circle below it.
+  function ring(orb, i, now) {
+    var r = wide(orb, now);
+    if (i === 0) return { x: MID, y: MID, r: r };
+    var th = TWO * now / RING + (i - 1) * TWO / (ORBS.length - 1);
+    var look = near(RINGZ + RINGR * Math.sin(th));
+    return {
+      x: MID + RINGR * Math.cos(th) * look,
+      y: MID + RINGY * look,
+      r: r * look,
+    };
+  }
+
+  var FORMS = { idle: spin, recording: snake, waiting: snake, answered: ring };
+
+  // remember keeps where an orb is, and drops what is older than SPAN.
+  function remember(orb, secs, spot) {
+    orb.path.push({ t: secs, x: spot.x, y: spot.y, r: spot.r });
+    while (orb.path.length > 2 && orb.path[0].t < secs - SPAN) orb.path.shift();
+  }
+
+  // at returns an orb's place at a time, read out of its path.
+  function at(orb, secs) {
+    var p = orb.path;
+    if (!p.length) return null;
+    if (secs >= p[p.length - 1].t) return p[p.length - 1];
+    for (var i = p.length - 1; i > 0; i--) {
+      if (p[i - 1].t > secs) continue;
+      var span = p[i].t - p[i - 1].t;
+      var f = span > 0 ? (secs - p[i - 1].t) / span : 0;
+      return {
+        x: p[i - 1].x + (p[i].x - p[i - 1].x) * f,
+        y: p[i - 1].y + (p[i].y - p[i - 1].y) * f,
+        r: p[i - 1].r + (p[i].r - p[i - 1].r) * f,
+      };
+    }
+    return p[0];
+  }
+
+  // behind returns the point a distance back along an orb's path. Walking it
+  // by length holds the gap as the head's speed changes.
+  function behind(orb, want) {
+    var p = orb.path;
+    if (p.length < 2) return p[0] || null;
+    var gone = 0;
+    for (var i = p.length - 1; i > 0; i--) {
+      var dx = p[i].x - p[i - 1].x;
+      var dy = p[i].y - p[i - 1].y;
+      var step = Math.sqrt(dx * dx + dy * dy);
+      if (gone + step >= want) {
+        var f = step > 0 ? (want - gone) / step : 0;
+        return { x: p[i].x - dx * f, y: p[i].y - dy * f, r: p[i].r };
+      }
+      gone += step;
+    }
+    return p[0];
   }
 
   // clock is the time every part of this reads, in seconds.
@@ -174,6 +352,7 @@
 
   var PALETTE = {
     idle: ramp(MOODS.idle),
+    waiting: ramp(MOODS.idle),
     recording: ramp(MOODS.recording),
     answered: ramp(MOODS.answered),
   };
@@ -182,6 +361,9 @@
   var into = PALETTE.idle;
   var blendAt = -1;
   var tapAt = 0;
+  var form = FORMS.idle;   // the formation the orbs are taking
+  var fore = FORMS.idle;   // the one they are leaving
+  var morphAt = -1;
   var ORB = null;    // the greyscale sprite, made on the first frame
   var show = null;   // the canvas on the page
   var paint = null;  // the field the orbs are summed into, offscreen
@@ -189,41 +371,64 @@
   var raf = 0;
   var level = 0;
   var vu = 0;
+  var swell = 1;
 
   // draw sums the orbs and their trails into the field, reads the sum
   // through the palette and puts the colour on the page's canvas.
   function draw(secs) {
-    // The meter jumps to the loudest it hears and falls back slowly, so a
-    // word swells the middle and silence lets it down.
+    // The meter takes a rise at once and falls 6% a frame, so a word swells
+    // the middle orb and silence lets it down over about a third of a second.
     vu = level > vu ? level : vu + (level - vu) * 0.06;
-    // A press swells everything and settles back, like a key going down.
-    var bump = tapAt ? 1 + 0.25 * Math.exp(-(secs - tapAt) / 0.18) : 1;
-    if (bump < 1.002) {
+    // A press swells every orb by a quarter, decaying over 0.18s.
+    swell = tapAt ? 1 + 0.25 * Math.exp(-(secs - tapAt) / 0.18) : 1;
+    if (swell < 1.002) {
       tapAt = 0;
-      bump = 1;
+      swell = 1;
+    }
+    // One formation becomes the next over MORPH seconds, eased at both ends.
+    // Both are evaluated every frame while w is under 1.
+    var w = 1;
+    if (morphAt >= 0) {
+      w = (secs - morphAt) / MORPH;
+      if (w >= 1) {
+        morphAt = -1;
+        w = 1;
+      } else {
+        w = w * w * (3 - 2 * w);
+      }
+    }
+    var i, orb;
+    for (i = 0; i < ORBS.length; i++) {
+      orb = ORBS[i];
+      var goes = form(orb, i, secs);
+      if (w < 1) {
+        var came = fore(orb, i, secs);
+        goes = {
+          x: came.x + (goes.x - came.x) * w,
+          y: came.y + (goes.y - came.y) * w,
+          r: came.r + (goes.r - came.r) * w,
+        };
+      }
+      remember(orb, secs, goes);
     }
     paint.globalCompositeOperation = "source-over";
     paint.globalAlpha = 1;
     paint.fillStyle = "#000000";
     paint.fillRect(0, 0, SIZE, SIZE);
     paint.globalCompositeOperation = "lighter";
-    for (var i = 0; i < ORBS.length; i++) {
-      var orb = ORBS[i];
-      var swell = bump * (orb.meter ? 1 + vu * orb.meter : 1);
+    for (i = 0; i < ORBS.length; i++) {
+      orb = ORBS[i];
       var tail = orb.tail || TRAIL;
       for (var j = tail - 1; j >= 0; j--) {
         var back = 1 - j / tail;
-        // A trail sample is a tenth of the orb: a slow orb's trail sits on
-        // top of the orb itself, and at full weight the sum of them all
-        // would run the head past white wherever it lingers.
-        paint.globalAlpha = (j === 0 ? 1 : 0.1 * back * back * back) * (orb.peak || 1);
-        var spot = place(orb, secs - j * STEP);
-        var r = spot.r * swell * (0.45 + 0.55 * back);
-        // The field is eight bits and adding clamps at the top of it, so a
-        // second pass is how an orb reaches past white and squares its edge.
-        for (var g = orb.gain || 1; g > 0; g--) {
-          paint.drawImage(ORB, spot.x - r, spot.y - r, r * 2, r * 2);
-        }
+        // A trail sample is a tenth of the orb. A slow orb's trail sits on
+        // top of the orb itself, and at full weight the 13 of them sum the
+        // head past white wherever it lingers.
+        paint.globalAlpha = j === 0 ? 1 : 0.1 * back * back * back;
+        var spot = at(orb, secs - j * STEP);
+        if (!spot) continue;
+        var r = spot.r * (0.45 + 0.55 * back);
+        paint.drawImage(ORB, spot.x - r, spot.y - r, r * 2, r * 2);
       }
     }
     paint.globalAlpha = 1;
@@ -270,6 +475,9 @@
         field.width = field.height = SIZE;
         paint = field.getContext("2d", { willReadFrequently: true });
       }
+      // A window that opens again starts from nothing: a kept path draws a
+      // trail from wherever the last one ended.
+      ORBS.forEach(function (orb) { orb.path = []; });
       paint.globalCompositeOperation = "source-over";
       paint.fillStyle = "#000000";
       paint.fillRect(0, 0, SIZE, SIZE);
@@ -279,7 +487,7 @@
       }
       raf = window.requestAnimationFrame(tick);
     },
-    // stop ends the loop: the window is closed and nothing of it is seen.
+    // stop ends the loop, for a window that has closed.
     stop: function () {
       if (raf) window.cancelAnimationFrame(raf);
       raf = 0;
@@ -294,15 +502,23 @@
       tapAt = clock();
       if (still) draw(tapAt);
     },
-    // mood is which palette the field is read through: idle, recording or
-    // answered. It fades from the one in use over BLEND seconds.
+    // mood is what the window is doing: idle, recording, waiting or
+    // answered. It picks the palette and the formation, and fades over BLEND
+    // and MORPH from the pair in use.
     mood: function (name) {
       var next = PALETTE[name] || PALETTE.idle;
-      if (next === into) return;
-      from = blendAt >= 0 ? mix.slice(0) : into;
-      into = next;
-      blendAt = clock();
-      if (still) draw(blendAt + BLEND);
+      var shape = FORMS[name] || FORMS.idle;
+      if (next !== into) {
+        from = blendAt >= 0 ? mix.slice(0) : into;
+        into = next;
+        blendAt = clock();
+      }
+      if (shape !== form) {
+        fore = form;
+        form = shape;
+        morphAt = clock();
+      }
+      if (still) draw(clock() + MORPH);
     },
   };
 })();
