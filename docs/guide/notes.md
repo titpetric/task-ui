@@ -12,7 +12,7 @@ A colon right after the name, with no space after it, makes a job ID and no ment
 
 A note naming another user of the instance, from someone who may run jobs, is an instruction to whoever it names, and so is a reply that names one: the reply opens its note again. A name of no user stays a plain mention, and a note from a viewer stays a message. The note shows the state on its left edge: **open**, **working**, then **done** or **failed**.
 
-A reply that names nobody is an instruction to whoever its note names, so the names are typed once and every reply in the thread goes to them. A reply that names someone addresses that user alone, so work passes to another by naming them; a reply from a user the note names is a report on the thread and instructs nobody.
+A reply that names nobody is an instruction to whoever its note names, so the names are typed once and every reply in the thread goes to them. A reply that names someone addresses that user alone, so work passes to another by naming them; a reply from a user the thread already names is a report on it and instructs nobody.
 
 A note or a reply may name several users at once to split one request: each of them gets the instruction, and each agent among them a run of its own, side by side. The thread each run reads is the same, and each run is told which user it works for, so an instruction names who does what.
 

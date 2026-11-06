@@ -81,6 +81,10 @@ func TestBoard_Post(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"claude", "ops", "claude", "ops", "consuela", "claude"}, answers(t, notes, thread.ID), "a report starts nothing")
 
+	_, err = board.Post(ctx, people["consuela"], thread.ID, "and the archive is smaller")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"claude", "ops", "claude", "ops", "consuela", "claude", "consuela"}, answers(t, notes, thread.ID), "a user a reply names reports too")
+
 	plain, err := board.Post(ctx, people["ops"], "", "the weather job is slow")
 	assert.NoError(t, err)
 	assert.Equal(t, "", plain.State)

@@ -16,15 +16,30 @@ func (b *Board) instructs(ctx context.Context, user *model.User, thread *model.N
 // addressed returns the users a message of the author's addresses, by
 // name: those its body names with @, the author apart, that the board
 // knows. A reply naming nobody takes the names of its note, and a reply
-// from a user that note names takes none.
+// from a user the thread names takes none and reports instead.
 func (b *Board) addressed(ctx context.Context, author string, thread *model.Note, body string) []string {
 	if names := b.named(ctx, author, body); len(names) > 0 || thread == nil {
 		return names
 	}
-	if thread.Mentioned(author) {
+	if b.addresses(ctx, thread, author) {
 		return nil
 	}
 	return b.named(ctx, author, thread.Body)
+}
+
+// addresses reports whether a thread names a user, in its note or in one
+// of its replies.
+func (b *Board) addresses(ctx context.Context, thread *model.Note, name string) bool {
+	if thread.Mentioned(name) {
+		return true
+	}
+	replies, _ := b.Notes.Replies(ctx, []string{thread.ID})
+	for _, reply := range replies[thread.ID] {
+		if reply.Mentioned(name) {
+			return true
+		}
+	}
+	return false
 }
 
 // named returns the users a text names with @, the author apart, that
@@ -120,22 +135,13 @@ func (b *Board) AnswererOf(ctx context.Context, thread *model.Note) string {
 }
 
 // assigned reports whether the user may set an instruction's state: the
-// note or a reply in its thread names the user, the user wrote the note,
-// or the user is an admin.
+// thread names the user, the user wrote the note, or the user is an
+// admin.
 func (b *Board) assigned(ctx context.Context, user *model.User, note *model.Note) bool {
 	if user == nil {
 		return false
 	}
-	if user.CanAdmin() || note.UserName == user.Name || note.Mentioned(user.Name) {
-		return true
-	}
-	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
-	for _, reply := range replies[note.ID] {
-		if reply.Mentioned(user.Name) {
-			return true
-		}
-	}
-	return false
+	return user.CanAdmin() || note.UserName == user.Name || b.addresses(ctx, note, user.Name)
 }
 
 // contains reports whether names holds name.
