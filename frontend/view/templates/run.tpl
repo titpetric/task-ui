@@ -7,11 +7,15 @@
 	</div>
 	<div class="actions">
 		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if not (ended $run.State) }}Attach{{ else }}View{{ end }}</button>
+		{{- if and (ended $run.State) $can (not $run.IsPrompt) (not $run.IsNote) }}
+		<button type="button" class="btn" data-run data-folder="{{ $run.Folder }}" data-dir="{{ $run.Dir }}" data-job="{{ $run.Job }}" data-title="{{ $run.Name }}"{{ if $run.ArgList }} data-run-args="{{ $run.Args }}"{{ end }}>Run again</button>
+		{{- end }}
 		{{- if and $run.Live (not (ended $run.State)) $can }}
 		<button type="button" class="btn" data-stop="{{ $run.ID }}">Stop</button>
 		<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>
 		{{- end }}
 		{{- with .Report }}<a class="btn" href="{{ .Href }}">Report</a>{{ end }}
+		{{- if and (not .Report) ($.SummarizesRun .Job $run) }}<button type="button" class="btn" data-summarize-run="{{ $run.ID }}" data-question="{{ summaryQuestion }}" title="Claude summarizes the run's output, in this window">Summarize</button>{{ end }}
 		{{- if and $run.CastPath (ended $run.State) (not $run.Expired) }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
 	</div>
 </div>

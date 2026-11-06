@@ -7,6 +7,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 )
 
 func TestRun(t *testing.T) {
@@ -69,4 +70,62 @@ func TestRender_runRecording(t *testing.T) {
 	assert.NotContains(t, html, "/cast")
 	assert.NotContains(t, html, `.cast"`)
 	assert.NotContains(t, html, ">Recording</a>")
+}
+
+// A run that ended has Run again in its head, with the arguments it ran
+// with and no args line; a prompt's run and the Notes agent's have none,
+// because POST /api/runs refuses their jobs.
+func TestRender_runAgain(t *testing.T) {
+	t.Parallel()
+	v := shared(t)
+	render := func(page *view.Page) string {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, "run", page))
+		return buf.String()
+	}
+	// The layout holds the window's own Run again, hidden, under the same
+	// label: the head's button is read by its attributes.
+	const starts = "data-run data-folder="
+	page := admin(t)
+	assert.NotContains(t, render(page), starts, "still running")
+
+	page.Run.State = model.StateKilled
+	html := render(page)
+	assert.Contains(t, html, `data-run data-folder="infra" data-dir="" data-job="plan" data-title="infra / plan">Run again<`)
+	assert.NotContains(t, html, "data-args=")
+
+	page.Run.Args = `["-x"]`
+	assert.Contains(t, render(page), `data-title="infra / plan" data-run-args="[&#34;-x&#34;]">Run again<`)
+
+	page.Run.Job = model.PromptJob
+	assert.NotContains(t, render(page), starts, "a prompt's run")
+
+	page.Run.Job = model.NoteJob
+	assert.NotContains(t, render(page), starts, "the Notes agent's run")
+}
+
+// A run that ended has Summarize in its head for a user who may ask,
+// and none once the summary is there to read as a Report.
+func TestRender_runSummarize(t *testing.T) {
+	t.Parallel()
+	v := shared(t)
+	render := func(page *view.Page) string {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, "run", page))
+		return buf.String()
+	}
+	page := admin(t)
+	page.Run.State = model.StateFailed
+	assert.NotContains(t, render(page), "data-summarize-run", "no Summaries")
+
+	page.Summaries = true
+	html := render(page)
+	assert.Contains(t, html, `data-summarize-run="`+page.Run.ID+`"`)
+	assert.Contains(t, html, `data-question="Summarize this run."`)
+
+	page.Report = &note.Report{RunID: page.Run.ID}
+	assert.NotContains(t, render(page), "data-summarize-run", "a summary to read")
+
+	page.Report, page.Run.State = nil, model.StateRunning
+	assert.NotContains(t, render(page), "data-summarize-run", "still running")
 }

@@ -104,6 +104,7 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	artifacts, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{RunID: run.ID, Limit: 200})
 	p.Artifacts = artifacts
 	p.Prompt = h.runPrompt(r, p, &run)
+	p.Summaries = h.summaries(r, p)
 	if h.opts.Board != nil && p.Can("prompt/view") {
 		p.Report = h.opts.Board.Report(r.Context(), row)
 	}

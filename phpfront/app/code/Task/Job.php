@@ -26,7 +26,7 @@ class Job {
 
 	const MORE = "Not scheduled. Add a cron expression below to run it on a schedule.";
 
-	/** SUMMARIZE is the hover of the Summarize entry of a run's [...]. */
+	/** SUMMARIZE is the hover of Summarize, in a run's [...] and in the head of its page. */
 	const SUMMARIZE = "Claude summarizes the run's output, in this window";
 
 	var $chrome;

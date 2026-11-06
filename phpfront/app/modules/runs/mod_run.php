@@ -114,7 +114,8 @@ class mod_run implements Module {
 		$state = $run->getState();
 		$ended = Task\Run::ended($state);
 		$can = $this->can($chrome, $run);
-		$buttons = self::buttons($run, $report, $expired, $can, $session);
+		$summarizes = $this->summarizes($chrome, $run, $report, $ended);
+		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes);
 		$code = $ended && $state !== Task\Run::OK ? (string)$run->getExitCode() : "";
 		$head = new Task\Head($name);
 
@@ -141,21 +142,28 @@ class mod_run implements Module {
 	}
 
 	/**
-	 * buttons are the actions of the page head: attach to the run, stop and
-	 * kill it while the runner holds it, open its report, and replay the
-	 * recording of one that ended.
+	 * buttons are the actions of the page head: attach to the run, run its job
+	 * again once it ended, stop and kill it while the runner holds it, open its
+	 * report or ask Claude for one, and replay the recording of one that ended.
 	 */
-	static function buttons($run, $report, $expired, $can, $session) {
+	static function buttons($run, $report, $expired, $can, $session, $summarizes) {
 		$id = $run->getId();
 		$ended = Task\Run::ended($run->getState());
 		$stops = Task\Row::flag($session, "live") && !$ended && $can;
+		$again = $ended && $can && !Task\Run::isPrompt($run) && !Task\Run::isNote($run);
 		$href = $report === null ? "" : Task\Route::href(Task\Report::href($report));
 		$buttons = new Task\Buttons;
 
 		$buttons->primary("", $ended ? "View" : "Attach", array("data-attach" => $id));
+		$buttons->when($again, "", "Run again", self::starts($run));
 		$buttons->when($stops, "", "Stop", array("data-stop" => $id));
 		$buttons->whenDanger($stops, "", "Kill", array("data-kill" => $id));
 		$buttons->when($href !== "", "", "Report", array("href" => $href));
+		$buttons->when($summarizes, "", "Summarize", array(
+			"data-summarize-run" => $id,
+			"data-question" => Task\Report::SUMMARY,
+			"title" => Task\Job::SUMMARIZE,
+		));
 		$buttons->when($run->getCastPath() !== "" && $ended && !$expired, "", "|>", array(
 			"data-replay" => $id,
 			"data-replay-title" => Task\Run::name($run),
@@ -165,6 +173,53 @@ class mod_run implements Module {
 		));
 
 		return $buttons;
+	}
+
+	/**
+	 * starts is the attributes of Run again: the run's own folder, directory,
+	 * job and title, and the arguments where the run has any.
+	 *
+	 * The arguments go as the column holds them, the JSON list the script
+	 * reads, and no args command goes beside them: the run repeats as it
+	 * stands, with no field before it.
+	 */
+	static function starts($run) {
+		$attrs = array(
+			"data-run" => null,
+			"data-folder" => $run->getFolder(),
+			"data-dir" => $run->getDir(),
+			"data-job" => $run->getJob(),
+			"data-title" => Task\Run::name($run),
+		);
+
+		if (count(Task\Run::argList($run)) > 0) {
+			$attrs["data-run-args"] = $run->getArgs();
+		}
+
+		return $attrs;
+	}
+
+	/**
+	 * summarizes reports whether the head holds Summarize: a run that ended, of
+	 * a job that summarizes at all, with no summary read yet.
+	 *
+	 * The job comes off the catalogue, as the Go page's p.Job does: a run of
+	 * Claude's own and a run of a job that is gone each summarize nothing.
+	 */
+	function summarizes($chrome, $run, $report, $ended) {
+		if (!$ended || $report !== null || Task\Run::isClaude($run)) {
+			return false;
+		}
+
+		$job = Task\Host::job($run->getFolder(), $run->getDir(), $run->getJob());
+
+		if (!$job["found"]) {
+			return false;
+		}
+
+		$control = new Task\Control($chrome);
+
+		return $control->summarizes($job);
 	}
 
 	/** terminal is the live screen of a run the runner still holds, or null. */

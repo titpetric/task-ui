@@ -231,28 +231,42 @@ $queued = $runs->get("fx-rp-3");
 
 echo "[", Task\Run::overlay($queued, Task\Host::session("fx-rp-3")), "] ", $queued->getState(), "\n";
 
-// The head of a run that ended: View, the report of it, and the replay of its
-// recording. Stop and Kill belong to a run the runner still holds.
+// The head of a run that ended: View, its job again, the report of it, and the
+// replay of its recording. Stop and Kill belong to a run the runner still
+// holds.
 // The row is read again rather than reusing $one, which the overlay above
 // wrote the session over.
 $reports = new Task\Report;
 $about = $runs->get("fx-rp-1");
 $report = $reports->of($about);
 $session = Task\Host::session("fx-rp-1");
-$ended = mod_run::buttons($one, $report, false, true, $session);
+$ended = mod_run::buttons($one, $report, false, true, $session, false);
 
 echo labels($ended->data()), " ", var_export($ended->data()["small"], true), "\n";
 echo attrs($ended->data(), "View"), "\n";
 echo attrs($ended->data(), "Report"), "\n";
 echo attrs($ended->data(), "|>"), "\n";
 
+// Run again repeats the run as it was: its own folder, the directory it ran in,
+// its job, the title the window gives it, and the arguments the column keeps.
+// No args command goes with them, so nothing is asked before it starts.
+echo attrs($ended->data(), "Run again"), "\n";
+
+// Summarize asks Claude the question a summary asks, over the window the page
+// is read in. A run that was given no arguments carries none.
+$asks = mod_run::buttons($runs->get("fx-rp-6"), null, false, true, array(), true);
+
+echo labels($asks->data()), "\n";
+echo attrs($asks->data(), "Run again"), "\n";
+echo attrs($asks->data(), "Summarize"), "\n";
+
 // A run the runner holds may be stopped and killed by a reader who may run its
-// job, and offers no replay until it ends.
-echo labels(mod_run::buttons($live, null, false, true, Task\Host::session("fx-rp-2"))->data()), "\n";
-echo labels(mod_run::buttons($live, null, false, false, Task\Host::session("fx-rp-2"))->data()), "\n";
+// job, and offers no replay until it ends. It runs again once it ended.
+echo labels(mod_run::buttons($live, null, false, true, Task\Host::session("fx-rp-2"), false)->data()), "\n";
+echo labels(mod_run::buttons($live, null, false, false, Task\Host::session("fx-rp-2"), false)->data()), "\n";
 
 // A recording the sweep removed is no replay.
-echo labels(mod_run::buttons($runs->get("fx-rp-4"), null, true, true, Task\Host::session("fx-rp-4"))->data()), "\n";
+echo labels(mod_run::buttons($runs->get("fx-rp-4"), null, true, true, Task\Host::session("fx-rp-4"), false)->data()), "\n";
 
 // The terminal is the live screen of a run the runner holds, and nothing for
 // one that ended.
@@ -389,6 +403,14 @@ Task\Fixture::resolves("fx-rp", "", $shut, array("fx-rp-ann"));
 
 echo var_export($mod->can($plain, $one), true), "\n";
 
+// Summarize is offered on a run that ended, is none of Claude's own, of a job
+// the catalogue still resolves, with no summary read yet: the run that has one
+// links the Report instead, and a run of a job that is gone summarizes
+// nothing.
+echo var_export($mod->summarizes($chrome, $one, $report, true), true), " ", var_export($mod->summarizes($chrome, $one, null, true), true), "\n";
+echo var_export($mod->summarizes($chrome, $live, null, false), true), " ", var_export($mod->summarizes($chrome, $claude, null, true), true), "\n";
+echo var_export($mod->summarizes($chrome, $runs->get("fx-rp-6"), null, true), true), "\n";
+
 // The sentence under the heading, which is written here and not in the
 // template: who started the run and how, and then what the reader may do about
 // it where it stands. A run with no start reads as no time at all.
@@ -440,13 +462,17 @@ true
 [the row's own word] ok []
 [the row's own word] running [pulling the image]
 [waits for a free slot, number 1 in line] queued
-View,Report,|> false
+View,Run again,Report,|> false
 data-attach="fx-rp-1" [] false true
  [/runs/fx-rp-1/report] false false
 data-replay="fx-rp-1" data-replay-title="fx-rp / build" data-replay-who="fx-rp-ann" title="Replay the recording" aria-label="Replay the recording" [] false false
+data-run data-folder="fx-rp" data-dir="" data-job="build" data-title="fx-rp / build" data-run-args="[&quot;--verbose&quot;,&quot;./pkg&quot;]" [] false false
+View,Run again,Summarize
+data-run data-folder="fx-rp" data-dir="" data-job="ghost" data-title="fx-rp / ghost" [] false false
+data-summarize-run="fx-rp-6" data-question="Summarize this run." title="Claude summarizes the run&#039;s output, in this window" [] false false
 Attach,Stop,Kill
 Attach
-View
+View,Run again
 fx-rp-2 fx-rp/docker / deploy 2 <svg></svg>
 NULL
 Folder,Job,Arguments,By,Started,Finished,Duration,Result,Terminal,ID
@@ -480,6 +506,9 @@ false false
 true true
 true true
 false false
+false true
+false false
+false
 Started by fx-rp-ann -. It waits, queued, for the run of its job before it to end or for a free slot: attach to follow it once it starts, or stop it to take it out of the queue.
 Started by fx-rp-ann -. It waits, queued, for the run of its job before it to end or for a free slot: attach to follow it once it starts.
 Started by fx-rp-ann just now. It's still running: attach to follow it, or stop it.
@@ -488,7 +517,7 @@ Started by fx-rp-ann <ago>. The run has finished; its full output is below.
 head,terminal,output,prompt,kv,artifacts
 title,icon,badge,tone,tags,note,lead,leads,faint,live,run,actions,buttons,show
 fx-rp / build [ok] ok []
-View,Report,|>
+View,Run again,Report,|>
 NULL
 expired,recording,text,id,cols,rows
 false true fx-rp-1 120 40
@@ -499,6 +528,6 @@ fx-rp-2 2 <svg></svg>
 false false
 the row's own word
 failed 2 bad
-View
+View,Run again,Summarize
 true false
 The recording of this run expired under the Data retention settings: its output is gone. The run's details stay.
