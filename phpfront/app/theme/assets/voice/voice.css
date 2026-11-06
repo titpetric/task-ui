@@ -95,10 +95,10 @@ body:has(.voice-orb:not([hidden])) .toasts {
     gap: 1rem;
   }
 
-  /* The page stays readable behind: this is a conversation over the work,
-     and the well below is what darkens the middle. */
+  /* The page falls into the dark the orb sits in: untouched at the corners,
+     black across the middle 30%, which is the orb's own width on a phone. */
   &::backdrop {
-    background: rgba(2, 4, 7, 0.22);
+    background: radial-gradient(circle farthest-side at 50% 50%, #000 0%, #000 30%, rgba(0, 0, 0, 0) 100%);
   }
 }
 
@@ -366,6 +366,15 @@ body:has(.voice-orb:not([hidden])) .toasts {
     background: color-mix(in srgb, var(--bad) 20%, transparent);
     color: var(--bad);
     box-shadow: 0 0 1.4rem color-mix(in srgb, var(--bad) 26%, transparent);
+  }
+
+  /* Nothing to throw away: the same button closes the window, and red would
+     say it destroys something. */
+  &.discard.shut {
+    border-color: color-mix(in srgb, var(--text-faint) 60%, transparent);
+    background: color-mix(in srgb, var(--text-faint) 12%, transparent);
+    color: var(--text-dim);
+    box-shadow: none;
   }
 }
 

@@ -39,6 +39,7 @@ Every list marks a job, a workflow or a run with `#!`: faint until it has run, t
 | [Workspaces](guide/workspaces.md)      | A workspace's row, its projects under it | Shared tooling, skills, cloning into one, keys, secrets, export and import, what it keeps apart, the prompt                 |
 | [Recents](guide/recents.md)            | Recents                                  | The latest runs, by anyone                                                                                                  |
 | [Settings](guide/settings.md)          | The user menu, Settings                  | Projects, workspaces, users, secrets and env, SSH keys, integrations                                                        |
+| [Dictation](guide/voice.md)            | The orb, bottom right of every page      | Recording, what send does with it, and the Orb input workflow                                                               |
 | [MCP](guide/mcp.md)                    |                                          | Tokens, and the tools an agent runs jobs with                                                                               |
 | [Screenshots](screenshots.md)          |                                          | Every view, in both themes and on a phone                                                                                   |
 

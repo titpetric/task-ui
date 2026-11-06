@@ -13,6 +13,11 @@
 // Send goes to the run when one is attached and takes input, and to Claude
 // otherwise: the window then shows what the request is doing and reads the
 // reply out through a voice this device holds.
+//
+// A device with no recogniser sends the recording alone and the instance does
+// the rest: the Orb input workflow transcribes it, answers the question in it
+// and synthesises a reply the window plays. See
+// docs/guide/voice.md.
 (function (TAP) {
   "use strict";
 
@@ -28,7 +33,8 @@
   var sendBtn = document.getElementById("voice-send");
   var discardBtn = document.getElementById("voice-discard");
   var replayBtn = document.getElementById("voice-replay");
-  if (!stage || !replayBtn) return;
+  if (!stage || !replayBtn || !discardBtn) return;
+  var discardIcon = discardBtn.querySelector("use");
 
   // RATE is the sample rate the recording is written at. 16 kHz mono is what a
   // transcriber reads: Whisper and wav2vec both resample to it, so capturing
@@ -43,6 +49,14 @@
   // BRIEF rides with a dictated question: the reply is read aloud, and a page
   // of markdown takes minutes to speak.
   var BRIEF = "Answer in one or two sentences.";
+
+  // FLOW is the workflow that answers a recording on a device that cannot
+  // transcribe: it reads the recordings with no answer beside them, so it
+  // takes no argument and the orb starts it and watches the artifacts.
+  var FLOW = "Orb input";
+
+  // STAGES name what FLOW is doing, by the step it is on.
+  var STAGES = ["Transcribing", "Thinking", "Speaking"];
 
   var lang = document.documentElement.lang || navigator.language || "en-US";
   // canRecord is what the orb needs: a microphone and a secure page. ready is
@@ -59,6 +73,10 @@
   var text = "";        // every final result since the last send
   var answer = "";      // the last reply, as spoken, kept for replay
   var pending = false;  // a question is out and the window is following it
+  var reply = "";       // the reply as audio the instance made, for replay
+  var player = null;    // the element playing that audio
+  var flowID = "";      // FLOW's ID, read once
+  var gen = 0;          // a send or a discard retires the watch before it
 
   // ------------------------------------------------------------------ gate
 
@@ -269,35 +287,47 @@
 
   // ----------------------------------------------------------------- store
 
+  // file returns the API path of a file of the artifact tree. The API answers
+  // under one mount for both front ends, so the path is absolute.
+  function file(rel) {
+    return "/api/artifacts/files/" + rel;
+  }
+
+  // put writes one file into the artifact tree; false when the write failed.
+  function put(rel, body, type) {
+    return fetch(file(rel), {
+      method: "PUT",
+      credentials: "same-origin",
+      headers: { "Content-Type": type },
+      body: body,
+    }).then(function (res) { return res.ok; }, function () { return false; });
+  }
+
+  // read returns a file of the artifact tree as the API describes it, or null
+  // when it is not there yet, so the window can wait for a reply.
+  function read(rel) {
+    return fetch(file(rel), { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.json() : null; }, function () { return null; });
+  }
+
   // keep writes the recording and the words beside each other in the artifact
-  // tree, which versions them and ages them out on its own schedule. A reader
-  // without artifact/edit dictates all the same, and the console says the
-  // recording went nowhere.
+  // tree, which versions them and ages them out on its own schedule. It
+  // returns the path the pair shares, or empty when a write failed: a reader
+  // without artifact/edit dictates all the same.
   //
-  // With no words there is no .txt, and that absence is the queue: the
-  // transcribe workflow reads every recording in voice/ that has no .txt
-  // beside it. An empty file here would take a recording out of that queue
-  // and leave it transcribed by nobody.
+  // With no words there is no .txt, and that absence is the queue FLOW reads.
+  // An empty file here would take a recording out of it and leave it
+  // transcribed by nobody.
   function keep(words) {
     var audio = wav();
-    if (!audio) return Promise.resolve(false);
+    if (!audio) return Promise.resolve("");
     var stamp = new Date().toISOString().replace(/[:.]/g, "-").replace("Z", "");
-    // The API answers under one mount for both front ends, so the path is
-    // absolute and takes no prefix.
-    var base = "/api/artifacts/files/voice/" + stamp;
-    var put = function (path, body, type) {
-      return fetch(path, {
-        method: "PUT",
-        credentials: "same-origin",
-        headers: { "Content-Type": type },
-        body: body,
-      }).then(function (res) { return res.ok; });
-    };
+    var base = "voice/" + stamp;
     var writes = [put(base + ".wav", audio, "audio/wav")];
     if (words) writes.push(put(base + ".txt", words, "text/plain"));
     return Promise.all(writes).then(function (ok) {
-      return ok.indexOf(false) < 0;
-    }, function () { return false; });
+      return ok.indexOf(false) < 0 ? base : "";
+    }, function () { return ""; });
   }
 
   // ------------------------------------------------------------------ flow
@@ -306,11 +336,9 @@
   // input is the terminal; anything else is the header prompt, which is on
   // every page a user may ask Claude from.
   function target() {
-    if (!ready) return { kind: "keep", say: "Keeps the recording, transcribed in the artifacts" };
     if (window.taskUI.attached()) return { kind: "run", say: "Sends to the run" };
-    var ask = document.getElementById("header-prompt");
-    if (ask) return { kind: "prompt", el: ask, say: "Fills the prompt, yours to send" };
-    return { kind: "keep", say: "Keeps the recording, transcribed in the artifacts" };
+    if (document.getElementById("header-prompt")) return { kind: "prompt", say: "Asks Claude, and reads the answer out" };
+    return { kind: "keep", say: "Keeps the recording in the artifacts" };
   }
 
   // show opens and closes the window. showModal puts it in the top layer, so
@@ -341,13 +369,20 @@
     stage.title = now === "recording" ? "Pause" : (now === "paused" ? "Resume" : "Record");
     stage.setAttribute("aria-label", stage.title);
     sendBtn.disabled = now === "idle";
+    // Nothing recorded leaves the left button nothing to throw away, so it
+    // closes the window instead.
+    var shut = now === "idle";
+    discardIcon.setAttribute("href", shut ? "#i-x" : "#i-trash");
+    discardBtn.title = shut ? "Close" : "Discard";
+    discardBtn.setAttribute("aria-label", discardBtn.title);
+    discardBtn.classList.toggle("shut", shut);
     // A question in flight owns the line; the state does not take it back.
     if (!pending) where.textContent = now === "idle" ? "" : target().say;
     if (note !== undefined) {
       said.textContent = note;
       return;
     }
-    if (now === "idle") said.textContent = "";
+    if (now === "idle" && !pending && !answer) said.textContent = "";
     if (now === "paused" && !text) said.textContent = "Paused";
   }
 
@@ -459,8 +494,12 @@
 
   // asked puts the question to Claude and follows it in the window, so the
   // orb says what the request is doing and reads the reply out when it ends.
-  function asked(words) {
+  // The reply goes beside the recording at, once it is written, so the pair
+  // reads the same whichever path transcribed it.
+  function asked(words, at) {
+    var mine = ++gen;
     answer = "";
+    reply = "";
     pending = true;
     replayBtn.hidden = true;
     if (!window.taskUI.ask) {
@@ -473,11 +512,14 @@
       return;
     }
     window.taskUI.ask(words + " " + BRIEF, function (update) {
+      if (mine !== gen) return;
       if (update.state === "answered") {
         pending = false;
-        said.textContent = plain(update.body).slice(0, 400);
+        answer = plain(update.body);
+        said.textContent = answer.slice(0, 400);
         where.textContent = "Answered";
-        speak(update.body);
+        speak(answer);
+        at.then(function (base) { if (base) put(base + ".reply.txt", answer, "text/plain"); });
         return;
       }
       if (update.state === "failed") {
@@ -492,29 +534,176 @@
     where.textContent = "Asking";
   }
 
-  // trash drops the recording and the words and closes the window.
+  // ------------------------------------------------------------------ flow
+
+  // flow returns FLOW's ID, or empty where the instance has no such workflow.
+  function flow() {
+    if (flowID) return Promise.resolve(flowID);
+    return fetch("/api/workflows", { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        ((data && data.workflows) || []).forEach(function (wf) {
+          if (wf.name === FLOW) flowID = wf.id;
+        });
+        return flowID;
+      });
+  }
+
+  // handed starts FLOW over the recording at and watches for the reply it
+  // writes beside it, which is the whole of a device that cannot transcribe.
+  function handed(at) {
+    var mine = ++gen;
+    answer = "";
+    reply = "";
+    pending = true;
+    replayBtn.hidden = true;
+    said.textContent = "";
+    where.textContent = STAGES[0];
+    flow().then(function (id) {
+      if (!id) throw new Error("this instance has no " + FLOW + " workflow");
+      return fetch("/api/workflows/" + encodeURIComponent(id) + "/runs", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }).then(function (res) {
+        if (res.status === 403) throw new Error("you may not run " + FLOW);
+        return res.json().then(function (body) { return { id: id, run: body.run_id || body.id }; });
+      });
+    }).then(function (started) {
+      if (mine === gen) watch(mine, started.id, started.run, at);
+    }).catch(function (err) { if (mine === gen) fell(err); });
+  }
+
+  // watch polls for the reply FLOW writes beside the recording, then for the
+  // audio of it, and says which step the run is on while neither is there.
+  // It stops after TRIES polls, a transcription and a reply over a cold
+  // whisper build with room to spare.
+  function watch(mine, id, runID, at) {
+    var TRIES = 200;
+    var tries = 0;
+    var tick = function () {
+      if (mine !== gen) return;
+      if (++tries > TRIES) {
+        done(mine);
+        return;
+      }
+      var again = function () { window.setTimeout(tick, 3000); };
+      if (!answer) {
+        read(at + ".reply.txt").then(function (data) {
+          if (mine !== gen) return;
+          if (data && data.text) {
+            answer = data.text.trim();
+            said.textContent = answer;
+            where.textContent = STAGES[2];
+            again();
+            return;
+          }
+          return onStep(id, runID).then(again);
+        }).catch(function (err) { if (mine === gen) fell(err); });
+        return;
+      }
+      read(at + ".reply.wav").then(function (data) {
+        if (mine !== gen) return;
+        if (!data) {
+          again();
+          return;
+        }
+        reply = file(at + ".reply.wav") + "?raw";
+        done(mine);
+      });
+    };
+    tick();
+  }
+
+  // onStep writes the step the run is on onto the window, and fails the watch
+  // when the run ended with nothing beside the recording.
+  function onStep(id, runID) {
+    return fetch("/api/workflows/" + encodeURIComponent(id) + "/runs", { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        var run = ((data && data.runs) || []).filter(function (r) { return r.id === runID; })[0];
+        if (!run) return;
+        var steps = run.steps || [];
+        for (var i = 0; i < steps.length; i++) {
+          if (steps[i].state === "running") {
+            where.textContent = STAGES[i] || "Working";
+            return;
+          }
+        }
+        if (run.state === "running") return;
+        if (run.state !== "ok") throw new Error(FLOW + " " + run.state + (run.message ? ": " + run.message : ""));
+      });
+  }
+
+  // done ends the watch with whatever arrived and plays it.
+  function done(mine) {
+    if (mine !== gen) return;
+    pending = false;
+    replayBtn.hidden = !answer && !reply;
+    if (!answer && !reply) {
+      where.textContent = "No answer came back";
+      return;
+    }
+    where.textContent = "Answered";
+    play();
+  }
+
+  // fell leaves the reason in the window and in a toast, since a phone shows
+  // the window for as long as it is open and the toast after that.
+  function fell(err) {
+    var why = (err && err.message) || String(err);
+    pending = false;
+    where.textContent = why;
+    say("The recording was kept but not answered: " + why, "bad");
+  }
+
+  // play plays the reply the instance synthesised, and reads the words out
+  // on this device where it synthesised none.
+  function play() {
+    if (!reply) {
+      speak(answer);
+      return;
+    }
+    if (!player) player = new Audio();
+    player.src = reply;
+    var started = player.play();
+    if (started && started.catch) started.catch(function () { speak(answer); });
+  }
+
+  // trash drops the recording, the words and the reply, and closes the
+  // window. It retires a watch, so an answer draws into no closed window.
   function trash() {
+    gen++;
     pause();
     buffer = null;
     text = "";
+    answer = "";
+    reply = "";
+    pending = false;
+    replayBtn.hidden = true;
+    if (player) player.pause();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
     show(false);
   }
 
   // send delivers the words, writes the file and leaves the window open on
-  // an empty buffer, so the next sentence is one press away.
+  // an empty buffer, so the next sentence is one press away. A recording with
+  // no words of its own goes to FLOW, which answers it on the instance.
   function send() {
     if (state() === "idle") return;
     var words = sanitize(text);
     var to = target();
-    var done = keep(words);
+    var at = keep(words);
     pause();
     buffer = null;
     text = "";
     dress();
     if (words && to.kind === "run") window.taskUI.paste(words);
-    if (words && to.kind === "prompt") asked(words);
-    done.then(function (saved) {
-      say(saved ? "Recording kept in artifacts, under voice/" : "The recording was not kept", saved ? "ok" : "bad");
+    if (words && to.kind === "prompt") asked(words, at);
+    at.then(function (base) {
+      say(base ? "Recording kept in artifacts, under voice/" : "The recording was not kept", base ? "ok" : "bad");
+      if (!words && base) handed(base);
     });
   }
 
@@ -584,15 +773,13 @@
   });
   sendBtn.addEventListener("click", send);
   discardBtn.addEventListener("click", trash);
-  replayBtn.addEventListener("click", function () { if (answer) speak(answer); });
+  replayBtn.addEventListener("click", function () { if (answer || reply) play(); });
 
   overlay.addEventListener("cancel", function (event) {
     event.preventDefault();
     trash();
   });
-  overlay.addEventListener("close", function () {
-    if (media || buffer) trash();
-  });
+  overlay.addEventListener("close", trash);
 
   if (dialog) {
     dialog.addEventListener("run-buttons", paint);
