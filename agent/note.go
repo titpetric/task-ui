@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Note runs Claude Code to the end on the Notes board thread in TASK_UI_NOTE, in TASK_UI_WORKSPACE_DIR.
+// Note runs Claude Code to the end on the Notes board thread in TASK_UI_NOTE, in TASK_UI_WORKSPACE_DIR, as the user TASK_UI_NOTE_AGENT names.
 // It fails without the thread or a token, or when it cannot create the file TASK_UI_NOTE_REPLY names.
 // Claude's answer goes to the terminal and to that file, which the board replies with.
 func (a *Agent) Note(ctx context.Context) error {
@@ -22,9 +22,7 @@ func (a *Agent) Note(ctx context.Context) error {
 	if author == "" {
 		author = "a user"
 	}
-	prompt := "An instruction on the task-ui Notes board, note " + a.getenv("TASK_UI_NOTE_ID") + " by " + author + ". The thread, oldest first, each message under its author; the last message naming you is the instruction, and your earlier replies are there too:\n\n" +
-		thread + "\n\n" +
-		"The working directory holds the projects task-ui runs, each a git checkout of its own. Commit what you change to main and push it. Your final message is your reply on the note, in markdown, to its author: what you changed and where, or the answer they asked for. If you will not or cannot do it, do nothing and say why instead."
+	prompt := notePrompt(a.getenv("TASK_UI_NOTE_ID"), author, a.getenv("TASK_UI_NOTE_AGENT"), thread)
 
 	out := a.Stdout
 	if path := a.getenv("TASK_UI_NOTE_REPLY"); path != "" {
@@ -36,4 +34,19 @@ func (a *Agent) Note(ctx context.Context) error {
 		out = io.MultiWriter(a.Stdout, reply)
 	}
 	return a.ask(ctx, a.getenv("TASK_UI_WORKSPACE_DIR"), prompt, a.context(), out)
+}
+
+// notePrompt returns what Claude reads of an instruction on the board: the
+// note, its author, the thread, and the user this run works for, as a
+// message may hand work to several at once.
+func notePrompt(id, author, agent, thread string) string {
+	you := "you"
+	if agent != "" {
+		you = "you, @" + agent + ","
+	}
+	return "An instruction on the task-ui Notes board, note " + id + " by " + author + ", for " + you + " to work on. " +
+		"The thread, oldest first, each message under its author; the last message is the instruction, and your earlier replies are there too. " +
+		"A message that names several users splits the work between them: do the part that is yours and leave the rest to the others.\n\n" +
+		thread + "\n\n" +
+		"The working directory holds the projects task-ui runs, each a git checkout of its own. Commit what you change to main and push it. Your final message is your reply on the note, in markdown, to its author: what you changed and where, or the answer they asked for. If you will not or cannot do it, do nothing and say why instead."
 }

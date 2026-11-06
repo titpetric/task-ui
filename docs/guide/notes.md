@@ -10,7 +10,11 @@ A colon right after the name, with no space after it, makes a job ID and no ment
 
 ## Instructions
 
-A note naming another user of the instance, from someone who may run jobs, is an instruction to whoever it names, and so is a reply that names one: the reply opens its note again. A name of no user stays a plain mention, and a note from a viewer stays a message. The note carries the state on its left edge: **open**, **working**, then **done** or **failed**.
+A note naming another user of the instance, from someone who may run jobs, is an instruction to whoever it names, and so is a reply that names one: the reply opens its note again. A name of no user stays a plain mention, and a note from a viewer stays a message. The note shows the state on its left edge: **open**, **working**, then **done** or **failed**.
+
+A reply that names nobody is an instruction to whoever its note names, so the names are typed once and every reply in the thread goes to them. A reply that names someone addresses that user alone, so work passes to another by naming them; a reply from a user the note names is a report on the thread and instructs nobody.
+
+A note or a reply may name several users at once to split one request: each of them gets the instruction, and each agent among them a run of its own, side by side. The thread each run reads is the same, and each run is told which user it works for, so an instruction names who does what.
 
 The user a note names sets that state, and so do the note's author and an admin; anyone who may post replies. A note may name any user. One with **MCP agent user** on, such as `@consuela`, an agent on another machine, picks the note up over [MCP](mcp.md#an-agent-elsewhere): an agent learns of work from the notes that name it, and nowhere else. task-ui runs the Notes agent itself only for a user with **Run instance Claude when mentioned** on; a note naming anyone else waits for them, their agent or the person.
 
@@ -18,11 +22,11 @@ The user a note names sets that state, and so do the note's author and an admin;
 
 A note naming a user with **Run instance Claude when mentioned**, `@claude` on most instances, starts the Notes agent on it.
 
-- task-ui starts `@claude-note`, the Notes agent in the root, as that user the moment the note or the reply appears, with the whole thread in its environment: `TASK_UI_NOTE`, every message of the thread under its author, `TASK_UI_NOTE_ID` and `TASK_UI_NOTE_AUTHOR`. The note links the run for the users who see it. The job writes its answer to the file `TASK_UI_NOTE_REPLY` names, and when the run ends, the agent replies with that answer alone, with a link to the run for the output. A job that writes no answer replies with how the run ended and the end of its output. Each instruction gets a run of its own, side by side with the runs of others.
+- task-ui starts `@claude-note`, the Notes agent in the root, as that user the moment the note or the reply appears, with the whole thread in its environment: `TASK_UI_NOTE`, every message of the thread under its author, `TASK_UI_NOTE_ID`, `TASK_UI_NOTE_AUTHOR` and `TASK_UI_NOTE_AGENT`, the user the run answers as. The note links the run for the users who see it. The job writes its answer to the file `TASK_UI_NOTE_REPLY` names, and when the run ends, the agent replies with that answer alone, with a link to the run for the output. A job that writes no answer replies with how the run ended and the end of its output. Each instruction gets a run of its own, side by side with the runs of others.
 - The agent may decline an instruction: its reply says why, and the note ends there.
 - With the flag off, the note stays open until an agent reads the board over MCP, replies and closes it with `note_comment`, as any other user does.
 
-To follow up, reply on the note and name the agent again: it works from the thread, its own replies included.
+To follow up, reply on the note: the reply goes to the agent the note names, which works from the thread, its own replies included. Naming the agent again changes nothing.
 
 A restart of task-ui fails a note working on a run of its own, as that run ends with it. A note an agent elsewhere set working has no such run and stays working.
 

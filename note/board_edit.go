@@ -17,9 +17,9 @@ var ErrNotAuthor = errors.New("only the note's author or an admin can edit it")
 // Edit puts a new body in a note or a reply, its author's or any for an
 // admin, and marks it edited. An instruction runs again on the edited
 // text: a prompt, a reply in a prompt's thread, or a note or a reply on
-// the board that names a user, which opens again, and the agent's job
-// runs on it when it names the agent. The agent's answer to it, the
-// first answer after it in the thread, shows working and then takes the
+// the board that addresses a user, which opens again, and the agent's job
+// runs on it for each agent it addresses. That agent's answer to it, the
+// first it wrote after it in the thread, shows working and then takes the
 // new answer in place, from a run under the same run ID; with no answer
 // yet, the agent replies as it does to a new note. The agent's own
 // answers change only that way.
@@ -62,7 +62,11 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 		thread = note
 	}
 	b.publish(note)
-	instruction := b.instructs(ctx, user, note.Body)
+	var parent *model.Note
+	if note.ID != thread.ID {
+		parent = thread
+	}
+	instruction := b.instructs(ctx, user, parent, note.Body)
 	if !thread.IsPrompt() && !instruction {
 		return note, nil
 	}
@@ -71,22 +75,20 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 	}
 	thread.State = model.NoteOpen
 	b.publish(thread)
-	again := b.answerTo(ctx, thread, note)
-	agent := b.forAgent(ctx, user, note.Body)
-	switch {
-	case thread.IsPrompt():
-		b.dispatchPrompt(thread, req, again)
-	case agent != nil:
-		b.dispatch(thread, again, agent)
+	if thread.IsPrompt() {
+		b.dispatchPrompt(thread, req, b.answerTo(ctx, thread, note, b.AnswererOf(ctx, thread)))
+		return note, nil
+	}
+	for _, agent := range b.forAgents(ctx, user, parent, note.Body) {
+		b.dispatch(thread, b.answerTo(ctx, thread, note, agent.Name), agent)
 	}
 	return note, nil
 }
 
-// answerTo returns the agent's answer to a note of a thread, the first
-// reply of the agent after it, or nil for none yet.
-func (b *Board) answerTo(ctx context.Context, thread, note *model.Note) *model.Note {
+// answerTo returns what the named user answered to a note of a thread,
+// the first reply of theirs after it, or nil for none yet.
+func (b *Board) answerTo(ctx context.Context, thread, note *model.Note, name string) *model.Note {
 	replies, _ := b.Notes.Replies(ctx, []string{thread.ID})
-	name := b.AnswererOf(ctx, thread)
 	after := note.ID == thread.ID
 	for _, reply := range replies[thread.ID] {
 		if after && name != "" && reply.UserName == name {

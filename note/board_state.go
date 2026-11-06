@@ -46,7 +46,7 @@ func (b *Board) live(runID string) bool {
 
 // Recover fails the instructions a restart cut short: a note working on a run of the board's has no run to wait on.
 // A note working with no run is an external agent's, which goes on.
-// An open instruction to the agent with no run, never started or set open by hand, starts the agent.
+// An open instruction to the agent with no run, never started or set open by hand, starts every agent the thread names.
 // An open prompt with no run starts its prompt.
 func (b *Board) Recover(ctx context.Context) error {
 	open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
@@ -58,7 +58,10 @@ func (b *Board) Recover(ctx context.Context) error {
 		return err
 	}
 	for i := range open {
-		if agent := b.threadForAgent(ctx, &open[i]); open[i].RunID == "" && agent != nil {
+		if open[i].RunID != "" {
+			continue
+		}
+		for _, agent := range b.threadAgents(ctx, &open[i]) {
 			b.dispatch(&open[i], nil, agent)
 		}
 	}

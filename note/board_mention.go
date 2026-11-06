@@ -7,18 +7,36 @@ import (
 )
 
 // instructs reports whether a note of the user's with the body is an
-// instruction: it names a user other than its author, the agent or one
-// the board knows, and the author may run jobs, as a note from someone
-// who may not is a message. A name of no user is a plain mention.
-func (b *Board) instructs(ctx context.Context, user *model.User, body string) bool {
-	named := false
-	for _, name := range model.Mentions(body) {
-		if name != user.Name && b.known(ctx, name) {
-			named = true
-			break
+// instruction: it addresses a user the board knows, and its author may
+// run jobs. The thread is the note a reply answers, nil for a new note.
+func (b *Board) instructs(ctx context.Context, user *model.User, thread *model.Note, body string) bool {
+	return len(b.addressed(ctx, user.Name, thread, body)) > 0 && b.permissions(ctx, user).Allowed("run")
+}
+
+// addressed returns the users a message of the author's addresses, by
+// name: those its body names with @, the author apart, that the board
+// knows. A reply naming nobody takes the names of its note, and a reply
+// from a user that note names takes none.
+func (b *Board) addressed(ctx context.Context, author string, thread *model.Note, body string) []string {
+	if names := b.named(ctx, author, body); len(names) > 0 || thread == nil {
+		return names
+	}
+	if thread.Mentioned(author) {
+		return nil
+	}
+	return b.named(ctx, author, thread.Body)
+}
+
+// named returns the users a text names with @, the author apart, that
+// the board knows, once each in order.
+func (b *Board) named(ctx context.Context, author, text string) []string {
+	var names []string
+	for _, name := range model.Mentions(text) {
+		if name != author && b.known(ctx, name) {
+			names = append(names, name)
 		}
 	}
-	return named && b.permissions(ctx, user).Allowed("run")
+	return names
 }
 
 // known reports whether a name is a user's.
@@ -30,50 +48,66 @@ func (b *Board) known(ctx context.Context, name string) bool {
 	return err == nil
 }
 
-// agentIn returns the first user a text by the author names, other
-// than the author, whose mentions run the Notes agent, Run instance
-// Claude when mentioned on, or nil.
-func (b *Board) agentIn(ctx context.Context, author, body string) *model.User {
+// agents returns the users of the names whose mentions run the Notes
+// agent, Run instance Claude when mentioned on.
+func (b *Board) agents(ctx context.Context, names []string) []*model.User {
 	if b.Users == nil {
 		return nil
 	}
-	for _, name := range model.Mentions(body) {
-		if name == author {
-			continue
-		}
+	var agents []*model.User
+	for _, name := range names {
 		if user, err := b.Users.GetByName(ctx, name); err == nil && user.AgentReply && user.Mcp {
-			return user
+			agents = append(agents, user)
 		}
 	}
-	return nil
+	return agents
 }
 
-// forAgent returns the agent an instruction of the user's with the body
-// is the board's to run as, or nil: it names a user with Run instance
-// Claude when mentioned, someone else wrote it. A note naming any other
-// user waits for that user, their agent over MCP or themselves.
-func (b *Board) forAgent(ctx context.Context, user *model.User, body string) *model.User {
-	return b.agentIn(ctx, user.Name, body)
+// forAgents returns the agents an instruction of the user's with the
+// body is for, a run each. A message naming any other user waits for
+// that user, their agent over MCP, or themselves.
+func (b *Board) forAgents(ctx context.Context, user *model.User, thread *model.Note, body string) []*model.User {
+	return b.agents(ctx, b.addressed(ctx, user.Name, thread, body))
 }
 
-// threadForAgent returns the agent an open thread is for, or nil: its
-// note or a reply by someone else names a user with Run instance Claude
-// when mentioned.
+// threadAgents returns the agents an open thread is for, once each: the
+// ones its note names and the ones its replies name.
+func (b *Board) threadAgents(ctx context.Context, note *model.Note) []*model.User {
+	var agents []*model.User
+	var names []string
+	add := func(author, body string) {
+		for _, agent := range b.agents(ctx, b.named(ctx, author, body)) {
+			if !contains(names, agent.Name) {
+				names = append(names, agent.Name)
+				agents = append(agents, agent)
+			}
+		}
+	}
+	add(note.UserName, note.Body)
+	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
+	for _, reply := range replies[note.ID] {
+		add(reply.UserName, reply.Body)
+	}
+	return agents
+}
+
+// threadForAgent returns the first agent a thread names, or nil. It
+// stops there, as a page asks it of every thread it lists.
 func (b *Board) threadForAgent(ctx context.Context, note *model.Note) *model.User {
-	if agent := b.agentIn(ctx, note.UserName, note.Body); agent != nil {
-		return agent
+	if agents := b.agents(ctx, b.named(ctx, note.UserName, note.Body)); len(agents) > 0 {
+		return agents[0]
 	}
 	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
 	for _, reply := range replies[note.ID] {
-		if agent := b.agentIn(ctx, reply.UserName, reply.Body); agent != nil {
-			return agent
+		if agents := b.agents(ctx, b.named(ctx, reply.UserName, reply.Body)); len(agents) > 0 {
+			return agents[0]
 		}
 	}
 	return nil
 }
 
-// AnswererOf returns the user name the agent's replies on a thread
-// carry: claude on a prompt, the agent the thread names on an
+// AnswererOf returns the user name the agent's replies on a thread are
+// from: claude on a prompt, the agent the thread names on an
 // instruction, else empty.
 func (b *Board) AnswererOf(ctx context.Context, thread *model.Note) string {
 	if thread.IsPrompt() {
