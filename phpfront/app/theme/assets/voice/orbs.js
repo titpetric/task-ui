@@ -76,9 +76,12 @@
   var ORBS = [
     // A radius of nothing leaves this one at the centre, which the others
     // pass through and merge with, and it breathes so a window with nothing
-    // in it is still alive. tail of one is what keeps it off white: a trail
-    // of an orb that does not move stacks on the orb and nowhere else.
-    { R: 0, tilt: 0, turn: 0, secs: 1, size: 76, at: 0, tail: 1, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
+    // in it is still alive. tail of one is what keeps the wake off it: a
+    // trail of an orb that does not move stacks on the orb and nowhere else.
+    // gain puts it in twice, so its middle is flat at the top of the field
+    // and the fall to nothing happens in the last fifth of its radius.
+    // size is written over below, out of the three that travel.
+    { R: 0, tilt: 0, turn: 0, secs: 1, size: 0, at: 0, tail: 1, gain: 2, pulse: 0.12, pulseSecs: 4.5, meter: 0.4 },
     { R: 72, tilt: 72, turn: 15, secs: 6.3, size: 27, at: 0 },
     { R: 76, tilt: 81, turn: 70, secs: 8.8, size: 20, at: 0.11 },
     { R: 52, tilt: 38, turn: 120, secs: -6.9, size: 29, at: 0.72 },
@@ -90,6 +93,12 @@
   ORBS.forEach(function (orb) {
     orb.lift = DEPTH / (DEPTH - orb.R * Math.abs(Math.sin(orb.tilt * Math.PI / 180)));
   });
+
+  // The orb at the centre is twice the mean of the three that travel, and is
+  // read off them, so resizing one of those resizes it too.
+  ORBS[0].size = 2 * ORBS.slice(1).reduce(function (sum, orb) {
+    return sum + orb.size * orb.lift;
+  }, 0) / (ORBS.length - 1);
 
   // ramp returns a palette as 256 entries of red, green, blue and alpha,
   // interpolated between the stops, with the alpha fading in over RISE.
@@ -210,7 +219,11 @@
         paint.globalAlpha = (j === 0 ? 1 : 0.1 * back * back * back) * (orb.peak || 1);
         var spot = place(orb, secs - j * STEP);
         var r = spot.r * swell * (0.45 + 0.55 * back);
-        paint.drawImage(ORB, spot.x - r, spot.y - r, r * 2, r * 2);
+        // The field is eight bits and adding clamps at the top of it, so a
+        // second pass is how an orb reaches past white and squares its edge.
+        for (var g = orb.gain || 1; g > 0; g--) {
+          paint.drawImage(ORB, spot.x - r, spot.y - r, r * 2, r * 2);
+        }
       }
     }
     paint.globalAlpha = 1;
