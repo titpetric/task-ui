@@ -130,6 +130,19 @@ jobs:
     steps:
       - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css|tpl)$' | xargs -r vale
 
+  # The editor the markdown fields are drawn with, vendored beside xterm's
+  # bundle because this front end has no node toolchain: what is in the
+  # folder is what the browser receives. mdedit commits its own dist/, so a
+  # refresh is a copy out of a checkout of it.
+  mdedit:
+    desc: "Refresh the vendored markdown editor from a checkout of mdedit"
+    vars:
+      mdedit: ../mdedit
+    steps:
+      - cp ${{mdedit}}/dist/mdedit.global.js phpfront/app/theme/assets/vendor/mdedit.js
+      - cp ${{mdedit}}/dist/mdedit.min.css phpfront/app/theme/assets/vendor/mdedit.css
+      - cp ${{mdedit}}/LICENSE phpfront/app/theme/assets/vendor/mdedit.LICENSE
+
   deploy:
     desc: "Deploy docs to cdn.si"
     vars:
