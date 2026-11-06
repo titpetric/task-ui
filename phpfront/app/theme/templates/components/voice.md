@@ -12,12 +12,12 @@ dictates.
 | `voice-said`     | The transcript as it arrives, the final text with the interim run after it |
 | `voice-where`    | What send will do with the words, since the window opens over a run and over a page without one |
 | `voice-send`     | Puts the words in the run or the header prompt, and keeps the recording |
-| `voice-discard`  | Ends the session and writes nothing              |
+| `voice-discard`  | Steps back: the recording, then the reply, then the window |
+| `voice-avatar`   | The canvas `assets/voice/orbs.js` draws the orbs into |
 
-The avatar is one SVG: three ellipses of fog, a core, and seven logarithmic
-spirals in three whorls, every layer additive and frayed by a static
-`feTurbulence` so no stroke reads as a surface. Only transforms and opacity
-animate, and `--voice-level` sets the microphone's level on all of them.
+The avatar is a canvas: four orbs added together as greyscale and read through
+a palette, so a pair that overlaps reads as one body. The middle one is the
+microphone's meter. See `docs/guide/voice.md`.
 
 Empty markup the script fills. `assets/voice/voice.js` owns the behaviour and
 `assets/voice/voice.css` the look; neither can reach a run's socket, only

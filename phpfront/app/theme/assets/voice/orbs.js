@@ -6,7 +6,7 @@
 // summed field is read through a palette of black to purple to white, which
 // is what makes a pair read as one body with one outline.
 //
-// Each orb is drawn again at where it was a moment ago, dimmer each time, so
+// Each orb is drawn again at the points it came through, dimmer each time, so
 // it drags the path it took behind it and the trail dims down the palette.
 //
 // See docs/guide/voice.md.
@@ -45,18 +45,29 @@
   var FLOOR = 30;
   var RISE = 42;
 
-  // STOPS are the palette the summed field is read through, black to purple
-  // to white, and the steps between them are interpolated: one even climb,
-  // so a blob is a solid shape with a lit middle and not a set of rings.
-  var STOPS = [
-    [0, 0, 0, 0],
-    [48, 26, 6, 48],
-    [96, 74, 18, 120],
-    [144, 130, 40, 190],
-    [192, 180, 95, 225],
-    [224, 218, 158, 242],
-    [255, 255, 255, 255],
-  ];
+  // MOODS are the palettes the summed field is read through, one per thing
+  // the window is doing. Each is one even climb from black to white through
+  // its colour, so a blob is a solid shape with a lit middle and not rings.
+  // White is held back to the top of each ramp: an orb's own field is over
+  // three quarters across half its radius, so a palette that is pale by then
+  // draws a white disc with a coloured rim and no body.
+  var MOODS = {
+    idle: [
+      [0, 0, 0, 0], [40, 22, 5, 42], [90, 66, 16, 112], [140, 116, 34, 176],
+      [190, 166, 70, 216], [228, 206, 122, 238], [248, 245, 205, 250], [255, 255, 255, 255],
+    ],
+    recording: [
+      [0, 0, 0, 0], [40, 40, 4, 6], [90, 108, 12, 14], [140, 170, 28, 22],
+      [190, 222, 70, 40], [228, 246, 140, 96], [248, 253, 215, 190], [255, 255, 255, 255],
+    ],
+    answered: [
+      [0, 0, 0, 0], [40, 4, 36, 16], [90, 12, 98, 44], [140, 28, 158, 78],
+      [190, 80, 206, 124], [228, 150, 234, 180], [248, 215, 250, 230], [255, 255, 255, 255],
+    ],
+  };
+
+  // BLEND is how long one palette takes to become the next.
+  var BLEND = 0.4;
 
   // Each orb walks a circle of radius R in a plane tilted by tilt and turned
   // by turn, once every secs, starting at a different point of it. A
@@ -65,22 +76,23 @@
   var ORBS = [
     // A radius of nothing leaves this one at the centre, which the others
     // pass through and merge with. It puts in less field than they do, or
-    // the middle of the window is white whatever is happening there.
-    { R: 0, tilt: 0, turn: 0, secs: 1, size: 38, at: 0, peak: 0.72 },
+    // the middle of the window is white whatever is happening there, and it
+    // breathes so a window with nothing in it is still alive.
+    { R: 0, tilt: 0, turn: 0, secs: 1, size: 38, at: 0, peak: 0.85, pulse: 0.12, pulseSecs: 4.5, meter: 0.6 },
     { R: 72, tilt: 72, turn: 15, secs: 6.3, size: 27, at: 0 },
     { R: 76, tilt: 81, turn: 70, secs: 8.8, size: 20, at: 0.11 },
     { R: 52, tilt: 38, turn: 120, secs: -6.9, size: 29, at: 0.72 },
   ];
 
-  // ramp returns the palette as 256 entries of red, green, blue and alpha,
+  // ramp returns a palette as 256 entries of red, green, blue and alpha,
   // interpolated between the stops, with the alpha fading in over RISE.
-  function ramp() {
+  function ramp(stops) {
     var map = new Uint8ClampedArray(256 * 4);
     for (var v = 0; v < 256; v++) {
       var i = 0;
-      while (i < STOPS.length - 2 && v > STOPS[i + 1][0]) i++;
-      var lo = STOPS[i];
-      var hi = STOPS[i + 1];
+      while (i < stops.length - 2 && v > stops[i + 1][0]) i++;
+      var lo = stops[i];
+      var hi = stops[i + 1];
       var t = (v - lo[0]) / (hi[0] - lo[0]);
       map[v * 4] = lo[1] + (hi[1] - lo[1]) * t;
       map[v * 4 + 1] = lo[2] + (hi[2] - lo[2]) * t;
@@ -130,51 +142,88 @@
     var y = orb.R * Math.sin(th) * Math.cos(tilt);
     var z = orb.R * Math.sin(th) * Math.sin(tilt);
     var near = DEPTH / (DEPTH - z);
+    var r = orb.size * near;
+    if (orb.pulse) r *= 1 + orb.pulse * Math.sin(2 * Math.PI * now / orb.pulseSecs);
     return {
       x: MID + (x * Math.cos(turn) - y * Math.sin(turn)) * near,
       y: MID + (x * Math.sin(turn) + y * Math.cos(turn)) * near,
-      r: orb.size * near,
+      r: r,
     };
   }
 
-  var PALETTE = ramp();
+  // clock is the time every part of this reads, in seconds.
+  function clock() {
+    return window.performance.now() / 1000;
+  }
+
+  var PALETTE = {
+    idle: ramp(MOODS.idle),
+    recording: ramp(MOODS.recording),
+    answered: ramp(MOODS.answered),
+  };
+  var mix = new Uint8ClampedArray(256 * 4);
+  var from = PALETTE.idle;
+  var into = PALETTE.idle;
+  var blendAt = -1;
+  var tapAt = 0;
   var ORB = null;    // the greyscale sprite, made on the first frame
   var show = null;   // the canvas on the page
   var paint = null;  // the field the orbs are summed into, offscreen
   var out = null;    // the page canvas's context
   var raf = 0;
   var level = 0;
+  var vu = 0;
 
   // draw sums the orbs and their trails into the field, reads the sum
   // through the palette and puts the colour on the page's canvas.
   function draw(secs) {
+    // The meter jumps to the loudest it hears and falls back slowly, so a
+    // word swells the middle and silence lets it down.
+    vu = level > vu ? level : vu + (level - vu) * 0.06;
+    // A press swells everything and settles back, like a key going down.
+    var bump = tapAt ? 1 + 0.25 * Math.exp(-(secs - tapAt) / 0.18) : 1;
+    if (bump < 1.002) {
+      tapAt = 0;
+      bump = 1;
+    }
     paint.globalCompositeOperation = "source-over";
     paint.globalAlpha = 1;
     paint.fillStyle = "#000000";
     paint.fillRect(0, 0, SIZE, SIZE);
     paint.globalCompositeOperation = "lighter";
-    var swell = 1 + level * 0.35;
     for (var i = 0; i < ORBS.length; i++) {
+      var orb = ORBS[i];
+      var swell = bump * (orb.meter ? 1 + vu * orb.meter : 1);
       for (var j = TRAIL - 1; j >= 0; j--) {
         var back = 1 - j / TRAIL;
         // A trail sample is a tenth of the orb: a slow orb's trail sits on
         // top of the orb itself, and at full weight the sum of them all
         // would run the head past white wherever it lingers.
-        paint.globalAlpha = (j === 0 ? 1 : 0.1 * back * back * back) * (ORBS[i].peak || 1);
-        var spot = place(ORBS[i], secs - j * STEP);
+        paint.globalAlpha = (j === 0 ? 1 : 0.1 * back * back * back) * (orb.peak || 1);
+        var spot = place(orb, secs - j * STEP);
         var r = spot.r * swell * (0.45 + 0.55 * back);
         paint.drawImage(ORB, spot.x - r, spot.y - r, r * 2, r * 2);
       }
     }
     paint.globalAlpha = 1;
+    var lut = into;
+    if (blendAt >= 0) {
+      var t = (secs - blendAt) / BLEND;
+      if (t >= 1) {
+        blendAt = -1;
+      } else {
+        for (var k = 0; k < mix.length; k++) mix[k] = from[k] + (into[k] - from[k]) * t;
+        lut = mix;
+      }
+    }
     var frame = paint.getImageData(0, 0, SIZE, SIZE);
     var data = frame.data;
     for (var p = 0; p < data.length; p += 4) {
       var v = data[p] * 4;
-      data[p] = PALETTE[v];
-      data[p + 1] = PALETTE[v + 1];
-      data[p + 2] = PALETTE[v + 2];
-      data[p + 3] = PALETTE[v + 3];
+      data[p] = lut[v];
+      data[p + 1] = lut[v + 1];
+      data[p + 2] = lut[v + 2];
+      data[p + 3] = lut[v + 3];
     }
     out.putImageData(frame, 0, 0);
   }
@@ -214,9 +263,25 @@
       if (raf) window.cancelAnimationFrame(raf);
       raf = 0;
     },
-    // level is how loud the microphone is, 0 to 1, which swells the orbs.
+    // level is how loud the microphone is, 0 to 1. It sets the size of the
+    // orb at the centre.
     level: function (loud) {
       level = loud;
+    },
+    // tap swells every orb for a moment and settles it back.
+    tap: function () {
+      tapAt = clock();
+      if (still) draw(tapAt);
+    },
+    // mood is which palette the field is read through: idle, recording or
+    // answered. It fades from the one in use over BLEND seconds.
+    mood: function (name) {
+      var next = PALETTE[name] || PALETTE.idle;
+      if (next === into) return;
+      from = blendAt >= 0 ? mix.slice(0) : into;
+      into = next;
+      blendAt = clock();
+      if (still) draw(blendAt + BLEND);
     },
   };
 })();

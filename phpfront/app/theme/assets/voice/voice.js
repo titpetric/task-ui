@@ -126,8 +126,8 @@
 
   // ----------------------------------------------------------------- level
 
-  // level reads the microphone and writes it to the overlay as --voice-level,
-  // which every layer of the avatar is sized and lit by.
+  // level reads the microphone each frame and sets the avatar's level, which
+  // swells the orb at its centre and lets it down again in silence.
   function level(analyser) {
     var buf = new Float32Array(analyser.fftSize);
     var smoothed = 0;
@@ -140,7 +140,6 @@
       // keeps the glow from flickering on each frame's noise.
       var now = Math.min(1, rms * 7);
       smoothed += (now - smoothed) * (now > smoothed ? 0.5 : 0.12);
-      overlay.style.setProperty("--voice-level", smoothed.toFixed(3));
       if (window.voiceOrbs) window.voiceOrbs.level(smoothed);
       raf = requestAnimationFrame(tick);
     };
@@ -206,7 +205,6 @@
   function release() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
-    overlay.style.setProperty("--voice-level", "0");
     if (window.voiceOrbs) window.voiceOrbs.level(0);
     if (!media) return;
     if (media.node) media.node.port.onmessage = null;
@@ -378,13 +376,17 @@
     stage.title = now === "recording" ? "Pause" : (now === "paused" ? "Resume" : "Record");
     stage.setAttribute("aria-label", stage.title);
     sendBtn.disabled = now === "idle";
-    // Nothing recorded leaves the left button nothing to throw away, so it
-    // closes the window instead.
+    // The left button is whatever there is to undo: the recording, then the
+    // answer it brought back, then the window.
     var shut = now === "idle";
-    discardIcon.setAttribute("href", shut ? "#i-x" : "#i-trash");
-    discardBtn.title = shut ? "Close" : "Discard";
+    var told = shut && !!(answer || reply);
+    discardIcon.setAttribute("href", !shut ? "#i-trash" : (told ? "#i-back" : "#i-x"));
+    discardBtn.title = !shut ? "Discard" : (told ? "Back" : "Close");
     discardBtn.setAttribute("aria-label", discardBtn.title);
     discardBtn.classList.toggle("shut", shut);
+    if (window.voiceOrbs) {
+      window.voiceOrbs.mood(now === "recording" ? "recording" : (told ? "answered" : "idle"));
+    }
     // A question in flight owns the line; the state does not take it back.
     if (!pending) where.textContent = now === "idle" ? "" : target().say;
     if (note !== undefined) {
@@ -717,22 +719,45 @@
     if (started && started.catch) started.catch(function () { speak(answer); });
   }
 
-  // trash drops the recording, the words and the reply, and closes the
-  // window. It retires a watch, so an answer draws into no closed window.
-  function trash() {
+  // drop lets go of the reply and the words, and retires the watch that
+  // would have written them, so nothing draws into a window that moved on.
+  function drop() {
     gen++;
     stopped();
     since = 0;
-    pause();
-    buffer = null;
-    text = "";
     answer = "";
     reply = "";
     pending = false;
     replayBtn.hidden = true;
     if (player) player.pause();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+
+  // trash drops the recording, the words and the reply, and closes the
+  // window.
+  function trash() {
+    drop();
+    pause();
+    buffer = null;
+    text = "";
     show(false);
+  }
+
+  // back steps back through what the window holds: a recording, then a reply,
+  // then the window itself.
+  function back() {
+    if (state() !== "idle") {
+      trash();
+      return;
+    }
+    if (!answer && !reply) {
+      trash();
+      return;
+    }
+    drop();
+    said.textContent = "";
+    where.textContent = "";
+    dress();
   }
 
   // send delivers the words, writes the file and leaves the window open on
@@ -816,11 +841,12 @@
   orb.addEventListener("click", visit);
   if (mic) mic.addEventListener("click", visit);
   stage.addEventListener("click", function () {
+    if (window.voiceOrbs) window.voiceOrbs.tap();
     if (media || starting) pause();
     else record();
   });
   sendBtn.addEventListener("click", send);
-  discardBtn.addEventListener("click", trash);
+  discardBtn.addEventListener("click", back);
   replayBtn.addEventListener("click", function () { if (answer || reply) play(); });
 
   overlay.addEventListener("cancel", function (event) {
