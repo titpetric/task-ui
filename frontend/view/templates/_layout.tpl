@@ -5,6 +5,9 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
+	<meta name="color-scheme" content="dark light">
+	<meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)">
+	<meta name="theme-color" content="#07090c" media="(prefers-color-scheme: dark)">
 	<title>{{ if .Title }}{{ .Title }} | {{ end }}TaskUI</title>
 	<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="/static/vendor/xterm.css?v={{ assetVersion }}">

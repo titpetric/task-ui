@@ -54,6 +54,8 @@
     "IBM Plex Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
+  /* --ink-0 is also the theme-color meta of both front ends' heads, which no
+     stylesheet reaches: change it in head.tpl and _layout.tpl too. */
   --ink-0: #07090c;
   --ink-1: #0b0f14;
   --ink-2: #10161d;
