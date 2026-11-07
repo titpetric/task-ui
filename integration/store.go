@@ -63,8 +63,8 @@ func (s *Store) Save(ctx context.Context, id string, values map[string]string) e
 	}
 	for name, value := range values {
 		if field := kind.Field(name); field != nil {
-			if !field.Valid(strings.TrimSpace(value)) {
-				return fmt.Errorf("%w value %q for %s: one of %s", ErrUnknown, value, name, strings.Join(field.Options, ", "))
+			if err := field.Check(strings.TrimSpace(value)); err != nil {
+				return fmt.Errorf("%w value %w", ErrUnknown, err)
 			}
 			continue
 		}

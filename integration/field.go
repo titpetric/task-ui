@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 )
@@ -54,6 +56,21 @@ type Field struct {
 // Valid reports whether a value is one the setting takes: any without options, else one of them or empty.
 func (f Field) Valid(value string) bool {
 	return len(f.Options) == 0 || value == "" || slices.Contains(f.Options, value)
+}
+
+// Check returns why the field refuses a value, or nil: one its options do not name, or an address a field with a Path cannot use.
+func (f Field) Check(value string) error {
+	if !f.Valid(value) {
+		return fmt.Errorf("%q for %s: one of %s", value, f.Name, strings.Join(f.Options, ", "))
+	}
+	if f.Path == "" || value == "" {
+		return nil
+	}
+	address, err := url.Parse(value)
+	if err != nil || address.Host == "" || (address.Scheme != "http" && address.Scheme != "https") {
+		return fmt.Errorf("%q for %s: an http or https address, or empty to take the instance URL", value, f.Name)
+	}
+	return nil
 }
 
 // Value returns what a form shows in the field: the stored value, else the instance URL and Path, else Default.
