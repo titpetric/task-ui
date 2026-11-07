@@ -200,11 +200,12 @@ CREATE TABLE IF NOT EXISTS "run" (
     target TEXT NOT NULL DEFAULT '',
     batch_id CHAR(26) NOT NULL DEFAULT '',
     message TEXT NOT NULL DEFAULT ''
-, title TEXT NOT NULL DEFAULT '');
+, title TEXT NOT NULL DEFAULT '', parent_id CHAR(26) NOT NULL DEFAULT '', parent_kind TEXT NOT NULL DEFAULT '');
 CREATE INDEX idx_run_folder_job ON run(folder, job);
 CREATE INDEX idx_run_state ON run(state);
 CREATE INDEX idx_run_started_at ON run(started_at);
 CREATE INDEX idx_run_batch ON run(batch_id);
+CREATE INDEX idx_run_parent ON run(parent_id, started_at, id);
 CREATE TABLE schedule (
     id CHAR(26) PRIMARY KEY NOT NULL,
     folder TEXT NOT NULL,

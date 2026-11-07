@@ -27,3 +27,5 @@ Run.
 | batch_id    | char(26) | MUL | Batch ID    |
 | message     | varchar  |     | Message     |
 | title       | varchar  |     | Title       |
+| parent_id   | char(26) | MUL | Parent ID   |
+| parent_kind | varchar  |     | Parent Kind |

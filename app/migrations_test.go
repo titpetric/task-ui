@@ -57,6 +57,7 @@ var migrations = []string{
 	"run_target_host_job.up.sql",
 	"run_target_queued.up.sql",
 	"run_title.up.sql",
+	"run_with_parent.up.sql",
 	"schedule.up.sql",
 	"schedule_target.up.sql",
 	"schedule_target_host_job.up.sql",

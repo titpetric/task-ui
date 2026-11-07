@@ -1549,6 +1549,12 @@ type Run struct {
 
 	// Title
 	Title string `db:"title" json:"title"`
+
+	// Parent ID
+	ParentID string `db:"parent_id" json:"parent_id"`
+
+	// Parent Kind
+	ParentKind string `db:"parent_kind" json:"parent_kind"`
 }
 
 // GetID will return the value of ID.
@@ -1689,11 +1695,23 @@ func (r *Run) GetTitle() string { return r.Title }
 // SetTitle sets Title to the provided value.
 func (r *Run) SetTitle(val string) { r.Title = val }
 
+// GetParentID will return the value of ParentID.
+func (r *Run) GetParentID() string { return r.ParentID }
+
+// SetParentID sets ParentID to the provided value.
+func (r *Run) SetParentID(val string) { r.ParentID = val }
+
+// GetParentKind will return the value of ParentKind.
+func (r *Run) GetParentKind() string { return r.ParentKind }
+
+// SetParentKind sets ParentKind to the provided value.
+func (r *Run) SetParentKind(val string) { r.ParentKind = val }
+
 // RunTable is the name of the table in the DB.
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message", "title"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message", "title", "parent_id", "parent_kind"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}

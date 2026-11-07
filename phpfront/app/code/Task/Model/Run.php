@@ -34,6 +34,8 @@ class Run {
 		"batch_id",
 		"message",
 		"title",
+		"parent_id",
+		"parent_kind",
 	);
 
 	/** primary is the primary key columns. */
@@ -87,6 +89,10 @@ class Run {
 	var $message = "";
 	/** Title */
 	var $title = "";
+	/** Parent ID */
+	var $parent_id = "";
+	/** Parent Kind */
+	var $parent_kind = "";
 
 	function __construct($row = array()) {
 		$this->id = \Task\Row::text($row, "id");
@@ -112,6 +118,8 @@ class Run {
 		$this->batch_id = \Task\Row::text($row, "batch_id");
 		$this->message = \Task\Row::text($row, "message");
 		$this->title = \Task\Row::text($row, "title");
+		$this->parent_id = \Task\Row::text($row, "parent_id");
+		$this->parent_kind = \Task\Row::text($row, "parent_kind");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -363,6 +371,28 @@ class Run {
 	/** setTitle sets Title. */
 	function setTitle($value) {
 		$this->title = $value;
+
+		return $this;
+	}
+	/** getParentId is Parent ID. */
+	function getParentId() {
+		return $this->parent_id;
+	}
+
+	/** setParentId sets Parent ID. */
+	function setParentId($value) {
+		$this->parent_id = $value;
+
+		return $this;
+	}
+	/** getParentKind is Parent Kind. */
+	function getParentKind() {
+		return $this->parent_kind;
+	}
+
+	/** setParentKind sets Parent Kind. */
+	function setParentKind($value) {
+		$this->parent_kind = $value;
 
 		return $this;
 	}

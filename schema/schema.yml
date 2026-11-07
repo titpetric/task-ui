@@ -955,6 +955,15 @@
       type: text
       comment: Title
       datatype: varchar
+    - name: parent_id
+      type: text
+      key: MUL
+      comment: Parent ID
+      datatype: char(26)
+    - name: parent_kind
+      type: text
+      comment: Parent Kind
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_run_1
       columns:
@@ -968,6 +977,11 @@
       columns:
         - folder
         - job
+    - name: idx_run_parent
+      columns:
+        - parent_id
+        - started_at
+        - id
     - name: idx_run_started_at
       columns:
         - started_at
