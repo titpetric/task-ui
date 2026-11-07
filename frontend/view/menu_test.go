@@ -67,10 +67,10 @@ var views struct {
 
 // shared is the parsed template set, built on the first call.
 //
-// A test that reads the markup is off unless TASK_UI_VIEW_TESTS is set: a
-// failed assertion over a page prints the page, and one broken template
-// prints it hundreds of times. docs/testing.md says what to assert
-// instead, and issue 29 is what removes this.
+// A test that reads the markup is off unless TASK_UI_VIEW_TESTS is set:
+// docs/testing.md says why a template test asserts nothing about its
+// output, and these are the tests still doing it. `atkins test:view`
+// runs them.
 func shared(t *testing.T) *view.View {
 	t.Helper()
 	if os.Getenv("TASK_UI_VIEW_TESTS") == "" {

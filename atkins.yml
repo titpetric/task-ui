@@ -103,15 +103,13 @@ jobs:
     steps:
       - go test ./...
 
-  # The tests that read a rendered page, which `test` skips: a failed
-  # assertion over a page prints the page, and a broken template prints it
-  # hundreds of times, which took the machine down. The caps are the ones
-  # scripts/test.sh runs with. docs/testing.md says what to assert instead;
-  # issue 29 removes the assertions and this job with them.
+  # The tests that read a rendered page, which `test` skips. docs/testing.md
+  # says why a template test asserts no markup, and these are the ones
+  # still doing it.
   test:view:
     desc: "Run the view tests that read the rendered markup"
     steps:
-      - env TASK_UI_VIEW_TESTS=1 GOMAXPROCS=2 GOMEMLIMIT=2GiB go test -count=1 ./frontend/...
+      - env TASK_UI_VIEW_TESTS=1 go test -count=1 ./frontend/...
 
   # What a change needs: the packages it touched, the packages that import
   # them, and a budget. A test over a second is waiting on something it

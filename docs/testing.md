@@ -77,7 +77,16 @@ Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, row
 atkins test:view     # TASK_UI_VIEW_TESTS=1, with GOMAXPROCS and GOMEMLIMIT capped
 ```
 
-A failed assertion over a page prints the page, through `fmt.Printf` and without stopping the test, so one broken template writes hundreds of megabytes to stdout and whatever is reading it holds them. [Issue 29](https://github.com/titpetric/task-ui/issues/29) carries the measurements and the order the gate comes out in.
+A failure over a page says where to look, not what the page holds: `assert.Brief` returns the haystack's length and the text around the longest prefix of the needle it holds.
+
+Run the suite through atkins, not as a bare `go test ./...`. The `env.vars` block at the top of `atkins.yml` holds `GOFLAGS=-p=1 GOMAXPROCS=2 GOMEMLIMIT=2GiB` for every job, which builds one package at a time; uncapped, `go test ./...` links a hundred of them four at a time, and that is the run the kernel killed.
+
+| Measured                                  | Value                  |
+|-------------------------------------------|------------------------|
+| one failing `Contains` over the dashboard | 26,297 bytes           |
+| the same failure through `assert.Brief`   | 473 bytes              |
+| one `frontend/view` test binary, peak     | 144 MB                 |
+| free memory when the kernel killed it     | 787 MB, swap full      |
 
 Three tools look at a template. `atkins precompile` compiles every `.tpl` and reports a syntax error, `phpscript lint ./...` reports a name the interpreter cannot resolve, and a six-line script renders one template over data you wrote. The `templates` skill has the script and the one trap in it.
 
