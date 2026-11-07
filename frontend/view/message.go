@@ -4,7 +4,9 @@ import (
 	"html/template"
 	"net/url"
 	"regexp"
+	"strings"
 
+	"github.com/titpetric/task-ui/form"
 	"github.com/titpetric/task-ui/markdown"
 )
 
@@ -18,9 +20,18 @@ func Message(text string) template.HTML {
 	return message(text, func(string) bool { return false })
 }
 
-// Message renders the text of a note, linking a mention to a profile the signed in user may open.
+// Message renders the text of a note, linking a mention to a profile the
+// signed in user may open and drawing a form fence of it as its form.
 func (p *Page) Message(text string) template.HTML {
-	return message(text, p.CanProfile)
+	var out strings.Builder
+	at := 0
+	for _, block := range form.Blocks(text) {
+		out.WriteString(string(message(text[at:block.Start], p.CanProfile)))
+		out.WriteString(string(FormHTML(p.FormOf(block))))
+		at = block.End
+	}
+	out.WriteString(string(message(text[at:], p.CanProfile)))
+	return template.HTML(out.String())
 }
 
 // message renders a note's text as markdown: lists, **bold**, headings,

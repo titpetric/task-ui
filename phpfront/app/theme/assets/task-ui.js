@@ -4029,7 +4029,9 @@
       return;
     }
     var body = event.target.closest(".note-body[data-edit]");
-    if (!body || event.target.closest("a, button, summary")) return;
+    // A form the body draws is the body's own control, not its text: a
+    // click in one picks a value, it does not open the editor over it.
+    if (!body || event.target.closest("a, button, summary, form[data-run-form]")) return;
     if (String(window.getSelection && window.getSelection()) !== "") return;
     editNote(body);
   });
@@ -4053,6 +4055,178 @@
         refreshNotes();
       });
   });
+
+  // ------------------------------------------------------- forms in a note
+
+  // A ```form fence of a note's body draws a form whose one button starts
+  // a run. Each field names its key, its component and its when, so the
+  // next choice reveals what it names without a round trip. The run goes
+  // to /api/runs for a form that names a job and to /api/prompts for one
+  // that names a prompt.
+
+  // runFormFields is the fields of a form in document order, the hidden
+  // inputs among them.
+  function runFormFields(form) {
+    return Array.prototype.slice.call(form.querySelectorAll("[data-key]"));
+  }
+
+  // runFormValue is what one field holds: a box as the word form.Bind
+  // writes, a multi as its checked values joined with ", ", anything else
+  // as its control's value.
+  function runFormValue(field) {
+    if (field.dataset.component === "hidden") return field.value;
+    var boxes = Array.prototype.slice.call(field.querySelectorAll("input[type=checkbox]"));
+    if (field.dataset.component === "bool") return boxes.length && boxes[0].checked ? "true" : "false";
+    if (field.dataset.component === "multi") {
+      return boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; }).join(", ");
+    }
+    var control = field.querySelector("input, select, textarea");
+    return control ? control.value : "";
+  }
+
+  // runFormShow draws the fields the values show, which is
+  // (*form.Form).Visible: a field with a when shows where the field it
+  // names is shown and holds that value, and one under a hidden field
+  // stays hidden.
+  function runFormShow(form) {
+    var shown = {}, held = {};
+    runFormFields(form).forEach(function (field) {
+      var when = field.dataset.when || "", at = when.indexOf("=");
+      var key = at < 0 ? when : when.slice(0, at), value = at < 0 ? "" : when.slice(at + 1);
+      if (when && (!shown[key] || held[key] !== value)) {
+        field.hidden = true;
+        return;
+      }
+      field.hidden = false;
+      shown[field.dataset.key] = true;
+      held[field.dataset.key] = runFormValue(field).trim();
+    });
+  }
+
+  // runFormValues is the value of every field the form shows, by its key.
+  function runFormValues(form) {
+    var out = {};
+    runFormFields(form).forEach(function (field) {
+      if (!field.hidden) out[field.dataset.key] = runFormValue(field).trim();
+    });
+    return out;
+  }
+
+  // runFormMissing names the first shown field that is required and empty,
+  // "" when every one of them holds something. data-required is the field's
+  // own, because the browser validates neither a box nor a hidden input.
+  function runFormMissing(form) {
+    var empty = "";
+    runFormFields(form).some(function (field) {
+      if (field.hidden || !field.hasAttribute("data-required") || runFormValue(field).trim() !== "") return false;
+      empty = (field.dataset.key || "") + " needs a value";
+      var control = field.querySelector("input, select, textarea");
+      if (control) control.focus();
+      return true;
+    });
+    return empty;
+  }
+
+  // runFormPrompt fills a prompt's {{key}} placeholders from the values,
+  // "" for a field with none, as (*form.Form).Render fills them.
+  function runFormPrompt(text, values) {
+    return text.replace(/\{\{([^{}]*)\}\}/g, function (_, name) {
+      var value = values[name.trim()];
+      return value === undefined ? "" : value;
+    });
+  }
+
+  // runFormSays writes what the form is doing beside its button.
+  function runFormSays(form, text) {
+    var line = form.querySelector(".form-state");
+    if (line) line.textContent = text;
+  }
+
+  // runFormClose replaces the form with the link to what it started.
+  function runFormClose(form, href, label) {
+    var done = document.createElement("p");
+    done.className = "faint form-started";
+    done.innerHTML = 'Started <a href="' + escapeHTML(href) + '">' + escapeHTML(label) + "</a>";
+    form.replaceWith(done);
+    return done;
+  }
+
+  // runFormRun starts the job the form names and leaves the link to the run.
+  function runFormRun(form, button) {
+    var body = { folder: form.dataset.folder || "", dir: form.dataset.dir || "", job: form.dataset.job, cols: 120, rows: 30 };
+    return api("POST", "/api/runs", body).then(function (res) {
+      button.disabled = false;
+      if (res.status >= 300) {
+        runFormSays(form, errorText(res));
+        return;
+      }
+      runFormClose(form, mount() + "/runs/" + encodeURIComponent(res.data.id), "run " + res.data.id.slice(0, 8));
+    });
+  }
+
+  // runFormAsk puts the form's prompt to Claude and leaves the link to the
+  // thread it opened; the run starts behind the note, so the link becomes
+  // the run's once the thread names one.
+  function runFormAsk(form, button, values) {
+    var place = { folder: form.dataset.folder || "", dir: form.dataset.dir || "" };
+    var body = { folder: place.folder, dir: place.dir, prompt: runFormPrompt(form.dataset.prompt || "", values) };
+    return api("POST", "/api/prompts", body).then(function (res) {
+      button.disabled = false;
+      if (res.status >= 300) {
+        runFormSays(form, errorText(res));
+        return;
+      }
+      var id = res.data.id;
+      var done = runFormClose(form, "#note-" + encodeURIComponent(id), "the thread");
+      runFormFollow(place, id, done);
+      refreshNotes();
+    });
+  }
+
+  // runFormFollow waits for the run the thread starts and points the link
+  // at it; a browser with no event stream keeps the thread's link.
+  function runFormFollow(place, id, done) {
+    if (!window.EventSource) return;
+    var stream = new EventSource("/api/sse/notes");
+    var url = "/api/prompts?limit=20&folder=" + encodeURIComponent(place.folder) + (place.dir ? "&dir=" + encodeURIComponent(place.dir) : "");
+    stream.addEventListener("note", function (event) {
+      var changed = {};
+      try { changed = JSON.parse(event.data); } catch (e) { return; }
+      if (changed.id !== id) return;
+      api("GET", url).then(function (res) {
+        var thread = ((res.data && res.data.notes) || []).filter(function (note) { return note.id === id; })[0];
+        if (!thread || !thread.run_id) return;
+        stream.close();
+        done.innerHTML = 'Started <a href="' + escapeHTML(mount() + "/runs/" + encodeURIComponent(thread.run_id)) + '">run ' + escapeHTML(thread.run_id.slice(0, 8)) + "</a>";
+      });
+    });
+  }
+
+  document.addEventListener("change", function (event) {
+    var form = event.target.closest("form[data-run-form]");
+    if (form) runFormShow(form);
+  });
+  document.addEventListener("input", function (event) {
+    var form = event.target.closest("form[data-run-form]");
+    if (form) runFormShow(form);
+  });
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-run-form]");
+    if (!form) return;
+    event.preventDefault();
+    var missing = runFormMissing(form);
+    if (missing) {
+      runFormSays(form, missing);
+      return;
+    }
+    var button = form.querySelector("button[type=submit]");
+    var values = runFormValues(form);
+    button.disabled = true;
+    runFormSays(form, "starting");
+    if (form.dataset.job) runFormRun(form, button);
+    else runFormAsk(form, button, values);
+  });
+
   // Ctrl+Enter and Esc are read before the editor sees them: Enter in a
   // drawn surface writes a line, and Esc there releases the Tab key.
   document.addEventListener("keydown", function (event) {

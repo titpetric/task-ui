@@ -15,13 +15,17 @@ vars:
   paths: ./code/... ./modules/... ./stubs/... ./tools/...
 
 jobs:
+  # The precompile runs before the tests, because a compiled template is an
+  # input to them: tests/form.phpt renders components/form-block.tpl, and the
+  # fixture runtime does not write, so a template edited since the last
+  # precompile would fail the fixture rather than the template.
   default:
-    desc: "Format, lint, test, generate and precompile"
+    desc: "Format, lint, generate, precompile and test"
     cmds:
       - task: fmt
       - task: lint
-      - task: test
       - task: precompile
+      - task: test
       - task: rules
 
   # `phpscript fmt -l` exits zero whether or not it listed a file, so the

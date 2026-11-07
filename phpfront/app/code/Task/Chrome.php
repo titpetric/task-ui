@@ -120,8 +120,29 @@ class Chrome {
 		return $this->people;
 	}
 
-	/** message renders a note's text, linking the mentions the reader may open. */
+	/**
+	 * message renders a note's text, linking the mentions the reader may open
+	 * and drawing a ```form fence of it as the form it declares.
+	 *
+	 * The body comes out as a sequence - markdown, the form, markdown - so the
+	 * renderer stays a markdown renderer and knows nothing of forms. The split
+	 * is Task\Form::blocks(), the Go page's form.Blocks().
+	 */
 	function message($text) {
+		$out = "";
+		$at = 0;
+
+		foreach (Form::blocks($text) as $block) {
+			$out .= $this->markdown(substr($text, $at, $block["start"] - $at));
+			$out .= Form::html($block, $this);
+			$at = $block["end"];
+		}
+
+		return $out . $this->markdown(substr($text, $at));
+	}
+
+	/** markdown renders one stretch of a note's text, the mentions the reader may open linked. */
+	function markdown($text) {
 		return Host::message($text, Route::href("/users/"), $this->who()->linkable());
 	}
 

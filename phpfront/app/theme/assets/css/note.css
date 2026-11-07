@@ -293,6 +293,29 @@ a.mention:hover {
   }
 }
 
+/* .run-form styles the form a ```form fence of a note's body draws. */
+.run-form {
+  cursor: auto;
+  margin: 0.6rem 0;
+
+  & .form-title {
+    margin: 0 0 0.6rem;
+    font-size: var(--fs-md);
+    font-weight: 600;
+  }
+
+  & .form-state {
+    margin-inline-end: auto;
+    font-size: var(--fs-xs);
+  }
+}
+
+/* .form-started is what the form leaves behind: the link to the run. */
+.form-started {
+  margin: 0.6rem 0;
+  font-size: var(--fs-sm);
+}
+
 /* .note-edit styles a note while its author is rewriting it. */
 .note-edit {
   margin: 0.4rem 0 0;
