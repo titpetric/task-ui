@@ -16,6 +16,7 @@
 		{{- end }}
 		{{- with .Report }}<a class="btn" href="{{ .Href }}">Report</a>{{ end }}
 		{{- if and (not .Report) ($.SummarizesRun .Job $run) }}<button type="button" class="btn" data-summarize-run="{{ $run.ID }}" data-question="{{ summaryQuestion }}" title="Claude summarizes the run's output, in this window">Summarize</button>{{ end }}
+		{{- with $.RunReport $run.ID }}{{ if .Pending }}<span class="faint run-denied">summarizing</span>{{ end }}{{ end }}
 		{{- if and $run.CastPath (ended $run.State) (not $run.Expired) }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
 	</div>
 </div>

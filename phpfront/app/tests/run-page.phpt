@@ -23,8 +23,8 @@ function at($time) {
 
 // A run that ended with a recording and arguments; one in progress in a
 // directory of its folder; one that waits for a slot; one that broke out of
-// hours, whose recording the sweep removed; a run of Claude's; and a job the
-// folder declares none of.
+// hours, whose recording the sweep removed; a run of Claude's; a job the
+// folder declares none of; and one whose summary Claude is still writing.
 $rows = array(
 	array("id" => "fx-rp-1", "job" => "build", "state" => "ok", "cast" => "casts/fx-rp-1.cast", "args" => '["--verbose","./pkg"]', "from" => at("10:01:00.000"), "to" => at("10:01:02.500")),
 	array("id" => "fx-rp-2", "job" => "deploy", "state" => "running", "dir" => "docker", "from" => Task\Clock::stamp()),
@@ -32,6 +32,7 @@ $rows = array(
 	array("id" => "fx-rp-4", "job" => "build", "state" => "failed", "code" => 2, "cast" => "casts/fx-rp-4.cast", "reason" => "the window of the job is closed", "forced" => 1, "scheduled" => 1, "from" => at("10:04:00.000"), "to" => at("10:04:01.000")),
 	array("id" => "fx-rp-5", "job" => "@claude-prompt", "state" => "ok", "from" => at("10:05:00.000"), "to" => at("10:05:30.000")),
 	array("id" => "fx-rp-6", "job" => "ghost", "state" => "ok", "from" => at("10:06:00.000"), "to" => at("10:06:01.000")),
+	array("id" => "fx-rp-7", "job" => "build", "state" => "ok", "from" => at("10:09:00.000"), "to" => at("10:09:01.000")),
 	array("id" => "fx-rp-b1", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:07:00.000"), "to" => at("10:07:01.000")),
 	array("id" => "fx-rp-b2", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:08:00.000"), "to" => at("10:08:01.000")),
 );
@@ -123,6 +124,23 @@ $db->replace("note", array(
 	"updated_at" => at("11:01:00.000"),
 ));
 
+// A summary thread Claude has not answered yet is a pending report: the head
+// says so where Summarize stood, and offers no button to ask it again.
+$db->replace("note", array(
+	"id" => "fx-rp-n3",
+	"channel" => "notes",
+	"parent_id" => "",
+	"user_name" => "fx-rp-ann",
+	"body" => Task\Report::SUMMARY,
+	"mentions" => "",
+	"state" => "working",
+	"run_id" => "",
+	"about_run_id" => "fx-rp-7",
+	"workspace_id" => "fx-rp-ws",
+	"created_at" => at("11:03:00.000"),
+	"updated_at" => at("11:03:00.000"),
+));
+
 // The catalogue the reader sees, the runner's own sessions, the recording the
 // sweep removed and the token a prompt needs.
 Task\Host::$whoami = "fx-rp-ann";
@@ -191,6 +209,19 @@ function attrs($data, $label) {
 	return "";
 }
 
+// faints are the sentences a head draws where a button would be, in order.
+function faints($data) {
+	$out = array();
+
+	foreach ($data["items"] as $item) {
+		if ($item["faint"] !== "") {
+			$out[] = $item["faint"];
+		}
+	}
+
+	return implode(",", $out);
+}
+
 // cell is one row of the details table, as the kv component reads it.
 function cell($rows, $label) {
 	foreach ($rows as $row) {
@@ -240,7 +271,7 @@ $reports = new Task\Report;
 $about = $runs->get("fx-rp-1");
 $report = $reports->of($about);
 $session = Task\Host::session("fx-rp-1");
-$ended = mod_run::buttons($one, $report, false, true, $session, false);
+$ended = mod_run::buttons($one, $report, false, true, $session, false, false);
 
 echo labels($ended->data()), " ", var_export($ended->data()["small"], true), "\n";
 echo attrs($ended->data(), "View"), "\n";
@@ -254,19 +285,26 @@ echo attrs($ended->data(), "Run again"), "\n";
 
 // Summarize asks Claude the question a summary asks, over the window the page
 // is read in. A run that was given no arguments carries none.
-$asks = mod_run::buttons($runs->get("fx-rp-6"), null, false, true, array(), true);
+$asks = mod_run::buttons($runs->get("fx-rp-6"), null, false, true, array(), true, false);
 
 echo labels($asks->data()), "\n";
 echo attrs($asks->data(), "Run again"), "\n";
 echo attrs($asks->data(), "Summarize"), "\n";
 
+// A summary Claude is still writing stands where Summarize would, as a faint
+// sentence and no button: the row keeps its order and nothing asks twice.
+$waits = mod_run::buttons($runs->get("fx-rp-7"), null, false, true, array(), false, true);
+
+echo labels($waits->data()), " [", faints($waits->data()), "]\n";
+echo "[", attrs($waits->data(), "Summarize"), "]\n";
+
 // A run the runner holds may be stopped and killed by a reader who may run its
 // job, and offers no replay until it ends. It runs again once it ended.
-echo labels(mod_run::buttons($live, null, false, true, Task\Host::session("fx-rp-2"), false)->data()), "\n";
-echo labels(mod_run::buttons($live, null, false, false, Task\Host::session("fx-rp-2"), false)->data()), "\n";
+echo labels(mod_run::buttons($live, null, false, true, Task\Host::session("fx-rp-2"), false, false)->data()), "\n";
+echo labels(mod_run::buttons($live, null, false, false, Task\Host::session("fx-rp-2"), false, false)->data()), "\n";
 
 // A recording the sweep removed is no replay.
-echo labels(mod_run::buttons($runs->get("fx-rp-4"), null, true, true, Task\Host::session("fx-rp-4"), false)->data()), "\n";
+echo labels(mod_run::buttons($runs->get("fx-rp-4"), null, true, true, Task\Host::session("fx-rp-4"), false, false)->data()), "\n";
 
 // The terminal is the live screen of a run the runner holds, and nothing for
 // one that ended.
@@ -411,6 +449,14 @@ echo var_export($mod->summarizes($chrome, $one, $report, true), true), " ", var_
 echo var_export($mod->summarizes($chrome, $live, null, false), true), " ", var_export($mod->summarizes($chrome, $claude, null, true), true), "\n";
 echo var_export($mod->summarizes($chrome, $runs->get("fx-rp-6"), null, true), true), "\n";
 
+// A summary under way is no report: the gate is the summaries themselves.
+// Summarize goes, the faint sentence stands in its place, and a reload asks
+// nothing a second time. The reports are read under prompt/view alone.
+$waiting = $runs->get("fx-rp-7");
+
+echo var_export($mod->pending($chrome, $waiting), true), " ", var_export($mod->summarizes($chrome, $waiting, null, true), true), "\n";
+echo var_export($mod->pending($chrome, $one), true), " ", var_export($mod->pending($plain, $waiting), true), "\n";
+
 // The sentence under the heading, which is written here and not in the
 // template: who started the run and how, and then what the reader may do about
 // it where it stands. A run with no start reads as no time at all.
@@ -456,6 +502,13 @@ echo $sweep["head"]["badge"], " ", $sweep["head"]["tone"], "\n";
 echo labels($sweep["head"]["buttons"]), "\n";
 echo var_export($sweep["output"]["expired"], true), " ", var_export($sweep["output"]["recording"], true), "\n";
 echo $sweep["output"]["text"], "\n";
+
+// The scope of a run whose summary Claude is still writing, the page a reload
+// draws: the head says summarizing where Summarize stood, and offers no button
+// to ask the same question again.
+$writing = $mod->scope($chrome, $runs->get("fx-rp-7"), $seen);
+
+echo labels($writing["head"]["buttons"]), " [", faints($writing["head"]["buttons"]), "]\n";
 ---
 runs Runs list
 true
@@ -470,6 +523,8 @@ data-run data-folder="fx-rp" data-dir="" data-job="build" data-title="fx-rp / bu
 View,Run again,Summarize
 data-run data-folder="fx-rp" data-dir="" data-job="ghost" data-title="fx-rp / ghost" [] false false
 data-summarize-run="fx-rp-6" data-question="Summarize this run." title="Claude summarizes the run&#039;s output, in this window" [] false false
+View,Run again, [summarizing]
+[]
 Attach,Stop,Kill
 Attach
 View,Run again
@@ -509,6 +564,8 @@ false false
 false true
 false false
 false
+true false
+false false
 Started by fx-rp-ann -. It waits, queued, for the run of its job before it to end or for a free slot: attach to follow it once it starts, or stop it to take it out of the queue.
 Started by fx-rp-ann -. It waits, queued, for the run of its job before it to end or for a free slot: attach to follow it once it starts.
 Started by fx-rp-ann just now. It's still running: attach to follow it, or stop it.
@@ -531,3 +588,4 @@ failed 2 bad
 View,Run again,Summarize
 true false
 The recording of this run expired under the Data retention settings: its output is gone. The run's details stay.
+View,Run again, [summarizing]

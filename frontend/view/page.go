@@ -248,8 +248,8 @@ type Page struct {
 	// JobSummaries are the summaries of the last runs of the rows
 	// JobGroups lists, by the job's key.
 	JobSummaries map[string]*SummaryLink
-	// RunReports are the summaries of the runs a job page lists, by run
-	// ID, those under way as well.
+	// RunReports are the summaries of the runs a page holds, by run ID,
+	// those under way as well.
 	RunReports map[string]*note.Report
 	// Report is the report page's report, and ReportOf the run Claude
 	// summarized or answered about, else Run.

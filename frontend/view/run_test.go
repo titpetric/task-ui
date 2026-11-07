@@ -105,7 +105,9 @@ func TestRender_runAgain(t *testing.T) {
 }
 
 // A run that ended has Summarize in its head for a user who may ask,
-// and none once the summary is there to read as a Report.
+// and none once the summary is there to read as a Report. A summary
+// Claude is still writing says so where the button stood: the button
+// would post the question a second time.
 func TestRender_runSummarize(t *testing.T) {
 	t.Parallel()
 	v := shared(t)
@@ -122,10 +124,20 @@ func TestRender_runSummarize(t *testing.T) {
 	html := render(page)
 	assert.Contains(t, html, `data-summarize-run="`+page.Run.ID+`"`)
 	assert.Contains(t, html, `data-question="Summarize this run."`)
+	assert.NotContains(t, html, ">summarizing<", "nothing asked yet")
 
+	page.RunReports = map[string]*note.Report{page.Run.ID: {RunID: page.Run.ID, Pending: true}}
+	html = render(page)
+	assert.NotContains(t, html, "data-summarize-run", "a summary under way")
+	assert.Contains(t, html, `<span class="faint run-denied">summarizing</span>`)
+
+	page.RunReports = map[string]*note.Report{page.Run.ID: {RunID: page.Run.ID, Body: "## Passed"}}
 	page.Report = &note.Report{RunID: page.Run.ID}
-	assert.NotContains(t, render(page), "data-summarize-run", "a summary to read")
+	html = render(page)
+	assert.NotContains(t, html, "data-summarize-run", "a summary to read")
+	assert.NotContains(t, html, ">summarizing<", "a summary to read")
+	assert.Contains(t, html, `<a class="btn" href="/runs/`+page.Run.ID+`/report">Report</a>`)
 
-	page.Report, page.Run.State = nil, model.StateRunning
+	page.RunReports, page.Report, page.Run.State = nil, nil, model.StateRunning
 	assert.NotContains(t, render(page), "data-summarize-run", "still running")
 }

@@ -36,15 +36,24 @@ func (h *Handlers) job(w http.ResponseWriter, r *http.Request, f *folder.Folder,
 	h.render(w, http.StatusOK, "job", p)
 }
 
-// runReports returns the summaries of the runs a page lists, by run ID,
+// runReports returns the summaries of the runs a page holds, by run ID,
 // for a user with prompt/view.
 func (h *Handlers) runReports(r *http.Request, p *view.Page) map[string]*note.Report {
 	if h.opts.Board == nil || !p.Can("prompt/view") {
 		return nil
 	}
-	ids := make([]string, 0, len(p.Runs))
+	return h.opts.Board.Summaries(r.Context(), runIDs(p))
+}
+
+// runIDs returns the IDs of the runs a page holds: the rows it lists,
+// and the single run of a run's own page.
+func runIDs(p *view.Page) []string {
+	ids := make([]string, 0, len(p.Runs)+1)
 	for _, run := range p.Runs {
 		ids = append(ids, run.ID)
 	}
-	return h.opts.Board.Summaries(r.Context(), ids)
+	if p.Run != nil {
+		ids = append(ids, p.Run.ID)
+	}
+	return ids
 }

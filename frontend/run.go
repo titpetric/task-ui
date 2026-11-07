@@ -105,6 +105,7 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	p.Artifacts = artifacts
 	p.Prompt = h.runPrompt(r, p, &run)
 	p.Summaries = h.summaries(r, p)
+	p.RunReports = h.runReports(r, p)
 	if h.opts.Board != nil && p.Can("prompt/view") {
 		p.Report = h.opts.Board.Report(r.Context(), row)
 	}

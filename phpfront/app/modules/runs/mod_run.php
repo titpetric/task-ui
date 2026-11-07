@@ -21,6 +21,9 @@ class mod_run implements Module {
 	/** ARTIFACT_API is where a file of a run is read, at the root. */
 	const ARTIFACT_API = "/api/artifacts/";
 
+	/** SUMMARIZING stands where Summarize stood, while Claude writes the summary. */
+	const SUMMARIZING = "summarizing";
+
 	function name() {
 		return "runs";
 	}
@@ -115,7 +118,8 @@ class mod_run implements Module {
 		$ended = Task\Run::ended($state);
 		$can = $this->can($chrome, $run);
 		$summarizes = $this->summarizes($chrome, $run, $report, $ended);
-		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes);
+		$pending = $this->pending($chrome, $run);
+		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes, $pending);
 		$code = $ended && $state !== Task\Run::OK ? (string)$run->getExitCode() : "";
 		$head = new Task\Head($name);
 
@@ -145,8 +149,11 @@ class mod_run implements Module {
 	 * buttons are the actions of the page head: attach to the run, run its job
 	 * again once it ended, stop and kill it while the runner holds it, open its
 	 * report or ask Claude for one, and replay the recording of one that ended.
+	 *
+	 * A summary Claude is still writing says so where Summarize stood, as a
+	 * faint item of the row: the button would post the question a second time.
 	 */
-	static function buttons($run, $report, $expired, $can, $session, $summarizes) {
+	static function buttons($run, $report, $expired, $can, $session, $summarizes, $pending) {
 		$id = $run->getId();
 		$ended = Task\Run::ended($run->getState());
 		$stops = Task\Row::flag($session, "live") && !$ended && $can;
@@ -164,6 +171,11 @@ class mod_run implements Module {
 			"data-question" => Task\Report::SUMMARY,
 			"title" => Task\Job::SUMMARIZE,
 		));
+
+		if ($pending) {
+			$buttons->faint(self::SUMMARIZING);
+		}
+
 		$buttons->when($run->getCastPath() !== "" && $ended && !$expired, "", "|>", array(
 			"data-replay" => $id,
 			"data-replay-title" => Task\Run::name($run),
@@ -201,13 +213,17 @@ class mod_run implements Module {
 
 	/**
 	 * summarizes reports whether the head holds Summarize: a run that ended, of
-	 * a job that summarizes at all, with no summary read yet.
+	 * a job that summarizes at all, with no summary read yet nor one under way.
 	 *
 	 * The job comes off the catalogue, as the Go page's p.Job does: a run of
 	 * Claude's own and a run of a job that is gone each summarize nothing.
 	 */
 	function summarizes($chrome, $run, $report, $ended) {
 		if (!$ended || $report !== null || Task\Run::isClaude($run)) {
+			return false;
+		}
+
+		if ($this->pending($chrome, $run)) {
 			return false;
 		}
 
@@ -220,6 +236,25 @@ class mod_run implements Module {
 		$control = new Task\Control($chrome);
 
 		return $control->summarizes($job);
+	}
+
+	/**
+	 * pending reports whether Claude is still writing the run's summary.
+	 *
+	 * A pending summary is no report: Task\Report::of answers null for it. The
+	 * question goes to the summaries themselves, read under prompt/view alone
+	 * as the Go page reads them.
+	 */
+	function pending($chrome, $run) {
+		if (!$chrome->allowed("prompt/view")) {
+			return false;
+		}
+
+		$id = $run->getId();
+		$reports = new Task\Report;
+		$found = $reports->summaries(array($id));
+
+		return isset($found[$id]) && $found[$id]["pending"];
 	}
 
 	/** terminal is the live screen of a run the runner still holds, or null. */
