@@ -1086,6 +1086,7 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 				</defs>
 			</svg>
 			<canvas class="voice-avatar" id="voice-avatar" width="256" height="256" aria-hidden="true"></canvas>
+			<span class="voice-rec" aria-hidden="true"><i></i>Recording</span>
 		</button>
 		<p class="voice-said" id="voice-said" role="status" aria-live="polite"></p>
 		<p class="voice-where" id="voice-where"></p>

@@ -197,6 +197,50 @@ body:has(.voice[open]) .voice-orb {
   filter: drop-shadow(0 0 1rem color-mix(in srgb, var(--voice-violet) 55%, transparent));
 }
 
+/* .voice-rec is the sign in the corner of the stage while the microphone is
+   open. The dot holds for half a second in every two and a half, which is
+   what a camera does: a light that is on reads as a steady picture. */
+.voice-rec {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.65rem;
+  border: 2px solid var(--bad);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.voice[data-state="recording"] .voice-rec {
+  display: flex;
+}
+
+.voice-rec i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--bad);
+  animation: voice-rec-blink 2.5s step-end infinite;
+}
+
+@keyframes voice-rec-blink {
+  0% {
+    opacity: 1;
+  }
+
+  20% {
+    opacity: 0;
+  }
+}
+
 /* .voice-field holds the one filter the well reads, and draws nothing. */
 .voice-field {
   position: absolute;
@@ -331,5 +375,9 @@ body:has(.voice[open]) .voice-orb {
     animation: none;
     opacity: 0.7;
     transform: none;
+  }
+
+  .voice-rec i {
+    animation: none;
   }
 }

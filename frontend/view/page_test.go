@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -358,4 +359,19 @@ func TestPage_Dirty(t *testing.T) {
 	assert.Equal(t, 3, p.Dirty("malta/apps"))
 	assert.Equal(t, 0, p.Dirty("malta/deploy"))
 	assert.Equal(t, 0, (&view.Page{}).Dirty("malta/apps"))
+}
+
+// Every page carries the dictation window, and the stage carries the
+// sign that says the microphone is open. The window's data-state shows
+// it, so the markup is the same on every page and for every reader, and
+// it draws after the canvas to paint over the orbs.
+func TestPage_VoiceRecording(t *testing.T) {
+	t.Parallel()
+	body := render(t, "home", admin(t))
+	at := strings.Index(body, `<button type="button" class="voice-stage"`)
+	assert.True(t, at >= 0, "the stage")
+	stage := body[at:]
+	stage = stage[:strings.Index(stage, "</button>")]
+	assert.Contains(t, stage, `<span class="voice-rec" aria-hidden="true"><i></i>Recording</span>`)
+	assert.True(t, strings.Index(stage, "voice-avatar") < strings.Index(stage, "voice-rec"))
 }
