@@ -309,6 +309,26 @@ func TestMigrate_stepKinds(t *testing.T) {
 	assert.Equal(t, 0, left)
 }
 
+// TestMigrate_runParent holds the parent columns and their index on a
+// freshly migrated database.
+//
+// run_target_queued rebuilds the table from a column list, so a file
+// named to sort before it adds a column the rebuild drops: the name
+// run_with_parent is what keeps these two.
+func TestMigrate_runParent(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	var columns []string
+	assert.NoError(t, db.SelectContext(ctx, &columns, "SELECT name FROM pragma_table_info('run') WHERE name LIKE 'parent%' ORDER BY name"))
+	assert.Equal(t, []string{"parent_id", "parent_kind"}, columns)
+
+	// The order carries the listing's, so neither query sorts.
+	var index []string
+	assert.NoError(t, db.SelectContext(ctx, &index, "SELECT name FROM pragma_index_info('idx_run_parent')"))
+	assert.Equal(t, []string{"parent_id", "started_at", "id"}, index)
+}
+
 // A database that cannot be migrated and a closed pool each return the
 // error the driver gave them.
 //

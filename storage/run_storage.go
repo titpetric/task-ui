@@ -41,10 +41,24 @@ type RunFilter struct {
 	// BatchID keeps the runs started together, the host runs of one Run
 	// on the inventory.
 	BatchID string
-	Before  string
-	After   string
-	Limit   int
+	// ParentID keeps the runs one run or workflow run dispatched, by the
+	// ID of that parent.
+	ParentID string
+	// Roots keeps the runs nothing dispatched, the ones a sidebar lists
+	// on their own.
+	Roots  bool
+	Before string
+	After  string
+	Limit  int
 }
+
+// The tables a run's parent_kind names, for the row parent_id points at.
+const (
+	// ParentRun is a run that dispatched this one.
+	ParentRun = "run"
+	// ParentWorkflowRun is a workflow run whose step dispatched this one.
+	ParentWorkflowRun = "workflow_run"
+)
 
 // Create inserts a run as running, started now.
 func (s *RunStorage) Create(ctx context.Context, run *model.Run) error {
@@ -67,7 +81,18 @@ func (s *RunStorage) Create(ctx context.Context, run *model.Run) error {
 	run.StartedAt = utc(run.StartedAt)
 	run.CreatedAt = now
 	run.UpdatedAt = now
+	runParent(run)
 	return client(s.db).Insert(ctx, model.RunTable, run)
+}
+
+// runParent pairs the run's parent columns: a parent with no kind is a run, a kind with no parent is none.
+func runParent(run *model.Run) {
+	switch {
+	case run.ParentID == "":
+		run.ParentKind = ""
+	case run.ParentKind == "":
+		run.ParentKind = ParentRun
+	}
 }
 
 // Get returns a run by ID.
@@ -126,6 +151,10 @@ func runQuery(filter RunFilter) (string, []any) {
 	add("user_id", filter.UserID)
 	add("user_name", filter.UserName)
 	add("batch_id", filter.BatchID)
+	add("parent_id", filter.ParentID)
+	if filter.Roots {
+		where = append(where, "parent_id = ''")
+	}
 	if len(filter.Folders) > 0 {
 		where = append(where, "folder IN (?"+strings.Repeat(", ?", len(filter.Folders)-1)+")")
 		for _, folder := range filter.Folders {
@@ -182,6 +211,14 @@ func (s *RunStorage) Latest(ctx context.Context, folders []string) ([]model.Run,
 			FROM run WHERE `+where+`
 		) WHERE latest = 1
 	) ORDER BY folder, dir, job`, args...)
+}
+
+// Children returns the runs one run or workflow run dispatched, oldest first.
+func (s *RunStorage) Children(ctx context.Context, parentID string) ([]model.Run, error) {
+	if parentID == "" {
+		return nil, errors.New("the children of a run need its ID")
+	}
+	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE parent_id = ? ORDER BY started_at ASC, id ASC", parentID)
 }
 
 // Update writes a run back, by ID.

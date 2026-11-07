@@ -401,6 +401,8 @@ func TestRunStorage_Closed(t *testing.T) {
 	assert.ErrorContains(t, err, errClosed)
 	_, err = runs.Busy(ctx)
 	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Children(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
 	_, err = runs.KillActive(ctx)
 	assert.ErrorContains(t, err, errClosed)
 	_, err = runs.FailQueued(ctx, "lost")
@@ -442,6 +444,86 @@ func TestRunStorage_Filters(t *testing.T) {
 
 	_, err = runs.Last(ctx, storage.RunFilter{Folder: "nowhere"})
 	assert.ErrorIs(t, err, storage.ErrNotFound)
+}
+
+// A run a workflow run or another run dispatched keeps both parent
+// columns, and a parent with no kind named is a run.
+func TestRunStorage_Parent(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+
+	flow := &model.Run{Folder: "infra", Job: "deploy", ParentID: "wr1", ParentKind: storage.ParentWorkflowRun}
+	assert.NoError(t, runs.Create(ctx, flow))
+	got, err := runs.Get(ctx, flow.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "wr1", got.ParentID)
+	assert.Equal(t, "workflow_run", got.ParentKind)
+
+	bare := &model.Run{Folder: "infra", Job: "plan", ParentID: "r1"}
+	assert.NoError(t, runs.Create(ctx, bare))
+	got, err = runs.Get(ctx, bare.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, storage.ParentRun, got.ParentKind)
+
+	// A kind with nothing to name is no parent at all.
+	stray := &model.Run{Folder: "infra", Job: "plan", ParentKind: storage.ParentRun}
+	assert.NoError(t, runs.Create(ctx, stray))
+	got, err = runs.Get(ctx, stray.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", got.ParentKind)
+}
+
+// Roots keeps the runs nothing dispatched and leaves out a child.
+func TestRunStorage_Roots(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	root := &model.Run{Folder: "infra", Job: "deploy"}
+	assert.NoError(t, runs.Create(ctx, root))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "infra", Job: "plan", ParentID: root.ID}))
+
+	roots, err := runs.List(ctx, storage.RunFilter{Roots: true})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{root.ID}, ids(roots))
+
+	all, err := runs.List(ctx, storage.RunFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, all, 2, "an unfiltered listing keeps a child")
+}
+
+// Children returns the runs of one parent, oldest first, by the filter
+// and by the method.
+func TestRunStorage_Children(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	root := &model.Run{Folder: "infra", Job: "deploy"}
+	assert.NoError(t, runs.Create(ctx, root))
+	base := time.Now().Add(-time.Hour)
+	var made []string // oldest first
+	for i, job := range []string{"plan", "build", "ship"} {
+		started := base.Add(time.Duration(i) * time.Minute)
+		child := &model.Run{ID: model.NewIDAt(started), Folder: "infra", Job: job, StartedAt: &started, ParentID: root.ID}
+		assert.NoError(t, runs.Create(ctx, child))
+		made = append(made, child.ID)
+	}
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "web", Job: "build", ParentID: "elsewhere"}))
+
+	children, err := runs.Children(ctx, root.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, made, ids(children))
+
+	byFilter, err := runs.List(ctx, storage.RunFilter{ParentID: root.ID})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[2], made[1], made[0]}, ids(byFilter), "a listing is newest first")
+
+	none, err := runs.Children(ctx, root.ID+"x")
+	assert.NoError(t, err)
+	assert.Len(t, none, 0)
+
+	_, err = runs.Children(ctx, "")
+	assert.ErrorContains(t, err, "need its ID")
 }
 
 // A run finishes in a final state, and nothing else is a finish.
