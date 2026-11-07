@@ -58,7 +58,7 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 		return true, nil
 	})
 
-	rt.RegisterFunc("Task::dispatch",func(ctx context.Context, comment, action, folder string) (string, error) {
+	rt.RegisterFunc("Task::dispatch", func(ctx context.Context, comment, action, folder string) (string, error) {
 		m, ok := ModuleFrom(ctx)
 		if !ok {
 			return "", ErrNoModule
