@@ -18,20 +18,25 @@ import (
 
 // NewCleaner returns the cleaner over db; serverHome holds the instance's own tool history.
 func NewCleaner(db storage.DB, cfg *Config, serverHome string) *retention.Cleaner {
+	return newCleaner(NewAppStorage(db), cfg, newArtifactStore(cfg), serverHome)
+}
+
+// newCleaner returns the cleaner over s, pruning the artifact history in store.
+func newCleaner(s *AppStorage, cfg *Config, store *artifactstore.Store, serverHome string) *retention.Cleaner {
 	return &retention.Cleaner{
-		DB: db, DBPath: cfg.DB,
-		Values:        storage.NewSettingStorage(db),
-		Runs:          storage.NewRunStorage(db),
-		Summaries:     storage.NewRunSummaryStorage(db),
-		Notes:         storage.NewNoteStorage(db),
-		Flows:         storage.NewWorkflowRunStorage(db),
-		Artifacts:     storage.NewArtifactStorage(db),
-		Store:         &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory},
-		SecretReads:   storage.NewSecretReadStorage(db),
-		Tokens:        storage.NewUserAuthTokenStorage(db),
-		Sessions:      storage.NewUserSessionStorage(db),
+		DB: s.DB, DBPath: cfg.DB,
+		Values:        s.Settings,
+		Runs:          s.Runs,
+		Summaries:     s.RunSummaries,
+		Notes:         s.Notes,
+		Flows:         s.WorkflowRuns,
+		Artifacts:     s.Artifacts,
+		Store:         store,
+		SecretReads:   s.SecretReads,
+		Tokens:        s.Tokens,
+		Sessions:      s.Sessions,
 		RecordingsDir: cfg.RecordingsDir(),
-		Tooling:       toolHistory(cfg, storage.NewWorkspaceStorage(db), serverHome),
+		Tooling:       toolHistory(cfg, s.Workspaces, serverHome),
 		Atkins:        atkins(),
 		Self:          os.Getenv("TASK_UI_RUN_ID"),
 		Now:           cfg.Clock(),
@@ -76,16 +81,16 @@ const seededCleanup = "cleanup.seeded"
 // until there is one it waits for the next start. An admin edits or deletes it on the
 // Schedules page, and it stays as they leave it.
 func (a *App) seedCleanup(ctx context.Context) error {
-	settings := storage.NewSettingStorage(a.DB)
+	settings := a.Storage.Settings
 	values, err := settings.Values(ctx)
 	if err != nil || values[seededCleanup] != "" {
 		return err
 	}
 	var admin *model.User
-	if user, err := a.Users.GetByName(ctx, a.Config.AutoLogin); err == nil && user.CanAdmin() {
+	if user, err := a.Storage.Users.GetByName(ctx, a.Config.AutoLogin); err == nil && user.CanAdmin() {
 		admin = user
 	}
-	if users, err := a.Users.List(ctx); err == nil && admin == nil {
+	if users, err := a.Storage.Users.List(ctx); err == nil && admin == nil {
 		for i := range users {
 			if users[i].CanAdmin() {
 				admin = &users[i]
@@ -101,7 +106,7 @@ func (a *App) seedCleanup(ctx context.Context) error {
 		return err
 	}
 	schedule := &model.Schedule{Folder: model.Default, Job: folder.CleanupID, UserID: admin.ID, UserName: admin.Name, Expression: "@daily", Enabled: 1, NextRunAt: &next}
-	if err := storage.NewScheduleStorage(a.DB).Create(ctx, schedule); err != nil {
+	if err := a.Storage.Schedules.Create(ctx, schedule); err != nil {
 		return err
 	}
 	slog.Info("scheduled the data retention cleanup", "job", model.Default+"/"+folder.CleanupID, "expression", "@daily", "user", admin.Name)

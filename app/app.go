@@ -26,18 +26,17 @@ import (
 	"github.com/titpetric/task-ui/workflow"
 )
 
-// App is a running instance: the database, the runner, the scheduler and
-// the handler that serves the API and the pages.
+// App is a running instance: its dependencies, the runner, the scheduler
+// and the handler that serves the API and the pages.
 //
-// What fills the fields is in app_wire.go, which is the whole of the
-// assembly: every storage over the open database, the services over those,
-// and the router that mounts them.
+// Storage holds every storage driver and Services everything built over
+// them, each constructed once in New. What fills the rest is in
+// app_wire.go, which is the whole of the assembly: the instance's own
+// parts and the router that mounts them.
 type App struct {
 	Config    *Config
-	DB        storage.DB
-	Users     *storage.UserStorage
-	Emails    *storage.UserEmailStorage
-	Passwords *storage.UserAuthPasswordStorage
+	Storage   *AppStorage
+	Services  *AppServices
 	Runner    *runner.Manager
 	Scheduler *scheduler.Loop
 	Workflows *workflow.Runner
@@ -51,7 +50,7 @@ type App struct {
 	Modules *phpscript.Manager
 	// Front is the front end being ported, served under FrontBase.
 	Front *phpfront.Front
-	// Telemetry is the tracer and the dashboard at /debug/oida.
+	// Telemetry is the tracer and the dashboard at /debug/oida, Services.Telemetry.
 	Telemetry *Telemetry
 
 	handler http.Handler
@@ -65,16 +64,17 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &App{
-		Config: cfg, DB: db,
-		Users:     storage.NewUserStorage(db),
-		Emails:    storage.NewUserEmailStorage(db),
-		Passwords: storage.NewUserAuthPasswordStorage(db),
-	}
+	a := &App{Config: cfg, Storage: NewAppStorage(db)}
+	// prepare first: it fills the default key folder the services' keystore reads.
 	if err := a.prepare(ctx); err != nil {
 		db.Close()
 		return nil, err
 	}
+	if a.Services, err = NewAppServices(cfg, a.Storage); err != nil {
+		db.Close()
+		return nil, err
+	}
+	a.Telemetry = a.Services.Telemetry
 	if err := a.wire(version); err != nil {
 		db.Close()
 		return nil, err
@@ -121,21 +121,21 @@ func (a *App) prepare(ctx context.Context) error {
 	if err := a.migrateSecrets(ctx); err != nil {
 		return err
 	}
-	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)
+	n, err := a.Storage.Runs.KillActive(ctx)
 	if err != nil {
 		return err
 	}
 	if n > 0 {
 		slog.Warn("runs left running by the previous process marked killed", "count", n)
 	}
-	n, err = storage.NewRunStorage(a.DB).FailQueued(ctx, model.QueuedLost)
+	n, err = a.Storage.Runs.FailQueued(ctx, model.QueuedLost)
 	if err != nil {
 		return err
 	}
 	if n > 0 {
 		slog.Warn("runs left queued by the previous process marked failed", "count", n)
 	}
-	return storage.NewWorkflowRunStorage(a.DB).Interrupt(ctx, "task-ui restarted while it ran")
+	return a.Storage.WorkflowRuns.Interrupt(ctx, "task-ui restarted while it ran")
 }
 
 // seed writes the password file to storage, when there is one. Without
@@ -146,7 +146,7 @@ func (a *App) seed(ctx context.Context) error {
 		return nil
 	}
 	a.UsersFile = NewUsersFile(a.Config.Htpasswd)
-	created, removed, err := a.UsersFile.Sync(ctx, a.Users, a.Passwords)
+	created, removed, err := a.UsersFile.Sync(ctx, a.Storage.Users, a.Storage.Passwords)
 	if errors.Is(err, os.ErrNotExist) {
 		// Not made yet: start anyway, the watcher reads it once it exists,
 		// so `task-ui passwd` works against a running instance.
@@ -168,11 +168,11 @@ func (a *App) autoLogin(ctx context.Context) error {
 	if name == "" {
 		return nil
 	}
-	if _, err := a.Users.GetByName(ctx, name); err == nil {
+	if _, err := a.Storage.Users.GetByName(ctx, name); err == nil {
 		return nil
 	}
 	slog.Warn("auto login names a user that is not there: created as an admin", "user", name)
-	return a.Users.Create(ctx, &model.User{Name: name, Role: model.RoleRunner, Admin: true, Mcp: true})
+	return a.Storage.Users.Create(ctx, &model.User{Name: name, Role: model.RoleRunner, Admin: true, Mcp: true})
 }
 
 // Handler returns what serves the API and the pages.
@@ -211,7 +211,7 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 
 	go a.Scheduler.Run(ctx)
 	if a.UsersFile != nil {
-		go a.UsersFile.Watch(ctx, a.Users, a.Passwords, func(err error) { slog.Error("re-reading the password file", "err", err) })
+		go a.UsersFile.Watch(ctx, a.Storage.Users, a.Storage.Passwords, func(err error) { slog.Error("re-reading the password file", "err", err) })
 	}
 	server := &http.Server{Handler: a.handler, ReadHeaderTimeout: 10 * time.Second}
 	errs := make(chan error, 1)
@@ -238,7 +238,7 @@ func (a *App) shutdown(server *http.Server) error {
 
 // Close releases the database.
 func (a *App) Close() error {
-	return a.DB.Close()
+	return a.Storage.DB.Close()
 }
 
 // ensureWorkspaces adds the default workspace's row to an instance with
@@ -247,7 +247,7 @@ func (a *App) Close() error {
 // before the first page; a default workspace deleted stays gone, and the
 // root gets no home or src back.
 func (a *App) ensureWorkspaces(ctx context.Context) error {
-	workspaces := storage.NewWorkspaceStorage(a.DB)
+	workspaces := a.Storage.Workspaces
 	if err := workspaces.EnsureDefault(ctx); err != nil {
 		return err
 	}

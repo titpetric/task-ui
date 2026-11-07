@@ -12,9 +12,9 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// keys returns the key folder, TASK_UI_SSH_DIR, over the database.
+// keys returns the key folder, TASK_UI_SSH_DIR, over the storage.
 func (a *App) keys() *keystore.Local {
-	return &keystore.Local{Dir: a.Config.SSHDir, Rows: storage.NewKeyInfoStorage(a.DB), Settings: storage.NewSettingStorage(a.DB)}
+	return newKeystore(a.Config, a.Storage)
 }
 
 // ensureKeys makes the key folder, private to the server, removes the
@@ -36,13 +36,13 @@ func (a *App) ensureKeys(ctx context.Context) error {
 		slog.Info("agent directories a previous process left removed", "count", n)
 	}
 	keys := a.keys()
-	workspaces, err := storage.NewWorkspaceStorage(a.DB).List(ctx)
+	workspaces, err := a.Storage.Workspaces.List(ctx)
 	if err != nil {
 		return err
 	}
 	if _, err := keys.Migrate(ctx, keystore.Legacy{
 		Data: a.Config.DataDir, Workspaces: workspaces,
-		Policies: storage.NewSSHKeyPolicyStorage(a.DB), Grants: storage.NewWorkspaceKeyGrantStorage(a.DB),
+		Policies: a.Storage.KeyPolicies, Grants: a.Storage.KeyGrants,
 	}); err != nil {
 		return fmt.Errorf("moving the keys into the key folder: %w", err)
 	}

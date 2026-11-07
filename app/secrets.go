@@ -14,14 +14,9 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// secrets returns the secret store: every secret on the instance's
-// encryption key, the workspaces' and the services'. No SSH key
-// encrypts or decrypts with it.
+// secrets returns a store of its own, which only the migrations hang a legacy vault off.
 func (a *App) secrets() *secret.Store {
-	keys := a.keys()
-	store := secret.New(storage.NewSecretStorage(a.DB), secret.NewVault(keys.Vault(storage.ScopeInstance)))
-	store.Workspaces = &secret.Workspaces{Rows: storage.NewWorkspaceStorage(a.DB)}
-	return store
+	return newSecrets(a.keys(), a.Storage)
 }
 
 // copyDB returns what copies the database to <db>.<suffix> before a
@@ -34,7 +29,7 @@ func (a *App) copyDB(suffix string) func(context.Context) error {
 			return nil
 		}
 		path := file + "." + suffix
-		err := storage.Copy(ctx, a.DB, path)
+		err := storage.Copy(ctx, a.Storage.DB, path)
 		if errors.Is(err, os.ErrExist) {
 			slog.Info("database copy from before the secrets migration kept", "file", path)
 			return nil
@@ -83,7 +78,7 @@ func (a *App) migrateSecrets(ctx context.Context) error {
 // dropWorkspaceKeys removes the workspaces' encryption keys whose
 // secrets the instance's key opens: one encryption key per instance.
 func (a *App) dropWorkspaceKeys(ctx context.Context, keys *keystore.Local, store *secret.Store, old []keystore.Key) error {
-	workspaces := storage.NewWorkspaceStorage(a.DB)
+	workspaces := a.Storage.Workspaces
 	for _, key := range old {
 		row, err := workspaces.Get(ctx, key.Workspace())
 		if err != nil {

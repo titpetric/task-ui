@@ -41,7 +41,7 @@ const importedRoles = "users.roles_imported"
 // changes nothing, so a typo can't take every admin away. With users
 // yet to come, it waits for a start that has them.
 func (a *App) importRoles(ctx context.Context) error {
-	settings := storage.NewSettingStorage(a.DB)
+	settings := a.Storage.Settings
 	values, err := settings.Values(ctx)
 	if err != nil || values[importedRoles] != "" {
 		return err
@@ -50,7 +50,7 @@ func (a *App) importRoles(ctx context.Context) error {
 		slog.Warn("TASK_UI_AGENT_JOB is not read: a note naming a user with Run instance Claude when mentioned runs the Notes agent as them")
 	}
 	lists := a.Config.Import
-	users, err := a.Users.List(ctx)
+	users, err := a.Storage.Users.List(ctx)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (a *App) importRoles(ctx context.Context) error {
 		return nil
 	}
 	if lists != nil {
-		if err := applyRoles(ctx, a.Users, users, lists); err != nil {
+		if err := applyRoles(ctx, a.Storage.Users, users, lists); err != nil {
 			return err
 		}
 	}
