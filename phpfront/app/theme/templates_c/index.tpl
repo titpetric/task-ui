@@ -261,10 +261,6 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
@@ -334,16 +330,13 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
 <details class="folder<?php if($_v['data_folder']['active']){?>
- active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+ active<?php }?><?php if(!$_v['data_folder']['jobs']){?>
+ leaf<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
  open<?php }?>>
 	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
@@ -364,9 +357,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
 </small><?php }else{?>
 <small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
-</small><?php }?>
+</small><?php } if($_v['data_folder']['jobs']){?>
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-	</summary>
+<?php }?>	</summary>
+<?php if($_v['data_folder']['jobs']){?>
 	<div class="jobs">
 <?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
@@ -403,19 +397,16 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
-</details>
+<?php }?></details>
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
 <details class="folder<?php if($_v['data_folder']['active']){?>
- active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+ active<?php }?><?php if(!$_v['data_folder']['jobs']){?>
+ leaf<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
  open<?php }?>>
 	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
@@ -436,9 +427,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
 </small><?php }else{?>
 <small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
-</small><?php }?>
+</small><?php } if($_v['data_folder']['jobs']){?>
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-	</summary>
+<?php }?>	</summary>
+<?php if($_v['data_folder']['jobs']){?>
 	<div class="jobs">
 <?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
@@ -475,14 +467,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
-</details>
+<?php }?></details>
 <?php } } }?>
 </details>
 <?php }else{if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project']; if($_v['data_project']['top']){?>
@@ -551,16 +539,13 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
 <details class="folder<?php if($_v['data_folder']['active']){?>
- active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+ active<?php }?><?php if(!$_v['data_folder']['jobs']){?>
+ leaf<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
  open<?php }?>>
 	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
@@ -581,9 +566,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
 </small><?php }else{?>
 <small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
-</small><?php }?>
+</small><?php } if($_v['data_folder']['jobs']){?>
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-	</summary>
+<?php }?>	</summary>
+<?php if($_v['data_folder']['jobs']){?>
 	<div class="jobs">
 <?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
@@ -620,19 +606,16 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
-</details>
+<?php }?></details>
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
 <details class="folder<?php if($_v['data_folder']['active']){?>
- active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+ active<?php }?><?php if(!$_v['data_folder']['jobs']){?>
+ leaf<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
  open<?php }?>>
 	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
@@ -653,9 +636,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
 </small><?php }else{?>
 <small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
-</small><?php }?>
+</small><?php } if($_v['data_folder']['jobs']){?>
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-	</summary>
+<?php }?>	</summary>
+<?php if($_v['data_folder']['jobs']){?>
 	<div class="jobs">
 <?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
@@ -692,14 +676,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
-</details>
+<?php }?></details>
 <?php } } } }}else{ $_v['data_project'] = $_v['group']; if($_v['data_project']['top']){?>
 
 				<details class="project<?php if($_v['data_project']['active']){?>
@@ -766,16 +746,13 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 					</div>
 <?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
 <details class="folder<?php if($_v['data_folder']['active']){?>
- active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+ active<?php }?><?php if(!$_v['data_folder']['jobs']){?>
+ leaf<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
  open<?php }?>>
 	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
@@ -796,9 +773,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
 </small><?php }else{?>
 <small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
-</small><?php }?>
+</small><?php } if($_v['data_folder']['jobs']){?>
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-	</summary>
+<?php }?>	</summary>
+<?php if($_v['data_folder']['jobs']){?>
 	<div class="jobs">
 <?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
@@ -835,19 +813,16 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
-</details>
+<?php }?></details>
 <?php }?>
 				</details>
 <?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
 <details class="folder<?php if($_v['data_folder']['active']){?>
- active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+ active<?php }?><?php if(!$_v['data_folder']['jobs']){?>
+ leaf<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_folder']['open']){?>
  open<?php }?>>
 	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
@@ -868,9 +843,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
 </small><?php }else{?>
 <small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
-</small><?php }?>
+</small><?php } if($_v['data_folder']['jobs']){?>
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-	</summary>
+<?php }?>	</summary>
+<?php if($_v['data_folder']['jobs']){?>
 	<div class="jobs">
 <?php $_v['data_jobs'] = $_v['data_folder']; if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
 <div class="job<?php if($_v['job']['pinned']){?>
@@ -907,14 +883,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>
 
 	</div>
-</details>
+<?php }?></details>
 <?php } }} }else{?>
 
 				<div class="empty">No folders yet. <?php if($_v['chrome']['can']['project/edit']){?>

@@ -11,9 +11,18 @@ func (p *Page) BrowseID() string {
 	return p.Folder.ID + "/" + strings.TrimSuffix(p.Browse, "/")
 }
 
-// PinnedJobs returns the pinned jobs the sidebar lists under a folder besides its own.
+// PinnedJobs returns the pinned jobs the sidebar lists under a folder, which is all it lists under one.
 func (p *Page) PinnedJobs(id string) []SidePin {
 	return p.SidePins[id]
+}
+
+// PinnedCount returns how many pinned jobs the whole sidebar lists, which decides whether a row starts folded.
+func (p *Page) PinnedCount() int {
+	out := 0
+	for _, pins := range p.SidePins {
+		out += len(pins)
+	}
+	return out
 }
 
 // PinOf returns the user's pin of a folder, or of a job of it with no args, nil for none.

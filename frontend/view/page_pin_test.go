@@ -28,6 +28,16 @@ func TestPage_PinItem(t *testing.T) {
 	assert.Len(t, p.PinnedJobs("malta"), 0)
 }
 
+// The fold reads the whole sidebar's pinned jobs, which is everything
+// it lists under a folder.
+func TestPage_PinnedCount(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{}
+	assert.Equal(t, 0, p.PinnedCount())
+	p.SidePins = map[string][]view.SidePin{"malta": {{}, {}}, "infra/edge": {{}}}
+	assert.Equal(t, 3, p.PinnedCount())
+}
+
 // A browse page pins the directory it shows, below its folder.
 func TestPage_BrowseID(t *testing.T) {
 	t.Parallel()

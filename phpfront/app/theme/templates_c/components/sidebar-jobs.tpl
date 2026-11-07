@@ -33,8 +33,4 @@
 "><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
 </div>
-<?php }else{?>
-
-<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
-</div>
 <?php }?>

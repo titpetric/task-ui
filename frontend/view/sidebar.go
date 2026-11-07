@@ -73,9 +73,8 @@ func NewSidebar(defaults []*folder.Folder, pins []SidePin, workspaces map[string
 		}
 		bare := *pin.Folder
 		bare.Jobs = nil
-		if f := add(&bare); !pin.plain(f) {
-			s.Pins[f.ID] = append(s.Pins[f.ID], pin)
-		}
+		f := add(&bare)
+		s.Pins[f.ID] = append(s.Pins[f.ID], pin)
 	}
 	for _, pin := range pins {
 		for _, id := range above(pin.Folder.ID, workspaces) {

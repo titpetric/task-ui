@@ -99,7 +99,7 @@ class Folders {
 
 		$this->warm($this->places($placed));
 
-		$this->total = self::jobCount($placed);
+		$this->total = $this->jobCount();
 
 		$groups = $this->group($placed, 0, true);
 		$out = array();
@@ -469,10 +469,6 @@ class Folders {
 				$folders[] = $bare;
 			}
 
-			if (self::plain($pin, $folders[$at[$id]])) {
-				continue;
-			}
-
 			$held = isset($pinned[$id]) ? $pinned[$id] : array();
 			$held[] = $pin;
 			$pinned[$id] = $held;
@@ -499,25 +495,6 @@ class Folders {
 	/** byName orders the tree's folders by ID, ignoring case. */
 	static function byName($one, $other) {
 		return strcmp(strtolower(Row::text($one, "id")), strtolower(Row::text($other, "id")));
-	}
-
-	/**
-	 * plain reports whether a folder's row lists a pinned job already, which
-	 * is a pin of one of the folder's own jobs with no directory and no
-	 * arguments to set it apart.
-	 */
-	static function plain($pin, $folder) {
-		if ($pin["dir"] !== "" || count($pin["args"]) > 0) {
-			return false;
-		}
-
-		foreach (Row::items($folder, "jobs") as $job) {
-			if (Row::text($job, "id") === $pin["named"]) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/** above is the workspace and the project a folder is in, those above it. */
@@ -707,7 +684,6 @@ class Folders {
 		$out["icon"] = $here ? "folder-open" : "folder";
 		$out["open"] = $here || $this->total <= self::FOLD;
 		$out["dir"] = self::dirUnder($out["id"], $top);
-		$out["count"] = count($out["jobs"]);
 		$out["counted"] = true;
 
 		return $out;
@@ -750,18 +726,13 @@ class Folders {
 			"count" => $own,
 			"counted" => $own > 0,
 			"jobs" => $this->jobs($folder),
-			"empty" => count($errors) > 0 ? "The pipeline has errors." : "Nothing to run.",
 		);
 	}
 
-	/** jobs is what a folder's row lists: the jobs it declares, then the pins it lists besides them. */
+	/** jobs is what a folder's row lists, which is the reader's pins under it and nothing else. */
 	function jobs($folder) {
 		$id = Row::text($folder, "id");
 		$out = array();
-
-		foreach (Row::items($folder, "jobs") as $job) {
-			$out[] = $this->jobRow($folder, $job);
-		}
 
 		if (!isset($this->pinned[$id])) {
 			return $out;
@@ -1067,12 +1038,12 @@ class Folders {
 		return $dirty . $files . "changed or untracked";
 	}
 
-	/** jobCount is how many jobs the whole tree lists, which decides whether a folder's row starts folded. */
-	static function jobCount($folders) {
+	/** jobCount is how many pinned jobs the whole tree lists, which decides whether a folder's row starts folded. */
+	function jobCount() {
 		$out = 0;
 
-		foreach ($folders as $folder) {
-			$out += count(Row::items($folder, "jobs"));
+		foreach ($this->pinned as $pins) {
+			$out += count($pins);
 		}
 
 		return $out;

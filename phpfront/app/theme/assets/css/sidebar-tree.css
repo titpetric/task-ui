@@ -256,12 +256,13 @@
   border-inline-start-color: var(--signal);
 }
 
+/* A folder with no pinned job under it opens onto nothing. */
+.folders details.folder.leaf summary {
+  cursor: default;
+}
+
 .folders .jobs {
   padding: 0.1rem 0 0.3rem;
-
-  & .empty {
-    padding: 0.2rem 1.1rem 0.2rem var(--tree-2);
-  }
 }
 
 /* .run-reason styles the reason given for forcing a run. */

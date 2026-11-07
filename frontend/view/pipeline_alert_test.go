@@ -89,7 +89,6 @@ func TestView_RenderPipelineAlert(t *testing.T) {
 	assert.Contains(t, page, "go:fmt&#34; not found &lt;b&gt;")
 	assert.NotContains(t, page, "not found <b>")
 	assert.Contains(t, page, `<small class="bad" title="step references task &#39;go:fmt&#39;, but job &#34;go:fmt&#34; not found &lt;b&gt;">!2</small>`)
-	assert.Contains(t, page, "The pipeline has errors.")
 	assert.NotContains(t, page, "more</summary>")
 
 	home := render("home", broken(t))

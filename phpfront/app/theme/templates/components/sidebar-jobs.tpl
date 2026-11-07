@@ -8,6 +8,4 @@
 	<button type="button" class="play" data-run data-folder="{job.folder}"{if $job.dir} data-dir="{job.dir}"{/if} data-job="{job.job}"{if $job.args} data-run-args="{job.args}"{/if} data-title="{job.folder} / {job.said}" title="Run {job.said}" aria-label="Run {job.said}"><svg class="ic"><use href="#i-play"/></svg></button>
 {/if}
 </div>
-{else}
-<div class="empty">{data_jobs.empty}</div>
 {/foreach}

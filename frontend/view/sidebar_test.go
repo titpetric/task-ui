@@ -42,11 +42,10 @@ func groupIDs(groups []view.Group) []string {
 }
 
 // A pin adds to the sidebar in its natural place: a deep folder with
-// its workspace and project above it, in the catalogue's order; a job
-// pin under its folder, listing only its pinned jobs when the folder is
-// there for them alone, or besides the folder's own when its directory
-// or args set it apart. A pin of what the sidebar lists already adds
-// nothing, and a pin in a home project stays out.
+// its workspace and project above it, in the catalogue's order, and a
+// job pin under its folder. Every job pin is listed, the folder's row
+// having nothing else under it. A pin of a folder the sidebar lists
+// already adds nothing, and a pin in a home project stays out.
 func TestSidebar(t *testing.T) {
 	t.Parallel()
 	ws := map[string]int{"malta": 0}
@@ -84,9 +83,10 @@ func TestSidebar(t *testing.T) {
 	assert.Len(t, s.Pins["infra/edge"], 1)
 	assert.Equal(t, "plan", s.Pins["infra/edge"][0].Label())
 
-	// The plain build is on the folder's row; the one with args is a pin of its own.
-	assert.Len(t, s.Pins["malta/dockerfiles"], 1)
-	assert.Equal(t, "build --push", s.Pins["malta/dockerfiles"][0].Label())
+	// Both pins of build are listed, the bare one and the one with args.
+	assert.Len(t, s.Pins["malta/dockerfiles"], 2)
+	assert.Equal(t, "build", s.Pins["malta/dockerfiles"][0].Label())
+	assert.Equal(t, "build --push", s.Pins["malta/dockerfiles"][1].Label())
 
 	groups := view.Groups(s.Folders, ws)
 	assert.Equal(t, []string{"apps", "infra", "malta"}, groupIDs(groups))

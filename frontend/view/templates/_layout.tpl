@@ -84,7 +84,7 @@
 				{{- end }}
 			</nav>
 			<nav class="folders">
-				{{- $total := 0 }}{{ range .SideFolders }}{{ $total = len .Jobs | add $total }}{{ end }}
+				{{- $total := .PinnedCount }}
 				{{- range $g := .Groups }}
 				{{- if $g.Workspace }}{{ template "sideworkspace" (list $ $g $total) }}{{ else }}{{ template "sideproject" (list $ $g $total) }}{{ end }}
 				{{- else }}
@@ -410,7 +410,7 @@
 						</a>
 						<svg class="ic chev"><use href="#i-chev"/></svg>
 					</summary>
-					{{- if or $p.Jobs ($.PinnedJobs $p.ID) }}
+					{{- if $.PinnedJobs $p.ID }}
 					<div class="jobs top">
 						{{- template "sidejobs" (list $ $p) }}
 					</div>
@@ -451,16 +451,19 @@
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}{{ $top := index . 3 }}
 {{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
 {{- $icon := "folder" }}{{ if $active }}{{ $icon = "folder-open" }}{{ end }}
-<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
+{{- $pins := $.PinnedJobs $p.ID }}
+<details class="folder{{ if $active }} active{{ end }}{{ if not $pins }} leaf{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
 	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 		<a href="{{ $.Href $p.ID }}">{{ template "sideicon" (list $icon ($.Dirty $p.ID)) }}<span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 		<i class="dot"></i>
-		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ add (len $p.Jobs) (len ($.PinnedJobs $p.ID)) }}</small>{{ end }}
-		<svg class="ic chev"><use href="#i-chev"/></svg>
+		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
+		{{- if $pins }}<svg class="ic chev"><use href="#i-chev"/></svg>{{ end }}
 	</summary>
+	{{- if $pins }}
 	<div class="jobs">
 		{{- template "sidejobs" (list $ $p) }}
 	</div>
+	{{- end }}
 </details>
 {{- end }}
 
@@ -572,20 +575,6 @@
 
 {{- define "sidejobs" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}
-{{- range $r := $p.Jobs }}
-{{- $run := $.RunningRun $r.Key }}
-<div class="job{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
-	<i class="shebang{{ if $run }} running{{ end }}" aria-hidden="true">#!</i>
-	<a href="{{ $.Href $p.ID }}/{{ $r.ID }}">{{ if ne $r.ID $r.Name }}<i>{{ index (split $r.ID ":") 0 }}:</i>{{ end }}{{ $r.Name }}</a>
-	{{- if $run }}
-	<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
-	{{- else if $.CanRun $p $r }}
-	<button type="button" class="play" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Run {{ $r.Name }}" aria-label="Run {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
-	{{- end }}
-</div>
-{{- else }}{{ if not ($.PinnedJobs $p.ID) }}
-<div class="empty">{{ if $p.Errors }}The pipeline has errors.{{ else }}Nothing to run.{{ end }}</div>
-{{- end }}{{ end }}
 {{- range $.PinnedJobs $p.ID }}{{ template "sidepin" (list $ $p .) }}{{ end }}
 {{- end }}
 

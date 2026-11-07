@@ -45,16 +45,3 @@ func (s SidePin) Label() string {
 	return label
 }
 
-// plain reports whether the pin is a job its folder's row lists as is:
-// one of the folder's jobs, no directory, no args.
-func (s SidePin) plain(f *folder.Folder) bool {
-	if s.Pin.Dir != "" || len(s.Args()) > 0 {
-		return false
-	}
-	for _, job := range f.Jobs {
-		if job.ID == s.Pin.Job {
-			return true
-		}
-	}
-	return false
-}
