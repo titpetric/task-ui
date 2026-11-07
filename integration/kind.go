@@ -125,7 +125,7 @@ func Kinds() []Kind {
 			Fields: []Field{
 				{Name: "client_id", Label: "Client ID", Placeholder: "32 hex characters", Help: "From the app at developer.spotify.com."},
 				{Name: "client_secret", Label: "Client secret", Secret: true, Help: "From the same app; it stays on the server."},
-				{Name: "redirect_uri", Label: "Redirect URI", Optional: true, Placeholder: "https://task.example.com/api/integrations/spotify/callback", Help: "Register exactly this address in the app. Empty derives it from the instance URL (TASK_UI_URL); it has to be https, or http on a loopback host."},
+				{Name: "redirect_uri", Label: "Redirect URI", Optional: true, Path: "/api/integrations/spotify/callback", Placeholder: "https://task.example.com/api/integrations/spotify/callback", Help: "Register exactly this address in the app, as shown. It comes from the instance URL (TASK_UI_URL) and has to be https, or http on a loopback host."},
 				{Name: "scopes", Label: "Access", Optional: true, Options: []string{"read", "write"}, Help: "read asks for the playback state, the playing track, private playlists and the library; write adds playback control, playlist changes and liking. Users link again after a change."},
 				{Name: "who", Label: "Who", Optional: true, Who: true, WhoEmpty: "everyone with the spotify_link permission may link", Help: "The roles and users who may link an account; none checked is everyone with the spotify_link permission."},
 			},

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"slices"
+	"strings"
 )
 
 // Field is one setting of an integration, as its form shows it.
@@ -44,9 +45,24 @@ type Field struct {
 	// Source takes the value from another field, and the form shows the
 	// switch alone: a key that reaches a run as two variables.
 	Source string `json:"source,omitempty"`
+	// Path makes the field's value the instance URL and this path, which
+	// the reader cannot know and the instance can: a form fills it in
+	// rather than showing it as a placeholder.
+	Path string `json:"path,omitempty"`
 }
 
 // Valid reports whether a value is one the setting takes: any without options, else one of them or empty.
 func (f Field) Valid(value string) bool {
 	return len(f.Options) == 0 || value == "" || slices.Contains(f.Options, value)
+}
+
+// Value returns what a form shows in the field: the stored value, else the instance URL and Path, else Default.
+func (f Field) Value(stored, baseURL string) string {
+	if stored != "" {
+		return stored
+	}
+	if f.Path != "" && baseURL != "" {
+		return strings.TrimRight(baseURL, "/") + f.Path
+	}
+	return f.Default
 }
