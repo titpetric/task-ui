@@ -31,7 +31,7 @@ type Options struct {
 	Projects *storage.ProjectStorage
 	// Workspaces are the directories the projects may clone inside,
 	Workspaces *storage.WorkspaceStorage
-	Runs       *storage.RunStorage
+	Runs       RunStore
 	Artifacts  *storage.ArtifactStorage
 	// ArtifactStore is the tree of the files the runs leave.
 	ArtifactStore *artifactstore.Store

@@ -43,7 +43,7 @@ type Handlers struct {
 	summarizing sync.Map
 }
 
-// New returns the handlers over the options.
+// New returns the handlers over the options; an optional one left nil answers 404 on its own routes.
 func New(opts Options) *Handlers {
 	return &Handlers{opts: opts}
 }
@@ -60,6 +60,9 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/runs/{id}", h.getRun)
 	r.Post("/runs/{id}/stop", h.stopRun)
 	r.Post("/runs/{id}/kill", h.killRun)
+	// A run that was killed, stopped or failed is started again from its
+	// own ID: no caller holds the inputs a stored run keeps.
+	r.Post("/runs/{id}/rerun", h.rerunRun)
 	r.Get("/runs/{id}/frame.svg", h.frameSVG)
 	r.Get("/runs/{id}/frame.txt", h.frameText)
 	r.Get("/runs/{id}/cast", h.cast)

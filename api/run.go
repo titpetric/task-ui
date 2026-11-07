@@ -128,6 +128,12 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	h.start(w, r, req)
+}
+
+// start runs what a request names, as the user asking, and answers the
+// run it started; a rerun takes the same path.
+func (h *Handlers) start(w http.ResponseWriter, r *http.Request, req RunRequest) {
 	user := access.UserFrom(r.Context())
 	switch req.Job {
 	case model.PromptJob:
