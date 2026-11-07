@@ -104,6 +104,44 @@ func TestRender_runAgain(t *testing.T) {
 	assert.NotContains(t, render(page), starts, "the Notes agent's run")
 }
 
+// A run's page lists the runs it dispatched, each a link with its job
+// and how it ended, and a run that dispatched none lists nothing.
+func TestRender_runChildren(t *testing.T) {
+	t.Parallel()
+	v := shared(t)
+	page := admin(t)
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "run", page))
+	assert.NotContains(t, buf.String(), "Runs it started")
+
+	page.Children = []model.Run{
+		{ID: "01child", Folder: "infra", Job: model.PromptJob, State: model.StateOK},
+		{ID: "02child", Folder: "infra", Job: "plan", State: model.StateFailed, ExitCode: 2},
+	}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "run", page))
+	html := buf.String()
+	assert.Contains(t, html, "<h3>Runs it started <small>oldest first</small></h3>")
+	assert.Contains(t, html, `<a href="/runs/01child">infra / @claude-prompt</a>`)
+	assert.Contains(t, html, `<span class="state" data-run-id="02child" data-finished="true"><i class="dot failed"></i>failed <span class="faint">(2)</span></span>`)
+}
+
+// A recent run that dispatched others draws the count of them, and one
+// that dispatched none draws no badge.
+func TestRender_recentChildren(t *testing.T) {
+	t.Parallel()
+	v := shared(t)
+	page := admin(t)
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "home", page))
+	assert.NotContains(t, buf.String(), `<span class="badge" title="Runs it started">`)
+
+	page.Recents[0].Entries[0].Children = 3
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "home", page))
+	assert.Contains(t, buf.String(), `<span class="badge" title="Runs it started">3</span>`)
+}
+
 // A run that ended has Summarize in its head for a user who may ask,
 // and none once the summary is there to read as a Report. A summary
 // Claude is still writing says so where the button stood: the button

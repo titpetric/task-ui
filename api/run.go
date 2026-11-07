@@ -100,11 +100,16 @@ func (h *Handlers) endsNote(r *http.Request, run *model.Run) bool {
 	return user != nil && (run.UserID == user.ID || user.CanAdmin()) && h.can(r, "note/edit")
 }
 
-// listRuns returns the runs the user may see, newest first.
+// listRuns returns the runs the user may see, newest first: ?parent= the
+// runs one run or workflow run dispatched, ?roots=1 the runs nothing did,
+// and without either every run.
 func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	q := r.URL.Query()
-	filter := storage.RunFilter{Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), BatchID: q.Get("batch"), Limit: queryInt(r, "limit", 50)}
+	filter := storage.RunFilter{
+		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"),
+		BatchID: q.Get("batch"), ParentID: q.Get("parent"), Roots: q.Get("roots") != "", Limit: queryInt(r, "limit", 50),
+	}
 	runs, err := h.opts.Runs.List(r.Context(), filter)
 	if err != nil {
 		failErr(w, err)

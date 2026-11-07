@@ -62,6 +62,9 @@ class Run {
 	 */
 	const CHART_COLUMNS = "id, folder, job, user_id, state, started_at || '' AS started_text, finished_at || '' AS finished_text";
 
+	/** CHILD_COLUMNS is what a count of a run's children reads: the parent, and the columns the rule that hides a run asks about. */
+	const CHILD_COLUMNS = "id, parent_id, folder, job, user_id";
+
 	var $db;
 
 	function __construct($db = null) {
@@ -156,6 +159,35 @@ class Run {
 		return $out;
 	}
 
+	/** children is the runs one run dispatched, oldest first. */
+	function children($id) {
+		if ($id === "") {
+			return array();
+		}
+
+		$sql = "SELECT " . self::COLUMNS . " FROM run WHERE parent_id = ? ORDER BY started_at ASC, id ASC";
+
+		return self::rows(DB::all($this->db, $sql, array($id)));
+	}
+
+	/**
+	 * childrenOf is the children of many runs at once, as rows and not as
+	 * runs: the rail counts the children of every row it lists.
+	 *
+	 * The columns are the ones Task\Seen::rows filters on, so a count costs no
+	 * hydration: the rail is chrome and is drawn on every page.
+	 */
+	function childrenOf($ids) {
+		if (count($ids) === 0) {
+			return array();
+		}
+
+		$sql = "SELECT " . self::CHILD_COLUMNS . " FROM run WHERE parent_id IN (" . Row::placeholders($ids) . ")";
+		$found = DB::all($this->db, $sql, $ids);
+
+		return is_array($found) ? $found : array();
+	}
+
 	/**
 	 * latest is the last run of each job of the folders, by the key the job is
 	 * listed under; every folder's for an empty list.
@@ -216,6 +248,12 @@ class Run {
 		self::narrow($where, $args, "user_id", self::pick($filter, "user_id"));
 		self::narrow($where, $args, "user_name", self::pick($filter, "user"));
 		self::narrow($where, $args, "batch_id", self::pick($filter, "batch"));
+		self::narrow($where, $args, "parent_id", self::pick($filter, "parent"));
+
+		// `roots` keeps the runs nothing dispatched, which is the rail.
+		if (isset($filter["roots"]) && $filter["roots"]) {
+			$where[] = "parent_id = ''";
+		}
 
 		$folders = isset($filter["folders"]) && is_array($filter["folders"]) ? $filter["folders"] : array();
 

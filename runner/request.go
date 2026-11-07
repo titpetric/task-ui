@@ -46,6 +46,11 @@ type Request struct {
 	// BatchID groups the run with others started together, the ID of
 	// the batch's first run; the row keeps it.
 	BatchID string
+	// ParentID is the run or workflow run that dispatched this one, under
+	// whose row the sidebar groups it; empty for a run a person started.
+	// ParentKind names the one, storage.ParentRun or ParentWorkflowRun.
+	ParentID   string
+	ParentKind string
 	// Queue lets the run wait, queued, when its job is running: it
 	// starts once the runs before it ended, in the order they came, and
 	// at most MaxQueued wait. A request that forces or reuses an ID
@@ -73,6 +78,10 @@ func (req Request) newRun() *model.Run {
 		BatchID:  req.BatchID,
 		TermCols: int64(req.Cols),
 		TermRows: int64(req.Rows),
+	}
+	// A rerun takes the ID of the run its thread holds: no run parents itself.
+	if req.ParentID != req.ID {
+		run.ParentID, run.ParentKind = req.ParentID, req.ParentKind
 	}
 	if req.User != nil {
 		run.UserID, run.UserName = req.User.ID, req.User.Name

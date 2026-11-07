@@ -57,6 +57,10 @@ func matches(run model.Run, filter storage.RunFilter) bool {
 		return false
 	case filter.State != "" && filter.State != run.State:
 		return false
+	case filter.ParentID != "" && filter.ParentID != run.ParentID:
+		return false
+	case filter.Roots && run.ParentID != "":
+		return false
 	}
 	return true
 }

@@ -12,6 +12,9 @@ import (
 type Recent struct {
 	Run  *Run
 	Flow *model.WorkflowRun
+	// Children counts the runs the entry's run dispatched that the reader
+	// sees, the count its row draws.
+	Children int
 }
 
 // StartedAt is when the entry's run started.

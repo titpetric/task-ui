@@ -11,6 +11,20 @@
 	<pre class="output" data-output="{data.output.id}" data-cols="{data.output.cols}" data-rows="{data.output.rows}"><span class="faint">Reading the recording</span></pre>
 </section>
 {/if}{if $data.prompt}{eval $data_prompt = $data.prompt}{include components/prompt.tpl}
+{/if}{if $data.children}<section class="block">
+	<h3>Runs it started <small>oldest first</small></h3>
+	<div class="table-wrap">
+	<table class="table">
+		<thead><tr><th>Job</th><th>Result</th></tr></thead>
+		<tbody>
+{foreach $data.children as $child}			<tr>
+				<td class="key"><a href="{child.href}">{child.name}</a></td>
+				<td data-label="Result">{eval $data_state = $child.state}{include components/state.tpl}</td>
+			</tr>
+{/foreach}		</tbody>
+	</table>
+	</div>
+</section>
 {/if}
 <div class="grid-2">
 <section class="block">

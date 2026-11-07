@@ -101,6 +101,7 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 			p.Job = sub.Job(run.Job)
 		}
 	}
+	p.Children = h.children(r.Context(), h.runSeer(r), run.ID)
 	artifacts, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{RunID: run.ID, Limit: 200})
 	p.Artifacts = artifacts
 	p.Prompt = h.runPrompt(r, p, &run)
@@ -110,6 +111,15 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 		p.Report = h.opts.Board.Report(r.Context(), row)
 	}
 	h.render(w, http.StatusOK, "run", p)
+}
+
+// children returns the runs one run dispatched that the user sees, oldest first.
+func (h *Handlers) children(ctx context.Context, sees func(*model.Run) bool, id string) []model.Run {
+	runs, err := h.opts.Runs.Children(ctx, id)
+	if err != nil {
+		return nil
+	}
+	return slices.DeleteFunc(runs, func(run model.Run) bool { return !sees(&run) })
 }
 
 // batch returns the runs of a batch, oldest first; none for "".

@@ -278,6 +278,7 @@ func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request
 	ctx := context.Background()
 	defer os.Remove(answer)
 	b.takeReplied(note.ID)
+	req.ParentID, req.ParentKind = parentOf(note)
 	if again != nil {
 		req.ID = again.RunID
 	}

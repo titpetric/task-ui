@@ -464,6 +464,31 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
 <?php }?>	</div>
 </details>
 
+<?php }?><?php if($_v['data']['children']){?>
+<section class="block">
+	<h3>Runs it started <small>oldest first</small></h3>
+	<div class="table-wrap">
+	<table class="table">
+		<thead><tr><th>Job</th><th>Result</th></tr></thead>
+		<tbody>
+<?php if(!empty($_v['data']['children']))foreach($_v['data']['children'] as $_v['child']){?>			<tr>
+				<td class="key"><a href="<?php echo htmlspecialchars($_v['child']['href'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['child']['name'], ENT_QUOTES);?>
+</a></td>
+				<td data-label="Result"><?php $_v['data_state'] = $_v['child']['state']; if($_v['data_state']['id']){?>
+<span class="state" data-run-id="<?php echo htmlspecialchars($_v['data_state']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_state']['ended']){?>
+ data-finished="true"<?php }?>><i class="dot <?php echo htmlspecialchars($_v['data_state']['state'], ENT_QUOTES);?>
+"></i><?php echo htmlspecialchars($_v['data_state']['state'], ENT_QUOTES); if($_v['data_state']['code'] !== ""){?>
+ <span class="faint">(<?php echo htmlspecialchars($_v['data_state']['code'], ENT_QUOTES);?>
+)</span><?php }?></span><?php }else{?>
+<span class="faint">never run</span><?php }?>
+</td>
+			</tr>
+<?php }?>		</tbody>
+	</table>
+	</div>
+</section>
 <?php }?>
 <div class="grid-2">
 <section class="block">

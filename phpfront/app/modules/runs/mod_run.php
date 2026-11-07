@@ -140,6 +140,7 @@ class mod_run implements Module {
 				"rows" => $run->getTermRows(),
 			),
 			"prompt" => Task\Prompt::panel($chrome, $run, $seen),
+			"children" => $this->children($run, $seen),
 			"kv" => array("rows" => $this->details($run, $chrome, $message)),
 			"artifacts" => $this->artifacts($chrome, $run),
 		);
@@ -255,6 +256,30 @@ class mod_run implements Module {
 		$found = $reports->summaries(array($id));
 
 		return isset($found[$id]) && $found[$id]["pending"];
+	}
+
+	/**
+	 * children is the runs this run dispatched that the reader sees, oldest
+	 * first: each a link, its job and how it ended.
+	 *
+	 * The rows are read as they stand and no session goes over them, as the Go
+	 * page reads them: a run of the list is somewhere else on the page of its
+	 * own.
+	 */
+	function children($run, $seen) {
+		$runs = new Task\Run;
+		$found = $runs->children($run->getId());
+		$rows = array();
+
+		foreach ($seen->of($found) as $child) {
+			$rows[] = array(
+				"href" => Task\Route::href("/runs/" . $child->getId()),
+				"name" => Task\Run::name($child),
+				"state" => Task\Run::label($child),
+			);
+		}
+
+		return $rows;
 	}
 
 	/** terminal is the live screen of a run the runner still holds, or null. */

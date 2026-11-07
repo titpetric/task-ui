@@ -134,18 +134,23 @@ func (s *Starter) Start(ctx context.Context, user *model.User, req Request) (str
 	}
 	var sessions []*runner.Session
 	var errs []error
+	parent, parentKind := req.parent(nil)
 	for _, host := range hosts {
 		job := root.HostJob(host)
 		job.Command = s.command(host, logins[host], command)
 		session, err := s.Runner.Start(ctx, runner.Request{
 			Folder: root, Job: job, User: user, Target: host, BatchID: batch, Args: []string{command}, Timeout: timeout, Queue: true,
 			Scheduled: req.Scheduled, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows,
+			ParentID: parent, ParentKind: parentKind,
 		})
 		if err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", host, err))
 			continue
 		}
 		sessions = append(sessions, session)
+		// The batch sits under its own first run, the run every page of the
+		// batch already answers for it.
+		parent, parentKind = req.parent(sessions[0])
 	}
 	if len(sessions) == 0 {
 		return "", nil, errors.Join(errs...)

@@ -85,6 +85,22 @@ foreach ($groups as $group) {
 	echo $group["label"], ": ", hrefs($group["entries"]), "\n";
 }
 
+// The prompt that run dispatched, which the rail counts on its row rather
+// than listing.
+$db->replace("run", array(
+	"id" => "fx-recent-2",
+	"folder" => $folder,
+	"job" => "@claude-prompt",
+	"dir" => "",
+	"user_name" => "claude",
+	"state" => "ok",
+	"started_at" => "2026-11-02 10:02:00.000 +0000 UTC",
+	"term_cols" => 120,
+	"term_rows" => 30,
+	"parent_id" => "fx-recent-1",
+	"parent_kind" => "run",
+));
+
 // One run of a job as the component reads it. The icon is an eye and not a
 // play: the catalogue here holds no folder, so nothing says the reader may
 // start the job again.
@@ -97,7 +113,7 @@ $first = $table->get("fx-recent-1");
 $entry = $rail->ofRun($first, $access, $roles, array());
 
 echo $entry["href"], " ", $entry["name"], " ", $entry["place"], " ", $entry["state"], "\n";
-echo var_export($entry["ended"], true), " ", var_export($entry["flow"], true), " ", $entry["act"], "\n";
+echo var_export($entry["ended"], true), " ", var_export($entry["flow"], true), " ", $entry["act"], " ", $entry["children"], "\n";
 echo $entry["title"], "\n";
 echo $entry["avatar"]["name"], " ", $entry["avatar"]["role"], " ", $entry["avatar"]["initials"], "\n";
 
@@ -128,6 +144,18 @@ $elsewhere = array(Task\Fixture::folder("fx-recent-other", array($build)));
 echo var_export(Task\Recent::runnable($run, $access, $catalogue), true), "\n";
 echo var_export(Task\Recent::runnable($run, $access, $elsewhere), true), "\n";
 
+// The runs each row of the rail dispatched, counted by the row's ID, and
+// counted as the reader sees them: a prompt's run is one count for a reader
+// with prompt/view and none for a reader without it.
+$listed = array($table->get("fx-recent-1"));
+$counts = $rail->children($listed, $ops, true, true);
+$hidden = $rail->children($listed, $ops, false, false);
+
+echo $counts["fx-recent-1"], " ", count($hidden), " ", count($rail->children(array(), $ops, true, true)), "\n";
+
+// The count goes on the entry, which draws it instead of the runs under it.
+echo $rail->ofRun($first, $access, $roles, array(), 3)["children"], "\n";
+
 // The role of a name no row holds is "", which draws the avatar without one.
 echo "[", Task\Recent::role($roles, "nobody"), "]\n";
 
@@ -154,12 +182,14 @@ In the last hour
 3 hours ago: /runs/b,/workflows/y
 4 hours ago: /runs/c
 /runs/fx-recent-1 build fx-recent running
-false false eye
+false false eye 0
 Open fx-recent / build, ops, running
 ops runner OP
 false
 false
 true
 false
+1 0 0
+3
 []
 /runs 50

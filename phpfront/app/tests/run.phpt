@@ -41,6 +41,30 @@ foreach ($rows as $row) {
 	));
 }
 
+// Two runs the first one dispatched, in a folder of their own so the filters
+// above read the same rows they always did.
+$kids = "fx-run-kids";
+$dispatched = array(
+	array("id" => "fx-run-k1", "at" => "10:07"),
+	array("id" => "fx-run-k2", "at" => "10:08"),
+);
+
+foreach ($dispatched as $kid) {
+	$db->replace("run", array(
+		"id" => $kid["id"],
+		"folder" => $kids,
+		"job" => "@claude-prompt",
+		"dir" => "",
+		"user_name" => "admin",
+		"state" => "ok",
+		"started_at" => "2026-11-02 " . $kid["at"] . ":00.000 +0000 UTC",
+		"term_cols" => 120,
+		"term_rows" => 30,
+		"parent_id" => "fx-run-1",
+		"parent_kind" => "run",
+	));
+}
+
 // A page reads through the reader, which refuses a write: a list is a list.
 $runs = new Task\Run;
 
@@ -82,6 +106,23 @@ echo "[", ids($runs->find(array("folder" => $folder, "user" => "nobody"))), "]\n
 // No limit reads the lot.
 echo count($runs->find(array("folder" => $folder, "limit" => 0))), "\n";
 
+// The parent conditions: the runs one run dispatched, newest first as every
+// listing is, and the runs nothing dispatched, which is what the rail lists.
+echo ids($runs->find(array("parent" => "fx-run-1", "limit" => 10))), "\n";
+echo ids($runs->find(array("folders" => array($kids), "limit" => 10))), "\n";
+echo "[", ids($runs->find(array("folders" => array($kids), "roots" => true, "limit" => 10))), "]\n";
+
+// The children of one run, oldest first, as a run's own page lists them.
+echo ids($runs->children("fx-run-1")), "\n";
+echo "[", ids($runs->children("fx-run-9")), "] [", ids($runs->children("")), "]\n";
+
+// The children of many runs at once, which the rail counts: the rows carry the
+// parent and the columns the permission rule reads, and no parent asks nothing.
+$found = $runs->childrenOf(array("fx-run-1", "fx-run-3"));
+
+echo count($found), " ", Task\Row::text($found[0], "parent_id"), " ", Task\Row::text($found[0], "folder"), " ", Task\Row::text($found[0], "job"), "\n";
+echo count($runs->childrenOf(array())), "\n";
+
 // One run by ID, and nothing for an ID that names none.
 $one = $runs->get("fx-run-2");
 
@@ -105,6 +146,13 @@ fx-run-6
 fx-run-2
 []
 5
+fx-run-k2,fx-run-k1
+fx-run-k2,fx-run-k1
+[]
+fx-run-k1,fx-run-k2
+[] []
+2 fx-run-1 fx-run-kids @claude-prompt
+0
 build failed 2
 2026-11-02 10:02:00.000 +0000 UTC
 NULL NULL

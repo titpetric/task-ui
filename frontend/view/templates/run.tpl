@@ -42,6 +42,25 @@
 
 {{- template "promptbox" . }}
 
+{{- with .Children }}
+<section class="block">
+	<h3>Runs it started <small>oldest first</small></h3>
+	<div class="table-wrap">
+	<table class="table">
+		<thead><tr><th>Job</th><th>Result</th></tr></thead>
+		<tbody>
+		{{- range . }}
+			<tr>
+				<td class="key"><a href="/runs/{{ .ID }}">{{ .Name }}</a></td>
+				<td data-label="Result">{{ template "state" . }}</td>
+			</tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
+</section>
+{{- end }}
+
 <div class="grid-2">
 <section class="block">
 	<h3>Run</h3>

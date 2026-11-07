@@ -59,10 +59,14 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	p.Roles = h.roles(r.Context(), user)
 	sees := h.runSeer(r)
 	p.Running = h.running(sees)
-	runs := h.visibleRuns(r.Context(), sees, storage.RunFilter{Limit: 2 * recentCount})
+	// The rail lists the runs nothing dispatched; a run under one of them
+	// is a count on its row.
+	runs := h.visibleRuns(r.Context(), sees, storage.RunFilter{Roots: true, Limit: 2 * recentCount})
+	recents := view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount)
+	h.countChildren(r.Context(), sees, recents)
 	// The headings read against the wall clock, as "ago" does; the page's
 	// clock stays fixed for a demo or a test.
-	p.Recents = view.GroupRecents(time.Now(), view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
+	p.Recents = view.GroupRecents(time.Now(), recents)
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	if user.CanAdmin() && p.Can("prompt/edit") && h.opts.Users != nil {
 		p.PromptUsers, _ = h.opts.Users.List(r.Context())

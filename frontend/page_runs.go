@@ -112,6 +112,33 @@ func (h *Handlers) frameOf(ctx context.Context, runID string) (template.HTML, in
 	return template.HTML(replay.Screen.Trim(frameRows).SVG(runner.DarkPalette)), replay.Lines(), replay.Complete()
 }
 
+// countChildren fills in how many runs each entry of the recents
+// dispatched that the user sees, the count its row draws.
+func (h *Handlers) countChildren(ctx context.Context, sees func(*model.Run) bool, entries []view.Recent) {
+	ids := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.Run != nil {
+			ids = append(ids, entry.Run.ID)
+		}
+	}
+	children, err := h.opts.Runs.ChildrenOf(ctx, ids)
+	if err != nil {
+		slog.Error("counting the runs of a run", "err", err)
+		return
+	}
+	counts := map[string]int{}
+	for i := range children {
+		if sees(&children[i]) {
+			counts[children[i].ParentID]++
+		}
+	}
+	for i := range entries {
+		if entries[i].Run != nil {
+			entries[i].Children = counts[entries[i].Run.ID]
+		}
+	}
+}
+
 // visibleRuns lists the runs of a filter the user sees.
 func (h *Handlers) visibleRuns(ctx context.Context, sees func(*model.Run) bool, filter storage.RunFilter) []view.Run {
 	runs, err := h.opts.Runs.List(ctx, filter)

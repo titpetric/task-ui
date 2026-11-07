@@ -221,6 +221,16 @@ func (s *RunStorage) Children(ctx context.Context, parentID string) ([]model.Run
 	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE parent_id = ? ORDER BY started_at ASC, id ASC", parentID)
 }
 
+// ChildrenOf returns the children of many parents, with the columns the rule
+// that hides a run reads: a sidebar counts the children of every row it lists.
+func (s *RunStorage) ChildrenOf(ctx context.Context, parentIDs []string) ([]model.Run, error) {
+	if len(parentIDs) == 0 {
+		return nil, nil
+	}
+	query := "SELECT id, parent_id, folder, job, user_id FROM run WHERE parent_id IN (?" + strings.Repeat(", ?", len(parentIDs)-1) + ")"
+	return client(s.db).Select[model.Run](ctx, query, anyList(parentIDs)...)
+}
+
 // Update writes a run back, by ID.
 func (s *RunStorage) Update(ctx context.Context, run *model.Run) error {
 	run.UpdatedAt = stamp()

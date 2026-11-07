@@ -8,6 +8,7 @@
 					<a href="{base}{entry.href}" class="recent{if $entry.flow} flow{/if}" title="{entry.title}">
 						<i class="dot {entry.state}"></i>
 						<span class="what"><b>{entry.name}</b><small>{if $entry.flow}<svg class="ic lead"><use href="#i-flow"/></svg>{/if}{entry.place}</small></span>
+{if $entry.children}						<span class="badge" title="Runs it started">{entry.children}</span>{/if}
 {if !$entry.ended}						<svg class="ic act"><use href="#i-{entry.act}"/></svg>{/if}
 						{eval $data_avatar = $entry.avatar}{include components/avatar.tpl}
 					</a>

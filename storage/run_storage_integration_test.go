@@ -526,6 +526,34 @@ func TestRunStorage_Children(t *testing.T) {
 	assert.ErrorContains(t, err, "need its ID")
 }
 
+// ChildrenOf answers for many parents at once, the columns the rule that
+// hides a run reads, and for no parent it asks nothing.
+func TestRunStorage_ChildrenOf(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	first := &model.Run{Folder: "infra", Job: "deploy"}
+	second := &model.Run{Folder: "infra", Job: "plan"}
+	assert.NoError(t, runs.Create(ctx, first))
+	assert.NoError(t, runs.Create(ctx, second))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "infra", Job: model.PromptJob, UserID: "u1", ParentID: first.ID}))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "web", Job: "build", ParentID: first.ID}))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "web", Job: "build", ParentID: "elsewhere"}))
+
+	children, err := runs.ChildrenOf(ctx, []string{first.ID, second.ID})
+	assert.NoError(t, err)
+	assert.Len(t, children, 2)
+	for _, child := range children {
+		assert.Equal(t, first.ID, child.ParentID)
+		assert.NotEmpty(t, child.Folder)
+		assert.Nil(t, child.StartedAt, "the listing reads the columns the rule asks about")
+	}
+
+	none, err := runs.ChildrenOf(ctx, nil)
+	assert.NoError(t, err)
+	assert.Len(t, none, 0)
+}
+
 // A run finishes in a final state, and nothing else is a finish.
 func TestRunStorage_FinishRefuses(t *testing.T) {
 	t.Parallel()

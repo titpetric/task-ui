@@ -310,7 +310,7 @@ func (r *Runner) pass(ctx context.Context, a *active, steps []Step, rows []model
 		default:
 			// The step's row names its run once it starts, so the
 			// run window follows the workflow from run to run.
-			ended, row.RunID, message = r.step(ctx, step, user, func(runID string) {
+			ended, row.RunID, message = r.step(ctx, step, user, run.ID, func(runID string) {
 				row.RunID = runID
 				r.saveStep(store, row)
 			})
@@ -338,9 +338,10 @@ func (r *Runner) pass(ctx context.Context, a *active, steps []Step, rows []model
 // step starts one job and waits for it, and tells started the run once
 // it starts. When the job is already running, step waits for that run
 // and then starts the job again; a stop ends the run in progress.
-func (r *Runner) step(ctx context.Context, step Step, user *model.User, started func(runID string)) (state, runID, message string) {
+// flowRun is the workflow run the step's run sits under.
+func (r *Runner) step(ctx context.Context, step Step, user *model.User, flowRun string, started func(runID string)) (state, runID, message string) {
 	if step.Job.IsHost() {
-		return r.hosts(ctx, step, user, started)
+		return r.hosts(ctx, step, user, flowRun, started)
 	}
 	for {
 		if ctx.Err() != nil {
@@ -348,7 +349,10 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User, started 
 		}
 		// The run's own writes must not fail on a stop; a stop reaches the
 		// run through the manager.
-		session, err := r.manager.Start(context.WithoutCancel(ctx), runner.Request{Folder: step.Folder, Job: step.Job, User: user, Args: step.Args})
+		session, err := r.manager.Start(context.WithoutCancel(ctx), runner.Request{
+			Folder: step.Folder, Job: step.Job, User: user, Args: step.Args,
+			ParentID: flowRun, ParentKind: storage.ParentWorkflowRun,
+		})
 		if errors.Is(err, runner.ErrBusy) && session != nil {
 			select {
 			case <-session.Done():
@@ -375,12 +379,16 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User, started 
 // hosts starts a step of @host:<host> and waits for its runs: one on
 // the host, or a batch for *. The step ends ok when every run did, else as the
 // first that did not, and keeps the first run; a stop ends the runs.
-func (r *Runner) hosts(ctx context.Context, step Step, user *model.User, started func(runID string)) (state, runID, message string) {
+// flowRun is the workflow run every run of the step sits under.
+func (r *Runner) hosts(ctx context.Context, step Step, user *model.User, flowRun string, started func(runID string)) (state, runID, message string) {
 	if r.Hosts == nil {
 		return model.StateFailed, "", "no hosts on this instance"
 	}
 	target := step.Job.HostTarget()
-	req := hostrun.Request{Targets: []string{target}, Command: strings.Join(step.Args, " "), Batch: target == "*"}
+	req := hostrun.Request{
+		Targets: []string{target}, Command: strings.Join(step.Args, " "), Batch: target == "*",
+		ParentID: flowRun, ParentKind: storage.ParentWorkflowRun,
+	}
 	_, sessions, err := r.Hosts.Start(context.WithoutCancel(ctx), user, req)
 	if err != nil {
 		return model.StateFailed, "", err.Error()

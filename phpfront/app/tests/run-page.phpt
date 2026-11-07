@@ -30,7 +30,7 @@ $rows = array(
 	array("id" => "fx-rp-2", "job" => "deploy", "state" => "running", "dir" => "docker", "from" => Task\Clock::stamp()),
 	array("id" => "fx-rp-3", "job" => "test", "state" => "queued"),
 	array("id" => "fx-rp-4", "job" => "build", "state" => "failed", "code" => 2, "cast" => "casts/fx-rp-4.cast", "reason" => "the window of the job is closed", "forced" => 1, "scheduled" => 1, "from" => at("10:04:00.000"), "to" => at("10:04:01.000")),
-	array("id" => "fx-rp-5", "job" => "@claude-prompt", "state" => "ok", "from" => at("10:05:00.000"), "to" => at("10:05:30.000")),
+	array("id" => "fx-rp-5", "job" => "@claude-prompt", "state" => "ok", "parent" => "fx-rp-1", "from" => at("10:05:00.000"), "to" => at("10:05:30.000")),
 	array("id" => "fx-rp-6", "job" => "ghost", "state" => "ok", "from" => at("10:06:00.000"), "to" => at("10:06:01.000")),
 	array("id" => "fx-rp-7", "job" => "build", "state" => "ok", "from" => at("10:09:00.000"), "to" => at("10:09:01.000")),
 	array("id" => "fx-rp-b1", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:07:00.000"), "to" => at("10:07:01.000")),
@@ -55,6 +55,8 @@ foreach ($rows as $row) {
 		"reason" => isset($row["reason"]) ? $row["reason"] : "",
 		"message" => "the row's own word",
 		"batch_id" => isset($row["batch"]) ? $row["batch"] : "",
+		"parent_id" => isset($row["parent"]) ? $row["parent"] : "",
+		"parent_kind" => isset($row["parent"]) ? "run" : "",
 		"started_at" => isset($row["from"]) ? $row["from"] : null,
 		"finished_at" => isset($row["to"]) ? $row["to"] : null,
 	));
@@ -358,6 +360,14 @@ $none = $mod->artifacts($chrome, $runs->get("fx-rp-6"));
 
 echo count($none["rows"]), " [", $none["block"]["empty"], "]\n";
 
+// The runs this run dispatched, oldest first: each a link, its job and how it
+// ended. The prompt asked about the run is one of them, and a run that
+// dispatched nothing lists none.
+$kids = $mod->children($one, $seen);
+
+echo count($kids), " ", $kids[0]["href"], " ", $kids[0]["name"], " ", $kids[0]["state"]["state"], "\n";
+echo count($mod->children($runs->get("fx-rp-6"), $seen)), "\n";
+
 // The prompt box of the run: the threads asked about it, and the field to ask,
 // which a reader with a token for Claude gets once the run is no longer
 // running.
@@ -547,6 +557,8 @@ report.html /api/artifacts/fx-rp-a1 2.0 KB text/html
 build.log 300 B
 Download,Delete
 0 [None: a job keeps files by writing them to the directory in $TASK_UI_ARTIFACTS.]
+1 /runs/fx-rp-5 fx-rp / @claude-prompt ok
+0
 Prompt [ask Claude Code about this run and its output, in fx-rp/] false false /api/prompts fx-rp
 run fx-rp-1 [why did this run end the way it did]
 [Runs @claude-prompt as ] [ in fx-rp/, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.]
@@ -571,7 +583,7 @@ Started by fx-rp-ann -. It waits, queued, for the run of its job before it to en
 Started by fx-rp-ann just now. It's still running: attach to follow it, or stop it.
 Started by fx-rp-ann <ago> by the scheduler, with Run force. The run has finished; its recording expired.
 Started by fx-rp-ann <ago>. The run has finished; its full output is below.
-head,terminal,output,prompt,kv,artifacts
+head,terminal,output,prompt,children,kv,artifacts
 title,icon,badge,tone,tags,note,lead,leads,faint,live,run,actions,buttons,show
 fx-rp / build [ok] ok []
 View,Run again,Report,|>

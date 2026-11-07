@@ -159,8 +159,11 @@ type Page struct {
 	Activity *Activity
 	// Tooling is what atkins has recorded for the tree, nil without a
 	// record of anything.
-	Tooling   *Tooling
-	Run       *Run
+	Tooling *Tooling
+	Run     *Run
+	// Children are the runs Run dispatched, oldest first, those the user
+	// sees: its workflow's steps, its prompts, the rest of its batch.
+	Children  []model.Run
 	Artifacts []model.Artifact
 	Schedules []model.Schedule
 	// WorkflowNames names the workflows the schedules of workflows

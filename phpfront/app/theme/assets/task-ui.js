@@ -5806,10 +5806,16 @@
   // place of the last entry that fits when some don't.
   var recentsMore = '<a href="' + mount() + '/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>';
 
-  // renderRecents draws the runs of jobs and of workflows, newest first.
+  // renderRecents draws the runs nothing dispatched and the runs of
+  // workflows, newest first, each run with the ones it dispatched counted.
   function renderRecents(runs, flows) {
     if (!recents) return;
-    var entries = runs.map(function (r) { return { run: r, at: r.started_at || "" }; })
+    var children = {};
+    runs.forEach(function (r) {
+      if (r.parent_id) children[r.parent_id] = (children[r.parent_id] || 0) + 1;
+    });
+    var entries = runs.filter(function (r) { return !r.parent_id; })
+      .map(function (r) { return { run: r, at: r.started_at || "", children: children[r.id] || 0 }; })
       .concat((flows || []).map(function (f) { return { flow: f, at: f.started_at || "" }; }));
     entries.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
     entries = entries.slice(0, 50);
@@ -5895,6 +5901,7 @@
       escapeHTML("Open " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
       '<span class="what"><b>' + escapeHTML(r.job + (r.target ? " · " + r.target : "")) + '</b><small>' + escapeHTML(runPlace(r)) + '</small></span>' +
+      (e.children ? '<span class="badge" title="Runs it started">' + e.children + "</span>" : "") +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
       avatarHTML(r.user_name) + "</a>";
   }

@@ -85,11 +85,19 @@ class Recent {
 		$notes = $access !== null && $access->allowed("note/view");
 		$runs = array();
 		$flows = array();
+		$rows = array();
 
-		foreach ($this->runs->find(array("limit" => 2 * self::COUNT)) as $run) {
+		foreach ($this->runs->find(array("roots" => true, "limit" => 2 * self::COUNT)) as $run) {
 			if (Run::seen($user, $run, $prompts, $notes)) {
-				$runs[] = $this->ofRun($run, $access, $roles, $folders);
+				$rows[] = $run;
 			}
+		}
+
+		$children = $this->children($rows, $user, $prompts, $notes);
+
+		foreach ($rows as $run) {
+			$id = $run->getId();
+			$runs[] = $this->ofRun($run, $access, $roles, $folders, isset($children[$id]) ? $children[$id] : 0);
 		}
 
 		foreach ($this->flows->visible($user, self::COUNT) as $flow) {
@@ -97,6 +105,35 @@ class Recent {
 		}
 
 		return self::merge($runs, $flows, self::COUNT);
+	}
+
+	/**
+	 * children counts the runs each row of the rail dispatched that the
+	 * reader sees, by the row's ID.
+	 *
+	 * One statement answers for the whole rail, over the columns the
+	 * permission rule reads: a count a page draws fifty of is not fifty reads.
+	 */
+	function children($rows, $user, $prompts, $notes) {
+		$ids = array();
+
+		foreach ($rows as $run) {
+			$ids[] = $run->getId();
+		}
+
+		$found = $this->runs->childrenOf($ids);
+		$counts = array();
+
+		foreach ($found as $child) {
+			if (!Run::seenRow($user, $child, $prompts, $notes)) {
+				continue;
+			}
+
+			$parent = Row::text($child, "parent_id");
+			$counts[$parent] = isset($counts[$parent]) ? $counts[$parent] + 1 : 1;
+		}
+
+		return $counts;
 	}
 
 	/** merge walks two lists that are each newest first and keeps the first n. */
@@ -127,8 +164,8 @@ class Recent {
 		return $out;
 	}
 
-	/** ofRun is one run of a job as the component reads it. */
-	function ofRun($run, $access, $roles, $folders) {
+	/** ofRun is one run of a job as the component reads it, with the runs it dispatched counted. */
+	function ofRun($run, $access, $roles, $folders, $children = 0) {
 		$state = $run->getState();
 		$name = Run::name($run);
 		$user = $run->getUserName();
@@ -148,6 +185,7 @@ class Recent {
 			"ended" => $ended,
 			"act" => $act,
 			"flow" => false,
+			"children" => $children,
 			"title" => "Open " . $name . ", " . $user . ", " . $state,
 			"avatar" => Who::avatar($user, self::role($roles, $user)),
 		);
@@ -167,6 +205,7 @@ class Recent {
 			"ended" => Run::ended($state),
 			"act" => "eye",
 			"flow" => true,
+			"children" => 0,
 			"title" => "Workflow " . $flow->getName() . ", " . $user . ", " . $state,
 			"avatar" => Who::avatar($user, self::role($roles, $user)),
 		);
