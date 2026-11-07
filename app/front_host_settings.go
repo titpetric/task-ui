@@ -124,7 +124,7 @@ func (h *FrontHost) Instance(ctx context.Context, admin bool) phpfront.Instance 
 		out.URL, out.Listen, out.Root = cfg.URL, cfg.Listen, cfg.Root
 		out.DataDir, out.SSHDir, out.Htpasswd, out.HostData = cfg.DataDir, cfg.SSHDir, cfg.Htpasswd, cfg.HostData
 		out.Discover, out.AutoLogin, out.TimeZone = cfg.Discover, cfg.AutoLogin, cfg.TimeZone
-		out.SessionTTL, out.Keep, out.Grace = cfg.SessionTTL, cfg.Keep, cfg.Grace
+		out.SessionTTL, out.SessionMax, out.Keep, out.Grace = cfg.SessionTTL, cfg.SessionMax, cfg.Keep, cfg.Grace
 		out.ArtifactHistory, out.ComposeProject = cfg.ArtifactHistory, cfg.ComposeProject
 	}
 	if h.Integrations != nil {

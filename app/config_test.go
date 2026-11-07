@@ -36,6 +36,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, filepath.Join(root, "data", "artifacts", "tree"), cfg.ArtifactTree())
 	assert.Equal(t, 7, cfg.ArtifactHistory)
 	assert.Equal(t, time.Hour, cfg.SessionTTL)
+	assert.Equal(t, 30*24*time.Hour, cfg.SessionMax, "the default ceiling, with no variable set")
 	assert.Equal(t, 2*time.Minute, cfg.Keep)
 	assert.Equal(t, 10*time.Second, cfg.Grace)
 	assert.False(t, cfg.Discover)
@@ -95,6 +96,10 @@ func TestNewConfig_Errors(t *testing.T) {
 	assert.ErrorContains(t, err, "TASK_UI_SESSION_TTL")
 
 	t.Setenv("TASK_UI_SESSION_TTL", "")
+	t.Setenv("TASK_UI_SESSION_MAX", "a month")
+	_, err = app.NewConfig(nil)
+	assert.ErrorContains(t, err, "TASK_UI_SESSION_MAX")
+	t.Setenv("TASK_UI_SESSION_MAX", "")
 	_, err = app.NewConfig([]string{"--nope"})
 	assert.Error(t, err)
 

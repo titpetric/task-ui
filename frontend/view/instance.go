@@ -26,9 +26,10 @@ type Instance struct {
 	// TimeZone is the zone of the server's clock, as the pages and the
 	// hours read it.
 	TimeZone string
-	// SessionTTL, Keep and Grace are TASK_UI_SESSION_TTL, TASK_UI_KEEP
-	// and TASK_UI_GRACE, as durations read.
+	// SessionTTL, SessionMax, Keep and Grace are TASK_UI_SESSION_TTL,
+	// TASK_UI_SESSION_MAX, TASK_UI_KEEP and TASK_UI_GRACE, as durations read.
 	SessionTTL string
+	SessionMax string
 	Keep       string
 	Grace      string
 	// ArtifactHistory is TASK_UI_ARTIFACT_HISTORY, 0 for every version.

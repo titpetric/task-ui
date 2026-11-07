@@ -72,8 +72,9 @@ type Instance struct {
 	// TimeZone is the zone of the server's clock, which the hours and the
 	// schedules read.
 	TimeZone string `json:"time_zone"`
-	// SessionTTL, Keep and Grace are the durations read, as they word.
+	// SessionTTL, SessionMax, Keep and Grace are the durations read, as they word.
 	SessionTTL string `json:"session_ttl"`
+	SessionMax string `json:"session_max"`
 	Keep       string `json:"keep"`
 	Grace      string `json:"grace"`
 	// ArtifactHistory is how many versions the history keeps, 0 for every

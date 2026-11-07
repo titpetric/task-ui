@@ -60,6 +60,7 @@ func instance(found Instance) *model.Array {
 		"auto_login", found.AutoLogin,
 		"time_zone", found.TimeZone,
 		"session_ttl", found.SessionTTL,
+		"session_max", found.SessionMax,
 		"keep", found.Keep,
 		"grace", found.Grace,
 		"artifact_history", found.ArtifactHistory,

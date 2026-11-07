@@ -678,7 +678,7 @@ class Host {
 	/**
 	 * What the server runs with: the `url`, `listen`, `root`, `data_dir`,
 	 * `ssh_dir`, `htpasswd` and `host_data` paths, `discover`, `auto_login`,
-	 * `time_zone`, the `session_ttl`, `keep` and `grace` durations,
+	 * `time_zone`, the `session_ttl`, `session_max`, `keep` and `grace` durations,
 	 * `artifact_history`, `compose_project`, `beszel`, `running` and the
 	 * `backlog` of slots, the `parent_env` mode with the `env` names,
 	 * `env_base` and `env_sensitive` lists, and `measured` with the `storage`
@@ -704,6 +704,7 @@ class Host {
 			"auto_login" => "",
 			"time_zone" => "",
 			"session_ttl" => "",
+			"session_max" => "",
 			"keep" => "",
 			"grace" => "",
 			"artifact_history" => 0,

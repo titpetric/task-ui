@@ -199,7 +199,8 @@ func (a *App) wire(version string) error {
 	instance := &view.Instance{
 		URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
 		Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),
-		SessionTTL: cfg.SessionTTL.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(), ArtifactHistory: cfg.ArtifactHistory, ComposeProject: self,
+		SessionTTL: cfg.SessionTTL.String(), SessionMax: cfg.SessionMax.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(),
+		ArtifactHistory: cfg.ArtifactHistory, ComposeProject: self,
 	}
 	measured := &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))}
 
