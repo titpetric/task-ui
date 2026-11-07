@@ -2,8 +2,10 @@ package runner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/titpetric/task-ui/git"
@@ -31,7 +33,9 @@ func (m *Manager) pull(ctx context.Context, session *Session) error {
 	}
 	home := session.home
 	if home != "" && m.opts.Git.IsRepo(home) {
-		if err := m.pullDir(ctx, session, home, "git -C "+home+" pull --ff-only"); err != nil {
+		// The home is where every run of the workspace lives, this one
+		// included, so the recovery may not replace it with a fresh clone.
+		if err := m.pullDir(ctx, session, home, "git -C "+home+" pull --ff-only", false); err != nil {
 			return err
 		}
 	}
@@ -39,25 +43,63 @@ func (m *Manager) pull(ctx context.Context, session *Session) error {
 	if dir == "" || dir == home {
 		return nil
 	}
-	return m.pullDir(ctx, session, dir, "git pull --ff-only")
+	return m.pullDir(ctx, session, dir, "git pull --ff-only", true)
 }
 
 // pullDir pulls one checkout under its lock, showing the command line.
-func (m *Manager) pullDir(ctx context.Context, session *Session, dir, line string) error {
+func (m *Manager) pullDir(ctx context.Context, session *Session, dir, line string, clone bool) error {
 	lock := m.pullLock(dir)
 	lock.Lock()
 	defer lock.Unlock()
 
 	fmt.Fprintf(session, "\x1b[2m$ %s\x1b[0m\r\n", line)
-	if err := m.opts.Git.Pull(ctx, dir, crlfWriter{session}); err != nil {
+	if err := pullOnce(ctx, m.opts.Git, dir, clone, crlfWriter{session}); err != nil {
 		return fmt.Errorf("git pull failed: %w", err)
 	}
 	fmt.Fprint(session, "\r\n")
 	return nil
 }
 
-// PullCheckout fast forwards a checkout under its lock, as a run of it does before it starts, writing git's
-// output to w: what a push hook calls, so it pulls under no run in progress; git.ErrNotRepo for no checkout.
+// puller is the git a pull needs: the fast forward, and the mend of a checkout it fails in.
+type puller interface {
+	Pull(ctx context.Context, dir string, w io.Writer) error
+	Recover(ctx context.Context, dir, failure string, clone bool, w io.Writer) (git.Recovery, error)
+}
+
+// pullOnce fast forwards a checkout, and mends it and pulls again once when the pull fails; the pull's error is the one it returns.
+// clone false keeps the last resort off a directory runs live in, a workspace home, which it would rename out from under them.
+func pullOnce(ctx context.Context, g puller, dir string, clone bool, w io.Writer) error {
+	said := newRing(4096)
+	err := g.Pull(ctx, dir, io.MultiWriter(w, said))
+	if err == nil || errors.Is(err, git.ErrNotRepo) {
+		return err
+	}
+	recovery, mendErr := g.Recover(ctx, dir, failureOf(err, said), clone, w)
+	if mendErr != nil {
+		fmt.Fprintf(w, "git recovery: the checkout was not mended: %s\n", mendErr)
+		return err
+	}
+	fmt.Fprintf(w, "%s\n", recovery.Line())
+	if !recovery.Mended {
+		return err
+	}
+	// The cause the reader needs is the pull's, not the retry's.
+	if retry := g.Pull(ctx, dir, w); retry != nil {
+		return err
+	}
+	return nil
+}
+
+// failureOf returns what the failed pull said, its exit status when it said nothing.
+func failureOf(err error, said *ring) string {
+	if out := strings.TrimSpace(string(said.Bytes())); out != "" {
+		return out
+	}
+	return err.Error()
+}
+
+// PullCheckout fast forwards a checkout under its lock and mends it when the pull fails, writing to w what a push hook answers with; git.ErrNotRepo for no checkout.
+// A hook pulls with nobody watching and names a workspace home as readily as a project, so this path refuses the last resort: a run's own pull is where a checkout gets cloned again.
 func (m *Manager) PullCheckout(ctx context.Context, dir string, w io.Writer) error {
 	if m.opts.Git == nil {
 		return git.ErrNotRepo
@@ -65,7 +107,7 @@ func (m *Manager) PullCheckout(ctx context.Context, dir string, w io.Writer) err
 	lock := m.pullLock(dir)
 	lock.Lock()
 	defer lock.Unlock()
-	return m.opts.Git.Pull(ctx, dir, w)
+	return pullOnce(ctx, m.opts.Git, dir, false, w)
 }
 
 // pullLock returns the lock of a checkout.

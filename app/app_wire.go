@@ -31,6 +31,23 @@ import (
 	"github.com/titpetric/task-ui/workflow"
 )
 
+// modelled reports whether a model is set up for task-ui's own asks, Claude Code's or OpenRouter's.
+func modelled(ctx context.Context, store *integration.Store) bool {
+	if store == nil {
+		return false
+	}
+	for _, id := range []string{integration.Claude, integration.OpenRouter} {
+		values, err := store.Values(ctx, id)
+		if err != nil {
+			continue
+		}
+		if kind := integration.KindOf(id); kind != nil && integration.Configured(*kind, values) {
+			return true
+		}
+	}
+	return false
+}
+
 // wire builds the instance's own parts and the handler over its storage and services.
 func (a *App) wire(version string) error {
 	cfg, store, svc := a.Config, a.Storage, a.Services
@@ -39,6 +56,14 @@ func (a *App) wire(version string) error {
 	// so the order a user saved survives a restart.
 	if err := store.Sidebar.EnsureDefaults(context.Background(), model.SidebarDefaults()); err != nil {
 		return err
+	}
+
+	// The model names which case a failed pull is, out of git's closed list, and task-ui runs that case's mend itself.
+	if svc.Git != nil && modelled(context.Background(), svc.Integrations) {
+		triage := &claude.Triager{Timeout: 90 * time.Second, Env: func(ctx context.Context) (map[string]string, error) {
+			return svc.Integrations.Env(ctx, "", "")
+		}}
+		svc.Git.Triage = triage.Triage
 	}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, store.Projects)

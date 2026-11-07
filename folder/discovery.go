@@ -20,6 +20,11 @@ const maxDepth = 6
 // skipped are the directories discovery never looks into.
 var skipped = map[string]bool{"node_modules": true, "vendor": true, "testdata": true}
 
+// brokenSuffix names what a pull's recovery renames a checkout it could
+// not mend to, kept beside the fresh clone: the same jobs under another
+// name, which the walk has no business listing twice.
+const brokenSuffix = ".broken-"
+
 // Discovery finds the folders under a root, laid out as the layout
 // package says: each workspace's home, a folder of its own, and every
 // directory under its src that holds something to run, as deep as they
@@ -314,7 +319,7 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 	entries, _ := os.ReadDir(dir)
 	for _, entry := range entries {
 		name := entry.Name()
-		if !entry.IsDir() || strings.HasPrefix(name, ".") || skipped[name] {
+		if !entry.IsDir() || strings.HasPrefix(name, ".") || skipped[name] || strings.Contains(name, brokenSuffix) {
 			continue
 		}
 		sub := filepath.Join(dir, name)
@@ -350,7 +355,7 @@ func holdsJobs(dir string, depth int) bool {
 	entries, _ := os.ReadDir(dir)
 	for _, entry := range entries {
 		name := entry.Name()
-		if !entry.IsDir() || strings.HasPrefix(name, ".") || skipped[name] {
+		if !entry.IsDir() || strings.HasPrefix(name, ".") || skipped[name] || strings.Contains(name, brokenSuffix) {
 			continue
 		}
 		if holdsJobs(filepath.Join(dir, name), depth+1) {

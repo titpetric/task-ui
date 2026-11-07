@@ -19,6 +19,8 @@ import (
 // length of the command; nil Keys leaves ssh to itself.
 type Git struct {
 	Keys Keys
+	// Triage names the case a failure is, "" when no model is available.
+	Triage func(ctx context.Context, dir, failure, status string) (string, error)
 }
 
 // ErrNotRepo reports a folder without a .git directory.
@@ -73,7 +75,7 @@ func shellQuote(s string) string {
 }
 
 func (g *Git) run(ctx context.Context, dir string, w io.Writer, args ...string) error {
-	env, cleanup, err := g.env(ctx, len(args) > 0 && (args[0] == "clone" || args[0] == "pull"))
+	env, cleanup, err := g.env(ctx, len(args) > 0 && reaches(args[0]))
 	if err != nil {
 		return err
 	}
@@ -86,14 +88,37 @@ func (g *Git) run(ctx context.Context, dir string, w io.Writer, args ...string) 
 	return cmd.Run()
 }
 
+// reaches reports whether a git subcommand talks to the remote, so it runs with the key.
+func reaches(command string) bool {
+	switch command {
+	case "clone", "pull", "fetch", "ls-remote":
+		return true
+	}
+	return false
+}
+
 func (g *Git) output(dir string, args ...string) (string, error) {
-	var out bytes.Buffer
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := g.run(ctx, dir, &out, args...); err != nil {
+	out, err := g.capture(context.Background(), dir, 10*time.Second, args...)
+	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(out.String()), nil
+	return out, nil
+}
+
+// capture returns a git command's output, git's own error text when it fails, bounded by timeout.
+func (g *Git) capture(ctx context.Context, dir string, timeout time.Duration, args ...string) (string, error) {
+	var out bytes.Buffer
+	run, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	err := g.run(run, dir, &out, args...)
+	return strings.TrimSpace(out.String()), err
+}
+
+// write runs a git command of a mend, its output in w, bounded by timeout.
+func (g *Git) write(ctx context.Context, dir string, w io.Writer, timeout time.Duration, args ...string) error {
+	run, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return g.run(run, dir, w, args...)
 }
 
 // Info returns the remote, branch and last commit of a checkout, or nil

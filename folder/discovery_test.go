@@ -105,6 +105,9 @@ func TestDiscovery_Tree(t *testing.T) {
 	write(t, src(root, "services", "api", "internal", "Makefile"), "build:\n\tgo build\n")
 	write(t, src(root, "services", "api", "cmd", "tool", "Makefile"), "build:\n\tgo build\n")
 	write(t, src(root, "node_modules", "dep", "atkins.yml"), "jobs:\n  x: echo x\n")
+	// What a pull's recovery kept beside the clone it made: the same jobs
+	// under another name, which the listing leaves out.
+	write(t, src(root, "services.broken-20260101-120000.000", "atkins.yml"), "jobs:\n  x: echo x\n")
 
 	d := &Discovery{Root: root, Discover: true}
 	ids := []string{}
