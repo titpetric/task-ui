@@ -22,6 +22,7 @@ import (
 	"github.com/titpetric/task-ui/spotify"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/stt"
 	"github.com/titpetric/task-ui/tooling"
 )
 
@@ -44,6 +45,7 @@ type AppServices struct {
 	Telemetry    *Telemetry
 	Cleaner      *retention.Cleaner
 	Spotify      *spotify.Service
+	STT          *stt.Service
 	Instance     *view.Instance
 
 	// mounts and hostData are the container's bind mounts, read once for the runner and the Instance page.
@@ -106,6 +108,9 @@ func NewAppServices(cfg *Config, s *AppStorage) (*AppServices, error) {
 			States:  &spotify.States{},
 			BaseURL: cfg.URL,
 		},
+		STT: stt.New(func(ctx context.Context) (map[string]string, error) {
+			return integrations.Values(ctx, integration.STT)
+		}),
 		// What the server runs with and what it keeps on disk, both read by the
 		// two front ends: the Instance page of either draws the same
 		// configuration, and the meter is one so a page drawn twice walks the

@@ -200,6 +200,7 @@ func (a *App) wire(version string) error {
 	}
 	apiHandlers := api.New(api.Options{
 		Spotify: svc.Spotify,
+		STT:     svc.STT,
 		Users:   store.Users, Projects: store.Projects, Workspaces: store.Workspaces, Runs: store.Runs, Artifacts: store.Artifacts, ArtifactStore: svc.Artifacts, Schedules: store.Schedules, Secrets: svc.Secrets, SecretReads: store.SecretReads,
 		FolderRefs: store.FolderRefs,
 		Workflows:  store.Workflows, WorkflowRuns: store.WorkflowRuns, Flows: a.Workflows, Events: svc.Events,

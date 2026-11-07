@@ -1,6 +1,6 @@
 # Dictation
 
-An orb sits in the bottom right of every page. Press it and a window opens over the page with the orb at full size, the words under it and three buttons. Press the orb in the middle to record, press it again to pause, and press it once more to add to the same recording. **Send** delivers what you said. The left button steps back: it throws a recording away, then dismisses an answer that came back, then closes the window, and its icon says which.
+An orb sits in the bottom right of every page. Press it and a window opens over the page with the orb at full size, the words under it and three buttons. Press the orb in the middle to record and press it again to end the recording and send it; **Send** during a recording does the same thing. The left button steps back: it throws a recording away, then dismisses an answer that came back, then closes the window, and its icon says which.
 
 The orb shows wherever the browser can open a microphone: a secure page, so `https://` or `localhost`. It does not show over `http://` on a LAN address.
 
@@ -11,7 +11,15 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 - **A run is attached and takes input.** The words go to the terminal as if typed, with no newline: punctuation is spelled out as `[dot]`, `[slash]` and the rest, so a dictated sentence cannot run a command.
 - **Anything else.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
 
-Chrome and Edge transcribe on the device, so the words never leave it: the orb reads `SpeechRecognition.available({processLocally: true})` and fetches the language the first time you press record. Safari and Firefox have no such recogniser, and neither do most phones. There the orb records and the instance does the rest.
+## Who transcribes
+
+With the **Speech to text** integration set up, this instance transcribes and the words arrive while you are still talking: every four seconds the window posts the piece of the recording since the last one to `POST /api/voice/transcribe`, which runs whisper.cpp on the server and answers with the words. The transcript the prompt is built from is what those pieces said, and the last piece is waited for before the prompt goes out. Transcribing takes `prompt/edit`, the same as asking Claude.
+
+The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder. A piece is transcribed on its own, so a cut lands mid-word often enough; `threads` is what decides whether the words keep up with the talking.
+
+Without the integration, Chrome and Edge transcribe on the device and the words never leave it: the orb reads `SpeechRecognition.available({processLocally: true})` and fetches the language the first time you press record. Safari and Firefox have no such recogniser, and neither do most phones. There the orb records and the session does the rest.
+
+Only one of the two runs. Where the server transcribes, the device's recogniser stays shut, so one transcript is built and not two.
 
 ## The session
 
@@ -21,7 +29,7 @@ The thread opens with an instruction the orb writes: reply in two or three spoke
 
 The window follows the thread over `/api/sse/notes` for as long as it is open. Nothing is polled: a reply pushes itself, and that holds for the second reply as much as the first, so work that finishes ten minutes later arrives and plays on its own. The replay button plays the last one again.
 
-A clip from a device that cannot transcribe is sent with no words, and the thread is asked to run the `transcribe-audio` workflow over it first.
+A clip nothing transcribed is sent with no words, and the thread is asked to run the `transcribe-audio` workflow over it first. A transcribed clip goes with its words and the path of the recording: no second pass over the same audio.
 
 Closing the window ends the session. The thread stays on the board under the page it belongs to, and the next time the orb opens it starts a new one.
 
@@ -54,4 +62,4 @@ Reduced motion draws one frame and runs no loop.
 
 ## What the recording is
 
-16 kHz mono, as a transcriber reads it: whisper resamples to that rate, so capturing more buys a later pass nothing. A recording is bounded at the size an artifact write takes, which is about eight minutes of it. Pause and resume write one file, so a pause costs nothing.
+16 kHz mono, as a transcriber reads it: whisper resamples to that rate, so capturing more buys a later pass nothing. A recording is bounded at the size an artifact write takes, which is about eight minutes of it. What the server transcribes as you talk and what is written at the end are the same samples: the pieces are slices of the one buffer, and the artifact holds every frame.

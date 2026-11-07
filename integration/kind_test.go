@@ -16,7 +16,7 @@ func TestKinds(t *testing.T) {
 	assert.True(t, kind.Field("token").Secret)
 	assert.Nil(t, kind.Field("colour"))
 	assert.Nil(t, integration.KindOf("nothing"))
-	assert.Len(t, integration.Kinds(), 5)
+	assert.Len(t, integration.Kinds(), 6)
 	assert.NotNil(t, integration.KindOf(integration.Claude).Field("who"))
 	openrouter := integration.KindOf(integration.OpenRouter)
 	assert.NotNil(t, openrouter)
@@ -87,4 +87,20 @@ func TestKind_Spotify(t *testing.T) {
 	}
 	assert.False(t, integration.Configured(*kind, map[string]string{"client_id": "x"}))
 	assert.True(t, integration.Configured(*kind, map[string]string{"client_id": "x", "client_secret": "y"}))
+}
+
+// Speech to text names two paths on this machine and no credential, so
+// nothing of it is a secret and nothing reaches a run as a variable.
+func TestKind_STT(t *testing.T) {
+	t.Parallel()
+	kind := integration.KindOf(integration.STT)
+	assert.NotNil(t, kind)
+	assert.Equal(t, "", kind.Credential())
+	for _, field := range kind.Fields {
+		assert.False(t, field.Secret, field.Name)
+		assert.Equal(t, "", field.Env, field.Name)
+	}
+	assert.True(t, kind.Field("threads").Optional)
+	assert.False(t, integration.Configured(*kind, map[string]string{"bin": "/x/whisper-cli"}))
+	assert.True(t, integration.Configured(*kind, map[string]string{"bin": "/x/whisper-cli", "model": "/x/m.bin"}))
 }

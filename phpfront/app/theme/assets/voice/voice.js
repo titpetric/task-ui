@@ -1,10 +1,19 @@
-// voice: dictation, transcribed on the device.
+// voice: dictation, transcribed on this instance or on the device.
 //
 // The orb in the corner opens the window: the avatar at full size, the words
 // under it, and two buttons. The microphone opens once and the stream feeds
 // two things, an analyser whose level drives the avatar and a worklet that
 // collects the samples, so the recording can be kept beside the words it came
 // out as.
+//
+// Where the stt integration is set up the server is the transcriber: a slice
+// of the recording goes to /api/voice/transcribe every SLICE milliseconds and
+// the words come back while the talking goes on. The device's own recogniser
+// then stays shut, so one transcript is built and not two. Where it is not,
+// the device transcribes as before.
+//
+// A press ends the recording and sends it: the orb and the send button are the
+// same act, and pause is for a fault and a page sent to the background.
 //
 // Nothing reaches a run while you talk. Interim results are drawn in the
 // window; the only write is taskUI.paste on send, which is the whole of the
@@ -50,6 +59,12 @@
   // dictation left running cannot fail its upload after the fact.
   var MAX = 16 << 20;
 
+  // SLICE is how long a piece of the recording runs before it is posted to be
+  // transcribed. Four seconds is short enough that the words keep up with the
+  // talking and long enough that whisper has a phrase to work on: a slice is
+  // transcribed on its own, so a cut lands mid-word often enough as it is.
+  var SLICE = 4000;
+
   // BRIEF opens the session, once, with the first thing said into it. The
   // thread that follows is one conversation: Claude reads everything said in
   // it so far, holds the task tools, and may reply again long after the
@@ -66,9 +81,12 @@
     "audio. The window plays <base>.N.reply.wav and nothing else, so a reply without one is never heard.",
   ].join("\n");
 
-  // HEARD rides with a clip this device could not transcribe: the words it
-  // holds are the question, so the session reads them first.
+  // HEARD rides with a clip nothing could transcribe: the words it holds are
+  // the question, so the session reads them first. KEPT rides with one the
+  // words already cover: no second pass over the same audio.
   var HEARD = "The clip is at <clip>.wav. Transcribe it with the transcribe-audio workflow and answer what it asks.";
+
+  var KEPT = "The recording is at <clip>.wav, already transcribed as the words above.";
 
   // STAGES name what the thread is doing while nothing has come back.
   var STAGES = ["Transcribing", "Thinking", "Speaking"];
@@ -104,6 +122,10 @@
   var clock = 0;        // the interval writing the counter
   var doing = "";       // the step the counter sits beside
   var failed = false;   // the run ended and left nothing beside the recording
+  var server = null;    // null until asked, then whether the server transcribes
+  var sent = 0;         // how many frames of the buffer have been posted
+  var posting = 0;      // the interval posting the slices
+  var flight = false;   // a slice is out and the next tick waits for it
 
   // ------------------------------------------------------------------ gate
 
@@ -115,7 +137,7 @@
   // because a modal run window puts the orb behind its backdrop.
   function paint() {
     orb.hidden = !canRecord;
-    orb.title = ready ? "Dictate" : "Record";
+    orb.title = ready || server ? "Dictate" : "Record";
     if (mic) mic.hidden = !(canRecord && mic.dataset.allowed);
   }
 
@@ -236,14 +258,19 @@
     media = null;
   }
 
-  // wav writes the frames as a RIFF file, mono, downsampled to RATE. Each
-  // output sample is the mean of the source window behind it; one sample
-  // picked out of that window would alias a voice badly.
-  function wav() {
+  // wav writes the frames from until to as a RIFF file, mono, downsampled to
+  // RATE, and the whole buffer with neither. Each output sample is the mean of
+  // the source window behind it; one sample picked out of that window would
+  // alias a voice badly.
+  function wav(from, to) {
     if (!buffer || !buffer.length) return null;
-    var all = new Float32Array(buffer.length);
+    var frames = buffer.frames.slice(from || 0, to === undefined ? buffer.frames.length : to);
+    var length = 0;
+    frames.forEach(function (f) { length += f.length; });
+    if (!length) return null;
+    var all = new Float32Array(length);
     var at = 0;
-    buffer.frames.forEach(function (f) { all.set(f, at); at += f.length; });
+    frames.forEach(function (f) { all.set(f, at); at += f.length; });
     var ratio = buffer.rate / RATE;
     var count = Math.floor(all.length / ratio);
     var out = new Int16Array(count);
@@ -354,6 +381,90 @@
     }, function () { return ""; });
   }
 
+  // ------------------------------------------------------------- transcribe
+
+  // asking settles once whether the server transcribes. It does when the stt
+  // integration is set up, and then it is the transcriber: the words arrive
+  // while the talking goes on and the device's own recogniser stays shut, so
+  // one transcript is built and not two.
+  function asking() {
+    if (server !== null) return Promise.resolve(server);
+    return fetch("/api/voice/ready", { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        server = !!(data && data.ready);
+        paint();
+        return server;
+      }, function () {
+        server = false;
+        return false;
+      });
+  }
+
+  // slice posts the frames recorded since the last one and adds the words to
+  // the transcript. A slice that fails stops the streaming for this recording:
+  // the whole clip is still written at the end, and the session is asked to
+  // transcribe it as it is for a device that cannot.
+  function slice() {
+    if (flight || !server || !buffer) return;
+    var from = sent;
+    var to = buffer.frames.length;
+    if (to <= from) return;
+    var clip = wav(from, to);
+    if (!clip) return;
+    flight = true;
+    fetch("/api/voice/transcribe", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "audio/wav", Accept: "application/json" },
+      body: clip,
+    }).then(function (res) {
+      flight = false;
+      if (!res.ok) throw new Error("the server did not transcribe the clip");
+      return res.json();
+    }).then(function (data) {
+      sent = to;
+      var words = (data && data.text ? data.text : "").trim();
+      if (!words) return;
+      text += (text ? " " : "") + words;
+      heard(text, "");
+    }).catch(function (err) {
+      flight = false;
+      streaming(false);
+      server = false;
+      console.info("voice: the server stopped transcribing, the clip goes to the session", err);
+    });
+  }
+
+  // streaming starts and stops the posting of slices. Stopping posts what is
+  // left, so the last words said are in the transcript the prompt is built
+  // from, and answers once that slice is in.
+  function streaming(on) {
+    if (posting) window.clearInterval(posting);
+    posting = 0;
+    if (on) {
+      posting = window.setInterval(slice, SLICE);
+      return Promise.resolve();
+    }
+    if (!server || !buffer || buffer.frames.length <= sent) return Promise.resolve();
+    // The last slice is waited for, up to WAIT: a prompt built before it
+    // landed would be missing the end of the sentence. Past that the words
+    // there are are the question.
+    var WAIT = 30000;
+    var until = Date.now() + WAIT;
+    return new Promise(function (done) {
+      var wait = function () {
+        if (!flight) {
+          slice();
+          if (!flight) return done();
+        }
+        if (Date.now() > until) return done();
+        window.setTimeout(wait, 100);
+      };
+      wait();
+    });
+  }
+
   // ------------------------------------------------------------------ flow
 
   // target picks where send puts the words. A run that is attached and takes
@@ -418,7 +529,7 @@
     var now = state();
     overlay.dataset.state = now;
     stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
-    stage.title = now === "recording" ? "Pause" : (now === "paused" ? "Resume" : "Record");
+    stage.title = now === "recording" ? "Stop and send" : (now === "paused" ? "Send" : "Record");
     stage.setAttribute("aria-label", stage.title);
     sendBtn.disabled = now === "idle";
     // The left button is whatever there is to undo: the recording, then the
@@ -460,14 +571,16 @@
   // unless it is handling the user's gesture.
   function record() {
     if (starting || media) return;
-    var SR = window.SpeechRecognition;
-    var first = ready && install && SR.install
-      ? SR.install({ langs: [lang], processLocally: true }).then(function () { install = false; })
-      : Promise.resolve();
     starting = true;
-    dress(install ? "Fetching the language, once" : (text || (ready ? "" : "Recording")));
-    first.then(listening).then(function () {
+    dress(text || "Recording");
+    asking().then(function () {
+      var SR = window.SpeechRecognition;
+      return !server && ready && install && SR.install
+        ? SR.install({ langs: [lang], processLocally: true }).then(function () { install = false; })
+        : undefined;
+    }).then(listening).then(function () {
       starting = false;
+      if (server) streaming(true);
       dress(text || undefined);
     }).catch(function (err) {
       starting = false;
@@ -475,9 +588,12 @@
     });
   }
 
-  // pause closes the microphone and keeps everything heard and captured.
+  // pause closes the microphone and keeps everything heard and captured. It
+  // sends nothing: a fault and a page sent to the background come through
+  // here, and the orb's own press ends in stop.
   function pause() {
     starting = false;
+    streaming(false);
     if (rec) {
       rec.onresult = null;
       rec.onerror = null;
@@ -488,6 +604,24 @@
     dress();
   }
 
+  // stop ends the recording the way the reader means it to end: the
+  // microphone closes, the slice still being talked into is posted and waited
+  // for, and the words go wherever send puts them. Pressing the orb and
+  // pressing send during a recording are the same act.
+  function stop() {
+    if (state() === "idle") return;
+    starting = false;
+    if (rec) {
+      rec.onresult = null;
+      rec.onerror = null;
+      try { rec.stop(); } catch (e) { /* already stopped */ }
+      rec = null;
+    }
+    release();
+    dress("Transcribing");
+    streaming(false).then(send);
+  }
+
   // listening opens the recogniser and the microphone, and returns once both
   // are running or the microphone alone where there is no recogniser.
   //
@@ -496,7 +630,7 @@
   // they come after and are allowed to fail.
   function listening() {
     var SR = window.SpeechRecognition;
-    if (!ready) {
+    if (server || !ready) {
       return listen().then(function () {
         if (!media || !media.node) throw new Error("this browser cannot record");
       }).catch(refused);
@@ -608,7 +742,7 @@
     ticking(clip && !words ? STAGES[0] : "Asking");
     var body = words;
     if (clip && !words) body = HEARD.replace("<clip>", clip);
-    else if (clip) body = words + "\n\n" + HEARD.replace("<clip>", clip);
+    else if (clip) body = words + "\n\n" + KEPT.replace("<clip>", clip);
     if (!thread) {
       stamp = clip || "voice/" + new Date().toISOString().replace(/[:.]/g, "-").replace("Z", "");
       body = body + "\n\n" + BRIEF.replace("<base>", stamp);
@@ -778,6 +912,7 @@
     pause();
     buffer = null;
     text = "";
+    sent = 0;
   }
 
   // trash clears the window, ends the session and closes it. The thread
@@ -823,6 +958,7 @@
     pause();
     buffer = null;
     text = "";
+    sent = 0;
     dress();
     if (words && to.kind === "run") {
       window.taskUI.paste(words);
@@ -903,10 +1039,13 @@
   if (mic) mic.addEventListener("click", visit);
   stage.addEventListener("click", function () {
     if (window.voiceOrbs) window.voiceOrbs.tap();
-    if (media || starting) pause();
+    if (media || starting) stop();
     else record();
   });
-  sendBtn.addEventListener("click", send);
+  sendBtn.addEventListener("click", function () {
+    if (media || starting) stop();
+    else send();
+  });
   discardBtn.addEventListener("click", back);
   replayBtn.addEventListener("click", function () { if (answer || reply) play(); });
 

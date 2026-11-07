@@ -24,6 +24,7 @@ const (
 	Forgejo    = "forgejo"
 	Beszel     = "beszel"
 	Spotify    = "spotify"
+	STT        = "stt"
 )
 
 // WebhookPath is the path of the Forgejo webhook under the instance's
@@ -136,6 +137,22 @@ func Kinds() []Kind {
 				"Playback control needs Spotify Premium and an active device; reading needs neither.",
 				"Allow the permission `spotify_link` to the roles or users who may connect an account, and `spotify_control` to those who may change playback, playlists and Liked Songs; both are denied until granted.",
 				"Each user then opens `/api/integrations/spotify/authorize` on the instance while signed in, agrees on Spotify's page and is sent back here. `DELETE /api/integrations/spotify/link` disconnects, and deletes the stored tokens.",
+			},
+		},
+		{
+			ID:          STT,
+			Title:       "Speech to text",
+			Description: "The voice orb's words: while a reader dictates, the page posts the audio as it arrives and the server transcribes it with whisper.cpp, on this machine. Without it a clip is kept as an artifact and the prompt thread is asked to transcribe it instead.",
+			Fields: []Field{
+				{Name: "bin", Label: "whisper-cli", Placeholder: "/data/workspaces/<ws>/home/.cache/stt/whisper.cpp/build/bin/whisper-cli", Help: "The binary the stt folder's setup job builds. Its libraries sit beside it and are loaded from there."},
+				{Name: "model", Label: "Model", Placeholder: "/data/.../whisper.cpp/models/ggml-small.en.bin", Help: "The ggml model the same job downloads. small.en reads English on a CPU at about real time."},
+				{Name: "threads", Label: "Threads", Optional: true, Help: "How many cores one clip takes, 4 by default and 32 at most. A clip arrives every few seconds, so this is what decides whether the words keep up."},
+			},
+			Steps: []string{
+				"Put the `stt` folder under a workspace's src, from `github.com/titpetric/stt`, and run its `setup` job once: it installs a static ffmpeg, builds whisper.cpp and downloads the model under the workspace's `home/.cache/stt`.",
+				"The job prints where it put them. Enter the `whisper-cli` path and the model path here, as the server sees them.",
+				"Save. The voice orb then transcribes on the server as well as on the device, so a browser that cannot transcribe still dictates.",
+				"Transcribing takes the `prompt/edit` permission, the same as asking Claude: the words go nowhere else.",
 			},
 		},
 	}

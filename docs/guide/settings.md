@@ -7,7 +7,7 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 3. [Telemetry](#telemetry): what the instance records of its own requests.
 4. [Keys](#keys): the encryption key and the SSH keys.
 5. [Secrets and env](#secrets-and-env), on the instance's encryption key.
-6. [Integrations](#integrations): Claude Code, OpenRouter, Forgejo, Beszel and Spotify.
+6. [Integrations](#integrations): Claude Code, OpenRouter, Forgejo, Beszel, Spotify and Speech to text.
 7. [Users](#users): who may sign in.
 8. [Permissions](#permissions): what each role may do.
 9. [Workflows](workflows.md): chains of jobs.
@@ -250,14 +250,15 @@ The services task-ui talks to, with their API keys and tokens, a card per integr
 - **OpenRouter**: a key that sends Claude Code to OpenRouter's gateway; the key sets every variable, see [OpenRouter](#openrouter) below.
 - **Forgejo**: the git host's URL and a token, for the sync that makes workspaces of its organisations and users and projects of their repositories, see [Forgejo](#forgejo) below.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the [Inventory](inventory.md) page. task-ui reads the collections `systems`, `system_stats`, the latest minute of each host and its records of eight or two hours for the charts, `containers`, the containers each host runs, and `container_stats`, their records, the newest minute on a hub without `containers`. A read-only user reads them all.
-- **Spotify**: the Client ID and Client secret of an app at developer.spotify.com, an optional redirect URI, **Access** and **Who**; see [Spotify](#spotify) below.
+- **Spotify**: the Client ID and Client secret of an app at developer.spotify.com, **Access** and **Who**; the redirect URI is the instance's own and takes no input. See [Spotify](#spotify) below.
+- **Speech to text**: the `whisper-cli` binary and the ggml model that the `setup` job of the `stt` folder builds, and how many threads one clip takes. With it the voice orb's words come from this instance while the reader is still talking; without it a browser that cannot transcribe sends the clip alone. See [Dictation](voice.md).
 
 ### Spotify
 
 Each user links their own Spotify account and then reads and controls it from prompts, runs and MCP, as themselves.
 
 1. At `https://developer.spotify.com/dashboard` create an app. A new app is in Development mode: only the accounts added under User Management, 25 at most, can link, until Spotify approves an extension.
-2. Register the redirect URI the form shows, `<instance URL>/api/integrations/spotify/callback`, exactly. It has to be https (or http on `127.0.0.1` for a local instance); `TASK_UI_URL` sets the instance URL, and the **Redirect URI** field overrides the derived address.
+2. Register the redirect URI the form shows, `<instance URL>/api/integrations/spotify/callback`, exactly. The instance owns that address and the field takes no input: `TASK_UI_URL` sets the instance URL, which has to be https, or http on `127.0.0.1` for a local instance.
 3. Enter the app's Client ID and Client secret, pick **Access**, and Save. `read` asks for `user-read-playback-state`, `user-read-currently-playing`, `playlist-read-private` and `user-library-read`; `write` adds `user-modify-playback-state`, `playlist-modify-public`, `playlist-modify-private` and `user-library-modify`. Playback control also needs Spotify Premium and an active device, and the tools say so when either is missing.
 4. Allow `spotify_link` (connect and read one's own account) and `spotify_control` (change playback, playlists and Liked Songs) on [Permissions](#permissions) to the roles or users who may: both are denied until granted. **Who** narrows who may link on top of that.
 5. A user opens `/api/integrations/spotify/authorize` on the instance, agrees on Spotify's page and returns to Integrations. Changing **Access** takes effect for a user when they link again.

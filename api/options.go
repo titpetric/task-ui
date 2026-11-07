@@ -22,6 +22,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/spotify"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/stt"
 	"github.com/titpetric/task-ui/workflow"
 )
 
@@ -75,6 +76,9 @@ type Options struct {
 	// Spotify links users' accounts and acts on them; nil turns the
 	// Spotify routes off.
 	Spotify *spotify.Service
+	// STT transcribes a dictated clip on this machine; nil answers the
+	// transcribe route with 503 and the orb keeps the clip instead.
+	STT *stt.Service
 	// HostRuns start the runs of @host:<host>, a command on hosts of the
 	// inventory. Nil runs on no host.
 	HostRuns *hostrun.Starter

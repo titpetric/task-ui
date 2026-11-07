@@ -45,9 +45,9 @@ A job that builds an image needs a daemon to build on and, to push, a login to t
 
 Which daemon:
 
-| Arrangement           | What the compose file does                            | What a job reaches                            | What it costs the host                        |
-|-----------------------|-------------------------------------------------------|-----------------------------------------------|-----------------------------------------------|
-| The host's daemon     | mounts `/var/run/docker.sock:ro`                      | every image, container and volume on the host | a job can read and start anything on the host |
+| Arrangement           | What the compose file does                                                   | What a job reaches                            | What it costs the host                        |
+|-----------------------|------------------------------------------------------------------------------|-----------------------------------------------|-----------------------------------------------|
+| The host's daemon     | mounts `/var/run/docker.sock:ro`                                             | every image, container and volume on the host | a job can read and start anything on the host |
 | A daemon in the image | `TASK_UI_DOCKER=dind`, `privileged: true` and a volume for `/var/lib/docker` | its own images, containers and volumes        | more than the socket does: privileged is root |
 
 A daemon inside the container is better isolation of the docker state and worse isolation of the host, because it needs `privileged: true`. Reach for it when a job must not see the host's containers, not when the host must be protected from the job.
