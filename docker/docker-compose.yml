@@ -19,10 +19,15 @@ services:
     # registry. docs/running.md#docker-and-registries has the three
     # arrangements; this is the first, and the least isolated.
     - /var/run/docker.sock:/var/run/docker.sock:ro
-    # The host's registry logins, read-only, for a job that pushes an
-    # image. Leave it out to let the Docker Registry integration write
-    # /app/.docker/config.json instead.
-    # - $HOME/.docker/config.json:/app/.docker/config.json:ro
+    # The host's registry logins, for a job that pushes an image. The
+    # Docker Registry integration runs `docker login` into the same file,
+    # so leaving this out keeps the logins inside the container.
+    #
+    # Mount the DIRECTORY. A single-file mount makes every credential
+    # change a silent no-op: the CLI renames a temp file over the config,
+    # the rename answers EBUSY on a bind-mounted file, and the CLI
+    # discards the error and reports success. `:ro` changes nothing.
+    # - $HOME/.docker:/app/.docker
 
 volumes:
   gopath:

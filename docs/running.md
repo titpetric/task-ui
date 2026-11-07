@@ -54,12 +54,16 @@ A daemon inside the container is better isolation of the docker state and worse 
 
 Which registry login:
 
-| Arrangement       | Where the credentials are                                                                               | Who manages them                        |
-|-------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------|
-| The host's logins | `$HOME/.docker/config.json` mounted read-only                                                           | whoever runs `docker login` on the host |
-| task-ui's own     | the Docker Registry integration, encrypted with the instance key, written to `/app/.docker/config.json` | an admin, in Settings                   |
+| Arrangement       | Mount                                        | Who logs in                              | The integration                             |
+|-------------------|----------------------------------------------|------------------------------------------|---------------------------------------------|
+| The host's logins | `$HOME/.docker:/app/.docker`                 | the host, and task-ui into the same file | on, and its saves reach the host's file too |
+| task-ui's own     | a named volume on `/app/.docker`, or nothing | task-ui alone                            | on                                          |
 
-task-ui writes the standard file and no format of its own: plain `auths` entries, no `credsStore`, so `docker` reads them with no helper binary present. The database holds them because a CRUD form has to list and edit and because a container rebuild wipes the filesystem; the file is derived from it at boot and on every save.
+task-ui stores a registry, a username and a password in the integration, encrypted with the instance key, and runs `docker login --password-stdin` for each on save and at boot. It writes no JSON itself, so whatever the installed CLI writes is what is on disk, a `credsStore` included. The database holds the pairs because a form has to list and edit them and because a container rebuild wipes the filesystem.
+
+**Mount the directory, never the file.** `-v $HOME/.docker/config.json:/app/.docker/config.json` makes every credential change a silent no-op: the CLI writes a sibling file and renames it over `config.json`, the rename answers `EBUSY` on a bind-mounted file, and the CLI discards the error and reports success. `docker logout reg.example` prints `Removing login credentials for reg.example`, exits 0, and leaves the credential in the file. `:ro` makes no difference, and neither does running as root. A directory mount renames correctly.
+
+A job that runs `docker login` itself writes `$HOME/.docker/config.json`, and a run's `HOME` is its workspace home, which is a git checkout: the login would land as an untracked file a folder page then reports. Runs therefore get `DOCKER_CONFIG=/app/.docker`, so a job's own login and the integration's reach the same file.
 
 ## Configuration
 
