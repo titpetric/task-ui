@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/titpetric/task-ui/forgejo"
@@ -107,7 +109,7 @@ func (h *Webhook) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// push pulls every checkout of the repository pushed, or returns why it did not.
+// push pulls every checkout of the repository pushed, in folder order, and returns the failures once it has tried them all.
 func (h *Webhook) push(w http.ResponseWriter, r *http.Request, body []byte) error {
 	push, err := forgejo.ParsePush(body)
 	if err != nil {
@@ -123,16 +125,20 @@ func (h *Webhook) push(w http.ResponseWriter, r *http.Request, body []byte) erro
 		return nil
 	}
 	var out bytes.Buffer
-	var pulled []string
-	for folder, dir := range dirs {
-		if err := h.Pull(r.Context(), dir, &out); err != nil {
+	var pulled, failed []string
+	for _, folder := range slices.Sorted(maps.Keys(dirs)) {
+		if err := h.Pull(r.Context(), dirs[folder], &out); err != nil {
 			slog.Warn("forgejo push pull failed", "repository", push.Repository.FullName, "folder", folder, "err", err)
-			return fmt.Errorf("%w: %s: %w: %s", errWebhookPull, folder, err, strings.TrimSpace(out.String()))
+			failed = append(failed, fmt.Sprintf("%s: %s", folder, err))
+			continue
 		}
 		pulled = append(pulled, folder)
 	}
 	slog.Info("forgejo push pulled", "repository", push.Repository.FullName, "ref", push.Ref, "folders", strings.Join(pulled, ", "))
-	writeJSON(w, http.StatusAccepted, map[string]any{"pulled": sorted(pulled), "output": out.String()})
+	if len(failed) > 0 {
+		return fmt.Errorf("%w: %s: %s", errWebhookPull, strings.Join(failed, "; "), strings.TrimSpace(out.String()))
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"pulled": pulled, "output": out.String()})
 	return nil
 }
 

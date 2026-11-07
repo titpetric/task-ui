@@ -129,6 +129,46 @@ func TestWebhook(t *testing.T) {
 	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
 }
 
+// A repository checked out twice has both pulled, in folder order, and
+// the one that failed is 502 with the other already pulled.
+func TestWebhook_Partial(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	var pulled []string
+	h := &api.Webhook{
+		Settings: func(context.Context) (map[string]string, error) {
+			return map[string]string{"url": "https://git.cdn.si", "token": "t", "secret": "s3"}, nil
+		},
+		Workspaces: func(context.Context) ([]model.Workspace, error) {
+			return []model.Workspace{{Folder: model.Default}, {Folder: "a"}, {Folder: "m"}, {Folder: "z"}}, nil
+		},
+		Projects: func(context.Context) ([]model.Project, error) {
+			return []model.Project{
+				{Folder: "a/infra", SourceURL: "https://git.cdn.si/ops/infra.git"},
+				{Folder: "m/infra", SourceURL: "https://git.cdn.si/ops/infra.git"},
+				{Folder: "z/infra", SourceURL: "https://git.cdn.si/ops/infra.git"},
+			}, nil
+		},
+		Root: root,
+		Pull: func(_ context.Context, dir string, w io.Writer) error {
+			if strings.Contains(dir, string(filepath.Separator)+"a"+string(filepath.Separator)) {
+				return errors.New("index.lock held")
+			}
+			pulled = append(pulled, dir)
+			io.WriteString(w, "Already up to date.\n")
+			return nil
+		},
+	}
+
+	rec := hook(h, "push", "s3", `{"repository":{"full_name":"ops/infra","clone_url":"https://git.cdn.si/ops/infra.git"}}`)
+	assert.Equal(t, http.StatusBadGateway, rec.Code)
+	assert.Contains(t, rec.Body.String(), "a/infra: index.lock held")
+	assert.Equal(t, []string{
+		filepath.Join(root, "m", "src", "infra"),
+		filepath.Join(root, "z", "src", "infra"),
+	}, pulled)
+}
+
 // With the integration off, or without a webhook secret, every call is
 // 404, the signature unread.
 func TestWebhook_Off(t *testing.T) {
