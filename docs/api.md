@@ -154,7 +154,7 @@ The surface below, and the MCP tools on it, stay frozen: a change adds a route o
 
 ## MCP
 
-`/api/mcp` is an MCP server over the streamable HTTP transport: nineteen tools to say what the token's user may do, list jobs and workflows, run them, make and change workflows, read the runs, read, leave and answer the notes, ask Claude in a folder, and list, read and write the artifact tree, as the token's user, and one resource, `taskui://context`. Its use is in [the MCP chapter](guide/mcp.md).
+`/api/mcp` is an MCP server over the streamable HTTP transport: tools to say what the token's user may do, list jobs and workflows, run them, make and change workflows, read the runs, read, leave and answer the notes, ask Claude in a folder, and list, read and write the artifact tree, as the token's user, and one resource, `taskui://context`. Its use is in [the MCP chapter](guide/mcp.md).
 
 A request your permissions refuse answers `403` with the permission it needs, as `{"error": "you need the artifact/view permission"}`.
 

@@ -133,7 +133,7 @@ A run started over MCP is like any other: it shows in the history, anyone allowe
 
 ## A frozen surface
 
-These nineteen tools, like the JSON API behind them, are the whole surface, and the surface stays frozen. An agent can see what it may do and what there is, run it, read how it went, work through the notes that name it, leave notes, ask Claude in a folder, read and write the artifact tree, and make and change workflows; ending runs, schedules, deleting workflows, artifacts, secrets, keys and users stay with people, in the browser. A new tool or endpoint needs a reason that the current ones cannot serve, and the reason goes with the change.
+These tools, like the JSON API behind them, are the whole surface, and the surface stays frozen. An agent can see what it may do and what there is, run it, read how it went, work through the notes that name it, leave notes, ask Claude in a folder, read and write the artifact tree, and make and change workflows; ending runs, schedules, deleting workflows, artifacts, secrets, keys and users stay with people, in the browser. A new tool or endpoint needs a reason that the current ones cannot serve, and the reason goes with the change.
 
 ---
 
