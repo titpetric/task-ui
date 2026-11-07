@@ -35,3 +35,27 @@ func TestBoard_Recover(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteFailed, ended.State, "the board has no root to run in")
 }
+
+// The restart notice comes from every agent of the thread, a reply each:
+// a thread two agents worked on reads as two cut runs, not one. The note
+// settles once.
+func TestBoard_RecoverNotice(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board, notes, _ := newBoard(t)
+
+	thread := &model.Note{UserName: "ops", Body: "@claude take the API, @consuela take the docs", State: model.NoteWorking, RunID: "r1"}
+	assert.NoError(t, notes.Create(ctx, thread))
+	alone := &model.Note{UserName: "ops", Body: "@claude take the API", State: model.NoteWorking, RunID: "r2"}
+	assert.NoError(t, notes.Create(ctx, alone))
+
+	states := watch(board)
+	assert.NoError(t, board.Recover(ctx))
+	assert.Equal(t, []string{"claude", "consuela"}, answers(t, notes, thread.ID))
+	assert.Equal(t, []string{"claude"}, answers(t, notes, alone.ID), "one agent, one notice")
+	assert.Equal(t, []string{model.NoteFailed}, states(thread.ID), "the note settles once")
+
+	ended, err := notes.Get(ctx, thread.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteFailed, ended.State)
+}

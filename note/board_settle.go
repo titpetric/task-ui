@@ -7,11 +7,12 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// dispatches are the runs of one thread the board has going, and the
-// state they settle its note on.
+// dispatches are the runs of one thread the board has going, the state
+// they settle its note on, and the run its note holds.
 type dispatches struct {
 	left  int
 	state string
+	run   string
 }
 
 // dispatchFor starts the Notes agent for each agent of a thread, a run
@@ -46,6 +47,37 @@ func (b *Board) dispatching(id string, n int) {
 	b.dispatched[id] = &dispatches{left: n}
 }
 
+// claims returns the run ID a thread's note holds: the first run to ask
+// for it, which every run beside it leaves in place.
+func (b *Board) claims(id, runID string) string {
+	b.dispatchedMu.Lock()
+	defer b.dispatchedMu.Unlock()
+	going, ok := b.dispatched[id]
+	if !ok {
+		return runID
+	}
+	if going.run == "" {
+		going.run = runID
+	}
+	return going.run
+}
+
+// reported folds a state a user reports into the runs of a thread the
+// board has going: working while one of them goes, else the state itself.
+func (b *Board) reported(id, state string) string {
+	if state != model.NoteDone && state != model.NoteFailed {
+		return state
+	}
+	b.dispatchedMu.Lock()
+	defer b.dispatchedMu.Unlock()
+	going, ok := b.dispatched[id]
+	if !ok {
+		return state
+	}
+	going.state = worse(going.state, state)
+	return model.NoteWorking
+}
+
 // settling returns the state one run leaves a thread's note in: working
 // while another run of it goes, else the worst state reported. A thread
 // under no count settles on the state it reports.
@@ -71,6 +103,28 @@ func worse(state, next string) string {
 		return model.NoteFailed
 	}
 	return next
+}
+
+// finishEach is finish with one reply per agent of the thread and a
+// single settle; an answer a rerun rewrites stays finish.
+func (b *Board) finishEach(ctx context.Context, note *model.Note, state, body string, again *model.Note) {
+	if again != nil {
+		b.finish(ctx, note, state, body, again)
+		return
+	}
+	for _, as := range authors(b.AnswerersOf(ctx, note)) {
+		b.replyAs(ctx, note, body, as)
+	}
+	b.settle(ctx, note, state)
+}
+
+// authors returns the agents a notice on a thread comes from, or one
+// empty name, the thread's answerer, when it names no agent.
+func authors(agents []string) []string {
+	if len(agents) == 0 {
+		return []string{""}
+	}
+	return agents
 }
 
 // settle records the state an instruction ended in, as settling reads it.

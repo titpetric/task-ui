@@ -11,7 +11,9 @@ import (
 // MCP lets go of a run of the board's that is over: the note keeps the
 // run it had from an earlier answer, such as the agent's before a reply
 // handed the thread to another user, and only a live run is the board's
-// to wait on.
+// to wait on. A done or failed report leaves the note working while a
+// run of its thread still goes, as reported folds it in: the last run
+// settles it.
 func (b *Board) setState(ctx context.Context, note *model.Note, state string) error {
 	if state == model.NoteWorking && note.RunID != "" && !b.live(note.RunID) {
 		if err := b.Notes.Release(ctx, note.ID, state); err != nil {
@@ -20,6 +22,7 @@ func (b *Board) setState(ctx context.Context, note *model.Note, state string) er
 		note.State, note.RunID = state, ""
 		return nil
 	}
+	state = b.reported(note.ID, state)
 	if err := b.Notes.SetState(ctx, note.ID, state, ""); err != nil {
 		return err
 	}
@@ -45,6 +48,7 @@ func (b *Board) live(runID string) bool {
 }
 
 // Recover fails the instructions a restart cut short: a note working on a run of the board's has no run to wait on.
+// The notice comes from every agent of the thread, a reply each, because a run of each was cut.
 // A note working with no run is an external agent's, which goes on.
 // An open instruction to the agent with no run, never started or set open by hand, starts every agent the thread names.
 // An open prompt with no run starts its prompt.
@@ -85,7 +89,7 @@ func (b *Board) Recover(ctx context.Context) error {
 				continue
 			}
 		}
-		b.finish(ctx, &note, model.NoteFailed, "task-ui restarted while the run was going.", b.working(ctx, &note))
+		b.finishEach(ctx, &note, model.NoteFailed, "task-ui restarted while the run was going.", b.working(ctx, &note))
 	}
 	return nil
 }

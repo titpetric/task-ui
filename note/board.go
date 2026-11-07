@@ -271,7 +271,9 @@ func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, 
 	return b.runAs(stop, note, req, answer, what, "", again)
 }
 
-// runAs is run, with as, the user a new reply is from: an agent of the thread.
+// runAs is run, with as, the user a new reply is from: an agent of the
+// thread. The thread's note holds the run claims hands it, the first of
+// its runs to start; every reply holds the run that wrote it.
 func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request, answer, what, as string, again *model.Note) bool {
 	ctx := context.Background()
 	defer os.Remove(answer)
@@ -293,7 +295,7 @@ func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request
 		b.finishAs(ctx, note, model.NoteFailed, what+" did not start: "+err.Error(), as, again)
 		return false
 	}
-	if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, session.ID()); err != nil {
+	if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, b.claims(note.ID, session.ID())); err != nil {
 		slog.Warn("note state not saved", "note", note.ID, "err", err)
 	}
 	note.State, note.RunID = model.NoteWorking, session.ID()
