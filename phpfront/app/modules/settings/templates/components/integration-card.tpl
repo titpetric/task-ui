@@ -25,6 +25,7 @@
 						<div class="form-foot">
 {if $data_card.runs}							<button type="button" class="btn" data-run data-folder="internal" data-job="@forgejo-sync" data-run-args='["--dry-run"]' data-title="internal / forgejo-sync --dry-run" title="Run @forgejo-sync --dry-run: the report alone, nothing changes">Dry run</button>
 							<button type="button" class="btn" data-run data-folder="internal" data-job="@forgejo-sync" data-title="internal / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
+{/if}{if $data_card.links}							<button type="button" class="btn" data-spotify-link title="Link your own Spotify account to this user">Connect</button>
 {/if}							<button class="btn btn-primary" type="submit" disabled>Save</button>
 						</div>
 					</form>

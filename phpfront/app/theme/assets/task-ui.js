@@ -2710,6 +2710,49 @@
     changed();
   });
 
+  // Connect reads the account's state from the API, because the page is
+  // the same bytes for every reader: an unlinked account goes to
+  // Spotify's consent page, a linked one disconnects and deletes the
+  // tokens. The button hides where the reader may not link at all.
+  document.querySelectorAll("[data-spotify-link]").forEach(function (button) {
+    var path = "/api/integrations/spotify/link";
+    function draw(status) {
+      var linked = !!status.linked;
+      button.hidden = !status.available;
+      button.textContent = linked ? "Disconnect" : (status.broken ? "Connect again" : "Connect");
+      button.title = linked
+        ? "Unlink your Spotify account and delete its stored tokens"
+        : "Link your own Spotify account to this user";
+      button.dataset.linked = linked ? "true" : "false";
+    }
+    api("GET", path).then(function (res) {
+      if (res.status !== 200) {
+        button.hidden = true;
+        return;
+      }
+      draw(res.data || {});
+      if (new URLSearchParams(window.location.search).get("spotify") === "linked") {
+        toast(res.data && res.data.linked ? "Spotify connected" : "Spotify did not link the account", res.data && res.data.linked ? "ok" : "bad");
+      }
+    });
+    button.addEventListener("click", function () {
+      if (button.dataset.linked !== "true") {
+        window.location.href = "/api/integrations/spotify/authorize";
+        return;
+      }
+      button.disabled = true;
+      api("DELETE", path).then(function (res) {
+        button.disabled = false;
+        if (res.status !== 204) {
+          toast((res.data && res.data.error) || "Spotify did not disconnect", "bad");
+          return;
+        }
+        draw({ available: true, linked: false });
+        toast("Spotify disconnected");
+      });
+    });
+  });
+
   document.querySelectorAll("form[data-workflow]").forEach(function (form) {
     var list = form.querySelector("[data-steps]");
     list.querySelectorAll("[data-step]").forEach(function (row) {

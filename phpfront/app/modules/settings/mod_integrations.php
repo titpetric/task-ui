@@ -43,6 +43,9 @@ class mod_integrations implements Module {
 
 	const FORGEJO = "forgejo";
 
+	/** SPOTIFY is the one card a reader links an account of their own on. */
+	const SPOTIFY = "spotify";
+
 	/** TOKEN is the one setting of the gateway the reader types. */
 	const TOKEN = "token";
 
@@ -179,6 +182,7 @@ class mod_integrations implements Module {
 			"steps" => self::steps($service),
 			"hook" => $sync ? self::hook($url) : "",
 			"runs" => $sync && $service["configured"] && $admin,
+			"links" => $id === self::SPOTIFY && $service["configured"],
 			"sync" => $sync,
 			"last" => $last,
 		);

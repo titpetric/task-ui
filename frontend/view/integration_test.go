@@ -87,6 +87,22 @@ func TestIntegration_Page(t *testing.T) {
 	assert.Contains(t, body, "No sync ran yet")
 	assert.Contains(t, body, "The instance has no public URL")
 	assert.NotContains(t, body, `data-job="@forgejo-sync"`, "no sync while Forgejo is not set up")
+	assert.NotContains(t, body, "data-spotify-link", "no Connect while Spotify is not set up")
 	// Only the Claude and Spotify kinds have a Who field.
 	assert.Equal(t, 2, strings.Count(body, `class="dim who-summary"`))
+}
+
+// A Spotify card that is set up has Connect, which links the reader's
+// own account. The page says nothing of whether it is linked: the state
+// is the reader's and the script asks for it.
+func TestIntegration_SpotifyConnect(t *testing.T) {
+	t.Parallel()
+	v := shared(t)
+	p := admin(t)
+	p.Integrations = []view.Integration{view.NewIntegration(*integration.KindOf(integration.Spotify), map[string]string{"client_id": "c1", "client_secret": "spotify-client-secret"})}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "integrations", p))
+	body := buf.String()
+	assert.Contains(t, body, `<button type="button" class="btn" data-spotify-link title="Link your own Spotify account to this user">Connect</button>`)
+	assert.NotContains(t, body, "spotify-client-secret")
 }
