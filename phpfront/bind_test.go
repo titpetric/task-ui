@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -86,7 +87,11 @@ func TestBind(t *testing.T) {
 		// A service crosses with its registry entry and the state of its
 		// settings, and with no secret in it: `set` says the token has a
 		// value and nothing says what it is.
-		`integrations=[{"id":"claude","title":"Claude Code","description":"The token Claude Code signs in with.","credential":"OAuth token","steps":["Run claude setup-token."],"fields":[{"name":"token","label":"OAuth token","help":"","placeholder":"","secret":true,"optional":false,"who":false,"options":[],"generated":false,"env":"CLAUDE_CODE_OAUTH_TOKEN","default":"","toggle":false,"default_on":false,"empty":false,"source":"","fixed":false},{"name":"who","label":"Who","help":"","placeholder":"","secret":false,"optional":true,"who":true,"options":[],"generated":false,"env":"","default":"","toggle":false,"default_on":false,"empty":false,"source":"","fixed":false}],"configured":true,"values":{"who":"admin, ops"},"set":{"token":true},"checked":["admin","ops"],"enabled":[],"error":""}]`,
+		`integrations=[{"id":"claude","title":"Claude Code","description":"The token Claude Code signs in with."`,
+		`"credential":"OAuth token","steps":["Run claude setup-token."]`,
+		`"configured":true,"values":{"who":"admin, ops"},"set":{"token":true},"checked":["admin","ops"],"enabled":[],"error":""}]`,
+		// The secret's own value is in neither the field nor the values.
+		`"env":"CLAUDE_CODE_OAUTH_TOKEN"`,
 		`"hosts":[{"id":"sys1","name":"web1","host":"10.0.0.1","status":"up","up":true,"cpus":8,"agent":"0.9.1","uptime":"3 days","cpu":12.5,"memory":48,"disk":71,"measured":true,"memory_total":32,"memory_used":15.5,"disk_total":500,"disk_used":355}]`,
 		`"logins":{"10.0.0.1":"debian@10.0.0.1"}`,
 		`"pools":[{"name":"CPU","unit":"cores","figure":"1 / 8 cores","used":1,"total":8,"percent":12.5,"segments":[{"host":"web1","color":0,"width":100,"fill":12.5,"title":"web1: 1 of 8 cores"}]}]`,
@@ -107,6 +112,38 @@ func TestBind(t *testing.T) {
 	assert.Contains(t, body, `linked=<p>see <a href="/artifacts/files/lint/out.txt">`, "a prefix links a relative path under the directory it was written in")
 	assert.Contains(t, body, "run=01RUN-01NOTE|\n", "no note is a run that has not started")
 	assert.Equal(t, []string{"runs"}, own.published)
+}
+
+// A field of an integration arrives keyed by the json tags of
+// IntegrationField, in declaration order, which is what the form
+// indexes by: the keys come off the struct, so a field added to it needs
+// no edit here and a tag renamed without the template fails.
+func TestBind_FieldKeys(t *testing.T) {
+	t.Parallel()
+
+	body := serve(t, &host{}, "/host")
+	fields := body[strings.Index(body, `"fields":[{`):]
+	fields = fields[:strings.Index(fields, "}")]
+
+	at := 0
+	for _, key := range jsonTags(phpfront.IntegrationField{}) {
+		found := strings.Index(fields[at:], `"`+key+`":`)
+		assert.True(t, found >= 0, key+" is not in the field, or not in declaration order")
+		at += found
+	}
+}
+
+// jsonTags returns the json names of a struct's fields, in declaration order.
+func jsonTags(of any) []string {
+	value := reflect.TypeOf(of)
+	tags := make([]string, 0, value.NumField())
+	for i := range value.NumField() {
+		name, _, _ := strings.Cut(value.Field(i).Tag.Get("json"), ",")
+		if name != "" && name != "-" {
+			tags = append(tags, name)
+		}
+	}
+	return tags
 }
 
 // A dispatch answers the note it opened and carries the action file and the
