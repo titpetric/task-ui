@@ -79,28 +79,24 @@ func TestNew(t *testing.T) {
 }
 
 // Every page renders over the same page model, so a template that
-// reaches for a field that is not there fails here.
+// reaches for a field that is not there fails here. What it draws is not
+// asserted: a template is read, and the markup tests that read it are
+// behind TASK_UI_VIEW_TESTS. This one builds its own set so it runs
+// whatever that says.
 func TestView_Render(t *testing.T) {
 	t.Parallel()
 
-	v := shared(t)
+	v, err := view.New()
+	assert.NoError(t, err)
 	for _, name := range v.Names() {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, name, admin(t)), name)
-		assert.Contains(t, buf.String(), "<!DOCTYPE html>", name)
-		assert.Contains(t, buf.String(), "blacksky.digital", name)
-		assert.Equal(t, 1, strings.Count(buf.String(), `<div class="toasts" id="toasts" role="status" aria-live="polite"></div>`), name)
-		if name != "login" {
-			assert.Contains(t, buf.String(), `class="avatar role-admin"`, name)
-			assert.Contains(t, buf.String(), "Recents", name)
-		}
+		assert.True(t, buf.Len() > 0, name)
 	}
 
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "login", &view.Page{Back: "/"}))
-	assert.Contains(t, buf.String(), "Sign in")
-	assert.NotContains(t, buf.String(), "Recents")
-
+	assert.True(t, buf.Len() > 0)
 	assert.Error(t, v.Render(&buf, "nothing", admin(t)))
 }
 

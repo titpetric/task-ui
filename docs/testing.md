@@ -57,6 +57,30 @@ go test -cover ./...
 
 The whole run takes seconds. `task test` and the atkins job `test` run the same command.
 
+### A template test asserts that it rendered
+
+A template is read, and a copy of its output pasted into a test says only that nobody has changed the template since: it fails on every edit, it is rewritten to match whatever came out, and it has caught nothing. A test may assert two things. The render returned no error, which fails when a template reaches for a field the page model does not hold. And it wrote something.
+
+```go
+for _, name := range v.Names() {
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, name, page), name)
+	assert.True(t, buf.Len() > 0, name)
+}
+```
+
+Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, rows, 3)` and `assert.Equal(t, 1, strings.Count(body, …))` assert the fixture; `assert.True(t, len(rows) > 0)` is the form. A golden file a tool regenerates is a diff against the last state and not an assertion somebody typed, so the `.phpt` fixtures and `scripts/compare-site.sh` below stay as they are.
+
+`frontend/view` holds 125 markup assertions, and they are being removed. Until then `shared(t)` skips the tests that hold them, and `atkins test:view` runs them:
+
+```bash
+atkins test:view     # TASK_UI_VIEW_TESTS=1, with GOMAXPROCS and GOMEMLIMIT capped
+```
+
+A failed assertion over a page prints the page, through `fmt.Printf` and without stopping the test, so one broken template writes hundreds of megabytes to stdout and whatever is reading it holds them. [Issue 29](https://github.com/titpetric/task-ui/issues/29) carries the measurements and the order the gate comes out in.
+
+Three tools look at a template. `atkins precompile` compiles every `.tpl` and reports a syntax error, `phpscript lint ./...` reports a name the interpreter cannot resolve, and a six-line script renders one template over data you wrote. The `templates` skill has the script and the one trap in it.
+
 ## Integration tests
 
 An integration test crosses a process boundary. It does at least one of these:
