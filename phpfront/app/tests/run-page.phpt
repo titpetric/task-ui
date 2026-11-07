@@ -529,9 +529,9 @@ View,Run again,Report,|> false
 data-attach="fx-rp-1" [] false true
  [/runs/fx-rp-1/report] false false
 data-replay="fx-rp-1" data-replay-title="fx-rp / build" data-replay-who="fx-rp-ann" title="Replay the recording" aria-label="Replay the recording" [] false false
-data-run data-folder="fx-rp" data-dir="" data-job="build" data-title="fx-rp / build" data-run-args="[&quot;--verbose&quot;,&quot;./pkg&quot;]" [] false false
+data-rerun="fx-rp-1" data-title="fx-rp / build" [] false false
 View,Run again,Summarize
-data-run data-folder="fx-rp" data-dir="" data-job="ghost" data-title="fx-rp / ghost" [] false false
+data-rerun="fx-rp-6" data-title="fx-rp / ghost" [] false false
 data-summarize-run="fx-rp-6" data-question="Summarize this run." title="Claude summarizes the run&#039;s output, in this window" [] false false
 View,Run again, [summarizing]
 []

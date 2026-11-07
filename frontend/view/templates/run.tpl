@@ -7,8 +7,8 @@
 	</div>
 	<div class="actions">
 		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if not (ended $run.State) }}Attach{{ else }}View{{ end }}</button>
-		{{- if and (ended $run.State) $can (not $run.IsPrompt) (not $run.IsNote) }}
-		<button type="button" class="btn" data-run data-folder="{{ $run.Folder }}" data-dir="{{ $run.Dir }}" data-job="{{ $run.Job }}" data-title="{{ $run.Name }}"{{ if $run.ArgList }} data-run-args="{{ $run.Args }}"{{ end }}>Run again</button>
+		{{- if and (ended $run.State) (or $can (and (or $run.IsPrompt $run.IsNote) ($.Can "prompt/edit"))) }}
+		<button type="button" class="btn" data-rerun="{{ $run.ID }}" data-title="{{ $run.Name }}">Run again</button>
 		{{- end }}
 		{{- if and $run.Live (not (ended $run.State)) $can }}
 		<button type="button" class="btn" data-stop="{{ $run.ID }}">Stop</button>

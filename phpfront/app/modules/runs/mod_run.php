@@ -119,7 +119,8 @@ class mod_run implements Module {
 		$can = $this->can($chrome, $run);
 		$summarizes = $this->summarizes($chrome, $run, $report, $ended);
 		$pending = $this->pending($chrome, $run);
-		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes, $pending);
+		$asks = $chrome->allowed("prompt/edit");
+		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks);
 		$code = $ended && $state !== Task\Run::OK ? (string)$run->getExitCode() : "";
 		$head = new Task\Head($name);
 
@@ -153,17 +154,22 @@ class mod_run implements Module {
 	 *
 	 * A summary Claude is still writing says so where Summarize stood, as a
 	 * faint item of the row: the button would post the question a second time.
+	 *
+	 * Run again posts the run's own ID: the endpoint reads the inputs off the
+	 * row, and asks the thread's question again for a prompt's run, which no
+	 * job can repeat. A prompt's run takes prompt/edit and not the job's gate.
 	 */
-	static function buttons($run, $report, $expired, $can, $session, $summarizes, $pending) {
+	static function buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks) {
 		$id = $run->getId();
 		$ended = Task\Run::ended($run->getState());
 		$stops = Task\Row::flag($session, "live") && !$ended && $can;
-		$again = $ended && $can && !Task\Run::isPrompt($run) && !Task\Run::isNote($run);
+		$claude = Task\Run::isPrompt($run) || Task\Run::isNote($run);
+		$again = $ended && ($claude ? $asks : $can);
 		$href = $report === null ? "" : Task\Route::href(Task\Report::href($report));
 		$buttons = new Task\Buttons;
 
 		$buttons->primary("", $ended ? "View" : "Attach", array("data-attach" => $id));
-		$buttons->when($again, "", "Run again", self::starts($run));
+		$buttons->when($again, "", "Run again", array("data-rerun" => $id, "data-title" => Task\Run::name($run)));
 		$buttons->when($stops, "", "Stop", array("data-stop" => $id));
 		$buttons->whenDanger($stops, "", "Kill", array("data-kill" => $id));
 		$buttons->when($href !== "", "", "Report", array("href" => $href));
@@ -186,30 +192,6 @@ class mod_run implements Module {
 		));
 
 		return $buttons;
-	}
-
-	/**
-	 * starts is the attributes of Run again: the run's own folder, directory,
-	 * job and title, and the arguments where the run has any.
-	 *
-	 * The arguments go as the column holds them, the JSON list the script
-	 * reads, and no args command goes beside them: the run repeats as it
-	 * stands, with no field before it.
-	 */
-	static function starts($run) {
-		$attrs = array(
-			"data-run" => null,
-			"data-folder" => $run->getFolder(),
-			"data-dir" => $run->getDir(),
-			"data-job" => $run->getJob(),
-			"data-title" => Task\Run::name($run),
-		);
-
-		if (count(Task\Run::argList($run)) > 0) {
-			$attrs["data-run-args"] = $run->getArgs();
-		}
-
-		return $attrs;
 	}
 
 	/**

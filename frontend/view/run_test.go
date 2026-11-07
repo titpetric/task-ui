@@ -83,25 +83,27 @@ func TestRender_runAgain(t *testing.T) {
 		assert.NoError(t, v.Render(&buf, "run", page))
 		return buf.String()
 	}
-	// The layout holds the window's own Run again, hidden, under the same
-	// label: the head's button is read by its attributes.
-	const starts = "data-run data-folder="
+	// The button posts the run's own ID: the endpoint reads the inputs off
+	// the row, so no folder, job or argument list is in the markup. The
+	// layout holds the window's own Run again, hidden, under the same
+	// label, which is why the head's button is read by its attribute.
 	page := admin(t)
+	starts := `data-rerun="` + page.Run.ID + `"`
 	assert.NotContains(t, render(page), starts, "still running")
 
 	page.Run.State = model.StateKilled
 	html := render(page)
-	assert.Contains(t, html, `data-run data-folder="infra" data-dir="" data-job="plan" data-title="infra / plan">Run again<`)
-	assert.NotContains(t, html, "data-args=")
+	assert.Contains(t, html, starts+` data-title="infra / plan">Run again<`)
+	assert.NotContains(t, html, "data-run-args=")
+	assert.NotContains(t, html, `data-job="plan" data-title="infra / plan">Run again<`)
 
-	page.Run.Args = `["-x"]`
-	assert.Contains(t, render(page), `data-title="infra / plan" data-run-args="[&#34;-x&#34;]">Run again<`)
-
+	// A prompt's run and the Notes agent's repeat the question, which
+	// takes prompt/edit and not the job's gate.
 	page.Run.Job = model.PromptJob
-	assert.NotContains(t, render(page), starts, "a prompt's run")
+	assert.Contains(t, render(page), starts, "a prompt's run")
 
 	page.Run.Job = model.NoteJob
-	assert.NotContains(t, render(page), starts, "the Notes agent's run")
+	assert.Contains(t, render(page), starts, "the Notes agent's run")
 }
 
 // A run's page lists the runs it dispatched, each a link with its job

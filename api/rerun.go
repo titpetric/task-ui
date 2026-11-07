@@ -23,7 +23,27 @@ func (h *Handlers) rerunRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusConflict, "you can view this run, but it hasn't ended yet")
 		return
 	}
+	// A prompt's run repeats as the question it answered, not as a job:
+	// POST /api/runs refuses the job a prompt runs under.
+	if run.IsPrompt() || run.IsNote() {
+		h.askAgain(w, r, run)
+		return
+	}
 	h.start(w, r, RerunRequest(run))
+}
+
+// askAgain puts the question a prompt's run answered to the board again, in the thread it was asked in and as the caller, and answers what POST /api/prompts answers; 404 once the thread is gone.
+func (h *Handlers) askAgain(w http.ResponseWriter, r *http.Request, run *model.Run) {
+	if h.opts.Board == nil {
+		fail(w, http.StatusNotFound, "not found")
+		return
+	}
+	note, err := h.opts.Board.Notes.ByRun(r.Context(), run.ID)
+	if err != nil {
+		fail(w, http.StatusNotFound, "the question this run answered is gone")
+		return
+	}
+	h.ask(w, r, PromptRequest{Prompt: note.Body, Parent: note.ID, Cols: int(run.TermCols), Rows: int(run.TermRows)}, "")
 }
 
 // RerunRequest returns the request that runs a stored run again: its

@@ -5350,7 +5350,7 @@
   // --------------------------------------------------------------- clicks
 
   document.addEventListener("click", function (event) {
-    var btn = event.target.closest("[data-run], [data-attach], [data-replay], [data-stop], [data-kill], [data-delete], [data-copy], [data-summarize-run]");
+    var btn = event.target.closest("[data-run], [data-rerun], [data-attach], [data-replay], [data-stop], [data-kill], [data-delete], [data-copy], [data-summarize-run]");
     if (!btn) return;
     // A link inside the element matched is a link: it navigates, it does
     // not run or attach for the element around it.
@@ -5409,6 +5409,22 @@
     }
     if (btn.hasAttribute("data-replay")) {
       replay(btn.dataset.replay, btn.dataset.replayTitle || "", btn.dataset.replayWho || "");
+      return;
+    }
+    // Run again posts the run's ID and the server reads the inputs off
+    // the row. A job answers the new run, which the window opens on; a
+    // prompt answers the note it asked again in, whose run the notes
+    // stream names, so the window opens on the run that was repeated and
+    // the chain moves it on.
+    if (btn.hasAttribute("data-rerun")) {
+      var repeated = btn.dataset.rerun;
+      btn.disabled = true;
+      api("POST", "/api/runs/" + encodeURIComponent(repeated) + "/rerun").then(function (res) {
+        btn.disabled = false;
+        if (res.status >= 300) { fail(btn, res); return; }
+        attach(res.data && res.data.state !== undefined ? res.data.id : repeated);
+        if (session) session.changed = true;
+      });
       return;
     }
     var spec = {

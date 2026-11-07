@@ -151,8 +151,12 @@ func TestRerun_Permission(t *testing.T) {
 	assert.Equal(t, "an interactive shell or Claude terminal needs the shell permission", out["error"])
 }
 
-// A prompt's run and the Notes agent's are refused from here as POST
-// /api/runs refuses them: a prompt is asked with its text.
+// A prompt's run and the Notes agent's take the board's path and not the
+// job's: POST /api/runs refuses the job either of them runs under, so a
+// rerun that took it would refuse every run of the Orb.
+//
+// With no board there is nothing to ask, which is 404 and not the job's
+// 400. The question this answers is covered where a board is real.
 func TestRerun_Claude(t *testing.T) {
 	t.Parallel()
 	h := rerunRoutes(&memRuns{runs: []model.Run{
@@ -160,11 +164,10 @@ func TestRerun_Claude(t *testing.T) {
 		{ID: "r2", Folder: model.Default, Job: model.NoteJob, State: model.StateOK, UserID: rerunAdmin.ID},
 	}})
 
-	code, out := rerunCall(t, h, rerunAdmin, "r1")
-	assert.Equal(t, http.StatusBadRequest, code, out)
-	assert.Contains(t, out["error"], "POST /api/prompts")
-
-	code, out = rerunCall(t, h, rerunAdmin, "r2")
-	assert.Equal(t, http.StatusBadRequest, code, out)
-	assert.Contains(t, out["error"], "Notes board")
+	for _, id := range []string{"r1", "r2"} {
+		code, out := rerunCall(t, h, rerunAdmin, id)
+		assert.Equal(t, http.StatusNotFound, code, out)
+		assert.NotContains(t, out["error"], "POST /api/prompts")
+		assert.NotContains(t, out["error"], "Notes board")
+	}
 }
