@@ -74,19 +74,35 @@ Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, row
 `frontend/view` holds 125 markup assertions, and they are being removed. Until then `shared(t)` skips the tests that hold them, and `atkins test:view` runs them:
 
 ```bash
-atkins test:view     # TASK_UI_VIEW_TESTS=1, with GOMAXPROCS and GOMEMLIMIT capped
+atkins test:view     # TASK_UI_VIEW_TESTS=1, under the caps the file sets
 ```
 
 A failure over a page says where to look, not what the page holds: `assert.Brief` returns the haystack's length and the text around the longest prefix of the needle it holds.
 
 Run the suite through atkins, not as a bare `go test ./...`. The `env.vars` block at the top of `atkins.yml` holds `GOFLAGS=-p=1 GOMAXPROCS=2 GOMEMLIMIT=2GiB` for every job, which builds one package at a time; uncapped, `go test ./...` links a hundred of them four at a time, and that is the run the kernel killed.
 
-| Measured                                  | Value                  |
-|-------------------------------------------|------------------------|
-| one failing `Contains` over the dashboard | 26,297 bytes           |
-| the same failure through `assert.Brief`   | 473 bytes              |
-| one `frontend/view` test binary, peak     | 144 MB                 |
-| free memory when the kernel killed it     | 787 MB, swap full      |
+| Measured                                  | Value             |
+|-------------------------------------------|-------------------|
+| one failing `Contains` over the dashboard | 26,297 bytes      |
+| the same failure through `assert.Brief`   | 473 bytes         |
+| free memory when the kernel killed it     | 787 MB, swap full |
+
+### A test binary holds tens of megabytes
+
+Measure one, and run it from the package's own directory: a test that names a relative path walks the wrong tree from anywhere else, and `../..` out of `/tmp` is the whole filesystem.
+
+```bash
+go test -c -o /tmp/pkg.test ./workspace
+cd workspace && /usr/bin/time -f "%M KB peak" /tmp/pkg.test -test.count=1
+```
+
+| Binary                                            | Peak   |
+|---------------------------------------------------|--------|
+| the heaviest of the 60 unit binaries              | 34 MB  |
+| `storage` under `-tags integration`, 194 tests    | 46 MB  |
+| `MaxBundle` of padding held as one `bytes.Repeat` | 190 MB |
+
+A binary that peaks in the hundreds holds an input it could read in pieces. `TestReadBundle_TooLarge` feeds `ReadBundle` the padding that trips `MaxBundle` through an `io.LimitReader` over a reader of zeros, which is the last row of the table it does not pay. The other rule is the one `view.New` follows: a parsed template set is built once per binary, never once per fixture.
 
 Three tools look at a template. `atkins precompile` compiles every `.tpl` and reports a syntax error, `phpscript lint ./...` reports a name the interpreter cannot resolve, and a six-line script renders one template over data you wrote. The `templates` skill has the script and the one trap in it.
 

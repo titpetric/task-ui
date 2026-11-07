@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 
@@ -146,11 +147,20 @@ func TestReadBundle_Refused(t *testing.T) {
 	assert.Equal(t, "x", string(ok.Keys["id_ed25519.key"]))
 }
 
+// zeros reads an endless run of zero bytes.
+type zeros struct{}
+
+func (zeros) Read(p []byte) (int, error) {
+	clear(p)
+	return len(p), nil
+}
+
 // ReadBundle refuses a file over MaxBundle before reading it through.
+// The pad is a reader: held as one slice it is 64 MiB of the test's heap.
 func TestReadBundle_TooLarge(t *testing.T) {
 	t.Parallel()
 	big := raw(t, "pass", map[string]string{"manifest.json": manifest, ".ssh/id_ed25519.key": strings.Repeat("x", 1000)})
-	padded := append(big, bytes.Repeat([]byte{0}, workspace.MaxBundle)...)
-	_, err := workspace.ReadBundle(bytes.NewReader(padded), "pass")
+	padded := io.MultiReader(bytes.NewReader(big), io.LimitReader(zeros{}, workspace.MaxBundle))
+	_, err := workspace.ReadBundle(padded, "pass")
 	assert.True(t, errors.Is(err, workspace.ErrBundle), err)
 }
