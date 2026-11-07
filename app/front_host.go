@@ -25,29 +25,26 @@ import (
 	"github.com/titpetric/task-ui/workflow"
 )
 
-// FrontBase is where the ported front end answers, which is the root: it is
-// the front end the instance serves. Every link it writes carries this, so a
-// page writes {base}/settings and the empty string makes that /settings.
+// FrontBase is the root, where the ported front end answers: it is the front
+// end the instance serves. Every link a page writes opens with it, and an
+// empty FrontBase turns {base}/settings into /settings.
 const FrontBase = ""
 
-// GoBase is where the Go pages still answer, the front end being replaced.
-// They are kept to be read against the ported ones on a live instance, which
-// is what scripts/compare.sh fetches, and they go in the cutover commit
-// together with this line.
+// GoBase mounts the Go pages, the front end being replaced.
+// scripts/compare.sh fetches both to diff a ported page against its Go
+// original; the cutover commit drops them along with this line.
 //
-// A page under it draws its links without a prefix, because the Go view layer
-// has no notion of one: a link followed from a page here leaves for the
-// ported page at the root. That is what keeping them is for — reading one
-// page and diffing it — and not browsing the old front end.
+// A Go page draws its links without a prefix, because the Go view layer has no
+// notion of one: a link followed from one leaves for the ported page at the
+// root. These pages serve a page-by-page diff, not browsing the old front end.
 const GoBase = "/legacy"
 
 // FrontHost answers phpfront.Host off the instance: the catalogue, the live
 // runner, the checkouts, the permission file and the event bus. Every row the
 // front end reads it reads itself.
 //
-// Rules hands over the titles in file order and the path lists the file
-// decides, so the decision in code/Task/Access.php is the only part of
-// permission/ that is ported.
+// Rules returns the titles in file order and the path lists the file decides.
+// Only the decision in code/Task/Access.php is ported out of permission/.
 //
 // The methods are grouped the way the interface is: the catalogue's in
 // front_host_catalogue.go, the live runner's in front_host_run.go, a folder's
@@ -114,22 +111,21 @@ type FrontHost struct {
 	// the Go page beside it answers closed. Nil is time.Now.
 	Now func() time.Time
 
-	// Dispatcher starts the runs a page asks for and Runs answers which run
+	// Dispatcher starts the runs a page requests and Runs answers which run
 	// one turned into, the pair the plugins already use: a dispatched run is
-	// an ordinary prompt either way, so there is one of each on the
-	// instance.
+	// an ordinary prompt either way, and the instance holds one of each.
 	//
-	// FrontRoot is where phpfront.Extract put the front end, which the
-	// action file a dispatch names is resolved inside. It is the same path
-	// as phpfront.Options.Root; it is here because the dispatcher takes the
-	// root it reads in, and the host is what knows which tree this is.
+	// FrontRoot is where phpfront.Extract put the front end, the root a
+	// dispatch's action file resolves against. It is the same path as
+	// phpfront.Options.Root, kept here because the dispatcher takes the root
+	// it reads in and the host is the one place that names this tree.
 	Dispatcher *Dispatcher
 	Runs       *ModuleRuns
 	FrontRoot  string
 
 	// Compose is the compose project task-ui itself runs in: compose up and
-	// down of that project ask before they run, as they stop the instance
-	// the page was drawn by.
+	// down of that project confirm first, since they stop the instance that
+	// drew the page.
 	Compose string
 
 	// subs keeps what Folder.Sub read of the directories a Jobs table

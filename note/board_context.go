@@ -10,7 +10,7 @@ import (
 )
 
 // EarlierAnswers is how many answers of a workflow's earlier runs its
-// prompts get, and answerBytes the most of each.
+// prompts get, and answerBytes caps each one.
 const (
 	EarlierAnswers = 3
 	answerBytes    = 1536
@@ -61,8 +61,7 @@ func (b *Board) workflowContext(ctx context.Context, run *model.WorkflowRun) str
 	return text.String() + "\n"
 }
 
-// link is a path of the instance as a prompt gets it: under BaseURL,
-// or the path alone without one.
+// link returns a path of the instance as a prompt reads it: under BaseURL, or the bare path for an empty BaseURL.
 func (b *Board) link(path string) string {
 	return strings.TrimRight(b.BaseURL, "/") + path
 }

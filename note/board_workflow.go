@@ -12,8 +12,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// workflowBytes is the most of the steps' output a workflow run's
-// prompt gets, all its steps together.
+// workflowBytes caps the step output a workflow run's prompt gets, every step together.
 const workflowBytes = 256 << 10
 
 // ErrPromptFailed reports a workflow run's prompt that ended without an
@@ -30,7 +29,7 @@ func WorkflowQuestion(prompt, input string) string {
 	return prompt + "\n\nInput:\n" + input
 }
 
-// WorkflowSummaryQuestion is the question of a workflow run's summary step; claude.RunSummary goes beside it.
+// WorkflowSummaryQuestion is the question of a workflow run's summary step, which its run reads under claude.RunSummary.
 const WorkflowSummaryQuestion = "Summarize this workflow run."
 
 // PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, internal, or none.
@@ -131,10 +130,9 @@ func (b *Board) StepText(ctx context.Context, step *model.WorkflowRunStep) strin
 	return b.outputText(row)
 }
 
-// aboutWorkflowRun writes what a workflow run's prompt tells Claude of
-// the run to a file, for TASK_UI_PROMPT_WORKFLOW: the workflow, and each
-// step, how it ended and the end of its output. It returns the file's
-// path.
+// aboutWorkflowRun writes a workflow run to a file, for
+// TASK_UI_PROMPT_WORKFLOW: the workflow, then every step, the way it ended
+// and the end of the output. It returns the file's path.
 func (b *Board) aboutWorkflowRun(ctx context.Context, id string) (string, error) {
 	if b.WorkflowRuns == nil || b.Runs == nil {
 		return "", fmt.Errorf("%w: workflow prompts aren't available on this instance", ErrNoPrompt)
@@ -163,7 +161,7 @@ func (b *Board) aboutWorkflowRun(ctx context.Context, id string) (string, error)
 	return file.Name(), nil
 }
 
-// stepText is a step of a workflow run as its prompt describes it.
+// stepText is a step of a workflow run as the prompt describes it.
 type stepText struct {
 	head   string
 	output string

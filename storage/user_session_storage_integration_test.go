@@ -59,7 +59,7 @@ func TestUserSessionStorage(t *testing.T) {
 }
 
 // Extend moves a session's expiry and records the use with it, so a
-// session in hand outlives the window it was issued for.
+// session in hand outlives its original window.
 func TestUserSessionStorage_Extend(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

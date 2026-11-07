@@ -8,10 +8,9 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// source is what a prompt's run reads of where the prompt comes from,
-// for TASK_UI_PROMPT_SOURCE: the thread's note ID, the reply that asks
-// when a reply asks, the place or area and the thread's link, and how
-// to answer there, a reply with note_comment over the task MCP.
+// source returns the TASK_UI_PROMPT_SOURCE a prompt's run reads: the thread's
+// note ID, the reply that asks when a reply asks, the place or area, the
+// thread's link, and the note_comment call over the task MCP that answers it.
 func (b *Board) source(ctx context.Context, thread *model.Note) string {
 	var text strings.Builder
 	fmt.Fprintf(&text, "## The prompt's source\n\nThe prompt is the thread of the task-ui note %s", thread.ID)
@@ -81,7 +80,7 @@ func (b *Board) threadPath(ctx context.Context, thread *model.Note) string {
 	return "/f/" + model.Default + "/" + thread.Dir + anchor
 }
 
-// RunReply posts what a prompt's run found to its own thread, as the run's token asks with note_comment.
+// RunReply posts a prompt run's finding to its own thread, as the run's token asks with note_comment.
 // The reply is Claude's, with the thread's run, in the reply a rerun rewrites when there is one.
 // The thread's state follows its run, so RunReply sets none, and the run's final message is no reply after this one.
 // A thread that is no prompt's takes the reply as Comment does.

@@ -7,16 +7,9 @@ import (
 	"github.com/titpetric/task-ui/tooling"
 )
 
-// Tooling is what atkins has recorded for the tree, the scopes of its report
-// with the project's first.
-//
-// It reports commands and not runs, so it says nothing about who ran what and
-// needs no permission of its own beyond the page it sits on: a reader of the
-// runs page may already see that the tree runs go test, because the runs are
-// there.
-//
-// Empty without a prober, without a root, and on a tree nobody has run a job
-// in through atkins, which is the usual answer.
+// Tooling is what atkins has recorded for the tree, the scopes of its report with the project's first.
+// It names commands and never runs, so it needs no permission beyond the page it sits on.
+// It is empty without a prober, without a root, and on a tree no atkins job has run in.
 func (h *FrontHost) Tooling(context.Context) []phpfront.ToolingScope {
 	if h.Tools == nil || h.Root == "" {
 		return nil

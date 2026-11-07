@@ -60,13 +60,13 @@ func (s *KeyInfoStorage) Get(ctx context.Context, name string) (*model.KeyInfo, 
 	return key, notFound(err)
 }
 
-// ByFingerprint returns the key with a fingerprint.
+// ByFingerprint returns the key with a fingerprint, ErrNotFound when no key has it.
 func (s *KeyInfoStorage) ByFingerprint(ctx context.Context, fingerprint string) (*model.KeyInfo, error) {
 	key, err := client(s.db).Get[model.KeyInfo](ctx, "SELECT * FROM key_info WHERE fingerprint = ?", fingerprint)
 	return key, notFound(err)
 }
 
-// List returns every key, by name.
+// List returns every key by name. The query sets no LIMIT.
 func (s *KeyInfoStorage) List(ctx context.Context) ([]model.KeyInfo, error) {
 	return client(s.db).Select[model.KeyInfo](ctx, "SELECT * FROM key_info ORDER BY name")
 }

@@ -35,8 +35,8 @@ SELECT 'workflow_step', w.id, s.folder, w.name || ': ' || s.job FROM workflow_st
 	WHERE s.folder = ?1 OR substr(s.folder, 1, ?2) = ?3
 ORDER BY kind, folder, name`
 
-// Under returns the rows that name the folder or one inside it, by kind,
-// folder and name.
+// Under returns the rows that name the folder id or any folder below id,
+// ordered by kind, folder and name.
 func (s *FolderRefStorage) Under(ctx context.Context, id string) ([]model.FolderRef, error) {
 	prefix := id + "/"
 	refs, err := client(s.db).Select[model.FolderRef](ctx, folderRefQuery, id, len(prefix), prefix)

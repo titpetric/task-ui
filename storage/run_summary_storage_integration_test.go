@@ -31,8 +31,8 @@ func TestRunSummaryStorage(t *testing.T) {
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
 
-// Every method hands back what the driver said. Set deletes before it
-// inserts, so a dead pool stops it at the delete.
+// Every method returns the driver's error. Set deletes before it inserts,
+// so a dead pool stops it at the delete.
 func TestRunSummaryStorage_Closed(t *testing.T) {
 	t.Parallel()
 	summaries := storage.NewRunSummaryStorage(closedDB(t))

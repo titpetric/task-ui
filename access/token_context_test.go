@@ -8,8 +8,7 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// A request carries the ID of its token and how it reached the API: an
-// MCP tool's call, or a client's.
+// The context holds the ID of a request's token and how the request reached the API: an MCP tool's call, or a client's.
 func TestTokenContext(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

@@ -33,7 +33,7 @@ func (s *ToolStorage) Save(ctx context.Context, tool model.Tool) error {
 	})
 }
 
-// Remove deletes a tool's row, for a tool the PATH no longer has.
+// Remove deletes a tool's row, for a tool absent from the PATH.
 func (s *ToolStorage) Remove(ctx context.Context, name string) error {
 	_, err := s.db.ExecContext(ctx, "DELETE FROM tool WHERE name = ?", name)
 	return err

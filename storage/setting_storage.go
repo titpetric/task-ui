@@ -17,7 +17,7 @@ func NewSettingStorage(db DB) *SettingStorage {
 	return &SettingStorage{db: db}
 }
 
-// Values returns every setting, by name.
+// Values returns every setting as a name to value map, built from one read of the table.
 func (s *SettingStorage) Values(ctx context.Context) (map[string]string, error) {
 	rows, err := client(s.db).Select[model.Setting](ctx, "SELECT * FROM setting")
 	if err != nil {

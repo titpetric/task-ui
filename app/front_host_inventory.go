@@ -24,8 +24,8 @@ const (
 // who task-ui signs in to each as, the pools the hosts sum into, and the
 // month of records the cluster's charts draw.
 //
-// hosts is the reader's permission, which PHP decides. It is what makes
-// task-ui read a host rather than answer out of what the host last told.
+// hosts is the reader's permission, which PHP decides. True reads each host
+// now; false answers out of what the host last told.
 func (h *FrontHost) Inventory(ctx context.Context, hosts bool) phpfront.Inventory {
 	if h.Hosts == nil {
 		return phpfront.Inventory{Off: true}
@@ -121,7 +121,7 @@ func (h *FrontHost) HostFacts(ctx context.Context, name string, hosts bool) phpf
 		sized, out.Sized = told.Containers, true
 	}
 	if told != nil && !told.At.IsZero() {
-		// Round(0) strips the monotonic reading a time.Now() carries, which
+		// Round(0) strips the monotonic reading on a time.Now() value, which
 		// String() would write as a trailing m=+0.000000001 that no layout
 		// reads.
 		out.Read = told.At.Round(0).String()
@@ -135,10 +135,10 @@ func (h *FrontHost) HostFacts(ctx context.Context, name string, hosts bool) phpf
 	return out
 }
 
-// Reachable is the hosts a command can be run on, largest capacity first:
-// the ones Beszel monitors that task-ui has an ssh login to. It is what a
-// job picker offers, and frontend/integration.go reads the same two calls
-// for the same list.
+// Reachable is the hosts a command can be run on, largest capacity first: the
+// ones Beszel monitors that task-ui has an ssh login to. A job picker lists
+// these, and frontend/integration.go reads the same two calls for the same
+// list.
 func (h *FrontHost) Reachable(ctx context.Context) []string {
 	if h.Hosts == nil || h.SSH == nil {
 		return nil
@@ -194,7 +194,7 @@ func frontSystems(systems []beszel.System) []phpfront.System {
 
 // frontSystem is one host as Beszel reports it. The shares its line meters
 // are the agent's last word and the sizes behind them the hub's last minute
-// of measures, which a host without one has none of.
+// of measures, both empty for a host the agent and the hub never reached.
 func frontSystem(each beszel.System) phpfront.System {
 	out := phpfront.System{
 		ID:     each.ID,

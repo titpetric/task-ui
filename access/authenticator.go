@@ -28,7 +28,7 @@ func NewAuthenticator(users *storage.UserStorage, emails *storage.UserEmailStora
 	return &Authenticator{users: users, emails: emails, passwords: passwords}
 }
 
-// Authenticate returns the user a login and password sign in as.
+// Authenticate returns the user a login and password sign in, ErrWrongCredentials for a pair that matches nobody.
 func (a *Authenticator) Authenticate(ctx context.Context, login, password string) (*model.User, error) {
 	user, err := a.lookup(ctx, strings.TrimSpace(login))
 	if err != nil {

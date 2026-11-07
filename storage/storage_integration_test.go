@@ -41,8 +41,8 @@ func newDB(t *testing.T) storage.DB {
 // is a query and a check of what the driver said; the check is most of
 // the branches in the package and none of them can be reached by a
 // well-formed call against a working database. A closed pool reaches
-// every one of them at once, which is why a storage test comes in two
-// halves: what the rows do, and what a dead pool does.
+// every one of them at once, so a storage test comes in two halves: what
+// the rows do, and what a dead pool does.
 func closedDB(t *testing.T) storage.DB {
 	t.Helper()
 	db, err := storage.OpenAndMigrate(context.Background(), ":memory:", migrations)
@@ -104,7 +104,7 @@ func widen(t *testing.T, db storage.DB, table string) {
 }
 
 // errNoField is what sqlx says when a row holds a column the model type
-// has no field for, which is what widenedDB arranges.
+// has no field for. widenedDB arranges that.
 const errNoField = "missing destination name unexpected"
 
 // refuse puts a trigger on a table that aborts every statement of one
@@ -149,10 +149,9 @@ func TestMigrate(t *testing.T) {
 	assert.NoError(t, storage.Migrate(ctx, db, migrations))
 	assert.NoError(t, storage.Migrate(ctx, db, migrations), "applying twice is fine")
 
-	// As many rows as there are migrations embedded, counted rather than
-	// written down: a migration added is a file added, and a number here
-	// only says what it was when someone last looked. app's own test is
-	// where the names are pinned.
+	// As many rows as there are migrations embedded, counted from the glob:
+	// a migration added is a file added, and a number written here would
+	// hold only until the next one. app's own test pins the names.
 	files, err := fs.Glob(migrations, "*.up.sql")
 	assert.NoError(t, err)
 
@@ -310,8 +309,8 @@ func TestMigrate_stepKinds(t *testing.T) {
 	assert.Equal(t, 0, left)
 }
 
-// A database that cannot be migrated and a pool that is closed each
-// hand back what they were told.
+// A database that cannot be migrated and a closed pool each return the
+// error the driver gave them.
 //
 // Open itself has no error to test: sqlx.Open answers one only for a
 // driver that is not registered, and the program links this one in.

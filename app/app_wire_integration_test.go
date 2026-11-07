@@ -17,11 +17,11 @@ import (
 )
 
 // A terminal window attaches over a websocket under /api, so the attach runs
-// through the compressor wire installs on the root router. chi's writer hands
-// a Hijack on to the connection only while it has selected no encoder, and a
+// through the compressor wire installs on the root router. chi's writer passes
+// a Hijack to the connection only while it has selected no encoder, and a
 // handler that hijacks writes no header first.
 //
-// Over a real server, for the reason TestTelemetryMiddlewareHijack gives: a
+// Over a real server, for the reason TestTelemetryMiddlewareHijack states: a
 // recorder is no http.Hijacker, so a test through one proves nothing here.
 func TestCompressLeavesTheAttachHijackable(t *testing.T) {
 	t.Parallel()
@@ -48,8 +48,8 @@ func TestCompressLeavesTheAttachHijackable(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close()
 
-	// The encoding a browser sends, because that is what makes chi wrap the
-	// writer at all: without it the handler gets the connection's own.
+	// The encoding a browser sends. chi wraps the writer only on this header;
+	// without it the handler gets the connection's own.
 	_, err = conn.Write([]byte("GET /api/runs/1/attach HTTP/1.1\r\nHost: test\r\nAccept-Encoding: gzip\r\n\r\n"))
 	assert.NoError(t, err)
 	answer, err := io.ReadAll(conn)

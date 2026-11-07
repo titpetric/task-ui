@@ -16,8 +16,8 @@ var ErrInvalidToken = errors.New("invalid session")
 
 // Sessions issues and resolves the session cookie: an opaque random
 // token the server looks up by its hash. The database holds the hash
-// alone, and the user it names, so a user removed or given a new
-// password loses their sessions with it.
+// and the user it names. A user removed or given a new password loses
+// their sessions.
 type Sessions struct {
 	Store  *storage.UserSessionStorage
 	Users  *storage.UserStorage
@@ -26,12 +26,12 @@ type Sessions struct {
 	Now func() time.Time
 }
 
-// SessionPolicy is how long a session lives and how often a use is written.
+// SessionPolicy sets a session's lifetime and how often a use is written.
 //
-// TTL is the window a session in use keeps ahead of it and Max the ceiling
-// from the sign in, which an extension cannot pass; a Max at or below TTL
-// pins the session to one TTL from the sign in. Touch is how stale a use
-// gets before a request records it, so a click is not a write.
+// TTL is the window a session in use keeps ahead of it. Max is the ceiling
+// from the sign in, which no extension passes; a Max at or below TTL pins
+// the session to one TTL from the sign in. Touch is the staleness a use
+// reaches before a request records it: a click inside Touch writes nothing.
 type SessionPolicy struct {
 	TTL   time.Duration
 	Max   time.Duration
@@ -65,8 +65,8 @@ func (s *Sessions) Issue(ctx context.Context, user *model.User) (string, error) 
 	return token, nil
 }
 
-// Resolve returns the user of a session token, and the expiry it moved to
-// where the use extended it; a zero time is a session left as it was.
+// Resolve returns the user of a session token and the expiry the use moved it to.
+// A zero time is a session this call left alone.
 func (s *Sessions) Resolve(ctx context.Context, token string) (*model.User, time.Time, error) {
 	if token == "" {
 		return nil, time.Time{}, ErrInvalidToken
@@ -125,7 +125,7 @@ func (s *Sessions) Revoke(ctx context.Context, token string) error {
 	return s.Store.Delete(ctx, HashToken(token))
 }
 
-// Policy is the lifetime the sessions were opened with.
+// Policy returns the policy NewSessions took, with Touch defaulted.
 func (s *Sessions) Policy() SessionPolicy {
 	return s.policy
 }

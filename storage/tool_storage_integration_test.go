@@ -42,9 +42,9 @@ func TestToolStorage(t *testing.T) {
 	assert.Equal(t, "jq", tools[0].Name)
 }
 
-// Save stores one tool over its own row, and Remove drops one: what the
-// instance's tool editor does, a tool at a time, rather than the whole
-// set a start replaces.
+// Save stores one tool over its own row, and Remove drops one: the
+// instance's tool editor works a tool at a time, where a start replaces
+// the whole set.
 func TestToolStorage_SaveAndRemove(t *testing.T) {
 	t.Parallel()
 	s := storage.NewToolStorage(newDB(t))
@@ -71,7 +71,7 @@ func TestToolStorage_SaveAndRemove(t *testing.T) {
 	assert.Equal(t, "yq", tools[0].Name)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestToolStorage_Closed(t *testing.T) {
 	t.Parallel()
 	s := storage.NewToolStorage(closedDB(t))

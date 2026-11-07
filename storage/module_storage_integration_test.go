@@ -103,7 +103,7 @@ func TestModuleStorage_Keep(t *testing.T) {
 	assert.Len(t, rows, 0)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestModuleStorage_Closed(t *testing.T) {
 	t.Parallel()
 	s := storage.NewModuleStorage(closedDB(t))
@@ -128,8 +128,7 @@ func TestModuleStorage_SaveReadBack(t *testing.T) {
 	assert.ErrorContains(t, err, errNoField)
 }
 
-// Keep reads the modules inside a transaction, and hands back what the
-// read said.
+// Keep reads the modules inside a transaction, and returns that read's error.
 func TestModuleStorage_KeepBroken(t *testing.T) {
 	t.Parallel()
 	_, err := storage.NewModuleStorage(brokenDB(t, model.ModuleTable)).Keep(context.Background(), nil)

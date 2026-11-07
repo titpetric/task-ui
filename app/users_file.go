@@ -96,7 +96,7 @@ func (f *UsersFile) Remove(ctx context.Context, users *storage.UserStorage, pass
 	return err
 }
 
-// NewUsersFile returns the file.
+// NewUsersFile returns the file at path, with the Interval that Watch polls on.
 func NewUsersFile(path string) *UsersFile {
 	return &UsersFile{Path: path, Interval: 5 * time.Second}
 }

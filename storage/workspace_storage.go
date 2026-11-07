@@ -49,7 +49,7 @@ func (s *WorkspaceStorage) Get(ctx context.Context, id string) (*model.Workspace
 	return workspace, notFound(err)
 }
 
-// GetByFolder returns the workspace of a folder.
+// GetByFolder returns the workspace of a folder, canonicalised first, ErrNotFound for a folder that has none.
 func (s *WorkspaceStorage) GetByFolder(ctx context.Context, folder string) (*model.Workspace, error) {
 	workspace, err := client(s.db).Get[model.Workspace](ctx, "SELECT * FROM workspace WHERE folder = ?", model.Canonical(folder))
 	return workspace, notFound(err)

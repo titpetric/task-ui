@@ -11,5 +11,19 @@
 // prompt. A workspace's home, TASK_UI_HOME, is a directory every Claude
 // session here reads, and where a workspace's prompt works.
 //
+// The prompt command answers a thread from a folder, a run or a workflow
+// run. It reads:
+//
+//   - TASK_UI_PROMPT, the thread, oldest first, the last message the question
+//   - TASK_UI_PROMPT_DIR, the directory to run in; TASK_UI_HOME or
+//     TASK_UI_WORKSPACE_DIR stand in for it
+//   - TASK_UI_PROMPT_REPLY, a file the reply is written to as well
+//   - TASK_UI_PROMPT_RUN, a file describing the run a thread is about
+//   - TASK_UI_PROMPT_WORKFLOW, the same for a workflow run's steps
+//   - TASK_UI_PROMPT_INSTRUCTIONS, prepended to the system prompt
+//   - TASK_UI_PROMPT_SOURCE, the thread to post the reply in over the task
+//     MCP server; the final message is then only the fallback
+//   - TASK_UI_HOSTS, the inventory Claude may inspect over ssh
+//
 // The shell command is a development tool with someone at the keyboard.
 package agent

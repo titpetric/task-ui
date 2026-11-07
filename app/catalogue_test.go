@@ -57,15 +57,11 @@ func TestCatalogueSteps(t *testing.T) {
 // number of projects, and Find answers out of the catalogue it already
 // holds.
 //
-// It was the other way around, and it was the latency of every page. A
-// walk reads the project and workspace rows and goes into every checkout
-// under the root; Steps().Find took one to answer a single ID. Asking it
-// per directory walked the root once per project, and the sidebar does
-// ask, because a workflow that runs over a workspace reads its projects
-// to say whether the reader may start it. The ported front end asks for
-// the job of each step one Host::job at a time, which is the same walk
-// again. The page took three and a half seconds on an instance whose
-// database is three megabytes.
+// A walk reads the project and workspace rows and goes into every checkout
+// under the root. Calling Find per directory walks the root once per project,
+// and the sidebar does call it: a workflow that runs over a workspace reads its
+// projects to say whether the reader may start it, and the ported front end
+// reads the job of each step one Host::job at a time.
 func TestCatalogueWalks(t *testing.T) {
 	t.Parallel()
 	walks := func(n int) int64 {

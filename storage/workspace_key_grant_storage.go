@@ -22,8 +22,8 @@ func NewWorkspaceKeyGrantStorage(db DB) *WorkspaceKeyGrantStorage {
 	return &WorkspaceKeyGrantStorage{db: db}
 }
 
-// Set replaces the roles and the users a workspace's key goes to. With
-// none of either, every run in the workspace gets it.
+// Set replaces the roles and the users a workspace's key goes to. Empty
+// roles and empty users leave the key ungranted, which opens it workspace wide.
 func (s *WorkspaceKeyGrantStorage) Set(ctx context.Context, workspaceID, keyName string, roles, users []string) error {
 	if workspaceID == "" || keyName == "" {
 		return errors.New("a grant needs a workspace and a key")

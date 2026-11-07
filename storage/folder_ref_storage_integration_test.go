@@ -46,7 +46,7 @@ func TestFolderRefStorage_Under(t *testing.T) {
 	assert.Len(t, got, 1, "an _ in the ID matches itself alone")
 }
 
-// The query hands back what the driver said.
+// The query returns the driver's error.
 func TestFolderRefStorage_Closed(t *testing.T) {
 	t.Parallel()
 	_, err := storage.NewFolderRefStorage(closedDB(t)).Under(context.Background(), "acme")

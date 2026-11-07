@@ -172,9 +172,8 @@ func (a *App) wire(version string) error {
 		return err
 	}
 	// One dispatcher and one lookup on the instance, read by both the
-	// plugins and the front end: a run a page asks for is the same run a
-	// module asks for, and the tree the action file sits in is the only
-	// part that differs.
+	// plugins and the front end: a page's run and a module's run are the
+	// same run, differing only in the tree the action file sits in.
 	dispatcher := NewDispatcher(a.Board, a.Users, store)
 	moduleRuns := NewModuleRuns(storage.NewNoteStorage(db))
 
@@ -279,8 +278,8 @@ func (a *App) wire(version string) error {
 	routes := apiHandlers.Routes()
 	r := chi.NewRouter()
 	// A page is a quarter of a megabyte of HTML and the JSON behind it is
-	// bigger, so the transfer was most of what a reader waited for: /runs
-	// answered in 2.2s and took another 0.6s to arrive. gzip at level 5
+	// bigger, which puts most of a reader's wait in the transfer: /runs
+	// answers in 2.2s and takes another 0.6s to arrive. gzip at level 5
 	// costs single digit milliseconds on a body this size. text/event-stream
 	// is not a compressible type here, so the SSE stream passes through, and
 	// a response that set its own Content-Encoding is left alone.
@@ -324,11 +323,11 @@ func (a *App) wire(version string) error {
 	r.Mount(telemetry.Path(), a.Guard.Require(telemetry))
 	// The runtime profiles, behind the Guard and the same admin check. A
 	// trace names the slow request; a CPU profile names the function in
-	// it, and only the running instance can be asked for one.
+	// it, and only the running instance can produce one.
 	r.Mount(PprofPath, a.Guard.Require(pprofRoutes()))
 	if ported == nil {
-		// No PHP front end was built, so the Go pages hold the root as they
-		// always did. A build that cannot extract the tree still serves.
+		// No PHP front end in this build: the Go pages hold the root. A
+		// build that cannot extract the tree still serves.
 		r.Mount("/", pages.Routes())
 		a.handler = telemetry.Middleware(r)
 		return nil
@@ -338,9 +337,9 @@ func (a *App) wire(version string) error {
 	//
 	// StripPrefix as well as the mount, because chi's Mount takes the prefix
 	// off the path it routes on and leaves the request's own URL whole, and a
-	// page reads that URL to decide which sidebar row it is: the row would be
-	// marked on none of them. The pages see themselves at the root, which is
-	// where they are compared from.
+	// page reads that URL to decide which sidebar row it is: no row would be
+	// marked. The pages see themselves at the root, where the comparison
+	// fetches them.
 	r.Mount(GoBase, http.StripPrefix(GoBase, pages.Routes()))
 	// What stays at the root because it is a page of neither front end: the
 	// session, the readiness check, the theme's files, the byte streams the
@@ -348,9 +347,9 @@ func (a *App) wire(version string) error {
 	// each of them and says why.
 	pages.Root(r)
 	r.Mount("/", ported)
-	// The middleware wraps every route above, so one trace holds a
-	// request and whatever ran inside it: a handler's own spans, and the
-	// spans of a module's PHP, which reports into the same tracer.
+	// The middleware wraps every route above, so one trace holds a request
+	// and everything it ran: a handler's own spans, and the spans of a
+	// module's PHP, which reports into the same tracer.
 	a.handler = telemetry.Middleware(r)
 	return nil
 }

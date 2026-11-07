@@ -44,16 +44,15 @@ type Catalogue struct {
 }
 
 // everyTTL is how long the workflow editor's listing of every folder
-// with a job lasts: the walk goes into every checkout.
+// with a job lasts: that walk descends into each checkout.
 const everyTTL = 30 * time.Second
 
 // listTTL is how long the catalogue the pages see lasts.
 //
-// It was no time at all, and that was the latency of the instance. The
-// walk goes into every checkout under the root, and one page takes it
+// The walk goes into every checkout under the root, and one page takes it
 // many times over: the chrome lists the folders, each workflow in the
 // sidebar resolves the job of every step through Find to say whether the
-// reader may start it, and the ported front end asks for those jobs one
+// reader may start it, and the ported front end reads those jobs one
 // Host::job at a time. A second is shorter than a click and longer than
 // a request, so a clone still shows at once and a page walks once.
 const listTTL = time.Second
@@ -63,12 +62,7 @@ func NewCatalogue(root string, discover bool, projects *storage.ProjectStorage) 
 	return &Catalogue{Root: root, Discover: discover, Projects: projects}
 }
 
-// Walks counts the walks of the root taken since the instance started.
-//
-// A walk reads the project and workspace rows and goes into every
-// checkout, so how many of them a page takes is the page's latency. The
-// number is here to be held down: the tests of what a listing costs
-// assert it, because nothing else makes an O(n) walk visible.
+// Walks counts the walks of the root since the instance started, the number the listing-cost tests assert to catch an O(n) walk.
 func (c *Catalogue) Walks() int64 {
 	return c.walks.Load()
 }
@@ -111,7 +105,7 @@ func (c *Catalogue) List() []*folder.Folder {
 
 // Find returns a folder by ID, or nil; internal that no folder takes is
 // the root, in its src while the default workspace exists, else the root
-// itself. The _ it was named before reads as internal.
+// itself. The legacy ID _ resolves to internal.
 func (c *Catalogue) Find(id string) *folder.Folder {
 	id = model.Canonical(id)
 	for _, f := range c.List() {

@@ -7,9 +7,8 @@ import (
 	"os"
 )
 
-// Note runs Claude Code to the end on the Notes board thread in TASK_UI_NOTE, in TASK_UI_WORKSPACE_DIR, as the user TASK_UI_NOTE_AGENT names.
-// It fails without the thread or a token, or when it cannot create the file TASK_UI_NOTE_REPLY names.
-// Claude's answer goes to the terminal and to that file, which the board replies with.
+// Note answers the board thread in TASK_UI_NOTE and writes the reply to the terminal and to TASK_UI_NOTE_REPLY, which the board posts.
+// It errors when the thread is empty, no token is set, or the reply file cannot be created.
 func (a *Agent) Note(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_NOTE")
 	if thread == "" {
@@ -36,9 +35,8 @@ func (a *Agent) Note(ctx context.Context) error {
 	return a.ask(ctx, a.getenv("TASK_UI_WORKSPACE_DIR"), prompt, a.context(), out)
 }
 
-// notePrompt returns what Claude reads of an instruction on the board: the
-// note, its author, the thread, and the user this run works for, as a
-// message may hand work to several at once.
+// notePrompt returns the prompt for note id: the author, the thread, and the agent this run answers as.
+// A message naming several agents splits the work, so the agent has to be named.
 func notePrompt(id, author, agent, thread string) string {
 	you := "you"
 	if agent != "" {

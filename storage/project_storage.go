@@ -55,7 +55,7 @@ func (s *ProjectStorage) Get(ctx context.Context, id string) (*model.Project, er
 	return project, notFound(err)
 }
 
-// GetByFolder returns the project of a folder.
+// GetByFolder returns the project of a folder, ErrNotFound for a folder that has none.
 func (s *ProjectStorage) GetByFolder(ctx context.Context, folder string) (*model.Project, error) {
 	project, err := client(s.db).Get[model.Project](ctx, "SELECT * FROM project WHERE folder = ?", folder)
 	return project, notFound(err)

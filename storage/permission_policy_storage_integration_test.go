@@ -149,9 +149,9 @@ func TestPermissionPolicyStorage_DeleteSubject(t *testing.T) {
 	assert.Len(t, policy, 1, "another subject keeps its entries")
 }
 
-// Every method hands back what the driver said. Put clears the entry of
-// the path before it writes one, so a dead pool stops it at the delete,
-// and a trigger at the insert.
+// Every method returns the driver's error. Put clears the entry of the
+// path before it writes one, so a dead pool stops it at the delete, and a
+// trigger at the insert.
 func TestPermissionPolicyStorage_Closed(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -169,7 +169,7 @@ func TestPermissionPolicyStorage_Closed(t *testing.T) {
 }
 
 // A policy the pool cannot read leaves the user with what the other
-// allows: For swallows the error, by design, so a page renders.
+// allows: For discards the error and returns an empty set, so a page renders.
 func TestPermissionPolicyStorage_ForClosed(t *testing.T) {
 	t.Parallel()
 	set := storage.NewPermissionPolicyStorage(closedDB(t)).

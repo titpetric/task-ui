@@ -8,7 +8,7 @@ import (
 )
 
 // The verdict is the last Result line, in any case, spacing or
-// emphasis; without one the verdict is not resolved.
+// emphasis; an answer missing that line is not resolved.
 func TestVerdict(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
@@ -32,7 +32,7 @@ func TestVerdict(t *testing.T) {
 }
 
 // The note names the task, the verdict and the run's link, the link's
-// text the link itself, under the base URL or as a path without one.
+// text the link itself, under the base URL or as a bare path for an empty one.
 func TestTriageNote(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t,

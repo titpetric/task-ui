@@ -52,9 +52,9 @@ func TestPinStorage(t *testing.T) {
 }
 
 // Pins follow a project that moves: a folder pin and a job pin of the
-// project, or of a directory inside it, get the new ID, for every user;
-// a pin the user holds at the new target already takes the moving
-// one's place, and a folder whose ID merely starts the same stays.
+// project, or of a directory below the project, get the new ID, for every
+// user; a pin the user holds at the new target already takes the moving
+// pin's place, and a folder whose ID merely starts the same stays.
 func TestPinStorage_MoveFolder(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -90,9 +90,9 @@ func TestPinStorage_MoveFolder(t *testing.T) {
 	assert.Equal(t, 0, moved)
 }
 
-// Every method hands back what the driver said. Add and MoveFolder look
-// for the pin a user has already: a dead pool answers that with an error
-// rather than with "not there", and neither writes.
+// Every method returns the driver's error. Add and MoveFolder look for the
+// pin a user has already: a dead pool answers that with an error, not with
+// "not there", and neither writes.
 func TestPinStorage_Closed(t *testing.T) {
 	t.Parallel()
 	pins := storage.NewPinStorage(closedDB(t))

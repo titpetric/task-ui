@@ -12,14 +12,11 @@ import (
 	"time"
 )
 
-// TokenPrefix starts every token, so a reader spots one in a
-// configuration file.
+// TokenPrefix starts every token, marking one in a configuration file.
 const TokenPrefix = "tui_"
 
-// MCPTokenName is the label the first MCP token of a user takes, and
-// MCPTokenTTL is how long any of them lasts. The kind that marks one is
-// model.TokenMCP: storage keys on the kind and the label is a user's own,
-// so a user holds as many as they care to name.
+// MCPTokenName labels a user's first MCP token and MCPTokenTTL sets the lifetime of every one.
+// model.TokenMCP marks the kind. Storage keys on kind and label; a user may name any number of them.
 const (
 	MCPTokenName = "mcp"
 	MCPTokenTTL  = 30 * 24 * time.Hour
@@ -40,15 +37,9 @@ func NewToken() (string, string, error) {
 	return token, HashToken(token), nil
 }
 
-// TokenName returns the label a new token takes: the one asked for where
-// nothing of taken holds it, and otherwise MCPTokenName with a number
-// after it, counting up to the first that is free.
-//
-// A label is unique among a user's tokens of one kind, so issuing one
-// without naming it has to pick a name nobody took, and a reader of the
-// list has to be able to tell which token a client holds. mcp, mcp-2 and
-// mcp-3 read as what they are and keep the name an instance already gave
-// the single token MCP access used to issue.
+// TokenName returns want when taken does not hold it, else want with -2, -3 and so on appended until one is free.
+// An empty want starts from MCPTokenName: mcp, mcp-2, mcp-3.
+// A label is unique among a user's tokens of one kind, and a reader of the list has to tell two of them apart.
 func TokenName(want string, taken []string) string {
 	stem := strings.TrimSpace(want)
 	if stem == "" {

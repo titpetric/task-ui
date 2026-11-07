@@ -82,7 +82,7 @@ func TestSSHKeyPolicyStorage_Users(t *testing.T) {
 	assert.Len(t, keys, 0)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestSSHKeyPolicyStorage_Closed(t *testing.T) {
 	t.Parallel()
 	policies := storage.NewSSHKeyPolicyStorage(closedDB(t))

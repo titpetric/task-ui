@@ -7,7 +7,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// replyBytes is the most of a reply file the board reads.
+// replyBytes caps the reply file the board reads.
 const replyBytes = 64 << 10
 
 // replyFile makes the file a job writes its answer to; the reply on the
@@ -20,8 +20,7 @@ func replyFile() (string, error) {
 	return answer.Name(), answer.Close()
 }
 
-// readReply returns what the agent's job wrote to the reply file, cut to
-// replyBytes.
+// readReply returns the reply file's contents, trimmed and cut to replyBytes, "" for a file it cannot read.
 func readReply(path string) string {
 	data, err := os.ReadFile(path)
 	if err != nil {

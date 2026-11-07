@@ -97,9 +97,9 @@ func TestEnvFileStorage_All(t *testing.T) {
 	assert.Equal(t, "acme/api", all[0].Folder)
 }
 
-// Every method hands back what the driver said. Set is the one that
-// reads before it writes: a dead pool answers its read with an error
-// rather than with "not there", and it stops instead of inserting.
+// Every method returns the driver's error. Set reads before it writes: a
+// dead pool answers that read with an error, not with "not there", and Set
+// stops there without inserting.
 func TestEnvFileStorage_Closed(t *testing.T) {
 	t.Parallel()
 	files := storage.NewEnvFileStorage(closedDB(t))

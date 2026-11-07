@@ -56,7 +56,7 @@ func TestWorkspaceKeyGrantStorage(t *testing.T) {
 	assert.Len(t, roles, 0)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestWorkspaceKeyGrantStorage_Closed(t *testing.T) {
 	t.Parallel()
 	grants := storage.NewWorkspaceKeyGrantStorage(closedDB(t))

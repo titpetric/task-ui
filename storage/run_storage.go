@@ -29,9 +29,9 @@ type RunFilter struct {
 	// Job keeps the runs of a job; @host:* keeps those of every host
 	// job, @host:<host>.
 	Job string
-	// Dir is the directory inside the folder of the job, with Job: ""
-	// keeps the runs of the folder's own job and leaves out the job of a
-	// directory inside it with the same name.
+	// Dir is the directory below the job's folder. An empty Dir with Job
+	// set keeps the runs of the folder's own job and leaves out a
+	// subdirectory's job of the same name.
 	Dir    string
 	State  model.State
 	UserID string

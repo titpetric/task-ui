@@ -82,7 +82,7 @@ func TestKeyInfoStorage_ClearBackup(t *testing.T) {
 	assert.Equal(t, "SHA256:new", got.Fingerprint)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestKeyInfoStorage_Closed(t *testing.T) {
 	t.Parallel()
 	keys := storage.NewKeyInfoStorage(closedDB(t))
@@ -129,7 +129,7 @@ func TestKeyInfoStorage_Writes(t *testing.T) {
 	assert.ErrorContains(t, storage.NewKeyInfoStorage(users).Link(ctx, "deploy", nil, []string{"alice"}), errRefused)
 }
 
-// Links reads two tables and hands back what the second read said.
+// Links reads two tables and returns the second read's error.
 func TestKeyInfoStorage_LinksSecondRead(t *testing.T) {
 	t.Parallel()
 	_, _, err := storage.NewKeyInfoStorage(brokenDB(t, model.KeyUserTable)).Links(context.Background())

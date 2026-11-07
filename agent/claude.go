@@ -12,11 +12,10 @@ import (
 	"github.com/titpetric/task-ui/claude"
 )
 
-// errNoToken stops a command without a sign-in for Claude Code.
+// errNoToken refuses a command whose environment has no Claude Code token.
 var errNoToken = errors.New("CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_AUTH_TOKEN: set up Settings, Integrations, Claude Code or OpenRouter")
 
-// getenv returns a variable of the environment, the last one set winning
-// as it does for a process.
+// getenv returns the last value set for name in a.Env, as a process reads it.
 func (a *Agent) getenv(name string) string {
 	value := ""
 	for _, kv := range a.Env {
@@ -36,9 +35,8 @@ func (a *Agent) signedIn() bool {
 	return a.getenv("ANTHROPIC_AUTH_TOKEN") != "" && a.getenv("ANTHROPIC_BASE_URL") != ""
 }
 
-// environ is the environment Claude Code runs with. IS_SANDBOX lets it
-// skip the permission prompts as root in the task container; with a
-// home, Claude reads the CLAUDE.md of the directories it adds.
+// environ returns a.Env with IS_SANDBOX=1, which skips Claude's permission prompts as root.
+// A run with a home also reads the CLAUDE.md of every added directory.
 func (a *Agent) environ() []string {
 	env := append(append([]string{}, a.Env...), "IS_SANDBOX=1")
 	if a.getenv("TASK_UI_HOME") != "" {
@@ -47,9 +45,8 @@ func (a *Agent) environ() []string {
 	return env
 }
 
-// homeArgs adds the run's home, TASK_UI_HOME, as a directory Claude
-// Code reads, its CLAUDE.md and its .claude skills with it, for a
-// session in dir. None without a home, or in it.
+// homeArgs returns --add-dir TASK_UI_HOME for a session in dir, so Claude reads that home's CLAUDE.md and skills.
+// It returns nil when the home is unset or is dir itself.
 func (a *Agent) homeArgs(dir string) []string {
 	home := a.getenv("TASK_UI_HOME")
 	if home == "" || filepath.Clean(home) == filepath.Clean(dir) {
@@ -58,12 +55,7 @@ func (a *Agent) homeArgs(dir string) []string {
 	return []string{"--add-dir", home}
 }
 
-// context is what every Claude run here reads after the instructions
-// of its own: where the run's artifacts go, task-ui's MCP tools for a
-// run that has them, the tools of the environment from
-// TASK_UI_TOOLING, then claude.Context, the
-// user of the run with the role and what the user may do, from
-// TASK_UI_USER, TASK_UI_ROLE and TASK_UI_PERMISSIONS, and what task-ui is.
+// context returns the system prompt every Claude run here appends, in the order system joins it: artifacts, MCP tools, tooling, then claude.Context.
 func (a *Agent) context() string {
 	artifacts := ""
 	if dir := a.getenv("TASK_UI_ARTIFACTS"); dir != "" {
@@ -93,10 +85,8 @@ func (a *Agent) claudePath() (string, error) {
 	return "", errors.New("claude: not found in PATH")
 }
 
-// ask runs claude -p on the prompt in dir and writes its reply to out,
-// with system, when not empty, after Claude's own system prompt, and
-// the MCP configuration of TASK_UI_MCP_CONFIG, task-ui's tools as the
-// run's user, when the run has one, and the workspace's home.
+// ask runs claude -p on prompt in dir and writes the reply to out.
+// It appends system, TASK_UI_MCP_CONFIG and the workspace home when each is set.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if !a.signedIn() {
 		return errNoToken

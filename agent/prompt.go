@@ -8,12 +8,8 @@ import (
 	"strings"
 )
 
-// Prompt runs Claude Code on the thread in TASK_UI_PROMPT, whose last message is the question,
-// in TASK_UI_PROMPT_DIR, or else the workspace's home, TASK_UI_HOME, or its directory, TASK_UI_WORKSPACE_DIR.
-// Claude's reply goes to the terminal and to the file TASK_UI_PROMPT_REPLY names.
-// TASK_UI_PROMPT_RUN names a file with the run a thread is about, TASK_UI_PROMPT_WORKFLOW one with a workflow run's steps.
-// The system prompt holds TASK_UI_PROMPT_INSTRUCTIONS, the thread TASK_UI_PROMPT_SOURCE to reply in with the task MCP,
-// the hosts of TASK_UI_HOSTS and the context; with a source, the final message is the fallback reply.
+// Prompt answers the thread in TASK_UI_PROMPT and writes the reply to the terminal and to TASK_UI_PROMPT_REPLY.
+// It errors when the thread is empty, no directory resolves, or no token is set. The package doc lists the variables it reads.
 func (a *Agent) Prompt(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_PROMPT")
 	if thread == "" {
@@ -62,8 +58,7 @@ func (a *Agent) Prompt(ctx context.Context) error {
 	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), source, inventory(a.getenv("TASK_UI_HOSTS")), a.context()), out)
 }
 
-// answerLine closes a prompt: the final message is what the page shows
-// under the question, or, with a source to reply in, the fallback.
+// answerLine closes a prompt. With a source the final message is only the fallback reply.
 func answerLine(source, page string) string {
 	if source != "" {
 		return "Post the answer as a reply in the thread, as the prompt's source in the system prompt says; your final message is the fallback, in markdown, shown under the question on " + page + " only when you posted no reply."
@@ -71,8 +66,7 @@ func answerLine(source, page string) string {
 	return "Your final message is the answer, in markdown, shown under the question on " + page + "."
 }
 
-// system joins what goes after Claude's own system prompt, the parts
-// that are not empty, a blank line between them.
+// system joins the non-empty parts with a blank line between them.
 func system(parts ...string) string {
 	kept := parts[:0]
 	for _, part := range parts {
@@ -83,9 +77,8 @@ func system(parts ...string) string {
 	return strings.Join(kept, "\n\n")
 }
 
-// aboutRun is the prompt of a thread from a run's page: the run, as
-// TASK_UI_PROMPT_RUN's file describes it with the end of its output,
-// then the thread. Claude commits a fix the question names to main.
+// aboutRun returns the prompt of a thread from a run's page: run, then thread.
+// A fix the question names is committed to main.
 func aboutRun(run, thread, source string) string {
 	return "A prompt from the page of a task-ui run, about that run. The run:\n\n" +
 		strings.TrimSpace(run) + "\n\n" +
@@ -94,11 +87,8 @@ func aboutRun(run, thread, source string) string {
 		thread + "\n\n" + answerLine(source, "the run's page")
 }
 
-// aboutWorkflow is the prompt a workflow asks once a run's steps
-// ended, or a prompt step asks after the steps before it: the run, as
-// TASK_UI_PROMPT_WORKFLOW's file describes it with the end of each
-// step's output, then the thread, the prompt first. Claude changes
-// nothing the prompt does not name.
+// aboutWorkflow returns the prompt a workflow step asks once the steps before it ended: run, then thread, the workflow's prompt first.
+// Claude changes nothing the prompt does not name.
 func aboutWorkflow(run, thread, source string) string {
 	return "A prompt of a task-ui workflow, asked in a run of the workflow once the steps before it ended, about that run. The run:\n\n" +
 		strings.TrimSpace(run) + "\n\n" +
@@ -107,9 +97,7 @@ func aboutWorkflow(run, thread, source string) string {
 		thread + "\n\n" + answerLine(source, "the workflow run's page")
 }
 
-// toolset tells Claude what tools TASK_UI_TOOLING found in the
-// environment and how to ask one for its usage, a line a tool with what
-// it is used for; nothing without tools.
+// toolset lists tools, one a line, with the `<tool> --help` hint. Empty for no tools.
 func toolset(tools string) string {
 	if tools == "" {
 		return ""
@@ -119,9 +107,7 @@ func toolset(tools string) string {
 		"Run `<tool> --help` for how to use one."
 }
 
-// inventory tells Claude about the hosts of TASK_UI_HOSTS and how to
-// inspect them over ssh, or passes on why there are none, a line without
-// tabs; nothing without hosts.
+// inventory lists hosts with the ssh command that inspects one. A hosts string with no tab is passed through as the reason there are none.
 func inventory(hosts string) string {
 	switch {
 	case hosts == "":

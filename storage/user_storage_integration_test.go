@@ -189,7 +189,7 @@ func TestUserStorage_SetFlags(t *testing.T) {
 	assert.Equal(t, int64(0), n)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestUserStorage_Closed(t *testing.T) {
 	t.Parallel()
 	users := storage.NewUserStorage(closedDB(t))

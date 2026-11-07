@@ -5,12 +5,13 @@ import (
 	"sync"
 )
 
-// RunTokens are the tokens task-ui mints for a Claude run it starts, so
-// Claude reaches task-ui's MCP server as the run's user: minted when
-// the run starts, revoked when it ends, held in memory alone, never in
-// the user's tokens and never shown. A run token signs in as its user,
-// with the user's own permissions, with or without MCP access, and
-// names the thread the run answers, so what it starts reports there.
+// RunTokens are the tokens task-ui mints for a Claude run it starts: a run
+// reaches task-ui's MCP server as the user who started it. One is minted
+// when the run starts and revoked when it ends, held in memory alone, never
+// listed among the user's tokens and never shown.
+//
+// A run token signs in with its user's own permissions, MCP access or not.
+// It names the thread the run answers, where what the run starts reports.
 type RunTokens struct {
 	mu     sync.Mutex
 	tokens map[string]runToken // token hash -> its run
@@ -44,7 +45,7 @@ func (t *RunTokens) Issue(userID, thread string) (string, func(), error) {
 	return token, revoke, nil
 }
 
-// User returns the ID of the user a live run token signs in as.
+// User returns the user ID of a live run token, false for a token that is not live.
 func (t *RunTokens) User(token string) (string, bool) {
 	run, ok := t.run(token)
 	return run.user, ok
@@ -68,7 +69,7 @@ func (t *RunTokens) run(token string) (runToken, bool) {
 
 type runKey struct{}
 
-// FromRun reports whether the request's user signed in with a run token, which needs no MCP access of the user's.
+// FromRun reports whether a run token signed the request in. A run token needs no MCP access of the user's.
 func FromRun(ctx context.Context) bool {
 	_, ok := ctx.Value(runKey{}).(runToken)
 	return ok

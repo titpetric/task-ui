@@ -36,13 +36,12 @@ type Guard struct {
 	Now func() time.Time
 }
 
-// NewGuard returns a guard over the sessions, reading the users they name
-// rather than a second set that could differ from them.
+// NewGuard returns a guard over sessions, reading users from sessions.Users and redirecting to /login.
 func NewGuard(sessions *Sessions) *Guard {
 	return &Guard{Sessions: sessions, Users: sessions.Users, LoginPath: "/login"}
 }
 
-// LoginRequired reports whether requests have to carry a session.
+// LoginRequired reports whether a request needs a session, false while AutoLogin names a user.
 func (g *Guard) LoginRequired() bool {
 	return g.AutoLogin == ""
 }
@@ -53,9 +52,8 @@ func (g *Guard) User(r *http.Request) *model.User {
 	return user
 }
 
-// resolve is User, with the ID of the token it signed in with and why
-// a bearer token signs in nobody: ErrTokenExpired for one past its
-// expiry. A writer takes the cookie of a session whose expiry moved.
+// resolve is User, with the ID of the token that signed the request in, and ErrTokenExpired for a bearer token past its expiry.
+// A writer takes the cookie of a session whose expiry moved.
 func (g *Guard) resolve(w http.ResponseWriter, r *http.Request) (*model.User, string, error) {
 	if token := BearerToken(r); token != "" {
 		return g.bearer(r.Context(), token)
@@ -87,8 +85,7 @@ func (g *Guard) renew(w http.ResponseWriter, r *http.Request, token string, unti
 	http.SetCookie(w, cookie(r, token, seconds))
 }
 
-// cookie is the session cookie: the one place its scope is written, so a
-// sign in, a renewal and a sign out cannot disagree on it.
+// cookie returns the session cookie. A sign in, a renewal and a sign out all take its scope from here.
 func cookie(r *http.Request, token string, maxAge int) *http.Cookie {
 	return &http.Cookie{
 		Name:     Cookie,
@@ -101,9 +98,8 @@ func cookie(r *http.Request, token string, maxAge int) *http.Cookie {
 	}
 }
 
-// bearer resolves the user of a token, and records its use. A token
-// with an expiry signs in until then; one without signs in until a
-// delete.
+// bearer resolves the user of a token, and records its use.
+// A token with an expiry signs in until then; an unexpiring one signs in until a delete.
 func (g *Guard) bearer(ctx context.Context, token string) (*model.User, string, error) {
 	if id, ok := g.RunTokens.User(token); ok {
 		user, err := g.Users.Get(ctx, id)
@@ -165,14 +161,9 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 	})
 }
 
-// Attach names the reader of a request and keeps nobody out: a request with a
-// session carries its user, one without carries none, and both go through.
-//
-// A page that answers before a sign in needs the name and not the check. The
-// sign in page is the one: it draws a reader who is already signed in nothing
-// and sends them home instead, which it can only do if it knows. Require
-// cannot be what tells it, because a reader with no session asking for the
-// sign in page would be redirected to the page they are already asking for.
+// Attach names the user of a request and keeps nobody out: the handler reads the user of a session, and nil where there is none.
+// The sign in page needs the name without the check: it sends a signed in reader home and never draws the form for one.
+// Require cannot tell it that: a reader with no session would be redirected from /login to /login.
 func (g *Guard) Attach(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, token, _ := g.resolve(w, r)

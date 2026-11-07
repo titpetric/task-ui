@@ -148,7 +148,7 @@ func TestArtifactStorage_Rewrite(t *testing.T) {
 	assert.Len(t, history, 0)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestArtifactStorage_Closed(t *testing.T) {
 	t.Parallel()
 	artifacts := storage.NewArtifactStorage(closedDB(t))

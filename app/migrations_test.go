@@ -13,15 +13,14 @@ import (
 // them, which is the order and the spelling every existing instance has
 // already recorded in its migrations table.
 //
-// This list is the one thing standing between a refactor and a broken
-// production database. A file's recorded name is its name here: move a
-// migration between owners and nothing changes, but rename its file, or let
-// two owners end up with one base name, and an instance that already ran it
-// runs it again. The second CREATE TABLE is conditional and survives; the
-// second ALTER TABLE of a column that is already there does not.
+// A rename here re-runs a migration on every instance that already applied it.
+// A file's recorded name is its name in this list: moving a migration between
+// owners changes nothing, while renaming its file, or letting two owners
+// collide on one base name, makes an instance apply it a second time. The
+// second CREATE TABLE is conditional and survives; the second ALTER TABLE of a
+// column that is already there fails.
 //
-// So a change to this list is a deliberate edit of 86 strings, which a review
-// sees, rather than a number that quietly moved.
+// A change to this list is therefore an edit of 86 strings, which a review sees.
 var migrations = []string{
 	"artifact.up.sql",
 	"artifact_commit.up.sql",
@@ -111,10 +110,10 @@ var migrations = []string{
 	"workspaces_internal_title.up.sql",
 }
 
-// The merged set is exactly what the owners carry, flat and in order. It also
-// proves the merge does not panic, which is how a base name carried by two
-// owners shows up: app.Migrations is called at every start and by every
-// maintenance command, so this test is the one that fails first.
+// The merged set is exactly what the owners embed, flat and in order, and the
+// merge does not panic. Two owners colliding on one base name panic here
+// first: app.Migrations runs at every start and from every maintenance
+// command.
 func TestMigrations(t *testing.T) {
 	t.Parallel()
 	files, err := fs.Glob(app.Migrations(), "*.up.sql")
@@ -123,8 +122,8 @@ func TestMigrations(t *testing.T) {
 }
 
 // Nothing but migrations reaches the merged set: a module's schema/ holds the
-// generated schema.puml and schema.svg beside the SQL, and a run that handed
-// those to mig would try to execute them.
+// generated schema.puml and schema.svg beside the SQL, and mig would try to
+// execute either of them.
 func TestMigrationsCarryNothingElse(t *testing.T) {
 	t.Parallel()
 	entries, err := fs.ReadDir(app.Migrations(), ".")
@@ -135,9 +134,9 @@ func TestMigrationsCarryNothingElse(t *testing.T) {
 	}
 }
 
-// Every owner is represented, which is what catches a //go:embed that stopped
-// matching: the merge is one filesystem and a missing owner is a missing table
-// rather than a missing file.
+// Every owner is represented, which catches a //go:embed that stopped
+// matching: the merge is one filesystem, so a missing owner reads as a missing
+// table and not as a missing file.
 func TestMigrationsCoverEveryOwner(t *testing.T) {
 	t.Parallel()
 	for _, name := range []string{

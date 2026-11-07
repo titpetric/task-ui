@@ -104,8 +104,8 @@ func (h *FrontHost) Place(_ context.Context, id, rel string) phpfront.Place {
 	}
 }
 
-// place is the folder of the catalogue, or the directory rel inside it as
-// Folder.Sub reads it; nil for either not being there.
+// place returns the folder id names in the catalogue, or its subdirectory rel
+// as Folder.Sub reads it; nil when the catalogue holds neither.
 func (h *FrontHost) place(id, rel string) *folder.Folder {
 	if h.Catalogue == nil {
 		return nil
@@ -119,8 +119,8 @@ func (h *FrontHost) place(id, rel string) *folder.Folder {
 
 // Groups is the Jobs table of a place, as frontend/job_table.go builds it off
 // the same listing: the place's sources, the files at the top of the folder
-// that run, the skills, the terminals, then the directories inside that run
-// jobs of their own.
+// that run, the skills, the terminals, then the subdirectories that run jobs
+// of their own.
 func (h *FrontHost) Groups(_ context.Context, id, rel string, seen []string, shell, claude bool) []phpfront.Group {
 	if h.Catalogue == nil {
 		return nil
@@ -215,8 +215,8 @@ func frontGroups(actions *view.Actions, found []view.JobGroup) []phpfront.Group 
 	return out
 }
 
-// Listing is a directory as the Files panel draws it: a folder's own, or a
-// directory inside it.
+// Listing is a directory as the Files panel draws it: the folder's own, or the
+// subdirectory rel names.
 func (h *FrontHost) Listing(_ context.Context, id, rel string, seen []string) []phpfront.Entry {
 	if h.Catalogue == nil {
 		return nil
@@ -268,13 +268,10 @@ func (h *FrontHost) Listing(_ context.Context, id, rel string, seen []string) []
 // RootTree is the root's own directories, as frontend/folder.go lists the
 // directory a workspace of no name keeps its checkouts in.
 //
-// The root is not a folder of the catalogue, so Listing cannot answer it: it
-// is the tree the catalogue was discovered from. A workspace row that names
-// the root moves the listing into the src of the tree, which is what named
-// says; a tree with no row for it lists the tree itself.
-//
-// No entry carries a Path, because the root's page links a directory to the
-// folder it is and never opens a file of its own.
+// The root is the tree the catalogue is discovered from and not a folder of
+// it, so Listing cannot answer it. named says a workspace row holds the root,
+// which moves the listing into the tree's src; without the row it lists the
+// tree itself. No entry sets a Path.
 func (h *FrontHost) RootTree(_ context.Context, named bool, seen []string) []phpfront.Entry {
 	dir := h.Root
 	if named {
@@ -383,8 +380,7 @@ func (h *FrontHost) Status(_ context.Context, dir string) phpfront.Status {
 }
 
 // Checkout is the commit a folder's checkout is at and the space that
-// checkout takes, measured from the top of the checkout the commit was read
-// from.
+// checkout takes, both measured from the top of the checkout holding dir.
 func (h *FrontHost) Checkout(_ context.Context, dir string) phpfront.Checkout {
 	if h.Git == nil || dir == "" || !h.Git.IsRepo(dir) {
 		return phpfront.Checkout{}

@@ -7,7 +7,7 @@
 // the users its note names. A message naming several users instructs each
 // of them, and each agent among them gets a run. For the agent, the board
 // starts the agent job as the agent's user, the note's text in its
-// environment, and replies with how the run ended. Any other user, and an
+// environment, and replies with the run's outcome. Any other user, and an
 // agent with no agent job, picks the note up over MCP: list_notes lists it open, and
 // note_comment reports working, done or failed. A note naming no user, or
 // from someone who may not run jobs, is a message and nothing more.
@@ -172,7 +172,7 @@ func (b *Board) permissions(ctx context.Context, user *model.User) permission.Se
 // Comment replies to a note, and moves its instruction to the state the
 // caller names: working, done or failed. A user the instruction names
 // reports with it; its author and an admin may set the state too, and
-// anyone who may post may reply.
+// anyone allowed to post may reply.
 func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state string) (*model.Note, error) {
 	note, err := b.Notes.Get(ctx, id)
 	if err != nil {
@@ -360,9 +360,9 @@ func (b *Board) start(stop context.Context, req runner.Request) (*runner.Session
 	}
 }
 
-// thread is the text of a note and its replies, oldest first, each under
-// its author: the conversation the agent works from. With an answer to
-// run again, the thread ends before it.
+// thread is the text of a note and its replies, oldest first, every message
+// below the name of whoever wrote it: the conversation the agent works from.
+// With an answer to run again, the thread stops before that answer.
 func (b *Board) thread(ctx context.Context, note, again *model.Note) string {
 	all, _ := b.Notes.Replies(ctx, []string{note.ID})
 	replies := all[note.ID]
@@ -507,7 +507,7 @@ func (b *Board) publish(note *model.Note) {
 	}
 }
 
-// report is the agent's reply when its run ends without an answer: how it ended, and the end
+// report is the agent's reply when its run produced no answer: the run's outcome, and the end
 // of the output in a code block.
 func report(run *model.Run, status runner.Status, output string) string {
 	took := run.Elapsed().Round(time.Second)

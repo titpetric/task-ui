@@ -18,7 +18,7 @@ func TestToolset(t *testing.T) {
 	assert.Contains(t, tools, "`<tool> --help`")
 }
 
-// The context of a run carries the tooling and its usage hint.
+// A run's context lists the tooling of TASK_UI_TOOLING with the `<tool> --help` hint, and neither without it.
 func TestAgent_ContextTooling(t *testing.T) {
 	t.Parallel()
 	a := &Agent{Env: []string{"TASK_UI_TOOLING=git: version control"}}

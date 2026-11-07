@@ -68,9 +68,9 @@ func TestUserAuthPasswordStorage(t *testing.T) {
 	assert.Len(t, list, 0)
 }
 
-// Every method hands back what the driver said. PasswordHash tells a
-// user with no password from a pool that cannot answer: the first is no
-// hash and no error, the second is the error.
+// Every method returns the driver's error. PasswordHash tells a user with
+// no password from a pool that cannot answer: the first is an empty hash
+// and a nil error, the second is the error.
 func TestUserAuthPasswordStorage_Closed(t *testing.T) {
 	t.Parallel()
 	passwords := storage.NewUserAuthPasswordStorage(closedDB(t))

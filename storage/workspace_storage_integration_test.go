@@ -165,9 +165,9 @@ func TestWorkspaceStorage_Home(t *testing.T) {
 }
 
 // The two reads task-ui migrate-layout makes: the folders in the order
-// it lays them out, and the home project each workspace names. They
-// name their columns rather than reading the row, so a database from
-// before the migration answers them.
+// it lays them out, and the home project each workspace names. Both name
+// their columns, so a database from before the migration answers them
+// where SELECT * would not.
 func TestWorkspaceStorage_Layout(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -199,8 +199,8 @@ func TestWorkspaceStorage_Layout(t *testing.T) {
 	assert.ErrorContains(t, err, errNoTable)
 }
 
-// Every method hands back what the driver said. Create reads the next
-// sort before it inserts, so a workspace without one stops there.
+// Every method returns the driver's error. Create reads the next sort
+// before it inserts, so a workspace whose sort is unset stops at that read.
 func TestWorkspaceStorage_Closed(t *testing.T) {
 	t.Parallel()
 	workspaces := storage.NewWorkspaceStorage(closedDB(t))

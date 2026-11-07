@@ -10,7 +10,7 @@ import (
 )
 
 // TriageQuestion is the question of the thread a schedule's triage asks
-// about its failed run; the prompt run sets claude.RunTriage beside it.
+// about its failed run; instructions pairs it with claude.RunTriage.
 const TriageQuestion = "Triage this failed run."
 
 // The verdicts of a triage, the Result line Claude's answer ends with.
@@ -25,7 +25,7 @@ const (
 var verdictLine = regexp.MustCompile(`(?i)^[\s*_\x60]*result:\s*(resolved|not\s+resolved|no\s+action)[\s*_\x60.]*$`)
 
 // Verdict returns the verdict of Claude's answer, its last Result line
-// in any case and spacing, or TriageUnresolved without one.
+// in any case and spacing. An answer missing that line is TriageUnresolved.
 func Verdict(answer string) string {
 	lines := strings.Split(answer, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
@@ -38,7 +38,7 @@ func Verdict(answer string) string {
 	return TriageUnresolved
 }
 
-// TriageNote returns the note a triage leaves on the board: the task, the verdict and the run's link under baseURL, a path without one.
+// TriageNote returns the note a triage leaves on the board: the task, the verdict and the run's link under baseURL, a bare path for an empty baseURL.
 func TriageNote(baseURL, folder, job, runID, verdict string) string {
 	link := strings.TrimSuffix(baseURL, "/") + "/runs/" + runID
 	return fmt.Sprintf("Attempted triage of failing %s/%s task, result: %s. Info: [%s](%s)", folder, job, verdict, link, link)

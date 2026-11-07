@@ -15,7 +15,7 @@ type Report struct {
 	RunID      string
 	AboutRunID string
 	// ThreadID is the prompt thread that holds the reply, empty for a
-	// summary kept without one.
+	// summary kept outside a thread.
 	ThreadID string
 	// Question is what Claude answered, and By who asked it.
 	Question string
@@ -34,8 +34,8 @@ func (r *Report) Href() string {
 
 // SummaryOf returns the report of a summary thread with its replies:
 // the first answer, the summary, or a pending report while the thread
-// waits on it; nil for a thread that is no summary or one that failed
-// without an answer.
+// waits on it; nil for a thread that is no summary, or one whose run
+// failed before answering.
 func SummaryOf(thread *model.Note, replies []model.Note) *Report {
 	if !IsSummary(thread) {
 		return nil

@@ -10,10 +10,9 @@ import (
 	"github.com/titpetric/task-ui/workflow"
 )
 
-// A check step reads the step it follows through the board, which is
-// the runner's Output: a prompt step's answer comes off the row, and a
-// job step whose run is gone, or an instance with no runs at all, reads
-// as nothing rather than failing the check.
+// A check step reads the step it follows through the board, the runner's Output.
+// A prompt step's answer comes off the row. A job step whose run is gone, and an
+// instance with no runs at all, both read as the empty string.
 func TestBoard_StepText(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

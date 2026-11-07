@@ -14,9 +14,9 @@ const PprofPath = "/debug/pprof"
 // pprofRoutes returns the runtime profiles, behind the same admin check
 // the telemetry dashboard has.
 //
-// A trace says which request was slow and what it queried; it does not
-// say which Go function spent the time. That is what a CPU profile
-// answers, and the only place to take one is the running instance:
+// A trace names the slow request and what it queried, never the Go function
+// that spent the time. A CPU profile names the function, and only the running
+// instance can produce one:
 //
 //	go tool pprof https://host/debug/pprof/profile?seconds=30
 //	go tool pprof https://host/debug/pprof/heap

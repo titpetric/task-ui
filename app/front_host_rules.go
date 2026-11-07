@@ -7,7 +7,7 @@ import (
 	"github.com/titpetric/task-ui/phpfront"
 )
 
-// Rules is config/permissions.yml, titles and path lists both.
+// Rules is `config/permissions.yml`, titles and path lists both.
 func (h *FrontHost) Rules(context.Context) phpfront.Rules {
 	file := config.Default()
 	return phpfront.Rules{

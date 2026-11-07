@@ -27,8 +27,8 @@ func TestSettingStorage(t *testing.T) {
 	assert.Equal(t, map[string]string{"a": "1", "b": "3"}, values)
 }
 
-// Every method hands back what the driver said, from the pool that is
-// closed and from the statement inside the transaction.
+// Every method returns the driver's error, from a closed pool and from a
+// statement inside the transaction alike.
 func TestSettingStorage_Errors(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

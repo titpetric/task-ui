@@ -91,10 +91,9 @@ func frontKey(key keystore.Key) phpfront.Key {
 // Spaces is the space each directory takes, by the directory, through the
 // meter both front ends read.
 //
-// The Projects settings measure every project they list and the measure is of
-// the directory itself: a project is a checkout as often as it is a plain
-// folder somebody put under src, and a page that drew a size for the one and
-// nothing for the other would be a different page.
+// The measure is of the directory and not of a checkout: a project under src
+// is a plain folder as often as it is a clone, and the Projects settings draw
+// a size for both.
 func (h *FrontHost) Spaces(_ context.Context, dirs []string) map[string]phpfront.Space {
 	out := make(map[string]phpfront.Space, len(dirs))
 	if h.Disk == nil {
@@ -168,13 +167,12 @@ func frontStorageRow(row diskusage.Row) phpfront.StorageRow {
 	return phpfront.StorageRow{Name: row.Name, Where: row.Where, Size: row.Size, Files: row.Files, Pending: row.Pending}
 }
 
-// Services is every integration as the Integrations settings draw it, in the
-// order the registry lists them: what the registry says of a service, and what
-// its settings hold now.
+// Services is every integration as the Integrations settings draw it, in
+// registry order: each service's description beside its current settings.
 //
-// The settings are read through the same view the Go page reads, so the two
-// front ends agree on what counts as set up, which secret has a value and
-// which switch is on. No secret value is in the answer.
+// The settings come through the same view the Go page reads, so the two front
+// ends agree on which service is set up, which secret has a value and which
+// switch is on. No secret value leaves this call.
 func (h *FrontHost) Services(ctx context.Context) []phpfront.Integration {
 	kinds := integration.Kinds()
 	out := make([]phpfront.Integration, 0, len(kinds))
@@ -201,11 +199,11 @@ func (h *FrontHost) Services(ctx context.Context) []phpfront.Integration {
 }
 
 // Variables is what the Secrets page prints of the vault: the value of every
-// plain env variable, by row ID, and what the walk of them said.
+// plain env variable, by row ID, with the result of the walk that read them.
 //
-// It is the list the Go page draws, opened once: a secret is left out, as
-// neither page prints one, and a variable the walk stopped at keeps the armour
-// its row holds, which is what the Go page then prints of it.
+// It is the list the Go page draws, opened once. A secret is left out, as
+// neither page prints one. A variable the walk stopped at keeps the armour its
+// row holds, and the Go page prints that armour.
 func (h *FrontHost) Variables(ctx context.Context) phpfront.Variables {
 	out := phpfront.Variables{Values: map[string]string{}}
 	if h.Secrets == nil {
@@ -268,7 +266,7 @@ func (h *FrontHost) IntegrationEnv(ctx context.Context) []phpfront.EnvVar {
 	return out
 }
 
-// frontFields is a service's settings as the boundary carries them.
+// frontFields is a service's settings in the shape the boundary passes.
 func frontFields(found []integration.Field) []phpfront.IntegrationField {
 	out := make([]phpfront.IntegrationField, 0, len(found))
 	for _, field := range found {
@@ -328,9 +326,9 @@ func (h *FrontHost) Usage(ctx context.Context) phpfront.Retention {
 // Telemetry is the options the tracer runs on, the stored ones over the
 // defaults, and where the dashboard is mounted.
 //
-// An instance with no telemetry answers the defaults rather than nothing: the
-// fields are what it would record, which is what the page shows, read only.
-// Wired is what says so, and the reader's own flag is PHP's.
+// An instance with no telemetry answers the defaults, the fields it would
+// record, and the page draws them read only. Wired names that state; the
+// reader's own flag is PHP's.
 func (h *FrontHost) Telemetry(ctx context.Context) phpfront.Telemetry {
 	opts, path := oida.NewOptions("task-ui"), oida.DefaultPath
 	out := phpfront.Telemetry{}

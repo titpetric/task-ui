@@ -452,7 +452,7 @@ func TestWorkflowRunStorage_HistoryDelete(t *testing.T) {
 	assert.Len(t, history, 1)
 }
 
-// Every method of the workflows hands back what the driver said.
+// Every method of the workflows returns the driver's error.
 func TestWorkflowStorage_Closed(t *testing.T) {
 	t.Parallel()
 	flows := storage.NewWorkflowStorage(closedDB(t))
@@ -477,7 +477,7 @@ func TestWorkflowStorage_Closed(t *testing.T) {
 	assert.ErrorContains(t, flows.Delete(ctx, "w1"), errClosed)
 }
 
-// Every method of the workflow runs hands back what the driver said.
+// Every method of the workflow runs returns the driver's error.
 func TestWorkflowRunStorage_Closed(t *testing.T) {
 	t.Parallel()
 	runs := storage.NewWorkflowRunStorage(closedDB(t))
@@ -552,7 +552,7 @@ func TestWorkflowStorage_RefErrors(t *testing.T) {
 	assert.ErrorContains(t, err, errNoTable)
 
 	// The workflow a step runs is there and the loop check cannot read
-	// its steps: the check stops rather than deciding without them.
+	// its steps: the check returns the read's error and decides nothing.
 	losing := newDB(t)
 	losingFlows := storage.NewWorkflowStorage(losing)
 	kept := &model.Workflow{Name: "kept"}

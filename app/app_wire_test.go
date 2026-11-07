@@ -13,9 +13,8 @@ import (
 )
 
 // The compressor wire puts in front of every route, measured over the writer
-// it hands a handler rather than through wire itself: building an instance
-// takes a database, a catalogue, a runner and a scheduler, and none of them
-// decides this.
+// it passes a handler. Building a whole instance takes a database, a
+// catalogue, a runner and a scheduler, and none of them decides this.
 //
 // A page is a quarter of a megabyte of HTML, so the transfer is most of what a
 // reader waits for. A page comes back encoded, a stream the browser reads as it
@@ -73,7 +72,7 @@ func TestCompressesAPageAndLeavesAStreamAlone(t *testing.T) {
 	}
 }
 
-// A client that asks for no encoding gets the bytes the handler wrote, so a
+// A client sending no Accept-Encoding gets the bytes the handler wrote, so a
 // curl without --compressed still reads the page.
 func TestCompressNeedsTheClientToAsk(t *testing.T) {
 	t.Parallel()

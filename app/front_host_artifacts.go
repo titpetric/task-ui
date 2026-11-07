@@ -10,7 +10,7 @@ import (
 
 // Tree is one directory of the artifact tree, as the artifacts page lists it.
 // A directory's size is the space the files under it take, which the listing
-// measures the way the page's Space does and the entry itself does not carry.
+// measures the way the page's Space does; the entry itself holds no size.
 func (h *FrontHost) Tree(_ context.Context, dir string) []phpfront.TreeItem {
 	if h.Artifacts == nil {
 		return nil

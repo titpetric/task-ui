@@ -227,7 +227,7 @@ func TestNoteStorage_Threads(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestNoteStorage_Closed(t *testing.T) {
 	t.Parallel()
 	notes := storage.NewNoteStorage(closedDB(t))
@@ -251,8 +251,8 @@ func TestNoteStorage_Closed(t *testing.T) {
 	assert.ErrorContains(t, notes.Delete(ctx, "n1"), errClosed)
 }
 
-// A note needs some text, whichever call puts it there, and a change of
-// a note that is not there is ErrNotFound rather than a silent success.
+// A note needs some text, whichever call puts it there. A change to a
+// missing note is ErrNotFound.
 func TestNoteStorage_Refuses(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

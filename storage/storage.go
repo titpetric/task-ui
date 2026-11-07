@@ -4,27 +4,29 @@
 // (Get[T], Select[T], Insert, Update) scan straight into the mig
 // generated model types. A *pdo.PDO is request scoped and not safe for
 // concurrent use, so every method allocates one over the shared *sqlx.DB
-// pool. Callers outside this package issue no SQL; a question the app
-// has gets a method here. rules/sql.yml refuses one written elsewhere.
+// pool. Every SQL statement task-ui runs is in this package; a question
+// the app has gets a method here. rules/sql.yml refuses one written in
+// another package.
 //
-// Three shapes recur, and the reason for each is here rather than on
-// every method that takes it.
+// Three shapes recur. The reason for each is here, so no method repeats it.
 //
 // A method that is one statement takes no transaction. The statement
 // either happens whole or not at all, and a count comes from the
-// driver's RowsAffected rather than from a loop that read every row to
-// decide. Keep and MoveFolder are written that way; inTx is for the
-// methods that genuinely write across tables.
+// driver's RowsAffected. Keep and MoveFolder are written that way; inTx
+// is for the methods that genuinely write across tables.
 //
-// A method that names its columns rather than reading the row with
-// SELECT * is one task-ui migrate-layout calls: it runs against a
-// database from before the migration it is part of, whose tables hold
-// other columns than this package's models do.
+// A method that names its columns is one task-ui migrate-layout calls. It
+// runs against a database from before the migration it is part of, whose
+// tables hold other columns than this package's models do, and SELECT *
+// would scan them.
 //
-// No method wraps a driver error. What the driver said goes back as it
-// came, so a caller comparing against sql.ErrNoRows or reading a
-// message gets the driver's own; ErrNotFound is the one translation,
-// and notFound makes it.
+// No method wraps a driver error. A caller comparing against sql.ErrNoRows
+// or reading a message gets the driver's own; ErrNotFound is the one
+// translation, and notFound makes it.
+//
+// Migrate takes the migrations as a parameter because they live with the
+// code that owns each table, and some of those owners import this package.
+// app.Migrations merges them, and app is the only place naming the owners.
 package storage
 
 import (
@@ -69,11 +71,7 @@ func Open(dsn string) (DB, error) {
 	return db, err
 }
 
-// Migrate applies the migrations of fsys to the database.
-//
-// The filesystem is a parameter because the migrations live with the code that
-// owns each table, and some of those owners import this package: app.Migrations
-// is what merges them, and app is the only place naming the owners.
+// Migrate applies the migrations of fsys to the database. The package doc says why fsys is a parameter.
 func Migrate(ctx context.Context, db DB, fsys fs.FS) error {
 	m, err := migrate.NewManager(db, fsys, Project)
 	if err != nil {

@@ -16,14 +16,13 @@ import (
 )
 
 // A terminal window attaches over a websocket, which hijacks the connection,
-// and the middleware is in front of every route of the instance: a tracer that
-// hands the handler a writer it cannot hijack panics the attach instead of
-// serving it, which is what took the shell off task.cdn.si.
+// and the middleware sits in front of every route of the instance. A tracer
+// that passes the handler a writer it cannot hijack panics the attach, which
+// took the shell off task.cdn.si.
 //
-// Over a real server, because that is the only writer that is an
-// http.Hijacker: httptest.NewRecorder is not one, so a test through the
-// recorder proves nothing here. A listening socket is also why this sits in
-// the integration suite rather than beside the unit tests.
+// Over a real server, the only writer that is an http.Hijacker:
+// httptest.NewRecorder is not one, so a test through the recorder proves
+// nothing here. That listening socket puts this in the integration suite.
 func TestTelemetryMiddlewareHijack(t *testing.T) {
 	t.Parallel()
 	telemetry, err := app.NewTelemetry(context.Background(), nil, "task-ui")

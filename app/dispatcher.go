@@ -16,14 +16,13 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Dispatcher starts the Claude runs a module asks for. It is what
+// Dispatcher starts the Claude runs of a module, behind
 // `Task::dispatch($comment, "action/refinement.md")` and the front end's
-// `Task\Host::dispatch` both reach.
+// `Task\Host::dispatch`.
 //
-// A dispatch is an ordinary prompt: the same board, the same run, the
-// same artifact tree and the same MCP server a prompt from a page gets.
-// Nothing about a module's run is special, which is why it appears on
-// /runs and its answer arrives as a note reply.
+// A dispatch is an ordinary prompt: the same board, the same run, the same
+// artifact tree and the same MCP server a prompt from a page gets. A module's
+// run appears on /runs and its answer arrives as a note reply.
 type Dispatcher struct {
 	Board *note.Board
 	Users *storage.UserStorage
@@ -35,19 +34,17 @@ func NewDispatcher(board *note.Board, users *storage.UserStorage, store *artifac
 	return &Dispatcher{Board: board, Users: users, Store: store}
 }
 
-// Dispatch starts a run over a comment and the action file naming what to
-// do with it, and returns the identifier of the note that holds the
-// thread. The run is started in the background: the note exists when this
-// returns and Claude's reply arrives under it.
+// Dispatch starts a run over a comment and the action file naming what to do
+// with it, and returns the ID of the thread's note. The run goes in the
+// background: the note exists on return, and Claude's reply arrives as a reply to it.
 //
-// The root is the tree the action file sits in, a plugin's module root or
-// the front end's own, and the action is a path inside it: every path the
-// prompt reads is resolved against the root and refused outside it.
+// The root is the tree the action file sits in, a plugin's module root or the
+// front end's own, and the action is a path below the root. phpscript.Inside
+// resolves every path the prompt reads against the root and refuses the rest.
 //
-// The user is the one whose request reached the module, so a module's run
-// has the permissions of whoever clicked rather than the instance's: a
-// viewer's comment starts nothing, and the run reads the secrets and keys
-// its own user may.
+// A module's run has the permissions of the user whose request reached it: a
+// viewer's comment starts nothing, and the run reads only the secrets and keys
+// that user may.
 func (d *Dispatcher) Dispatch(ctx context.Context, root, comment, action, folder string) (string, error) {
 	if d.Board == nil {
 		return "", errors.New("this instance starts no module runs")
@@ -69,13 +66,12 @@ func (d *Dispatcher) Dispatch(ctx context.Context, root, comment, action, folder
 	return asked.ID, nil
 }
 
-// prompt is the action file, then where to work, then the comment, then
-// the index of what is in the folder already.
+// prompt returns the action file, then where to work, then the comment, then
+// the index of what the folder holds already.
 //
-// Nothing else is added. The run's own environment already names the
-// artifact tree, the MCP server and what the user may do, and the agent's
-// context repeats them, so a module's prompt says what this module wants
-// and lets the instance say the rest.
+// The run's environment already names the artifact tree, the MCP server and the
+// user's permissions, and the agent's context repeats them; the prompt adds none
+// of that.
 func (d *Dispatcher) prompt(root, comment, action, folder string) (string, error) {
 	rel, err := phpscript.Inside(root, action)
 	if err != nil {
@@ -99,22 +95,15 @@ func (d *Dispatcher) prompt(root, comment, action, folder string) (string, error
 	return strings.Join(parts, "\n\n"), nil
 }
 
-// Revisions is how far back the prompt carries the history of a folder.
-// Enough to roll back a few steps of refinement and short enough that it
-// is a paragraph rather than a log.
+// Revisions is how many of a folder's commits the prompt lists: enough to roll
+// back a few steps of refinement, short enough to stay a paragraph.
 const Revisions = 12
 
-// history is what the folder has been, as a list of revisions, so a
-// request to put something back the way it was has something to name.
+// history returns the folder's last Revisions commits, newest first, so a
+// request to restore an earlier state can name one. Every write to the
+// artifact tree is a commit, and read_artifact takes a revision as its version.
 //
-// The artifact tree is a git repository and every write to it is a
-// commit, which has always been true and was never told to a run. A
-// refinement thread is a sequence of revisions of one folder, so going
-// back one is the ordinary correction: the run reads the file as the
-// revision holds it and writes it again.
-//
-// A folder with no history adds nothing: a thread whose first run has
-// not finished has nothing to go back to.
+// A folder with no commits returns "".
 func (d *Dispatcher) history(folder string) string {
 	if d.Store == nil {
 		return ""
@@ -142,16 +131,12 @@ func (d *Dispatcher) history(folder string) string {
 	return strings.Join(lines, "\n")
 }
 
-// where names the folder of the artifact tree a run writes in, which is
-// the only part of the tree it is asked to touch.
+// where returns the Where to work section: the folder of the artifact tree a
+// run writes in, and the only part of the tree it may touch. A module that
+// names a folder per thread gets one scratch space per thread out of a single
+// tree, each thread starting on an empty directory.
 //
-// A module that gives each of its threads a folder gets a scratch space
-// per thread out of one tree: a new thread is an empty directory, so a
-// run starts on nothing the way the first run of the instance did, and
-// what an earlier thread left stays where it was.
-//
-// No folder says nothing, and the run works at the top of the tree with
-// every other.
+// An empty folder returns "", and the run works at the top of the tree.
 func where(folder string) string {
 	folder = strings.Trim(folder, "/")
 	if folder == "" {
@@ -164,11 +149,8 @@ func where(folder string) string {
 		"/schema/user.up.sql` is linked as `schema/user.up.sql`. Nothing you write goes outside it."
 }
 
-// artifacts is what the folder holds now, as a list, so a run knows what
-// an earlier one left without reading the directory first.
-//
-// An empty folder adds nothing: a list of nothing is a line of prompt
-// that says nothing, and a new thread's folder is empty by definition.
+// artifacts returns the folder's contents as a list, which saves a run walking
+// the directory to find what an earlier one left. An empty folder returns "".
 func (d *Dispatcher) artifacts(folder string) string {
 	if d.Store == nil {
 		return ""

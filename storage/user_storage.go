@@ -25,7 +25,7 @@ func (s *UserStorage) Policies() *PermissionPolicyStorage {
 	return s.policies
 }
 
-// Permissions returns what a user may do.
+// Permissions returns what a user may do, read through the Policies cache and never an error: a policy it cannot read allows nothing.
 func (s *UserStorage) Permissions(ctx context.Context, user *model.User) permission.Set {
 	return s.policies.For(ctx, user)
 }
@@ -55,13 +55,13 @@ func (s *UserStorage) Get(ctx context.Context, id string) (*model.User, error) {
 	return user, notFound(err)
 }
 
-// GetByName returns a user by name.
+// GetByName returns a user by name, ErrNotFound for a name no user holds.
 func (s *UserStorage) GetByName(ctx context.Context, name string) (*model.User, error) {
 	user, err := client(s.db).Get[model.User](ctx, "SELECT * FROM user WHERE name = ?", name)
 	return user, notFound(err)
 }
 
-// List returns every user, by name.
+// List returns every user by name, unpaged: the caller gets the whole table.
 func (s *UserStorage) List(ctx context.Context) ([]model.User, error) {
 	return client(s.db).Select[model.User](ctx, "SELECT * FROM user ORDER BY name")
 }
@@ -177,8 +177,8 @@ func (s *UserStorage) Delete(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM user WHERE id = ?", id)
 }
 
-// MoveFolder rewrites the folder lists of the users that name a folder,
-// or one inside it, to name it under its new ID: access follows a
+// MoveFolder rewrites the folder lists of the users that name folder from,
+// or a folder below from, to name it under the ID to: access follows a
 // project that moves. It returns how many users changed.
 func (s *UserStorage) MoveFolder(ctx context.Context, from, to string) (int, error) {
 	users, err := s.List(ctx)

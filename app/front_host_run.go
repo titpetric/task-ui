@@ -13,7 +13,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 )
 
-// frontFrameRows is the least rows a frame on a page shows, which is what
+// frontFrameRows is the least rows a frame on a page shows, the number
 // frontend/page.go trims to.
 const frontFrameRows = 8
 
@@ -58,12 +58,8 @@ func (h *FrontHost) Publish(_ context.Context, topic string, payload map[string]
 	return nil
 }
 
-// Dispatch starts a run over a comment, through the dispatcher the plugins
-// use, with the action file resolved inside the front end's own tree.
-//
-// An instance with no board starts nothing and says so: a page whose form
-// posts into a dispatch draws the error rather than reporting a run that is
-// not there.
+// Dispatch starts a run over a comment through the dispatcher the plugins use, with the action file resolved against the front end's own tree.
+// An instance with no board returns an error for the page's form to draw.
 func (h *FrontHost) Dispatch(ctx context.Context, comment, action, folder string) (string, error) {
 	if h.Dispatcher == nil {
 		return "", errors.New("this instance starts no runs")
@@ -71,8 +67,8 @@ func (h *FrontHost) Dispatch(ctx context.Context, comment, action, folder string
 	return h.Dispatcher.Dispatch(ctx, h.FrontRoot, comment, action, folder)
 }
 
-// RunOf is the run a note holds, "" where the note has none yet or the
-// instance keeps no notes.
+// RunOf is the run a note holds, "" before the run starts or on an instance
+// that keeps no notes.
 func (h *FrontHost) RunOf(ctx context.Context, note string) string {
 	if h.Runs == nil {
 		return ""
@@ -80,8 +76,8 @@ func (h *FrontHost) RunOf(ctx context.Context, note string) string {
 	return h.Runs.RunOf(ctx, note)
 }
 
-// Session is a run as the runner holds it. A run that waits says so and says
-// nothing else, which is why the position replaces the message.
+// Session is a run as the runner holds it. A waiting run reports its queue
+// position in place of a message.
 func (h *FrontHost) Session(_ context.Context, id string) phpfront.Session {
 	found, ok := h.held(id)
 	if !ok {
@@ -115,9 +111,8 @@ func (h *FrontHost) Frame(_ context.Context, id string) string {
 }
 
 // Screen is the last frame of a run that has ended, replayed off the recording
-// the run wrote, which is what a pipeline draws under every step. The caller
-// holds the row, so the path of the recording and the columns it was written
-// at come over with the ID.
+// the run wrote, the frame a pipeline draws under every step. The caller holds
+// the row, so castPath and cols arrive with the ID.
 //
 // A run still going answers from the live session, as Frame does, and so does
 // a recording that will not replay: a frame is decoration and a page that

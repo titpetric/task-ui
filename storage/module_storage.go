@@ -17,24 +17,20 @@ func NewModuleStorage(db DB) *ModuleStorage {
 	return &ModuleStorage{db: db}
 }
 
-// List returns every module, by name.
+// List returns every module by name, unpaged: the caller gets the whole table.
 func (s *ModuleStorage) List(ctx context.Context) ([]model.Module, error) {
 	return client(s.db).Select[model.Module](ctx, "SELECT * FROM module ORDER BY name")
 }
 
-// Get returns the module of a name.
+// Get returns the module of a name, ErrNotFound when no module has it.
 func (s *ModuleStorage) Get(ctx context.Context, name string) (*model.Module, error) {
 	row, err := client(s.db).Get[model.Module](ctx, "SELECT * FROM module WHERE name = ?", name)
 	return row, notFound(err)
 }
 
-// Save stores a module over the row its name holds. The conflict clause
-// names every column but id and created_at, so a module already in the
-// table keeps both: a start reads every modinfo.php again, and a module
-// whose title changed is the same module with the same row.
-//
-// It reads the row back, so module.ID and its dates are the row's
-// whichever branch the upsert took.
+// Save stores a module over the row its name holds, keeping that row's id
+// and created_at. It reads the row back into module, so the ID and the
+// dates are the row's whichever branch the upsert took.
 func (s *ModuleStorage) Save(ctx context.Context, module *model.Module) error {
 	if module.ID == "" {
 		module.ID = model.NewID()

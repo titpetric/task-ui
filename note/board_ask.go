@@ -18,8 +18,7 @@ import (
 // ErrForbidden reports a prompt from someone without prompt/edit.
 var ErrForbidden = errors.New("you need the prompt/edit permission to prompt Claude")
 
-// ErrNoPrompt reports a place no prompt runs in: a directory that is
-// not there.
+// ErrNoPrompt reports a place no prompt runs in: a directory that does not exist.
 var ErrNoPrompt = errors.New("no prompt runs here")
 
 // Ask puts a prompt to Claude in dir, or in the thread of parentID, as ask does.
@@ -28,7 +27,7 @@ func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body s
 }
 
 // AskArea puts a prompt of an area's page, such as model.AreaWorkflows, to Claude in dir, as Ask does.
-// The thread carries the area, so its runs get the area's instruction; asking takes prompt/edit.
+// The thread names the area, and its runs read the area's instruction. It takes prompt/edit.
 func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body string) (*model.Note, error) {
 	if area != model.AreaWorkflows {
 		return nil, fmt.Errorf("%w: no area %q", ErrInvalid, area)
@@ -36,7 +35,7 @@ func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body s
 	return b.ask(ctx, user, "", dir, "", area, body)
 }
 
-// ask puts a prompt to Claude in dir, a folder and a directory inside it
+// ask puts a prompt to Claude in dir, a folder and a directory under that folder
 // as Run.Where names them, or internal for the root, and answers with the note:
 // open, of the folder's workspace, about the run aboutRun names and of
 // the area when they name one. With parentID it replies in a prompt's
@@ -96,7 +95,7 @@ func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutR
 	return &asked, nil
 }
 
-// reask starts the prompt of an open prompt note as its author.
+// reask starts the prompt of an open prompt note as the note's author.
 func (b *Board) reask(ctx context.Context, note *model.Note) {
 	user, err := b.Users.Get(ctx, note.UserID)
 	if err != nil {
@@ -130,13 +129,12 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *mode
 // promptEnv puts a prompt's thread and the file its answer goes to in
 // the request's environment, and returns the request, that file, and a
 // cleanup for the files it made. A thread about a run gets the run in a
-// file, TASK_UI_PROMPT_RUN, as its output may pass what an environment
-// variable holds, a workflow run's prompt the run's steps in
+// file, TASK_UI_PROMPT_RUN, because the output can exceed the size of an
+// environment variable, a workflow run's prompt the run's steps in
 // TASK_UI_PROMPT_WORKFLOW, and the summary of Run and summarize its
 // shape in TASK_UI_PROMPT_INSTRUCTIONS; a run with task-ui's MCP tools
 // gets the thread it answers in TASK_UI_PROMPT_SOURCE, to reply there.
-// When a file is not there to read, the note fails and promptEnv
-// returns false.
+// A file it cannot write fails the note, and promptEnv returns false.
 func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Note) (runner.Request, string, func(), bool) {
 	ctx := context.Background()
 	answer, err := replyFile()
@@ -291,8 +289,8 @@ func (b *Board) isWorkspace(ctx context.Context, id string) bool {
 	return err == nil
 }
 
-// underRoot returns where a directory is under the root, a slash path,
-// "" for the root itself; false for one outside it.
+// underRoot returns a directory's slash path below b.Root, "" for the root itself.
+// It returns false for a directory b.Root does not contain.
 func (b *Board) underRoot(dir string) (string, bool) {
 	root, err := filepath.EvalSymlinks(b.Root)
 	if err != nil {

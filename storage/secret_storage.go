@@ -21,8 +21,7 @@ func SharedScope(workspace string) string {
 	return ScopeWorkspace + workspace
 }
 
-// ScopeWorkspaceName returns the workspace a workspace scope names, and
-// whether the scope names one at all.
+// ScopeWorkspaceName returns the workspace a workspace scope names, false for ScopeAll or a folder scope.
 func ScopeWorkspaceName(scope string) (string, bool) {
 	name, ok := strings.CutPrefix(scope, ScopeWorkspace)
 	return name, ok
@@ -76,8 +75,7 @@ func (s *SecretStorage) GetByID(ctx context.Context, id string) (*model.Secret, 
 	return secret, notFound(err)
 }
 
-// List returns every secret, the ones of every workspace first, then a
-// workspace's, then a folder's, by scope and name.
+// List returns every secret by scope and name, the scopes in the order ScopeAll, workspace, folder.
 func (s *SecretStorage) List(ctx context.Context) ([]model.Secret, error) {
 	return client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret ORDER BY CASE WHEN scope = ? THEN 0 WHEN scope LIKE ? THEN 1 ELSE 2 END, scope, name", ScopeAll, ScopeWorkspace+"%")
 }

@@ -55,8 +55,8 @@ func (s *PinStorage) Delete(ctx context.Context, user, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM pin WHERE id = ?", id)
 }
 
-// movedPins matches the pins of a folder and of the folders inside it,
-// and ?4 || substr(folder, ?5) is where each of them moves to: the new
+// movedPins matches the pins of a folder and of the folders below that
+// folder. ?4 || substr(folder, ?5) is where each pin moves to: the new
 // folder with what followed the old one. It is model.Moved as a column
 // expression, and the arguments are movedArgs.
 const movedPins = "folder = ?1 OR substr(folder, 1, ?2) = ?3"
@@ -69,8 +69,8 @@ func movedArgs(from, to string) []any {
 	return []any{from, len(prefix), prefix, to, len(from) + 1}
 }
 
-// MoveFolder renames the pins of a folder and of the folders inside it
-// to its new ID, for every user, and returns how many moved. A pin
+// MoveFolder renames the pins of folder from, and of the folders below
+// from, to the ID to, for every user, and returns how many moved. A pin
 // whose user holds the target already goes, the target's pin stays.
 func (s *PinStorage) MoveFolder(ctx context.Context, from, to string) (int, error) {
 	db := client(s.db)

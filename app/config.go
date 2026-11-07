@@ -279,14 +279,12 @@ func (c *Config) ArtifactTree() string {
 	return filepath.Join(c.ArtifactsDir(), "tree")
 }
 
-// ArtifactsDir is where the runs write their artifacts while they run.
+// ArtifactsDir is DataDir/artifacts, the tree a run writes into through $TASK_UI_ARTIFACTS and the artifact store commits.
 func (c *Config) ArtifactsDir() string {
 	return filepath.Join(c.DataDir, "artifacts")
 }
 
-// ModulesDir is where the modules that ship in the binary are extracted,
-// and the first directory walked for a modinfo.php. The workspace folder
-// is walked after it, so a project's checkout carries a module of its own.
+// ModulesDir is DataDir/modules, where the binary's modules extract to and the first directory walked for a modinfo.php; the workspace folder is walked after it.
 func (c *Config) ModulesDir() string {
 	return filepath.Join(c.DataDir, "modules")
 }

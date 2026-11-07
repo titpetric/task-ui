@@ -89,7 +89,7 @@ func (s *SecretReadStorage) List(ctx context.Context, secretID, before, after st
 	return reads, err
 }
 
-// ForRun returns the reads of one run, by secret name.
+// ForRun returns the reads of one run by secret name. A run that read no secret returns nothing and no error.
 func (s *SecretReadStorage) ForRun(ctx context.Context, runID string) ([]model.SecretRead, error) {
 	return client(s.db).Select[model.SecretRead](ctx, "SELECT * FROM secret_read WHERE run_id = ? ORDER BY name", runID)
 }

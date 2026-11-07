@@ -21,7 +21,7 @@ func NewSSHKeyPolicyStorage(db DB) *SSHKeyPolicyStorage {
 	return &SSHKeyPolicyStorage{db: db}
 }
 
-// Set replaces the roles that get a key. No roles leaves it with none.
+// Set replaces the roles that get a key. An empty roles leaves the key to no role at all.
 func (s *SSHKeyPolicyStorage) Set(ctx context.Context, keyName string, roles []string) error {
 	if keyName == "" {
 		return errors.New("a policy needs a key")
@@ -79,8 +79,8 @@ func (s *SSHKeyPolicyStorage) Keys(ctx context.Context, role string) ([]string, 
 	return client(s.db).Select[string](ctx, "SELECT key_name FROM ssh_key_policy WHERE role = ? ORDER BY key_name", role)
 }
 
-// SetUsers replaces the users that get a key by name. No users leaves it
-// with none by name; its roles stay.
+// SetUsers replaces the users that get a key by name. An empty users leaves
+// the key to no named user; the key's roles stay.
 func (s *SSHKeyPolicyStorage) SetUsers(ctx context.Context, keyName string, users []string) error {
 	if keyName == "" {
 		return errors.New("a policy needs a key")

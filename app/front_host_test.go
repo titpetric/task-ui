@@ -41,7 +41,7 @@ func TestFrontHost_Whoami(t *testing.T) {
 	assert.Equal(t, "ops", host.Whoami(ctx))
 }
 
-// Folders is the catalogue with each folder's jobs, and a job carries what a
+// Folders is the catalogue with each folder's jobs, and a job holds what a
 // gate reads: its kind and its own allow list.
 func TestFrontHost_Folders(t *testing.T) {
 	t.Parallel()
@@ -63,10 +63,10 @@ func TestFrontHost_Folders(t *testing.T) {
 	assert.Equal(t, []string{"ann"}, found[0].Jobs[1].Allow)
 }
 
-// The directories of a tree are read in one call, keyed by the ID asked
-// about: the catalogue's list is indexed once, so a tree of fifty rows is one
-// scan and not fifty, and an ID nothing places is left out rather than keyed
-// to the empty string.
+// The directories of a tree are read in one call, keyed by ID: the
+// catalogue's list is indexed once, so a tree of fifty rows costs one scan.
+// An ID the layout places nowhere is left out of the map; no key is set to the
+// empty string.
 func TestFrontHost_FolderDirs(t *testing.T) {
 	t.Parallel()
 
@@ -81,14 +81,14 @@ func TestFrontHost_FolderDirs(t *testing.T) {
 	assert.Equal(t, "/src/infra", found["infra"])
 
 	// A folder the catalogue holds with no directory measured is no key
-	// either, and neither is the empty ID the chrome's list may carry.
+	// either, and neither is the empty ID the chrome's list may hold.
 	_, ok := found["bare"]
 	assert.False(t, ok, "a folder with no directory is left out")
 	_, ok = found[""]
 	assert.False(t, ok, "an empty ID is asked of nobody")
 
-	// An ID no folder holds is the layout's, and it answers what the single
-	// reader answers: the batch is an optimisation, not a second rule.
+	// An ID no folder holds is the layout's, and the batch answers what
+	// FolderDir answers for it: one rule, read once for the whole tree.
 	rooted := &FrontHost{Root: "/root", Catalogue: host.Catalogue}
 	batched := rooted.FolderDirs(ctx, []string{"infra", "malta/deploy"}, workspaces)
 	assert.Equal(t, "/src/infra", batched["infra"])
@@ -121,8 +121,8 @@ func TestFrontHost_Dirty(t *testing.T) {
 	assert.Equal(t, 0, host.Dirty(context.Background(), ""))
 }
 
-// Rules carries the file in order, with the path lists it decides, so the
-// decision is the only part of permission/ the front end ports.
+// Rules returns the file in order, with the path lists it decides. Only that
+// decision is ported out of permission/.
 func TestFrontHost_Rules(t *testing.T) {
 	t.Parallel()
 
@@ -137,7 +137,7 @@ func TestFrontHost_Rules(t *testing.T) {
 	assert.False(t, slices.Contains(rules.Checks, "user/all"), "a check never names an all rule")
 	assert.True(t, slices.Contains(rules.Checks, "run"), "an application permission is a check")
 
-	// The titles are the file's, so a page draws what config/permissions.yml says.
+	// The titles are the file's, so a page draws what `config/permissions.yml` says.
 	assert.True(t, slices.ContainsFunc(rules.Sections, func(r phpfront.Rule) bool {
 		return r.Key == "note" && r.Title == "Notes"
 	}))
@@ -161,9 +161,9 @@ func TestFrontHost_Publish(t *testing.T) {
 	assert.Equal(t, "note", got.Name)
 }
 
-// An instance with no Beszel integration is the Inventory page's unset state,
-// which it says instead of listing nothing, and a host nobody monitors is not
-// found rather than empty.
+// An instance with no Beszel integration answers the Inventory page's unset
+// state, which the page draws in place of an empty list. A host nobody
+// monitors answers not found.
 func TestFrontHost_Inventory(t *testing.T) {
 	t.Parallel()
 

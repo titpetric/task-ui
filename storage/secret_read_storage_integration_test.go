@@ -84,7 +84,7 @@ func TestSecretReadStorage_DeleteThrough(t *testing.T) {
 	assert.Equal(t, batch[2].ID, left[0].ID)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestSecretReadStorage_Closed(t *testing.T) {
 	t.Parallel()
 	reads := storage.NewSecretReadStorage(closedDB(t))
@@ -108,8 +108,8 @@ func TestSecretReadStorage_Closed(t *testing.T) {
 }
 
 // Record writes a row and prunes the secret's log, both inside one
-// transaction, and stops at the statement that failed. Keep of zero is
-// the default cap rather than a log of nothing.
+// transaction, and stops at the statement that failed. Keep of zero falls
+// back to SecretReadKeep.
 func TestSecretReadStorage_RecordErrors(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -136,7 +136,7 @@ func TestSecretReadStorage_RecordErrors(t *testing.T) {
 	}), errRefused)
 }
 
-// Keep of zero is the default cap, not a log of nothing.
+// Keep of zero falls back to SecretReadKeep.
 func TestSecretReadStorage_KeepDefault(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

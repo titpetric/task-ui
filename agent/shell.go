@@ -5,9 +5,8 @@ import (
 	"syscall"
 )
 
-// Shell replaces the process with Claude Code in a terminal, in the directory it starts in, with args and the workspace's home, TASK_UI_HOME.
-// The pty is Claude's own, and the context goes into its system prompt.
-// As a folder's @claude it starts in the folder, or in the directory inside it the run is of.
+// Shell replaces the process with Claude Code in the working directory, with args, the run context in --append-system-prompt and TASK_UI_HOME in --add-dir.
+// Claude owns the pty. It returns errNoToken when no token is set.
 func (a *Agent) Shell(args []string) error {
 	if !a.signedIn() {
 		return errNoToken

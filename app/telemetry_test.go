@@ -44,9 +44,9 @@ func TestTelemetry_ServeHTTP(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, recorder.Code)
 }
 
-// Tracer is nil until one is built, which is what every reader of the pointer
-// checks for, and Path falls back to the library's mount so the chrome has a
-// link to draw.
+// Tracer is nil until one is built, the case every reader of the pointer
+// checks, and Path falls back to the library's mount so the chrome has a link
+// to draw.
 func TestTelemetry_Tracer(t *testing.T) {
 	t.Parallel()
 

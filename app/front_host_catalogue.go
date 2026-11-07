@@ -40,8 +40,8 @@ func (h *FrontHost) Folders(context.Context) []phpfront.Folder {
 	return out
 }
 
-// frontSources is the files a folder's conventions were detected in, which
-// its row in the sidebar names itself by.
+// frontSources is the files a folder's conventions come from, the names its
+// sidebar row lists.
 func frontSources(sources []*detector.Source) []string {
 	out := make([]string, 0, len(sources))
 	for _, source := range sources {
@@ -102,11 +102,11 @@ func (h *FrontHost) FolderDir(_ context.Context, id string, workspaces []string)
 }
 
 // FolderDirs is FolderDir of every ID a tree draws, in one crossing: the
-// catalogue's list is indexed once and the layout answers the IDs no folder
-// of it holds, so a tree of fifty rows costs one scan rather than fifty.
+// catalogue's list is indexed once and the layout answers the IDs no folder of
+// it holds, so a tree of fifty rows costs one scan.
 //
-// An ID the layout places nowhere is left out of the map, which is the empty
-// string FolderDir answers, and no folder has an empty directory.
+// An ID the layout places nowhere is left out of the map. No folder has an
+// empty directory, so a missing key reads as FolderDir's "".
 func (h *FrontHost) FolderDirs(ctx context.Context, ids []string, workspaces []string) map[string]string {
 	var known map[string]string
 	if h.Catalogue != nil {
@@ -147,8 +147,8 @@ func (h *FrontHost) FolderDirs(ctx context.Context, ids []string, workspaces []s
 	return out
 }
 
-// IsDir reports whether a directory inside a folder of the catalogue is
-// there, which is what a pin of a directory is resolved against.
+// IsDir reports whether rel exists under the folder id names, the check a
+// pinned directory resolves against.
 func (h *FrontHost) IsDir(_ context.Context, id, rel string) bool {
 	if h.Catalogue == nil {
 		return false
@@ -165,14 +165,9 @@ func (h *FrontHost) IsDir(_ context.Context, id, rel string) bool {
 	return err == nil && info.IsDir()
 }
 
-// Commit is the time of the last commit in a directory, through the cache
-// both front ends share, and "" for a directory in no checkout or one whose
-// checkout has no commit.
-//
-// It answers in the shape a timestamp column holds, which Task\Clock calls
-// STORED, in UTC: the sidebar orders a workspace's projects by this and
-// compares two of them as text, and a commit carries the committer's own zone,
-// which no two projects need share.
+// Commit is the time of the last commit in a directory, through the cache both
+// front ends share, formatted as frontStamp in UTC so the sidebar can order a
+// workspace's projects as text. It is "" for a directory with no commit.
 func (h *FrontHost) Commit(_ context.Context, dir string) string {
 	if h.Git == nil || dir == "" {
 		return ""
@@ -188,9 +183,9 @@ func (h *FrontHost) Commit(_ context.Context, dir string) string {
 const frontStamp = "2006-01-02 15:04:05.999 -0700 MST"
 
 // Job is the job a run names, resolved the way frontend/run.go resolves it:
-// the folder of the catalogue, the directory inside it the run ran in, and
-// the job that directory holds. Each step answers nothing where the thing is
-// gone, and a job that is not there is one nobody may run.
+// the folder id names in the catalogue, the subdirectory dir names under it,
+// and the job that subdirectory holds. A missing step answers the zero Job,
+// which nobody may run.
 func (h *FrontHost) Job(_ context.Context, id, dir, job string) phpfront.Job {
 	if h.Catalogue == nil {
 		return phpfront.Job{}

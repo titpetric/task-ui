@@ -86,7 +86,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 }
 
 // answerTo returns what the named user answered to a note of a thread,
-// the first reply of theirs after it, or nil for none yet.
+// the first reply of theirs after it, nil until they answer.
 func (b *Board) answerTo(ctx context.Context, thread, note *model.Note, name string) *model.Note {
 	replies, _ := b.Notes.Replies(ctx, []string{thread.ID})
 	after := note.ID == thread.ID

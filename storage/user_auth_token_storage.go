@@ -12,9 +12,8 @@ import (
 // hashes, each under a name of its user's choosing.
 //
 // A name is unique per user and kind, so a user holds as many tokens of a
-// kind as they name: Set replaces the one of a name, which is what
-// `task-ui token` means by a name, and Add writes one more, which is what
-// a user's MCP access does.
+// kind as they name. Set replaces the token of a name, as `task-ui token`
+// does; Add writes one more, as a user's MCP access does.
 type UserAuthTokenStorage struct {
 	db DB
 }
@@ -24,7 +23,7 @@ func NewUserAuthTokenStorage(db DB) *UserAuthTokenStorage {
 	return &UserAuthTokenStorage{db: db}
 }
 
-// Set stores a CLI token that never expires for a user under a name, replacing the one it had.
+// Set stores a CLI token that never expires for a user under a name, deleting any earlier token of that name first.
 func (s *UserAuthTokenStorage) Set(ctx context.Context, userID, name, hash string) error {
 	if err := s.Delete(ctx, userID, model.TokenCLI, name); err != nil {
 		return err

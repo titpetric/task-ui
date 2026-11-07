@@ -17,8 +17,7 @@ func NewSidebarStorage(db DB) *SidebarStorage {
 	return &SidebarStorage{db: db}
 }
 
-// List returns every item, by position, then by title, so two rows of
-// one position are still in a fixed order.
+// List returns every item by position, title breaking a tie so the order is stable.
 func (s *SidebarStorage) List(ctx context.Context) ([]model.Sidebar, error) {
 	return client(s.db).Select[model.Sidebar](ctx, "SELECT * FROM sidebar ORDER BY position, title")
 }
@@ -46,13 +45,9 @@ func (s *SidebarStorage) EnsureDefaults(ctx context.Context, items []model.Sideb
 	return nil
 }
 
-// Save stores an item over the row its link holds, keeping that row's
-// identifier, its position and whether it is hidden: a module registering
-// again must not jump to the end of the sidebar or come back shown after
-// the user hid it.
-//
-// It reads the row back, so the item is the row whichever branch the
-// upsert took.
+// Save stores an item over the row its link holds, keeping that row's id,
+// position and hidden flag: a module registering again stays where the user
+// put it and stays hidden. It reads the row back into item.
 func (s *SidebarStorage) Save(ctx context.Context, item *model.Sidebar) error {
 	if item.ID == "" {
 		item.ID = model.NewID()
@@ -79,13 +74,10 @@ func (s *SidebarStorage) Save(ctx context.Context, item *model.Sidebar) error {
 	return nil
 }
 
-// Order writes the position and the hidden flag of every row the page
-// posted, at once: the position is the index in hrefs, and hidden names
-// the links to leave out of the sidebar.
-//
-// A link the table does not hold is left alone rather than added, because
-// the page lists what the table holds and a link it did not list is a
-// stale form or a changed instance.
+// Order writes the position and the hidden flag of every row the page posted,
+// in one transaction: the position is the index in hrefs, and hidden names the
+// links to leave out of the sidebar. A link the table does not hold is skipped,
+// because the page lists what the table holds and anything else is a stale form.
 func (s *SidebarStorage) Order(ctx context.Context, hrefs []string, hidden map[string]bool) error {
 	return inTx(ctx, s.db, func(c conn) error {
 		now := stamp()

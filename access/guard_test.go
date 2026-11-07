@@ -10,9 +10,8 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// Attach keeps nobody out. A request with no session reaches the page it asked
-// for, carrying no user, which is what the sign in page needs: Require would
-// redirect it to the page it is already asking for.
+// Attach keeps nobody out: a request with no session reaches /login with no user on it.
+// Require would redirect that same request to /login.
 func TestGuardAttachKeepsNobodyOut(t *testing.T) {
 	t.Parallel()
 	guard := &access.Guard{LoginPath: "/login"}

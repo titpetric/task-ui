@@ -7,14 +7,13 @@ import (
 	"github.com/titpetric/task-ui/internal/killswitch"
 )
 
-// TestMain bounds the binary. A test here builds a whole application:
-// the catalogue, the runner, the scheduler and the database behind them,
-// and the run that noticed was an OOM kill with no stack and no test
-// name on it.
+// TestMain bounds the binary. A test here builds a whole application: the
+// catalogue, the runner, the scheduler and the database behind them. An
+// unbounded run ends as an OOM kill, which prints no stack and no test name.
 //
-// killswitch panics the first reading over 8GiB instead, which prints
-// the goroutines and so says which test was running. The limit and the
-// per-second trace are environment knobs; the package doc names them.
+// killswitch panics on the first reading over the limit, which prints the
+// goroutines and names the running test. The limit and the per-second trace are
+// environment knobs; the package doc names them.
 func TestMain(m *testing.M) {
 	stop := killswitch.Watch()
 	code := m.Run()

@@ -377,7 +377,7 @@ func TestRunStorage_History(t *testing.T) {
 	assert.Equal(t, second.ID, history[1].ID)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestRunStorage_Closed(t *testing.T) {
 	t.Parallel()
 	runs := storage.NewRunStorage(closedDB(t))
@@ -411,7 +411,7 @@ func TestRunStorage_Closed(t *testing.T) {
 
 // A run of a job filters by its directory as well, a host job by the
 // prefix of its name, and a list of folders by the list: the clauses
-// runQuery builds that a page asks for.
+// runQuery builds for a page's filter.
 func TestRunStorage_Filters(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

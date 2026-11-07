@@ -74,7 +74,7 @@ func TestSidebarStorage_Save(t *testing.T) {
 	assert.Equal(t, "Refinement, renamed", again.Title, "the title is the modinfo.php's")
 	assert.Equal(t, "box", again.Icon)
 
-	// A row with no kind is a view, which is what the zero value means.
+	// A row with no kind is a view: model.SidebarView is the zero value.
 	plain := &model.Sidebar{Href: "/custom", Title: "Custom"}
 	assert.NoError(t, s.Save(ctx, plain))
 	assert.Equal(t, model.SidebarView, plain.Kind)
@@ -105,7 +105,7 @@ func TestSidebarStorage_Order(t *testing.T) {
 	assert.True(t, hidden["/schedules"])
 	assert.False(t, hidden["/runs"])
 
-	// A link the table does not hold is left alone rather than added.
+	// A link the table does not hold is skipped, and the row count stays.
 	assert.NoError(t, s.Order(ctx, []string{"/gone"}, nil))
 	rows, err = s.List(ctx)
 	assert.NoError(t, err)
@@ -147,7 +147,7 @@ func TestSidebarStorage_Keep(t *testing.T) {
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
 
-// Every method hands back what the driver said.
+// Every method returns the driver's error.
 func TestSidebarStorage_Closed(t *testing.T) {
 	t.Parallel()
 	s := storage.NewSidebarStorage(closedDB(t))
@@ -186,8 +186,7 @@ func TestSidebarStorage_SaveReadBack(t *testing.T) {
 	assert.ErrorContains(t, storage.NewSidebarStorage(refused).EnsureDefaults(ctx, []model.Sidebar{item}), errRefused)
 }
 
-// Order writes a row per link in one transaction, and hands back what
-// the write said.
+// Order writes a row per link in one transaction, and returns the write's error.
 func TestSidebarStorage_OrderBroken(t *testing.T) {
 	t.Parallel()
 	s := storage.NewSidebarStorage(brokenDB(t, model.SidebarTable))

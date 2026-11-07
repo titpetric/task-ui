@@ -141,9 +141,9 @@ func TestSecretStorage_GetByID(t *testing.T) {
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
 
-// Every method hands back what the driver said. Set reads before it
-// writes: a dead pool answers its read with an error rather than with
-// "not there", and it stops instead of inserting.
+// Every method returns the driver's error. Set reads before it writes: a
+// dead pool answers that read with an error, not with "not there", and Set
+// stops there without inserting.
 func TestSecretStorage_Closed(t *testing.T) {
 	t.Parallel()
 	secrets := storage.NewSecretStorage(closedDB(t))

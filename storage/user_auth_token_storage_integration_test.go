@@ -66,7 +66,7 @@ func TestUserAuthTokenStorage_Many(t *testing.T) {
 	ctx := context.Background()
 	tokens := storage.NewUserAuthTokenStorage(newDB(t))
 	// A stamp is kept to the millisecond, so an expiry compares equal
-	// only when the test hands over one that is already rounded.
+	// only when the test passes one already rounded.
 	expires := time.Now().Add(time.Hour).UTC().Truncate(time.Millisecond)
 
 	first, err := tokens.Add(ctx, "u1", model.TokenMCP, "mcp", "h1", &expires)
@@ -156,9 +156,8 @@ func TestUserAuthTokenStorage_Expired(t *testing.T) {
 	}
 }
 
-// Every method hands back what the driver said. A set deletes the token
-// of the name before it writes the new one, so a dead pool stops it at
-// the delete.
+// Every method returns the driver's error. A set deletes the token of the
+// name before it writes the new one, so a dead pool stops it at the delete.
 func TestUserAuthTokenStorage_Closed(t *testing.T) {
 	t.Parallel()
 	tokens := storage.NewUserAuthTokenStorage(closedDB(t))

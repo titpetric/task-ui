@@ -16,8 +16,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// The most of a run's output a prompt about the run gets: its last
-// lines, as many as fit both.
+// A prompt gets the last lines of a run's output, as many as fit both caps.
 const (
 	aboutLines = 2000
 	aboutBytes = 256 << 10
@@ -46,7 +45,7 @@ func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string
 }
 
 // SummaryQuestion is the question of the thread Run and summarize
-// asks about its run; its prompt run sets claude.RunSummary beside it.
+// asks about its run; instructions pairs claude.RunSummary with it.
 const SummaryQuestion = "Summarize this run."
 
 // SummarizeRun asks Claude, as the run's starter, for the summary of a run that ended.
@@ -55,8 +54,8 @@ func (b *Board) SummarizeRun(ctx context.Context, user *model.User, runID string
 }
 
 // BatchSummaryQuestion is the question of the thread Run and
-// summarize on the inventory asks about a batch of host runs; its
-// prompt run sets claude.HostsSummary beside it.
+// summarize on the inventory asks about a batch of host runs;
+// instructions pairs it with claude.HostsSummary.
 const BatchSummaryQuestion = "Summarize the runs on these hosts."
 
 // SummarizeBatch asks Claude for the summary of a batch of host runs, a thread every run page of the batch lists.
@@ -73,7 +72,7 @@ func IsSummary(thread *model.Note) bool {
 }
 
 // SummaryRunID returns the run that answers a thread's question: the
-// run its first reply names, or while there is none, the thread's run.
+// run its first reply names, or the thread's run until that reply exists.
 // A reply asked later runs again; the first answer stays the summary.
 func SummaryRunID(thread *model.Note, replies []model.Note) string {
 	for _, reply := range replies {
@@ -87,12 +86,11 @@ func SummaryRunID(thread *model.Note, replies []model.Note) string {
 	return thread.RunID
 }
 
-// instructions are what a prompt's run tells Claude besides the
-// thread, TASK_UI_PROMPT_INSTRUCTIONS: the summary's shape for the
-// question of SummarizeRun, SummarizeBatch or a workflow's summary step
-// alone in its thread, the triage's of claude.RunTriage for
-// TriageRun's, the builder's of claude.WorkflowBuilder for every run of
-// a thread of the Workflows page; nothing otherwise.
+// instructions returns the TASK_UI_PROMPT_INSTRUCTIONS a prompt's run reads
+// beside the thread: the summary's shape for the question of SummarizeRun,
+// SummarizeBatch or a workflow's summary step alone in its thread,
+// claude.RunTriage for TriageRun's, claude.WorkflowBuilder for every run of a
+// thread of the Workflows page, nothing otherwise.
 func instructions(note *model.Note, thread string) []string {
 	if note.Area == model.AreaWorkflows {
 		return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.WorkflowBuilder}
@@ -114,9 +112,9 @@ func instructions(note *model.Note, thread string) []string {
 	return nil
 }
 
-// aboutRun writes what a prompt about a run tells Claude of it to a
-// file, for TASK_UI_PROMPT_RUN: the run, the job's command and the end
-// of its output. It returns the file's path.
+// aboutRun writes the run a prompt asks about to a file, for
+// TASK_UI_PROMPT_RUN: the run, the job's command and the end of the
+// output. It returns the file's path.
 func (b *Board) aboutRun(ctx context.Context, runID string) (string, error) {
 	if b.Runs == nil {
 		return "", fmt.Errorf("%w: prompts about runs aren't available on this instance", ErrNoPrompt)
@@ -144,9 +142,9 @@ func (b *Board) aboutRun(ctx context.Context, runID string) (string, error) {
 	return file.Name(), nil
 }
 
-// batchText describes the batch of a run for a prompt: every run of it,
-// oldest first, as runText does one, each with the end of its output
-// cut to its share of what a prompt gets.
+// batchText describes the batch of a run for a prompt: every run in it,
+// oldest first, as runText describes one, each with the end of the
+// output cut to its share of the prompt's budget.
 func (b *Board) batchText(ctx context.Context, run *model.Run) string {
 	runs, err := b.Runs.List(ctx, storage.RunFilter{BatchID: run.BatchID, Limit: 200})
 	if err != nil || len(runs) == 0 {
@@ -201,8 +199,7 @@ func (b *Board) runTextCut(run *model.Run, limit int) string {
 	return text.String()
 }
 
-// command is the argv of the run's job in the catalogue, empty when the
-// job is not there any more.
+// command is the argv of the run's job in the catalogue, empty for a job the catalogue does not list.
 func (b *Board) command(run *model.Run) string {
 	if b.Catalogue == nil {
 		return ""
@@ -222,7 +219,7 @@ func (b *Board) command(run *model.Run) string {
 }
 
 // outputText returns a run's output as text, its colours and cursor
-// moves played out, from its recording; empty when there is none.
+// moves played out, from its recording; empty for an unrecorded run.
 func (b *Board) outputText(run *model.Run) string {
 	if b.Recordings == nil {
 		return ""

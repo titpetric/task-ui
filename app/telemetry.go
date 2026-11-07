@@ -21,7 +21,7 @@ import (
 const TelemetrySetting = "telemetry.options"
 
 // errTelemetryOff is what serveHTTP answers for an instance with no tracer:
-// the debug front end is oida's own and there is nothing behind the route.
+// the debug front end belongs to oida, and nothing sits behind the route.
 var errTelemetryOff = errors.New("telemetry is off")
 
 // Telemetry is the instance's tracer and the settings page behind it.
@@ -29,8 +29,7 @@ var errTelemetryOff = errors.New("telemetry is off")
 // The tracer sits behind an atomic pointer because oida builds one from
 // its options and exposes no way to change them after: Apply builds a new
 // tracer and swaps it, so a save takes effect without a restart. The
-// middleware and the dashboard both read through the pointer, so neither
-// holds a tracer the settings have replaced.
+// middleware and the dashboard both read through the pointer.
 //
 // Enabled is the exception. A tracer can be switched on and off in place,
 // so flipping that alone keeps every trace recorded so far; any other
@@ -57,26 +56,23 @@ func NewTelemetry(ctx context.Context, settings *storage.SettingStorage, service
 	return t, nil
 }
 
-// Defaults are the options of an instance that stored none: oida's own,
-// named for this service, with the debug front end behind an admin and
-// the statistics grouped by chi's routed pattern.
+// Defaults are oida's options for this service, the debug front end behind an admin and the statistics grouped by chi's routed pattern.
 func (t *Telemetry) Defaults() oida.Options {
 	opts := oida.NewOptions(t.service)
-	// A millisecond, where the library takes a microsecond. The producer
-	// here is the PHP interpreter: it marks a span per frame as detail,
-	// and a page calling two hundred methods reports two hundred of
-	// them. A frame under a millisecond is not where the page spent its
-	// time, and dropping it gives its slot in MaxSpansPerTrace back to
-	// the work that is. Zero keeps every frame.
+	// A millisecond, where the library takes a microsecond. The PHP
+	// interpreter marks a span per frame as detail, and a page calling two
+	// hundred methods reports two hundred of them. Dropping a frame under a
+	// millisecond returns its slot in MaxSpansPerTrace to slower work. Zero
+	// keeps every frame.
 	opts.DebugSpanMinDuration = time.Millisecond
 	opts.RouteFunc = routePattern
 	opts.Authorize = authorizeTelemetry
 	return opts
 }
 
-// Load returns the stored options, over the defaults. A value that does
-// not parse is reported rather than served, so a hand-edited row cannot
-// leave the instance with a tracer nobody configured.
+// Load returns the stored options over the defaults. A value that does not
+// parse comes back as an error beside the defaults, which keeps a hand-edited
+// row from configuring the tracer.
 func (t *Telemetry) Load(ctx context.Context) (oida.Options, error) {
 	opts := t.Defaults()
 	if t.settings == nil {
@@ -92,8 +88,8 @@ func (t *Telemetry) Load(ctx context.Context) (oida.Options, error) {
 	}
 	// The stored row is the yaml-tagged fields of oida.Options, which are
 	// the configurable ones: the sampler, the storage driver and the five
-	// callbacks carry `yaml:"-"`, so a document cannot name them and
-	// unmarshalling over the defaults leaves them as they are.
+	// callbacks are tagged `yaml:"-"`, so a document cannot name them and
+	// unmarshalling over the defaults leaves them alone.
 	//
 	// YAML and not JSON. Every tag on oida.Options is a yaml tag, and the
 	// callbacks are plain func fields, so encoding/json refuses the struct
@@ -110,9 +106,9 @@ func (t *Telemetry) Load(ctx context.Context) (oida.Options, error) {
 	return opts, nil
 }
 
-// Save stores the options and applies them. Enabled alone goes through
-// the running tracer and keeps the traces it holds; anything else builds
-// a tracer and swaps it, which starts an empty ring buffer.
+// Save stores the options and applies them. A change to Enabled alone flips
+// the running tracer and keeps the traces it holds; any other change builds a
+// tracer and swaps it, starting an empty ring buffer.
 func (t *Telemetry) Save(ctx context.Context, opts oida.Options) error {
 	if err := opts.Validate(); err != nil {
 		return err
@@ -139,8 +135,8 @@ func (t *Telemetry) Apply(opts oida.Options) error {
 	return t.build(opts)
 }
 
-// Tracer is the tracer in use, which the middleware and the dashboard
-// read through so neither holds one the settings replaced.
+// Tracer is the tracer in use, loaded off the pointer the middleware and the
+// dashboard both read, nil until Apply builds one.
 func (t *Telemetry) Tracer() *oida.Tracer {
 	if t == nil {
 		return nil
@@ -176,17 +172,15 @@ func (t *Telemetry) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// ServeHTTP serves the debug front end, reading the pointer per request
-// for the same reason the middleware does. An instance with no tracer has
-// no front end, and says so as a page that is not there.
+// ServeHTTP serves the debug front end, reading the tracer pointer per request
+// as the middleware does. An instance without a tracer answers 404.
 func (t *Telemetry) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := t.serveHTTP(w, r); err != nil {
 		http.NotFound(w, r)
 	}
 }
 
-// serveHTTP is ServeHTTP with its one failure as a value, so a caller that is
-// not a server can ask whether the front end is there.
+// serveHTTP is ServeHTTP with its one failure as a value: errTelemetryOff for an instance with no tracer.
 func (t *Telemetry) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	tracer := t.Tracer()
 	if tracer == nil {
@@ -209,9 +203,8 @@ func (t *Telemetry) build(opts oida.Options) error {
 // sameButEnabled reports whether two option sets differ in Enabled and
 // nothing else, which is the one change a running tracer can take.
 //
-// It compares the yaml-tagged fields, because those are the ones a save
-// can change: the callbacks are the instance's own and the same function
-// either way.
+// It compares the yaml-tagged fields, the ones a save can change. The
+// callbacks belong to the instance and are the same function either way.
 func sameButEnabled(running, next oida.Options) bool {
 	running.Enabled = next.Enabled
 	before, err := yaml.Marshal(running)
@@ -225,13 +218,12 @@ func sameButEnabled(running, next oida.Options) bool {
 	return string(before) == string(after)
 }
 
-// routePattern groups the statistics by the routed pattern rather than
-// the request path, so /runs/1 and /runs/2 aggregate into GET /runs/{id}.
+// routePattern groups the statistics by the routed pattern: /runs/1 and
+// /runs/2 aggregate into GET /runs/{id}.
 //
-// A catch-all mount would group every request it serves under one pattern
-// that says nothing, so those patterns are dropped and the requests group
-// by path. Without that, every path of every module would read as one row
-// under /m/{vendor}/{plugin}/*.
+// A catch-all pattern is dropped and its requests group by path. Keeping it
+// would collapse every path of every module into one row under
+// /m/{vendor}/{plugin}/*.
 func routePattern(r *http.Request) string {
 	routeContext := chi.RouteContext(r.Context())
 	if routeContext == nil {

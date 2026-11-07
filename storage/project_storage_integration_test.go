@@ -106,8 +106,8 @@ func TestProjectStorage_Delete(t *testing.T) {
 }
 
 // The folder of each project an ID names, which task-ui migrate-layout
-// reads to resolve the home project of a workspace. An ID with no
-// project is missing rather than empty, and no IDs reads nothing.
+// reads to resolve the home project of a workspace. An ID with no project
+// is absent from the map, and no IDs reads nothing.
 func TestProjectStorage_FoldersByID(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -129,9 +129,9 @@ func TestProjectStorage_FoldersByID(t *testing.T) {
 	assert.ErrorContains(t, err, errClosed)
 }
 
-// Every method hands back what the driver said. Upsert is the one that
-// reads before it writes: a dead pool answers its read with an error
-// rather than with "not there", and it stops instead of inserting.
+// Every method returns the driver's error. Upsert reads before it writes:
+// a dead pool answers that read with an error, not with "not there", and
+// Upsert stops there without inserting.
 func TestProjectStorage_Closed(t *testing.T) {
 	t.Parallel()
 	projects := storage.NewProjectStorage(closedDB(t))
