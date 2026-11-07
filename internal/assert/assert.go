@@ -78,7 +78,7 @@ func False(t testing.TB, b bool, msg ...any) {
 // Contains checks that needle is in haystack.
 func Contains(t testing.TB, haystack, needle any, msg ...any) {
 	if !containsElement(haystack, needle) {
-		Errorf(t, "%v doesn't contain %v: %v", haystack, needle, msg)
+		Errorf(t, "%v doesn't contain %v: %v", Brief(haystack, needle), needle, msg)
 	}
 }
 

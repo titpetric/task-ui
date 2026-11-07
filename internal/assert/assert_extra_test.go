@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -75,4 +76,35 @@ func assertExtraFailure(t *testing.T) {
 
 	mustFail(t, "IsIncreasing", func(tb testing.TB) { assert.IsIncreasing(tb, []int{1, 3, 2}) })
 	mustFail(t, "IsIncreasingKind", func(tb testing.TB) { assert.IsIncreasing(tb, 42) })
+}
+
+// A failure over a long haystack prints its length and the text around
+// the most of the needle it holds, never the haystack itself.
+func TestBrief(t *testing.T) {
+	t.Parallel()
+
+	// Short enough to read whole, and anything that is no string.
+	assert.Equal(t, "haystack", assert.Brief("haystack", "needle"))
+	assert.Equal(t, 42, assert.Brief(42, "needle"))
+
+	page := strings.Repeat("<div class=\"row\">x</div>\n", 200)
+	assert.Equal(t, 5000, len(page))
+
+	// Not a byte of the needle is there: the length and what it looked for.
+	none := assert.Brief(page, "@@@").(string)
+	assert.Contains(t, none, "5000 bytes")
+	assert.Contains(t, none, "none of it")
+	assert.True(t, len(none) < 200)
+
+	// Part of the needle is there: the length, the offset and a window.
+	some := assert.Brief(page, `<div class="row">y`).(string)
+	assert.Contains(t, some, "5000 bytes")
+	assert.Contains(t, some, "around offset 0")
+	assert.Contains(t, some, `<div class=\"row\">x`)
+	assert.True(t, len(some) < 400)
+
+	// A needle longer than the window is cut in the report.
+	long := assert.Brief(strings.Repeat("a", 500), strings.Repeat("b", 500)).(string)
+	assert.Contains(t, long, "...")
+	assert.True(t, len(long) < 300)
 }

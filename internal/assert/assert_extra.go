@@ -5,6 +5,7 @@ package assert
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -60,8 +61,50 @@ func Greater(t testing.TB, actual, expected any, msg ...any) {
 // NotContains checks that needle is not in haystack.
 func NotContains(t testing.TB, haystack, needle any, msg ...any) {
 	if containsElement(haystack, needle) {
-		Errorf(t, "%v unexpectedly contains %v: %v", haystack, needle, msg)
+		Errorf(t, "%v unexpectedly contains %v: %v", Brief(haystack, needle), needle, msg)
 	}
+}
+
+// briefMax is the longest haystack a failure prints whole, and briefWindow
+// how much of a longer one it prints either side of the needle.
+const (
+	briefMax    = 400
+	briefWindow = 120
+)
+
+// Brief returns the haystack as a failure prints it: itself while it is
+// short, else its length and the text around the longest prefix of the
+// needle it holds.
+func Brief(haystack, needle any) any {
+	text, ok := haystack.(string)
+	if !ok || len(text) <= briefMax {
+		return haystack
+	}
+	want, _ := needle.(string)
+	at := nearest(text, want)
+	if at < 0 {
+		return fmt.Sprintf("%d bytes, none of it %q", len(text), cut(want, briefWindow))
+	}
+	from, to := max(0, at-briefWindow), min(len(text), at+len(want)+briefWindow)
+	return fmt.Sprintf("%d bytes, around offset %d: %q", len(text), at, text[from:to])
+}
+
+// nearest is where the longest prefix of want appears in text, -1 for none.
+func nearest(text, want string) int {
+	for n := len(want); n > 0; n-- {
+		if at := strings.Index(text, want[:n]); at >= 0 {
+			return at
+		}
+	}
+	return -1
+}
+
+// cut shortens a string to n bytes, adding an ellipsis when it drops any.
+func cut(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
 }
 
 // ErrorContains checks that err is non-nil and its message contains want.
@@ -155,7 +198,7 @@ func containsElement(haystack, needle any) bool {
 // ordered compares two values of the same broad kind. The second return
 // is false when the two are not comparable, which every caller has to
 // treat as a failure: a bare 0 would read as "equal" and let
-// LessOrEqual and GreaterOrEqual pass on an int against a string.
+// LessOrEqual and GreaterOrEqual pass on an int and a string.
 func ordered(actual, expected any) (int, bool) {
 	a := reflect.ValueOf(actual)
 	b := reflect.ValueOf(expected)
