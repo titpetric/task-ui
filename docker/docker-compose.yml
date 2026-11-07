@@ -11,4 +11,18 @@ services:
     volumes:
     - $PWD/data:/data
     - $PWD/keys:/keys
+    # /go holds what /app/entrypoint.d installs, task and atkins, and the
+    # module cache they are built from. Without it every restart downloads
+    # and rebuilds them, which is minutes before the instance answers.
+    - gopath:/go
+    # How a job reaches a docker daemon, and how it authenticates to a
+    # registry. docs/running.md#docker-and-registries has the three
+    # arrangements; this is the first, and the least isolated.
     - /var/run/docker.sock:/var/run/docker.sock:ro
+    # The host's registry logins, read-only, for a job that pushes an
+    # image. Leave it out to let the Docker Registry integration write
+    # /app/.docker/config.json instead.
+    # - $HOME/.docker/config.json:/app/.docker/config.json:ro
+
+volumes:
+  gopath:

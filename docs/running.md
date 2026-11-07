@@ -20,11 +20,46 @@ Two mounts hold everything the instance keeps:
 - `/data`, `TASK_UI_DATA`: the database, the recordings, the artifacts, the password file, `/data/.htpasswd`, and the workspace folder, `/data/workspaces`, `TASK_UI_WORKSPACE`. The workspace folder holds `home/`, the `HOME` of every run at the root, `src/`, whose subfolders with something to run are the folders of the UI, and a directory per named workspace, each with a `home/` and a `src/` of its own ([Workspaces](guide/workspaces.md)).
 - `/keys`, `TASK_UI_SSH_DIR`: the keys of the instance. Keep it out of `/root/.ssh`, where `ssh` in a job would find them by default; a run receives the keys its policies grant it.
 
-`/app`, the working directory, holds the image's own configuration and nothing a run writes; mount nothing there. The image bundles `task`, `atkins`, `docker` and `docker compose`.
+`/app` is the working directory and `HOME`. It holds the image's own configuration: `entrypoint.d`, `.ssh`, and `.docker/config.json`, where `docker` reads the registry logins. Nothing a run writes goes there.
+
+`/go`, `GOPATH`, is the third mount and the one that decides how long a restart takes. The image bundles `docker` and `docker compose` and builds nothing else in: `task` and `atkins` install at boot, from `/app/entrypoint.d`, into the default `/go/bin`, which is first on `PATH`. With `/go` mounted a restart is two seconds; without it the binaries, the module downloads and the compiled objects are all gone and a boot spends three minutes rebuilding tools that did not change. `GOCACHE` is set to `/go/cache` for that reason: it defaults under `HOME`, which is not a volume.
+
+Every tool installs at `@latest`, or `@main` where the repository has no tag, and installs on every boot. A pinned version is a number somebody has to remember to raise, and skipping the install when the binary exists means a restart never picks up a release.
 
 - To run without Docker, remove the volume for `docker.sock`. Without `/data` and `/keys`, task-ui uses `./data` and `./keys`.
 - A job's `docker run -v $PWD:/src` goes to the host's docker daemon, which resolves `$PWD` on the host, where `/data` has another path. Every run gets `TASK_UI_HOST_PWD`, its directory as the host sees it, and `TASK_UI_HOST_DATA`, the data directory there: write `docker run -v "${TASK_UI_HOST_PWD:-$PWD}:/src"`. task-ui reads the host paths from the mounts of its container; `TASK_UI_HOST_DATA` set in its environment overrides the data directory's.
 - The key folder holds every key, `<name>.key` and `<name>.pub`, the encryption key among them: `task_encryption_ed25519` encrypts every secret, the workspaces' and the integrations' settings. A rotated key keeps its backup in `backup/` until an admin deletes it. task-ui makes the folder `0700` and each file `0600`. Back up `/keys` with `/data`: without the encryption key the secrets don't open. A copy of `/data` alone holds no key.
+
+## Provisioning the image
+
+`/usr/local/bin/entrypoint.sh` runs every `*.sh` of two directories, in lexical order, under `sh -x` so the run is traced in the container's log, and then execs `task-ui`:
+
+- `/app/entrypoint.d`, baked into the image from `docker/app/entrypoint.d` of this repository. `task` and `atkins` are installed here and nowhere else.
+- `/data/entrypoint.d`, on the mounted volume. Another repository drops scripts here to add software without rebuilding the image, and `apt-get`, `go install` and `pip` all work: the base image is the Go toolchain and the docker CLI, which is enough to install the rest.
+
+A missing or empty directory is not an error, so an instance with no provisioning starts. A script that fails stops the boot, because a half-provisioned instance that serves is worse than one that does not come up: its jobs fail one at a time, somewhere else, with nothing naming the cause. `exit 1` in `run_scripts` is the one word to change to make a failure a warning.
+
+## Docker and registries
+
+A job that builds an image needs a daemon to build on and, to push, a login to the registry. The two are separate choices and neither is a step on one ladder.
+
+Which daemon:
+
+| Arrangement           | What the compose file does                            | What a job reaches                            | What it costs the host                        |
+|-----------------------|-------------------------------------------------------|-----------------------------------------------|-----------------------------------------------|
+| The host's daemon     | mounts `/var/run/docker.sock:ro`                      | every image, container and volume on the host | a job can read and start anything on the host |
+| A daemon in the image | `privileged: true` and a volume for `/var/lib/docker` | its own images, containers and volumes        | more than the socket does: privileged is root |
+
+A daemon inside the container is better isolation of the docker state and worse isolation of the host, because it needs `privileged: true`. Reach for it when a job must not see the host's containers, not when the host must be protected from the job.
+
+Which registry login:
+
+| Arrangement       | Where the credentials are                                                                               | Who manages them                        |
+|-------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| The host's logins | `$HOME/.docker/config.json` mounted read-only                                                           | whoever runs `docker login` on the host |
+| task-ui's own     | the Docker Registry integration, encrypted with the instance key, written to `/app/.docker/config.json` | an admin, in Settings                   |
+
+task-ui writes the standard file and no format of its own: plain `auths` entries, no `credsStore`, so `docker` reads them with no helper binary present. The database holds them because a CRUD form has to list and edit and because a container rebuild wipes the filesystem; the file is derived from it at boot and on every save.
 
 ## Configuration
 
