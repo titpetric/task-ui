@@ -2,12 +2,13 @@
 // model they bind to and the embedded assets. It knows nothing of HTTP
 // routing; the frontend package fills a Page and renders it by name.
 //
-// The template set is parsed once per process, because it is not cheap:
-// 49 pages over 19 partials, and a page is a clone of the whole layout
-// tree, which is 16MB of parse nodes and 90ms of parsing. A server
-// builds one and would never have noticed. The tests built one per
-// fixture, and ninety of them held 1.5GB of identical template trees
-// until the kernel stopped the test binary.
+// One set holds everything: the layout, the 20 partials and the content
+// block of each of the 49 pages, named for its page. A page block is
+// executed on its own and the layout prints the result as Page.Body, so
+// no page owns a copy of the partials: 49 clones of 164 KB of partials
+// were 40 MB of parse nodes the process kept.
+//
+// The set is parsed once per process, on the first call to New.
 package view
 
 import (
@@ -26,22 +27,26 @@ import (
 //go:embed templates/*.tpl
 var templates embed.FS
 
-// partialPrefix starts the files every page shares: _layout.tpl, the
-// layout and most partials, and a file per partial of its own size, such
-// as _actions.tpl.
+// partialPrefix starts the files every page shares: _layout.tpl with the
+// layout and most partials, then one file per partial big enough to keep
+// apart, such as _actions.tpl.
 const partialPrefix = "_"
 
-// View holds the parsed pages, one template set per page over the
-// shared layout.
+// contentBlock is the block a page file defines, which the set keeps by
+// the page's name.
+const contentBlock = "content"
+
+// View holds the parsed set and the content block of every page in it.
 type View struct {
+	set   *template.Template
 	pages map[string]*template.Template
 }
 
-// parsed is the one template set of the process, built on the first
-// call to New and kept. Sharing it is safe because a View is read only
-// once it is built, the files are embedded and the functions are
-// package level, and html/template executes a parsed template from any
-// number of goroutines.
+// parsed is the template set of the process, built on the first call to
+// New and kept. Sharing it is safe because a View is read only once it
+// is built, the files are embedded and the functions are package level,
+// and html/template executes a parsed template from any number of
+// goroutines.
 var parsed struct {
 	sync.Once
 	v   *View
@@ -54,32 +59,59 @@ func New() (*View, error) {
 	return parsed.v, parsed.err
 }
 
-// parse reads the embedded templates into a page per file.
+// parse reads the partials into one set, then every page file into the
+// same set.
 func parse() (*View, error) {
 	entries, err := fs.ReadDir(templates, "templates")
 	if err != nil {
 		return nil, err
 	}
-	layout, err := template.New("layout").Funcs(Funcs()).ParseFS(templates, path.Join("templates", partialPrefix+"*.tpl"))
+	set, err := template.New("layout").Funcs(Funcs()).ParseFS(templates, path.Join("templates", partialPrefix+"*.tpl"))
 	if err != nil {
 		return nil, err
 	}
-	v := &View{pages: map[string]*template.Template{}}
+	v := &View{set: set, pages: map[string]*template.Template{}}
 	for _, entry := range entries {
 		name := entry.Name()
 		if strings.HasPrefix(name, partialPrefix) || !strings.HasSuffix(name, ".tpl") {
 			continue
 		}
-		page, err := layout.Clone()
-		if err != nil {
+		if err := v.add(strings.TrimSuffix(name, ".tpl"), name); err != nil {
 			return nil, err
 		}
-		if _, err := page.ParseFS(templates, path.Join("templates", name)); err != nil {
-			return nil, fmt.Errorf("%s: %w", name, err)
-		}
-		v.pages[strings.TrimSuffix(name, ".tpl")] = page
 	}
 	return v, nil
+}
+
+// add parses one page file into the set: its content block by the page's
+// name, every other block it defines by its own. It refuses a file that
+// defines no content block, and a block name the set already holds.
+func (v *View) add(page, file string) error {
+	parsed, err := template.New(file).Funcs(Funcs()).ParseFS(templates, path.Join("templates", file))
+	if err != nil {
+		return fmt.Errorf("%s: %w", file, err)
+	}
+	for _, block := range parsed.Templates() {
+		name := block.Name()
+		switch {
+		case name == file:
+			continue
+		case name == contentBlock:
+			name = page
+		}
+		if v.set.Lookup(name) != nil {
+			return fmt.Errorf("%s: %q is defined twice", file, name)
+		}
+		if _, err := v.set.AddParseTree(name, block.Tree); err != nil {
+			return fmt.Errorf("%s: %w", file, err)
+		}
+	}
+	content := v.set.Lookup(page)
+	if content == nil {
+		return fmt.Errorf("%s: defines no %q", file, contentBlock)
+	}
+	v.pages[page] = content
+	return nil
 }
 
 // Names returns the pages, in order.
@@ -92,15 +124,21 @@ func (v *View) Names() []string {
 	return names
 }
 
-// Render writes a page. It builds the page in full before it writes
+// Render writes a page: its content block, then the layout printing
+// that as Page.Body. It builds the page in full before it writes
 // anything, so a template error never leaves half a page behind.
 func (v *View) Render(w io.Writer, name string, page *Page) error {
-	tpl, ok := v.pages[name]
+	content, ok := v.pages[name]
 	if !ok {
 		return fmt.Errorf("no page %q", name)
 	}
+	var body bytes.Buffer
+	if err := content.Execute(&body, page); err != nil {
+		return err
+	}
+	page.Body = template.HTML(body.String())
 	var buf bytes.Buffer
-	if err := tpl.ExecuteTemplate(&buf, "layout", page); err != nil {
+	if err := v.set.ExecuteTemplate(&buf, "layout", page); err != nil {
 		return err
 	}
 	_, err := buf.WriteTo(w)

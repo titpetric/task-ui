@@ -20,7 +20,7 @@
 	<header class="top login-top">
 		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
 	</header>
-	{{ template "content" . }}
+	{{ .Body }}
 {{- else }}
 	<a class="skip-link" href="#main">Skip to content</a>
 	{{- if .Can "prompt/edit" }}
@@ -98,7 +98,7 @@
 			{{- end }}
 			{{- if .Notice }}<div class="alert ok" role="status">{{ .Notice }}</div>{{ end }}
 			{{- if .Error }}<div class="alert bad" role="alert">{{ .Error }}</div>{{ end }}
-			{{ template "content" . }}
+			{{ .Body }}
 			{{- template "setup-trail" .SetupTrail }}
 		</main>
 		<aside class="rail" aria-label="Recents">

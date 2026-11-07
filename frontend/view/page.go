@@ -1,6 +1,7 @@
 package view
 
 import (
+	"html/template"
 	"sort"
 	"strings"
 	"time"
@@ -21,6 +22,9 @@ import (
 // leaves the rest empty.
 type Page struct {
 	Title string
+	// Body is the page's content block, rendered. Render fills it and the
+	// layout prints it.
+	Body template.HTML
 	// Path is the request path, for the active entry of the sidebar.
 	Path string
 	User *model.User
