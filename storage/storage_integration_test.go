@@ -195,7 +195,7 @@ func TestMigrate_scheduleUTC(t *testing.T) {
 		('b', '_', 'west', '@daily', '2026-01-10 00:30:00 -0330 NST', NULL),
 		('c', '_', 'utc', '@daily', '2026-10-23 05:00:00.5 +0000 UTC', NULL)`)
 	assert.NoError(t, err)
-	statements, err := migrate.Statements(migrations,"schedule_utc.up.sql")
+	statements, err := migrate.Statements(migrations, "schedule_utc.up.sql")
 	assert.NoError(t, err)
 	for _, statement := range statements {
 		_, err := db.ExecContext(ctx, statement)
@@ -231,7 +231,7 @@ func TestMigrate_hostJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 	for _, file := range []string{"run_target_host_job.up.sql", "schedule_target_host_job.up.sql", "workflow_step_target_host_job.up.sql"} {
-		statements, err := migrate.Statements(migrations,file)
+		statements, err := migrate.Statements(migrations, file)
 		assert.NoError(t, err)
 		for _, statement := range statements {
 			_, err := db.ExecContext(ctx, statement)
@@ -273,7 +273,7 @@ func TestMigrate_stepKinds(t *testing.T) {
 		_, err := db.ExecContext(ctx, insert)
 		assert.NoError(t, err)
 	}
-	statements, err := migrate.Statements(migrations,"workflow_step_with_kind.up.sql")
+	statements, err := migrate.Statements(migrations, "workflow_step_with_kind.up.sql")
 	assert.NoError(t, err)
 	// The columns are there already; the rest of the migration runs
 	// over the rows above.
