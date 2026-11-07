@@ -248,6 +248,94 @@ body:has(.voice[open]) .voice-orb {
   height: 0;
 }
 
+/* .voice-quiz is the card a reply's form block opens: the question, its
+   options as one row of them, and the two buttons. It takes the window's own
+   acts' place, so there is one Submit on screen and not two. */
+.voice-quiz {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(100%, 26rem);
+  margin: 0 auto;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--ink-1);
+}
+
+.voice-quiz-count {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.voice-quiz-ask {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.voice-quiz-help {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+}
+
+/* .voice-quiz-picks wraps, so a question with eight options reads as a grid
+   and one with two reads as a pair. */
+.voice-quiz-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* .voice-pick is one option, sized for a thumb. The pressed one takes the
+   accent, so what is selected is read at a glance and not from the border. */
+.voice-pick {
+  flex: 1 1 auto;
+  min-width: 5rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: var(--ink-2);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.voice-pick:hover {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+.voice-pick.on {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+  color: var(--text);
+}
+
+.voice-typed {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.voice-quiz-acts {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 /* .voice-said is the words as they are heard, which is the proof it listens. */
 /* The stage's dark reaches well past the stage, over the words and the acts
    under it, and it paints above anything the window leaves at the default

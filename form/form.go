@@ -19,50 +19,50 @@ import (
 
 // Form is a form: what it is called, the table it edits, its fields and its submission.
 type Form struct {
-	Title  string  `yaml:"title"`
-	Table  string  `yaml:"table"`
-	Fields []Field `yaml:"fields"`
-	Submit Submit  `yaml:"submit"`
+	Title  string  `yaml:"title" json:"title,omitempty"`
+	Table  string  `yaml:"table" json:"table,omitempty"`
+	Fields []Field `yaml:"fields" json:"fields"`
+	Submit Submit  `yaml:"submit" json:"submit"`
 }
 
 // Field is one input of a form.
 type Field struct {
 	// Key names the field in a submission and in a prompt.
-	Key string `yaml:"key"`
+	Key string `yaml:"key" json:"key"`
 	// Label is what the field is called beside its input.
-	Label string `yaml:"label"`
+	Label string `yaml:"label" json:"label,omitempty"`
 	// Component is the input the renderer draws, one of the components below.
-	Component string `yaml:"component"`
+	Component string `yaml:"component" json:"component"`
 	// Help is the line under the input.
-	Help string `yaml:"help"`
+	Help string `yaml:"help" json:"help,omitempty"`
 	// Placeholder is the empty input's text.
-	Placeholder string `yaml:"placeholder"`
+	Placeholder string `yaml:"placeholder" json:"placeholder,omitempty"`
 	// Default is the value an empty submission takes.
-	Default string `yaml:"default"`
+	Default string `yaml:"default" json:"default,omitempty"`
 	// Source names the DAO getter the renderer asks for the options.
-	Source string `yaml:"source"`
+	Source string `yaml:"source" json:"source,omitempty"`
 	// When is <key>=<value>, the field and value that show this one.
-	When string `yaml:"when"`
+	When string `yaml:"when" json:"when,omitempty"`
 	// Required refuses an empty submission.
-	Required bool `yaml:"required"`
+	Required bool `yaml:"required" json:"required,omitempty"`
 	// Options are the static choices of a choice or a multi.
-	Options []Option `yaml:"options"`
+	Options []Option `yaml:"options" json:"options,omitempty"`
 }
 
 // Option is one static choice of a choice or a multi.
 type Option struct {
-	Value string `yaml:"value"`
-	Label string `yaml:"label"`
-	Next  string `yaml:"next"`
+	Value string `yaml:"value" json:"value"`
+	Label string `yaml:"label" json:"label,omitempty"`
+	Next  string `yaml:"next" json:"next,omitempty"`
 }
 
 // Submit is what the form's one button does: the run it starts.
 type Submit struct {
-	Label  string `yaml:"label"`
-	Job    string `yaml:"job"`
-	Folder string `yaml:"folder"`
-	Dir    string `yaml:"dir"`
-	Prompt string `yaml:"prompt"`
+	Label  string `yaml:"label" json:"label,omitempty"`
+	Job    string `yaml:"job" json:"job,omitempty"`
+	Folder string `yaml:"folder" json:"folder,omitempty"`
+	Dir    string `yaml:"dir" json:"dir,omitempty"`
+	Prompt string `yaml:"prompt" json:"prompt,omitempty"`
 }
 
 // components are the inputs the dialect names; a field names one of them.

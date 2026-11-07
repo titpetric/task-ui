@@ -1090,6 +1090,16 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 		</button>
 		<p class="voice-said" id="voice-said" role="status" aria-live="polite"></p>
 		<p class="voice-where" id="voice-where"></p>
+		<div class="voice-quiz" id="voice-quiz" hidden>
+			<p class="voice-quiz-count" id="voice-quiz-count"></p>
+			<p class="voice-quiz-ask" id="voice-quiz-ask" role="status" aria-live="polite"></p>
+			<div class="voice-quiz-picks" id="voice-quiz-picks" role="group" aria-labelledby="voice-quiz-ask"></div>
+			<p class="voice-quiz-help" id="voice-quiz-help"></p>
+			<div class="voice-quiz-acts">
+				<button type="button" class="btn" id="voice-quiz-cancel">Cancel</button>
+				<button type="button" class="btn btn-primary" id="voice-quiz-submit">Submit</button>
+			</div>
+		</div>
 		<div class="voice-acts">
 			<button type="button" class="voice-act discard" id="voice-discard" title="Discard" aria-label="Discard"><svg class="ic"><use href="#i-trash"/></svg></button>
 			<button type="button" class="voice-act replay" id="voice-replay" title="Play again" aria-label="Play again" hidden><svg class="ic"><use href="#i-play"/></svg></button>

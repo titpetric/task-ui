@@ -375,3 +375,18 @@ func TestPage_VoiceRecording(t *testing.T) {
 	assert.Contains(t, stage, `<span class="voice-rec" aria-hidden="true"><i></i>Recording</span>`)
 	assert.True(t, strings.Index(stage, "voice-avatar") < strings.Index(stage, "voice-rec"))
 }
+
+// The window holds the card a reply's form block asks on, hidden until
+// one arrives: the question, the row its options are drawn into, and the
+// two buttons. It stands before the window's own acts, whose place it
+// takes while a question is open.
+func TestPage_VoiceQuiz(t *testing.T) {
+	t.Parallel()
+	body := render(t, "home", admin(t))
+	assert.Contains(t, body, `<div class="voice-quiz" id="voice-quiz" hidden>`)
+	assert.Contains(t, body, `<p class="voice-quiz-ask" id="voice-quiz-ask" role="status" aria-live="polite"></p>`)
+	assert.Contains(t, body, `<div class="voice-quiz-picks" id="voice-quiz-picks" role="group" aria-labelledby="voice-quiz-ask"></div>`)
+	assert.Contains(t, body, `<button type="button" class="btn" id="voice-quiz-cancel">Cancel</button>`)
+	assert.Contains(t, body, `<button type="button" class="btn btn-primary" id="voice-quiz-submit">Submit</button>`)
+	assert.True(t, strings.Index(body, `id="voice-quiz"`) < strings.Index(body, `class="voice-acts"`))
+}

@@ -120,6 +120,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Delete("/integrations/spotify/link", h.spotifyUnlink)
 	r.Post("/voice/transcribe", h.voiceTranscribe)
 	r.Get("/voice/ready", h.voiceReady)
+	r.Post("/forms", h.listForms)
 	r.Get("/spotify/now-playing", h.spotifyNowPlaying)
 	r.Get("/spotify/search", h.spotifySearch)
 	r.Get("/spotify/playlists", h.spotifyPlaylists)

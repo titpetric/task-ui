@@ -15,6 +15,11 @@
 // A press ends the recording and sends it: the orb and the send button are the
 // same act, and pause is for a fault and a page sent to the background.
 //
+// A reply that holds a form block is a question. The card opens over the
+// window with one field on it, its options as buttons, and Submit and Cancel;
+// the answers go back as the next thing said. The server parses the yaml, so
+// the dialect lives in form/ and this file holds no parser.
+//
 // Nothing reaches a run while you talk. Interim results are drawn in the
 // window; the only write is taskUI.paste on send, which is the whole of the
 // interface this file has. There is no path from the recogniser to the socket.
@@ -48,6 +53,15 @@
   var avatar = document.getElementById("voice-avatar");
   if (!stage || !replayBtn || !discardBtn) return;
   var discardIcon = discardBtn.querySelector("use");
+  var acts = discardBtn.parentNode;
+  var quiz = document.getElementById("voice-quiz");
+  var quizCount = document.getElementById("voice-quiz-count");
+  var quizAsk = document.getElementById("voice-quiz-ask");
+  var quizPicks = document.getElementById("voice-quiz-picks");
+  var quizHelp = document.getElementById("voice-quiz-help");
+  var quizSubmit = document.getElementById("voice-quiz-submit");
+  var quizCancel = document.getElementById("voice-quiz-cancel");
+  if (!quiz || !quizPicks || !quizSubmit || !quizCancel) return;
 
   // RATE is the sample rate the recording is written at. 16 kHz mono is what a
   // transcriber reads: Whisper and wav2vec both resample to it, so capturing
@@ -79,6 +93,12 @@
     "After each reply, write the same sentences to <base>.N.reply.txt with write_artifact, N counting",
     "your replies in this thread from 1, then run the speak job of titpetric/stt so the window has the",
     "audio. The window plays <base>.N.reply.wav and nothing else, so a reply without one is never heard.",
+    "",
+    "To ask me something, end the reply with a ```form block: one field per question, component bool for",
+    "a yes or no, choice with options for a pick, multi for several, text for words. The window draws it",
+    "a question at a time as buttons and sends the answers back as my next message. Ask a questionnaire",
+    "as one block of many short fields, with when: <key>=<value> on a field that follows from an answer,",
+    "and submit.prompt as the sentence you want the answers read back in, {{key}} for each.",
   ].join("\n");
 
   // HEARD rides with a clip nothing could transcribe: the words it holds are
@@ -126,6 +146,7 @@
   var sent = 0;         // how many frames of the buffer have been posted
   var posting = 0;      // the interval posting the slices
   var flight = false;   // a slice is out and the next tick waits for it
+  var quizzing = null;  // { form, values, at } while a question is open
 
   // ------------------------------------------------------------------ gate
 
@@ -463,6 +484,193 @@
       };
       wait();
     });
+  }
+
+  // ------------------------------------------------------------------ ask
+
+  // PICKS are the components the window answers with a row of options. A
+  // bool is the yes or no every other question turns out to be, and it is
+  // drawn as the same two options rather than a checkbox.
+  var PICKS = { bool: true, choice: true, multi: true };
+
+  var YESNO = [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }];
+
+  // forms reads the form blocks of a reply. The server parses the yaml, so
+  // the dialect is declared in one place and the window holds no parser:
+  // POST /api/forms answers with what each fence declares, or why it was
+  // refused.
+  function forms(body) {
+    return fetch("/api/forms", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "text/plain", Accept: "application/json" },
+      body: body,
+    }).then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        return ((data && data.forms) || []).filter(function (one) { return one.form; });
+      }, function () { return []; });
+  }
+
+  // visible is the fields the answers so far show, in declaration order. A
+  // field names the answer that shows it as when: <key>=<value>, and one
+  // whose own when-field is hidden stays hidden. This is form.Visible, which
+  // the stepping repeats here because a question answered on the device
+  // cannot wait for a round trip to know what to ask next.
+  function visible(form, values) {
+    var shown = {};
+    return (form.fields || []).filter(function (field) {
+      if (field.when) {
+        var cut = field.when.indexOf("=");
+        var key = field.when.slice(0, cut);
+        if (!shown[key] || String(values[key] || "").trim() !== field.when.slice(cut + 1)) return false;
+      }
+      shown[field.key] = true;
+      return true;
+    });
+  }
+
+  // options are what a field offers: its own, or yes and no for a bool.
+  function options(field) {
+    return field.component === "bool" ? YESNO : (field.options || []);
+  }
+
+  // ask opens the question card over the window and draws the first field a
+  // reply asked for. Nothing of the recording is touched: a question arrives
+  // between recordings, and the orbs keep their formation behind it.
+  function ask(form) {
+    quizzing = { form: form, values: {}, at: 0 };
+    (form.fields || []).forEach(function (field) {
+      if (field.default) quizzing.values[field.key] = field.default;
+    });
+    draw();
+  }
+
+  // draw writes the field the card is on, its options and what the buttons
+  // say: Submit answers the last question and sends, Next moves on.
+  function draw() {
+    if (!quizzing) return;
+    var list = visible(quizzing.form, quizzing.values);
+    if (quizzing.at >= list.length) return done();
+    var field = list[quizzing.at];
+    var picks = PICKS[field.component];
+    quizCount.textContent = list.length > 1 ? (quizzing.at + 1) + " of " + list.length : "";
+    quizAsk.textContent = field.label || field.key;
+    quizHelp.textContent = field.help || "";
+    quizHelp.hidden = !field.help;
+    quizPicks.textContent = "";
+    if (picks) options(field).forEach(function (option) { quizPicks.appendChild(pick(field, option)); });
+    else quizPicks.appendChild(typed(field));
+    quizSubmit.textContent = quizzing.at + 1 < list.length ? "Next" : "Submit";
+    quiz.hidden = false;
+    acts.hidden = true;
+    stage.disabled = true;
+    held(field);
+  }
+
+  // pick is one option as a button that selects it. A multi keeps every
+  // option pressed, a choice keeps one.
+  function pick(field, option) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "voice-pick";
+    button.dataset.value = option.value;
+    button.setAttribute("aria-pressed", "false");
+    button.textContent = option.label || option.value;
+    button.addEventListener("click", function () {
+      if (field.component === "multi") {
+        var set = String(quizzing.values[field.key] || "").split(",").filter(Boolean);
+        var at = set.indexOf(option.value);
+        if (at < 0) set.push(option.value);
+        else set.splice(at, 1);
+        quizzing.values[field.key] = set.join(",");
+      } else {
+        quizzing.values[field.key] = quizzing.values[field.key] === option.value ? "" : option.value;
+      }
+      held(field);
+    });
+    return button;
+  }
+
+  // typed is the input a field that offers no options takes, which a
+  // requirement written out rather than chosen needs.
+  function typed(field) {
+    var input = document.createElement(field.component === "textarea" ? "textarea" : "input");
+    input.className = "voice-typed";
+    if (field.component !== "textarea") input.type = field.component === "number" ? "number" : "text";
+    else input.rows = 3;
+    input.value = quizzing.values[field.key] || "";
+    input.placeholder = field.placeholder || "";
+    input.setAttribute("aria-label", field.label || field.key);
+    input.addEventListener("input", function () {
+      quizzing.values[field.key] = input.value;
+      held(field);
+    });
+    return input;
+  }
+
+  // held marks what is selected and refuses an empty answer to a required
+  // field, so Submit is pressed only once there is something to send.
+  function held(field) {
+    var answer = String(quizzing.values[field.key] || "");
+    var set = answer.split(",").filter(Boolean);
+    quizPicks.querySelectorAll(".voice-pick").forEach(function (button) {
+      var on = field.component === "multi"
+        ? set.indexOf(button.dataset.value) >= 0
+        : button.dataset.value === answer;
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+      button.classList.toggle("on", on);
+    });
+    quizSubmit.disabled = !!field.required && !answer.trim();
+  }
+
+  // step takes the answer and moves on, or sends once the last field is
+  // answered. A hidden field never asked keeps its default.
+  function step() {
+    if (!quizzing) return;
+    quizzing.at++;
+    draw();
+  }
+
+  // done sends the answers back into the thread and closes the card. The
+  // form's prompt is what goes, with every placeholder filled in; a form
+  // that declares none sends the answers as lines, which is what a
+  // questionnaire collecting requirements wants read back to it.
+  function done() {
+    var form = quizzing.form;
+    var values = quizzing.values;
+    shut();
+    var body = (form.submit && form.submit.prompt)
+      ? form.submit.prompt.replace(/\{\{([^{}]*)\}\}/g, function (_, key) { return values[key.trim()] || ""; })
+      : lines(form, values);
+    if (!body.trim()) return;
+    asked(body, "");
+  }
+
+  // lines is every answered field as "label: value", the reply to a form
+  // that names no prompt of its own.
+  function lines(form, values) {
+    return (form.fields || []).filter(function (field) {
+      return String(values[field.key] || "").trim() !== "";
+    }).map(function (field) {
+      return (field.label || field.key) + ": " + values[field.key];
+    }).join("\n");
+  }
+
+  // drop the card and tell the thread the questions were left, so a session
+  // waiting on an answer is not waiting on one that never comes.
+  function quit() {
+    if (!quizzing) return;
+    shut();
+    asked("I cancelled the questions.", "");
+  }
+
+  // shut closes the card and gives the window back its own buttons.
+  function shut() {
+    quizzing = null;
+    quiz.hidden = true;
+    quizPicks.textContent = "";
+    acts.hidden = false;
+    stage.disabled = false;
   }
 
   // ------------------------------------------------------------------ flow
@@ -827,6 +1035,11 @@
   // landed shows a reply and waits for the audio of it. The count in the name
   // is how many answers the thread holds, which is what BRIEF tells Claude to
   // count; the window writes no file and only reads.
+  //
+  // A reply that holds a form block asks something: the card opens over the
+  // window with the first question on it, and the answers go back as the
+  // next thing said. The words are still read out, so the question is heard
+  // as well as read.
   function landed(body) {
     var mine = gen;
     var words = plain(body);
@@ -837,6 +1050,11 @@
     if (played < 1) played = 1;
     tell(STAGES[2]);
     audio(mine, stamp + "." + played, 0);
+    if (body.indexOf("```form") < 0) return;
+    forms(body).then(function (found) {
+      if (mine !== gen || !found.length || quizzing) return;
+      ask(found[0].form);
+    });
   }
 
   // audio waits for the wav of a reply and plays it, and reads the words out
@@ -927,6 +1145,7 @@
   // the next one starts a new one.
   function trash() {
     clear();
+    shut();
     hush();
     thread = "";
     stamp = "";
@@ -1053,6 +1272,8 @@
     if (media || starting) stop();
     else send();
   });
+  quizSubmit.addEventListener("click", step);
+  quizCancel.addEventListener("click", quit);
   discardBtn.addEventListener("click", back);
   replayBtn.addEventListener("click", function () { if (answer || reply) play(); });
 

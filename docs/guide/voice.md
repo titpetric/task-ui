@@ -41,6 +41,34 @@ A clip nothing transcribed is sent with no words, and the thread is asked to run
 
 Closing the window ends the session. The thread stays on the board under the page it belongs to, and the next time the orb opens it starts a new one.
 
+## Questions back
+
+A reply that ends with a [form block](forms.md) is a question. The card opens over the window with one field on it, the options as buttons you press to select, and **Submit** and **Cancel**. What you answered goes back into the thread as the next thing said, so Claude reads it before asking anything else.
+
+The thread's opening instruction tells Claude how: one field per question, `bool` for a yes or no, `choice` with `options` for a pick, `multi` for several, `text` for words. This is the same dialect the form block of a note's reply renders on a page, so one block works in both places.
+
+A questionnaire is one block of many short fields. The card draws them one at a time and counts them, `4 of 23`, and sends once, so feature mapping costs one reply and not twenty. `when: <key>=<value>` on a field draws it only where the field it names holds that value, so a hundred declared questions are the dozen that follow from what you said. `submit.prompt` is the sentence the values are read back in, `{{key}}` for each; a form that names none sends `label: value` a line at a time.
+
+```form
+title: The list page
+fields:
+  - key: cache
+    label: Should the list page cache its results?
+    component: bool
+  - key: ttl
+    label: How long for?
+    component: choice
+    when: cache=yes
+    options:
+      - value: 1m
+      - value: 5m
+      - value: 1h
+submit:
+  prompt: "cache: {{cache}}, ttl: {{ttl}}"
+```
+
+Cancel sends one line saying the questions go unanswered, so a thread waiting on an answer is not waiting on one that never comes. The window plays the reply as it always does, so a question is heard as well as read, and the microphone is shut while the card is open.
+
 The instance has to hold a transcriber and a synthesiser for the audio half of this: `transcribe-audio` over whisper.cpp, and a `speak` job over piper. Without them the conversation still works in text, read out by whatever voice the device holds.
 
 ## The orb itself
