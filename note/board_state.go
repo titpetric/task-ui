@@ -61,9 +61,7 @@ func (b *Board) Recover(ctx context.Context) error {
 		if open[i].RunID != "" {
 			continue
 		}
-		for _, agent := range b.threadAgents(ctx, &open[i]) {
-			b.dispatch(&open[i], nil, agent)
-		}
+		b.dispatchFor(&open[i], b.threadAgents(ctx, &open[i]), nil)
 	}
 	for i := range prompts {
 		if prompts[i].RunID == "" {

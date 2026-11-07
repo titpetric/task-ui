@@ -39,7 +39,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 		if thread, err = b.Notes.Get(ctx, note.ParentID); err != nil {
 			return nil, err
 		}
-		if thread.State != "" && note.UserName == b.AnswererOf(ctx, thread) {
+		if thread.State != "" && contains(b.AnswerersOf(ctx, thread), note.UserName) {
 			return nil, fmt.Errorf("%w: you can't edit the agent's answer; it changes when its question runs again", ErrInvalid)
 		}
 	}
@@ -79,9 +79,9 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 		b.dispatchPrompt(thread, req, b.answerTo(ctx, thread, note, b.AnswererOf(ctx, thread)))
 		return note, nil
 	}
-	for _, agent := range b.forAgents(ctx, user, parent, note.Body) {
-		b.dispatch(thread, b.answerTo(ctx, thread, note, agent.Name), agent)
-	}
+	b.dispatchFor(thread, b.forAgents(ctx, user, parent, note.Body), func(agent *model.User) *model.Note {
+		return b.answerTo(ctx, thread, note, agent.Name)
+	})
 	return note, nil
 }
 

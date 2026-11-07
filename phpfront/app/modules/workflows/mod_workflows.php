@@ -265,10 +265,10 @@ class mod_workflows implements Module {
 
 		foreach ($roots as $note) {
 			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
-			$answerer = Task\Note::answerer($note, $under, $agents);
+			$answerers = Task\Note::answerers($note, $under, $agents);
 
 			if (self::seesPlace($chrome, $note->getDir())) {
-				$threads[] = Task\Note::thread($note, $replies, $chrome, $answerer, false, null);
+				$threads[] = Task\Note::thread($note, $replies, $chrome, $answerers, null);
 			}
 		}
 

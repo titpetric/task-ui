@@ -60,8 +60,8 @@ class mod_notes implements Module {
 
 		foreach ($roots as $note) {
 			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
-			$answerer = Task\Note::answerer($note, $under, $agents);
-			$threads[] = Task\Note::thread($note, $replies, $chrome, $answerer, $seen);
+			$answerers = Task\Note::answerers($note, $under, $agents);
+			$threads[] = Task\Note::thread($note, $replies, $chrome, $answerers, $seen);
 		}
 
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";

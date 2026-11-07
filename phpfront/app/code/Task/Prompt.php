@@ -227,8 +227,8 @@ class Prompt {
 
 		foreach ($roots as $note) {
 			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
-			$answerer = Note::answerer($note, $under, $agents);
-			$threads[] = Note::thread($note, $replies, $chrome, $answerer, $seen);
+			$answerers = Note::answerers($note, $under, $agents);
+			$threads[] = Note::thread($note, $replies, $chrome, $answerers, $seen);
 		}
 
 		return array(
@@ -286,8 +286,8 @@ class Prompt {
 
 		foreach ($roots as $note) {
 			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
-			$answerer = Note::answerer($note, $under, $agents);
-			$threads[] = Note::thread($note, $replies, $chrome, $answerer, null);
+			$answerers = Note::answerers($note, $under, $agents);
+			$threads[] = Note::thread($note, $replies, $chrome, $answerers, null);
 		}
 
 		return array(

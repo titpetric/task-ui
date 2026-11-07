@@ -131,15 +131,20 @@ echo var_export($writes->get($posted->getId()), true), " ", var_export($writes->
 // row, where the run the prompt's answer names is none.
 $db->replace("user", array("id" => "fx-note-u1", "name" => "fx-note-ann", "role" => "admin", "admin" => 1));
 $db->replace("user", array("id" => "fx-note-u2", "name" => "fx-note-bot", "role" => "runner", "agent_reply" => 1, "mcp" => 1));
+$db->replace("user", array("id" => "fx-note-u3", "name" => "fx-note-maid", "role" => "runner", "agent_reply" => 1, "mcp" => 1));
 
 $db->replace("run", array("id" => "fx-note-reply-run", "folder" => "fx-note", "job" => "build", "user_name" => "fx-note-ann", "state" => "ok"));
 
 // A board thread that names the agent, the agent's answer under it, and a
-// reply of the reader's own.
+// reply of the reader's own, then a thread that splits one request across two
+// agents and holds an answer from each.
 $cards = array(
 	array("id" => "fx-note-8", "parent" => "", "by" => "fx-note-ann", "body" => "@fx-note-bot look at the build", "state" => "working", "run" => ""),
 	array("id" => "fx-note-9", "parent" => "fx-note-8", "by" => "fx-note-bot", "body" => "the cache was cold", "state" => "", "run" => "fx-note-reply-run"),
 	array("id" => "fx-note-10", "parent" => "fx-note-8", "by" => "fx-note-ann", "body" => "thanks", "state" => "", "run" => ""),
+	array("id" => "fx-note-11", "parent" => "", "by" => "fx-note-ann", "body" => "@fx-note-bot take the API, @fx-note-maid take the docs", "state" => "working", "run" => ""),
+	array("id" => "fx-note-12", "parent" => "fx-note-11", "by" => "fx-note-bot", "body" => "the API is done", "state" => "", "run" => ""),
+	array("id" => "fx-note-13", "parent" => "fx-note-11", "by" => "fx-note-maid", "body" => "the docs are done", "state" => "", "run" => ""),
 );
 
 foreach ($cards as $row) {
@@ -198,19 +203,22 @@ echo "[", implode(",", Task\Note::names("@admin and @ops, ask @admin again")), "
 echo "[", implode(",", Task\Note::names("run @host:dev1 and tell @fx-note-bot.")), "]\n";
 echo "[", implode(",", Task\Note::names("nobody is named here")), "]\n";
 
-// The agent whose replies answer a thread: claude on a prompt, the agent an
-// instruction names on a board note, and nobody where no agent is named.
+// The agents whose replies answer a thread: claude on a prompt, every agent an
+// instruction names on a board note, and nobody where no agent is named. A
+// note that names two agents is answered by both, each of them once.
 $agents = agents();
 $under = $notes->replies(array("fx-note-8"))["fx-note-8"];
 
-echo "[", Task\Note::answerer($notes->get("fx-note-6"), array(), $agents), "]\n";
-echo "[", Task\Note::answerer($notes->get("fx-note-8"), $under, $agents), "]\n";
-echo "[", Task\Note::answerer($notes->get("fx-note-1"), $notes->replies(array("fx-note-1"))["fx-note-1"], $agents), "]\n";
-echo "[", Task\Note::agentIn("fx-note-bot", "@fx-note-bot talking to itself", $agents), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-6"), array(), $agents)), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-8"), $under, $agents)), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-1"), $notes->replies(array("fx-note-1"))["fx-note-1"], $agents)), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-11"), $notes->replies(array("fx-note-11"))["fx-note-11"], $agents)), "]\n";
+echo "[", implode(",", Task\Note::agentsIn("fx-note-bot", "@fx-note-bot talking to itself", $agents)), "]\n";
+echo "[", implode(",", Task\Note::agentsIn("fx-note-ann", "@fx-note-bot and @fx-note-maid, twice: @fx-note-bot", $agents)), "]\n";
 
 // One thread as the component reads it: the note on top, its replies oldest
 // first, and the field under it where the reader may write one.
-$thread = Task\Note::thread($notes->get("fx-note-8"), $notes->replies(array("fx-note-8")), $chrome, "fx-note-bot", $seen);
+$thread = Task\Note::thread($notes->get("fx-note-8"), $notes->replies(array("fx-note-8")), $chrome, array("fx-note-bot"), $seen);
 
 echo $thread["id"], " ", var_export($thread["working"], true), " ", count($thread["replies"]), " ", $thread["author"]["name"], " ", var_export($thread["edited"], true), "\n";
 echo labels($thread["menu"]), "\n";
@@ -226,11 +234,19 @@ echo labels($answer["menu"]), "\n";
 echo $thread["replies"][1]["id"], " ", var_export($thread["replies"][1]["edits"], true), " [", $thread["replies"][1]["run"], "]\n";
 echo labels($thread["replies"][1]["menu"]), "\n";
 
+// A thread that split one request across two agents holds an answer from each,
+// and neither of them is a row the reader rewrites where it stands.
+$split = Task\Note::thread($notes->get("fx-note-11"), $notes->replies(array("fx-note-11")), $chrome, array("fx-note-bot", "fx-note-maid"), $seen);
+
+echo $split["replies"][0]["id"], " ", var_export($split["replies"][0]["edits"], true), "\n";
+echo $split["replies"][1]["id"], " ", var_export($split["replies"][1]["edits"], true), "\n";
+echo labels($split["replies"][1]["menu"]), "\n";
+
 // A card links the run its agent worked in only for a reader who sees it: the
 // run of the prompt's answer is gone, so the card with a seen links nowhere
 // and the card without one links it.
-echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $notes->get("fx-note-6"), Task\Note::CLAUDE, $seen)["run"], "]\n";
-echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $notes->get("fx-note-6"), Task\Note::CLAUDE)["run"], "]\n";
+echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $notes->get("fx-note-6"), array(Task\Note::CLAUDE), $seen)["run"], "]\n";
+echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $notes->get("fx-note-6"), array(Task\Note::CLAUDE))["run"], "]\n";
 
 // A prompt belongs to the page it was asked from, so removing it needs the
 // prompt permission and removing a board note the note one. An admin holds
@@ -242,8 +258,8 @@ Task\Host::$whoami = "";
 
 $nobody = new Task\Chrome;
 
-echo var_export(Task\Note::edits($notes->get("fx-note-8"), $nobody, $notes->get("fx-note-8"), ""), true), " ", var_export(Task\Note::deletes($notes->get("fx-note-8"), $nobody), true), "\n";
-echo "[", labels(Task\Note::card($notes->get("fx-note-8"), $nobody, $notes->get("fx-note-8"), "", $seen)["menu"]), "]\n";
+echo var_export(Task\Note::edits($notes->get("fx-note-8"), $nobody, $notes->get("fx-note-8"), array()), true), " ", var_export(Task\Note::deletes($notes->get("fx-note-8"), $nobody), true), "\n";
+echo "[", labels(Task\Note::card($notes->get("fx-note-8"), $nobody, $notes->get("fx-note-8"), array(), $seen)["menu"]), "]\n";
 ---
 fx-note-3,fx-note-1
 fx-note-5
@@ -271,13 +287,18 @@ NULL NULL
 [claude]
 [fx-note-bot]
 []
+[fx-note-bot,fx-note-maid]
 []
+[fx-note-bot,fx-note-maid]
 fx-note-8 true 2 fx-note-ann false
 Edit,Delete
 fx-note-9 false fx-note-reply-run fx-note-
 Open its run,Delete
 fx-note-10 true []
 Edit,Delete
+fx-note-12 false
+fx-note-13 false
+Delete
 []
 [fx-note-answer-run]
 true false

@@ -100,6 +100,11 @@ type Board struct {
 	// then no reply.
 	repliedMu sync.Mutex
 	replied   map[string]bool
+
+	// dispatched counts the runs the board has going per thread, by the
+	// thread's note ID. The last to end settles the note.
+	dispatchedMu sync.Mutex
+	dispatched   map[string]*dispatches
 }
 
 // Post leaves a note on the board, or a reply to one. A note naming
@@ -154,9 +159,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		thread = parent
 		b.publish(parent)
 	}
-	for _, agent := range b.forAgents(ctx, user, parent, body) {
-		b.dispatch(thread, nil, agent)
-	}
+	b.dispatchFor(thread, b.forAgents(ctx, user, parent, body), nil)
 	return note, nil
 }
 
@@ -399,15 +402,6 @@ func (b *Board) finishAs(ctx context.Context, note *model.Note, state, body, as 
 		b.replyAs(ctx, note, body, as)
 	}
 	b.settle(ctx, note, state)
-}
-
-// settle records the state an instruction ended in.
-func (b *Board) settle(ctx context.Context, note *model.Note, state string) {
-	if err := b.Notes.SetState(ctx, note.ID, state, ""); err != nil {
-		slog.Warn("note state not saved", "note", note.ID, "err", err)
-	}
-	note.State = state
-	b.publish(note)
 }
 
 // answer puts the body in an answer run again, with the note's run.

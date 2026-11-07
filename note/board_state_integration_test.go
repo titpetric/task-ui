@@ -13,7 +13,8 @@ import (
 )
 
 // A restart starts every agent an open instruction with no run names, one
-// run each, and leaves a thread that names nobody alone.
+// run each, and leaves a thread that names nobody alone. Its runs count
+// as a message's do, and the note waits for the last.
 func TestBoard_Recover(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -24,9 +25,11 @@ func TestBoard_Recover(t *testing.T) {
 	message := &model.Note{UserName: "ops", Body: "the archive is big", State: model.NoteOpen}
 	assert.NoError(t, notes.Create(ctx, message))
 
+	states := watch(board)
 	assert.NoError(t, board.Recover(ctx))
 	assert.Equal(t, []string{"claude", "consuela"}, answers(t, notes, thread.ID))
 	assert.Len(t, answers(t, notes, message.ID), 0)
+	assert.Equal(t, []string{model.NoteWorking, model.NoteFailed}, states(thread.ID))
 
 	ended, err := notes.Get(ctx, thread.ID)
 	assert.NoError(t, err)

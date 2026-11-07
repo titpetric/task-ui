@@ -106,30 +106,24 @@ func (b *Board) threadAgents(ctx context.Context, note *model.Note) []*model.Use
 	return agents
 }
 
-// threadForAgent returns the first agent a thread names, or nil. It
-// stops there, as a page asks it of every thread it lists.
-func (b *Board) threadForAgent(ctx context.Context, note *model.Note) *model.User {
-	if agents := b.agents(ctx, b.named(ctx, note.UserName, note.Body)); len(agents) > 0 {
-		return agents[0]
+// AnswerersOf returns the user names of the agents that answer a
+// thread, once each: claude on a prompt, every agent an instruction
+// names, else none.
+func (b *Board) AnswerersOf(ctx context.Context, thread *model.Note) []string {
+	if thread.IsPrompt() {
+		return []string{answerer}
 	}
-	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
-	for _, reply := range replies[note.ID] {
-		if agents := b.agents(ctx, b.named(ctx, reply.UserName, reply.Body)); len(agents) > 0 {
-			return agents[0]
-		}
+	var names []string
+	for _, agent := range b.threadAgents(ctx, thread) {
+		names = append(names, agent.Name)
 	}
-	return nil
+	return names
 }
 
-// AnswererOf returns the user name the agent's replies on a thread are
-// from: claude on a prompt, the agent the thread names on an
-// instruction, else empty.
+// AnswererOf returns the first name of a thread's AnswerersOf, or empty.
 func (b *Board) AnswererOf(ctx context.Context, thread *model.Note) string {
-	if thread.IsPrompt() {
-		return answerer
-	}
-	if agent := b.threadForAgent(ctx, thread); agent != nil {
-		return agent.Name
+	if names := b.AnswerersOf(ctx, thread); len(names) > 0 {
+		return names[0]
 	}
 	return ""
 }

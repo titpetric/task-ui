@@ -16,6 +16,8 @@ A reply that names nobody is an instruction to whoever its note names, so the na
 
 A note or a reply may name several users at once to split one request: each of them gets the instruction, and each agent among them a run of its own, side by side. The thread each run reads is the same, and each run is told which user it works for, so an instruction names who does what.
 
+Each agent replies the moment its own run ends. The note stays **working** until the last of the runs ends, and then reads **done** where every one of them ended well and **failed** where any ended badly: a failure beside a success reads failed, because a done hides it. Each agent's answer is its own to rewrite, by its question running again, and no reader rewrites one in place.
+
 The user a note names sets that state, and so do the note's author and an admin; anyone who may post replies. A note may name any user. One with **MCP agent user** on, such as `@consuela`, an agent on another machine, picks the note up over [MCP](mcp.md#an-agent-elsewhere): an agent learns of work from the notes that name it, and nowhere else. task-ui runs the Notes agent itself only for a user with **Run instance Claude when mentioned** on; a note naming anyone else waits for them, their agent or the person.
 
 ## Instructions to the agent

@@ -9,6 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/titpetric/task-ui/app"
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
@@ -23,7 +24,8 @@ const noRoot = "has no root to run in"
 // ops, an admin who may run jobs, the agents claude and consuela, and
 // alice, who is neither. The board has no root, so every dispatch fails
 // at once and leaves a reply as the agent it dispatched: that reply is
-// what a test counts.
+// what a test counts. Its event bus holds every state the board wrote,
+// which watch reads back.
 func newBoard(t *testing.T) (*note.Board, *storage.NoteStorage, map[string]*model.User) {
 	t.Helper()
 	ctx := context.Background()
@@ -40,7 +42,23 @@ func newBoard(t *testing.T) (*note.Board, *storage.NoteStorage, map[string]*mode
 	for _, user := range people {
 		assert.NoError(t, users.Create(ctx, user))
 	}
-	return &note.Board{Notes: notes, Users: users}, notes, people
+	return &note.Board{Notes: notes, Users: users, Events: event.NewBus()}, notes, people
+}
+
+// watch subscribes to the board's notes. It returns the states one note
+// went through, in the order the board published them.
+func watch(board *note.Board) func(id string) []string {
+	events, cancel := board.Events.Subscribe(note.Topic)
+	return func(id string) []string {
+		cancel()
+		var out []string
+		for e := range events {
+			if row, ok := e.Data.(model.Note); ok && row.ID == id {
+				out = append(out, row.State)
+			}
+		}
+		return out
+	}
 }
 
 // answers returns the user names of the replies to a note, oldest first.
@@ -138,4 +156,27 @@ func TestBoard_AnswererOf(t *testing.T) {
 
 	assert.Equal(t, board.Answerer(), board.AnswererOf(ctx, &model.Note{WorkspaceID: model.Default, Body: "say ok"}))
 	assert.NotNil(t, people["alice"])
+}
+
+// Every agent a thread names answers it, once each: the ones its note
+// names and the ones its replies name. A prompt is claude's alone.
+func TestBoard_AnswerersOf(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board, notes, _ := newBoard(t)
+
+	thread := &model.Note{UserName: "ops", Body: "@claude take the API, @consuela take the docs", State: model.NoteOpen}
+	assert.NoError(t, notes.Create(ctx, thread))
+	assert.Equal(t, []string{"claude", "consuela"}, board.AnswerersOf(ctx, thread))
+
+	assert.NoError(t, notes.Create(ctx, &model.Note{ParentID: thread.ID, UserName: "ops", Body: "@claude again"}))
+	assert.Equal(t, []string{"claude", "consuela"}, board.AnswerersOf(ctx, thread), "a name twice answers once")
+
+	message := &model.Note{UserName: "ops", Body: "@alice, have a look"}
+	assert.NoError(t, notes.Create(ctx, message))
+	assert.Len(t, board.AnswerersOf(ctx, message), 0, "alice runs no agent")
+	assert.NoError(t, notes.Create(ctx, &model.Note{ParentID: message.ID, UserName: "ops", Body: "@consuela too"}))
+	assert.Equal(t, []string{"consuela"}, board.AnswerersOf(ctx, message), "a reply names the agent")
+
+	assert.Equal(t, []string{board.Answerer()}, board.AnswerersOf(ctx, &model.Note{WorkspaceID: model.Default, Body: "say ok"}))
 }

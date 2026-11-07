@@ -126,8 +126,8 @@ class Note {
 	 * or a reply under it, with the menu of what the reader may do to it.
 	 *
 	 * The thread is the note on top, which decides what the reader edits: a
-	 * reply the agent wrote is the answer and changes when its question runs
-	 * again, so nobody rewrites it in place.
+	 * reply an agent of the thread wrote is an answer and changes when its
+	 * question runs again, so nobody rewrites it in place.
 	 *
 	 * The run the agent worked in is linked for a reader who sees that run,
 	 * which seen answers; a card without one links nowhere. No seen links
@@ -137,11 +137,11 @@ class Note {
 
 	/**
 	 * edits reports whether the reader may rewrite a note of a thread where it
-	 * stands: its author or an admin, with note/edit, and the agent's answers
+	 * stands: its author or an admin, with note/edit, and the agents' answers
 	 * excepted.
 	 */
 
-	/** answered reports whether a reply is the agent's answer on a thread. */
+	/** answered reports whether a reply is an answer of one of a thread's agents. */
 
 	/**
 	 * deletes reports whether the reader may remove a note and the replies
@@ -291,8 +291,8 @@ class Note {
 		return $out;
 	}
 
-	static function thread($note, $replies, $chrome, $answerer, $seen = null) {
-		$out = self::card($note, $chrome, $note, $answerer, $seen);
+	static function thread($note, $replies, $chrome, $answerers, $seen = null) {
+		$out = self::card($note, $chrome, $note, $answerers, $seen);
 
 		$out["replies"] = array();
 
@@ -303,13 +303,13 @@ class Note {
 		}
 
 		foreach ($replies[$id] as $reply) {
-			$out["replies"][] = self::card($reply, $chrome, $note, $answerer, $seen);
+			$out["replies"][] = self::card($reply, $chrome, $note, $answerers, $seen);
 		}
 
 		return $out;
 	}
 
-	static function card($note, $chrome, $thread, $answerer, $seen = null) {
+	static function card($note, $chrome, $thread, $answerers, $seen = null) {
 		$id = $note->getId();
 		$author = $note->getUserName();
 		$run = $note->getRunId();
@@ -319,7 +319,7 @@ class Note {
 			$run = "";
 		}
 
-		$edits = self::edits($note, $chrome, $thread, $answerer);
+		$edits = self::edits($note, $chrome, $thread, $answerers);
 		$what = $reply ? "reply" : "note";
 		$menu = new Menu("Actions on the " . $what . " of " . $author);
 
@@ -367,20 +367,20 @@ class Note {
 		);
 	}
 
-	static function edits($note, $chrome, $thread, $answerer) {
+	static function edits($note, $chrome, $thread, $answerers) {
 		if ($chrome->user === null || !$chrome->allowed("note/edit")) {
 			return false;
 		}
 
-		if ($note->getId() !== $thread->getId() && self::answered($thread, $note, $answerer)) {
+		if ($note->getId() !== $thread->getId() && self::answered($thread, $note, $answerers)) {
 			return false;
 		}
 
 		return $note->getUserName() === $chrome->name() || User::admin($chrome->user);
 	}
 
-	static function answered($thread, $reply, $answerer) {
-		return $thread->getState() !== "" && $answerer !== "" && $reply->getUserName() === $answerer;
+	static function answered($thread, $reply, $answerers) {
+		return $thread->getState() !== "" && in_array($reply->getUserName(), $answerers, true);
 	}
 
 	static function deletes($note, $chrome) {
@@ -431,50 +431,52 @@ class Note {
 	}
 
 	/**
-	 * answerer is the name the agent's replies on a thread carry: claude on a
-	 * prompt, the agent an instruction names, and "" where no agent answers
-	 * it.
+	 * answerers is the names of the agents that answer a thread, once each:
+	 * claude on a prompt, every agent an instruction names, and none where no
+	 * agent answers it.
+	 *
+	 * A message names several agents to split one request, and each of them
+	 * replies, so a thread has as many answers as it has agents and no reader
+	 * rewrites any of them.
 	 *
 	 * The agents are the users whose mentions run one, which
 	 * Task\User::agents() answers.
 	 */
-	static function answerer($thread, $replies, $agents) {
+	static function answerers($thread, $replies, $agents) {
 		if (self::isPrompt($thread)) {
-			return self::CLAUDE;
+			return array(self::CLAUDE);
 		}
 
-		$found = self::agentIn($thread->getUserName(), $thread->getBody(), $agents);
-
-		if ($found !== "") {
-			return $found;
-		}
+		$out = self::agentsIn($thread->getUserName(), $thread->getBody(), $agents);
 
 		foreach ($replies as $reply) {
-			$found = self::agentIn($reply->getUserName(), $reply->getBody(), $agents);
-
-			if ($found !== "") {
-				return $found;
+			foreach (self::agentsIn($reply->getUserName(), $reply->getBody(), $agents) as $name) {
+				if (!in_array($name, $out, true)) {
+					$out[] = $name;
+				}
 			}
 		}
 
-		return "";
+		return $out;
 	}
 
-	/** agentIn is the first agent a text names, other than its own author, or "". */
-	static function agentIn($author, $body, $agents) {
+	/** agentsIn is the agents a text names, other than its own author, once each in the order the text names them. */
+	static function agentsIn($author, $body, $agents) {
+		$out = array();
+
 		foreach (self::names($body) as $name) {
 			if ($name === $author) {
 				continue;
 			}
 
 			foreach ($agents as $agent) {
-				if ($agent->getName() === $name) {
-					return $name;
+				if ($agent->getName() === $name && !in_array($name, $out, true)) {
+					$out[] = $name;
 				}
 			}
 		}
 
-		return "";
+		return $out;
 	}
 
 	/**
