@@ -15,7 +15,15 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 
 With the **Speech to text** integration set up, this instance transcribes and the words arrive while you are still talking: every four seconds the window posts the piece of the recording since the last one to `POST /api/voice/transcribe`, which runs whisper.cpp on the server and answers with the words. The transcript the prompt is built from is what those pieces said, and the last piece is waited for before the prompt goes out. Transcribing takes `prompt/edit`, the same as asking Claude.
 
-The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder. A piece is transcribed on its own, so a cut lands mid-word often enough; `threads` is what decides whether the words keep up with the talking.
+The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder. A piece is transcribed on its own, so a cut lands mid-word often enough.
+
+**The model has to run faster than the talking.** A piece covers four seconds, so a model that takes longer than four seconds over four seconds of speech falls behind, and the words land after the sentence is finished. One measurement, over `samples/jfk.wav` on the four cores of task.cdn.si with `threads` at 4:
+
+| Model      | Clip | Transcribed in | Ratio |
+|------------|------|----------------|-------|
+| `small.en` | 9.4s | 67.7s          | 7.2x  |
+
+`small.en` is what the `setup` job downloads, and 7.2x is too slow for this: run the job with `MODEL=tiny.en` for one that keeps up, and time a clip of your own before trusting it. A slow model breaks nothing, as a piece is posted only once the one before it has come back and the window counts the seconds it waits, but the words stop being live.
 
 Without the integration, Chrome and Edge transcribe on the device and the words never leave it: the orb reads `SpeechRecognition.available({processLocally: true})` and fetches the language the first time you press record. Safari and Firefox have no such recogniser, and neither do most phones. There the orb records and the session does the rest.
 

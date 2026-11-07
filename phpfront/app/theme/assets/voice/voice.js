@@ -618,8 +618,15 @@
       rec = null;
     }
     release();
-    dress("Transcribing");
-    streaming(false).then(send);
+    dress();
+    // The counter runs while the last slice is out: on a machine where the
+    // model costs more than the clip, this is the wait, and a line that does
+    // not move reads as stuck.
+    if (server) ticking("Transcribing");
+    streaming(false).then(function () {
+      stopped();
+      send();
+    });
   }
 
   // listening opens the recogniser and the microphone, and returns once both
