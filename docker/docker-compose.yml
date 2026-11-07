@@ -16,9 +16,15 @@ services:
     # and rebuilds them, which is minutes before the instance answers.
     - gopath:/go
     # How a job reaches a docker daemon, and how it authenticates to a
-    # registry. docs/running.md#docker-and-registries has the three
-    # arrangements; this is the first, and the least isolated.
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+    # registry: docs/running.md#docker-and-registries has the three
+    # arrangements. This is the second, the container's own daemon, and
+    # the default because a host socket is not there to mount on most of
+    # the places this runs. The images a job builds stay in this volume.
+    - dockerlib:/var/lib/docker
+    # The first, and the least isolated: the host's daemon, which a job
+    # reaches as root on the host. Drop TASK_UI_DOCKER and privileged
+    # below when using it.
+    # - /var/run/docker.sock:/var/run/docker.sock:ro
     # The host's registry logins, for a job that pushes an image. The
     # Docker Registry integration runs `docker login` into the same file,
     # so leaving this out keeps the logins inside the container.
@@ -28,6 +34,13 @@ services:
     # the rename answers EBUSY on a bind-mounted file, and the CLI
     # discards the error and reports success. `:ro` changes nothing.
     # - $HOME/.docker:/app/.docker
+    environment:
+      # The entrypoint starts dockerd, and privileged is what it needs:
+      # without it the daemon comes up and then fails on the first
+      # container a job runs.
+      TASK_UI_DOCKER: dind
+    privileged: true
 
 volumes:
   gopath:
+  dockerlib:

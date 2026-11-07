@@ -1,15 +1,20 @@
-# Final image dependency: the docker CLI with the buildx and compose
-# plugins. Without buildx, `docker build` on a current daemon falls back
-# to the deprecated legacy builder, and BuildKit features error out.
+# Final image dependencies: the docker CLI with the buildx and compose
+# plugins, and the daemon behind TASK_UI_DOCKER=dind. Without buildx,
+# `docker build` on a current daemon falls back to the deprecated legacy
+# builder, and BuildKit features error out.
 FROM docker:29-cli AS docker
+FROM docker:29-dind AS dind
 
 # Build project
-FROM golang:1.27-alpine AS builder
+FROM golang:1.27-bookworm AS builder
 
 # bash runs the jobs in the runner and api tests, make is a convention
-# they detect. coreutils for stty: busybox `stty size` answers from
-# $COLUMNS/$LINES before the pty, so it misses a resize the tests make.
-RUN apk --no-cache add bash coreutils git make
+# they detect.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		bash \
+		git \
+		make \
+	&& rm -rf /var/lib/apt/lists/*
 
 WORKDIR /task-ui
 ADD . /task-ui
@@ -24,29 +29,54 @@ ADD . /task-ui
 # what the entrypoint installs lands in the default /go/bin.
 RUN CGO_ENABLED=0 go build -o /out/task-ui .
 
-# The final image environment.
-FROM golang:1.27-alpine
+# The final image environment. Debian, not Alpine: an entrypoint.d script
+# installs software with `apt-get`, which is half of what this base is
+# for. The other half is the Go toolchain the same scripts build with.
+FROM golang:1.27-bookworm
 
-RUN apk --no-cache add bash git colordiff openssh mailcap curl
+# iptables is dockerd's; mailcap is /etc/mime.types, which an artifact
+# download answers with; tzdata is the scheduler's zone. The rest is what
+# a job expects to find.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		bash \
+		ca-certificates \
+		colordiff \
+		curl \
+		git \
+		iptables \
+		mailcap \
+		openssh-client \
+		tzdata \
+	&& rm -rf /var/lib/apt/lists/*
 
-# mailcap - adds /etc/mime.types for golang server
-# colordiff - as it sounds like
-# git, ssh - allows git clone from github, bitbucket,...
-# bash - run bash scripts, commands
-
-# Task UI and docker-cli. task and atkins are not here: /root/entrypoint.d
-# installs them at boot, into /go/bin, which is already first on PATH.
+# Task UI and the docker CLI. task and atkins are not here:
+# /app/entrypoint.d installs them at boot, into /go/bin, which is already
+# first on PATH.
 COPY --from=builder /out/task-ui /usr/local/bin
 COPY --from=docker /usr/local/bin/docker /usr/local/bin
 COPY --from=docker /usr/local/libexec/docker/cli-plugins /usr/local/libexec/docker/cli-plugins
+
+# The daemon, started only for TASK_UI_DOCKER=dind. The release binaries
+# are static, so the ones built for Alpine run here. docker 29 carries
+# containerd inside dockerd, so the shim, runc and the two helpers are
+# the whole runtime; modprobe is the release's own shim, which answers 0
+# for a module the kernel already holds.
+COPY --from=dind \
+	/usr/local/bin/dockerd \
+	/usr/local/bin/containerd-shim-runc-v2 \
+	/usr/local/bin/runc \
+	/usr/local/bin/docker-init \
+	/usr/local/bin/docker-proxy \
+	/usr/local/bin/modprobe \
+	/usr/local/bin/
 
 # Configure the final image with whatever.
 ADD /docker /
 
 # /app is HOME and holds the image's own configuration: the entrypoint
 # scripts, ~/.ssh and ~/.docker, where docker reads the registry logins
-# from config.json. Mount that file to keep the host's logins, or let the
-# Docker Registry integration write it.
+# from config.json. Mount that directory to keep the host's logins, or
+# let the Docker Registry integration write it.
 #
 # /data holds the database, .htpasswd and the workspace folder,
 # /data/workspaces; /keys every key of the instance. Mount both.
@@ -55,7 +85,10 @@ RUN mkdir -p /data /keys /app/.docker && chmod 700 /keys /app/.docker
 VOLUME /data
 VOLUME /keys
 
-RUN docker --version && docker buildx version && docker compose version
+RUN docker --version \
+	&& docker buildx version \
+	&& docker compose version \
+	&& dockerd --version
 
 # GOPATH and PATH are the base image's own, repeated here because the
 # entrypoint scripts install into them: `go install` with no GOBIN writes

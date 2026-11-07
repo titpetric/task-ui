@@ -26,7 +26,7 @@ Two mounts hold everything the instance keeps:
 
 Every tool installs at `@latest`, or `@main` where the repository has no tag, and installs on every boot. A pinned version is a number somebody has to remember to raise, and skipping the install when the binary exists means a restart never picks up a release.
 
-- To run without Docker, remove the volume for `docker.sock`. Without `/data` and `/keys`, task-ui uses `./data` and `./keys`.
+- To run without Docker, drop `TASK_UI_DOCKER` and mount no socket; a job that calls `docker` then fails on its own. Without `/data` and `/keys`, task-ui uses `./data` and `./keys`.
 - A job's `docker run -v $PWD:/src` goes to the host's docker daemon, which resolves `$PWD` on the host, where `/data` has another path. Every run gets `TASK_UI_HOST_PWD`, its directory as the host sees it, and `TASK_UI_HOST_DATA`, the data directory there: write `docker run -v "${TASK_UI_HOST_PWD:-$PWD}:/src"`. task-ui reads the host paths from the mounts of its container; `TASK_UI_HOST_DATA` set in its environment overrides the data directory's.
 - The key folder holds every key, `<name>.key` and `<name>.pub`, the encryption key among them: `task_encryption_ed25519` encrypts every secret, the workspaces' and the integrations' settings. A rotated key keeps its backup in `backup/` until an admin deletes it. task-ui makes the folder `0700` and each file `0600`. Back up `/keys` with `/data`: without the encryption key the secrets don't open. A copy of `/data` alone holds no key.
 
@@ -35,7 +35,7 @@ Every tool installs at `@latest`, or `@main` where the repository has no tag, an
 `/usr/local/bin/entrypoint.sh` runs every `*.sh` of two directories, in lexical order, under `sh -x` so the run is traced in the container's log, and then execs `task-ui`:
 
 - `/app/entrypoint.d`, baked into the image from `docker/app/entrypoint.d` of this repository. `task` and `atkins` are installed here and nowhere else.
-- `/data/entrypoint.d`, on the mounted volume. Another repository drops scripts here to add software without rebuilding the image, and `apt-get`, `go install` and `pip` all work: the base image is the Go toolchain and the docker CLI, which is enough to install the rest.
+- `/data/entrypoint.d`, on the mounted volume. Another repository drops scripts here to add software without rebuilding the image, and `apt-get`, `go install` and `pip` all work: the base image is Debian with the Go toolchain and the docker CLI, which is enough to install the rest.
 
 A missing or empty directory is not an error, so an instance with no provisioning starts. A script that fails stops the boot, because a half-provisioned instance that serves is worse than one that does not come up: its jobs fail one at a time, somewhere else, with nothing naming the cause. `exit 1` in `run_scripts` is the one word to change to make a failure a warning.
 
@@ -48,9 +48,13 @@ Which daemon:
 | Arrangement           | What the compose file does                            | What a job reaches                            | What it costs the host                        |
 |-----------------------|-------------------------------------------------------|-----------------------------------------------|-----------------------------------------------|
 | The host's daemon     | mounts `/var/run/docker.sock:ro`                      | every image, container and volume on the host | a job can read and start anything on the host |
-| A daemon in the image | `privileged: true` and a volume for `/var/lib/docker` | its own images, containers and volumes        | more than the socket does: privileged is root |
+| A daemon in the image | `TASK_UI_DOCKER=dind`, `privileged: true` and a volume for `/var/lib/docker` | its own images, containers and volumes        | more than the socket does: privileged is root |
 
 A daemon inside the container is better isolation of the docker state and worse isolation of the host, because it needs `privileged: true`. Reach for it when a job must not see the host's containers, not when the host must be protected from the job.
+
+`docker/docker-compose.yml` ships the second, with the socket line commented out: most hosts this runs on have no socket to mount. `docker/app/entrypoint.d/05-dockerd.sh` starts `dockerd` when `TASK_UI_DOCKER` is `dind`, waits for it to answer, and does nothing at all when a socket is already mounted on `/var/run/docker.sock` - the mount is the operator naming which daemon to use. The daemon, its shim, `runc` and the two helpers are the release's static binaries, copied from `docker:29-dind`; docker 29 builds containerd into `dockerd`, so there is no separate containerd to run.
+
+The volume on `/var/lib/docker` is required, and not as a cache. The layers the daemon writes there are overlayfs, and an overlayfs upperdir may not itself sit on overlayfs: without the volume `dockerd` starts, pulls an image, and then fails every container with `failed to mount ... fstype: overlay ... invalid argument`. With it, `docker run` works in a privileged container on a cgroup v2 host, measured on docker 29.9.3.
 
 Which registry login:
 
@@ -122,7 +126,7 @@ task-ui -v                                   # the version and the commit
 
 `task-ui agent note|prompt|shell [args]` are the host commands of the Claude built-ins, `@claude-note`, `@claude-prompt` and `@claude`: the server runs them in a run's terminal, and they read the run's environment (see [Notes](guide/notes.md#the-claude-jobs)).
 
-task-ui keeps what a user signs in with apart from the user row, and no reader of a user, the API included, carries a credential: `user_auth_password` holds the password hashes, `user_email` the addresses and `user_auth_token` the token hashes. The `email`, `backup` and `token` commands work on the database of a user the server has read from the password file. To remove a user, delete the line, or **Delete** the user on Settings, **Users**, or call `DELETE /api/users/{id}`; both take Allow Deletes on Users, `user/delete`, and remove the line and the user's sessions, tokens and policy at once.
+task-ui keeps what a user signs in with apart from the user row, and no reader of a user, the API included, holds a credential: `user_auth_password` holds the password hashes, `user_email` the addresses and `user_auth_token` the token hashes. The `email`, `backup` and `token` commands work on the database of a user the server has read from the password file. To remove a user, delete the line, or **Delete** the user on Settings, **Users**, or call `DELETE /api/users/{id}`; both take Allow Deletes on Users, `user/delete`, and remove the line and the user's sessions, tokens and policy at once.
 
 The database holds what each user is: the admin flag, **Administrative privileges (all)**, which allows everything, and the role, runner or viewer, whose policy decides the rest; what each role may do is in [Settings, Permissions](guide/settings.md#permissions). The password file brings users in:
 
