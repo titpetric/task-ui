@@ -125,13 +125,13 @@ func Kinds() []Kind {
 			Fields: []Field{
 				{Name: "client_id", Label: "Client ID", Placeholder: "32 hex characters", Help: "From the app at developer.spotify.com."},
 				{Name: "client_secret", Label: "Client secret", Secret: true, Help: "From the same app; it stays on the server."},
-				{Name: "redirect_uri", Label: "Redirect URI", Optional: true, Path: "/api/integrations/spotify/callback", Placeholder: "https://task.example.com/api/integrations/spotify/callback", Help: "Register exactly this address in the app, as shown. It comes from the instance URL (TASK_UI_URL) and has to be https, or http on a loopback host."},
+				{Name: "redirect_uri", Label: "Redirect URI", Optional: true, Path: "/api/integrations/spotify/callback", Help: "Register exactly this address in the app. The instance sets it from its own URL (TASK_UI_URL), which has to be https, or http on a loopback host; nothing entered here is kept."},
 				{Name: "scopes", Label: "Access", Optional: true, Options: []string{"read", "write"}, Help: "read asks for the playback state, the playing track, private playlists and the library; write adds playback control, playlist changes and liking. Users link again after a change."},
 				{Name: "who", Label: "Who", Optional: true, Who: true, WhoEmpty: "everyone with the spotify_link permission may link", Help: "The roles and users who may link an account; none checked is everyone with the spotify_link permission."},
 			},
 			Steps: []string{
 				"At `https://developer.spotify.com/dashboard` create an app. The app is in Development mode: only the Spotify accounts you add under User Management, 25 at most, can link until Spotify approves an extension.",
-				"Under Redirect URIs add the address shown in Redirect URI above, exactly: `<instance URL>/api/integrations/spotify/callback`. It has to be https, or http on `127.0.0.1` for a local instance.",
+				"Under Redirect URIs add the address the Redirect URI row above shows, exactly. It is the instance's own URL and `/api/integrations/spotify/callback`, and it takes no editing here: https, or http on `127.0.0.1` for a local instance.",
 				"Copy the app's Client ID and Client secret here, leave Access on `read` unless users should control playback and playlists, and Save.",
 				"Playback control needs Spotify Premium and an active device; reading needs neither.",
 				"Allow the permission `spotify_link` to the roles or users who may connect an account, and `spotify_control` to those who may change playback, playlists and Liked Songs; both are denied until granted.",

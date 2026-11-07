@@ -275,6 +275,7 @@ func frontFields(found []integration.Field) []phpfront.IntegrationField {
 			Secret: field.Secret, Optional: field.Optional, Who: field.Who, Options: field.Options,
 			Generated: field.Generated, Env: field.Env, Default: field.Default,
 			Toggle: field.Toggle, DefaultOn: field.DefaultOn, Empty: field.Empty, Source: field.Source,
+			Fixed: field.Fixed(),
 		})
 	}
 	return out

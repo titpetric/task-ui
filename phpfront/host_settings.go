@@ -264,6 +264,9 @@ type IntegrationField struct {
 	DefaultOn bool   `json:"default_on"`
 	Empty     bool   `json:"empty"`
 	Source    string `json:"source"`
+	// Fixed is a value the instance owns, such as the address Spotify
+	// sends a reader back to: the card shows it and takes no input for it.
+	Fixed bool `json:"fixed"`
 }
 
 // Variables is what the Secrets page prints of the vault: the value of every

@@ -47,10 +47,15 @@ type Field struct {
 	// Source takes the value from another field, and the form shows the
 	// switch alone: a key that reaches a run as two variables.
 	Source string `json:"source,omitempty"`
-	// Path makes the field's value the instance URL and this path, which
-	// the reader cannot know and the instance can: a form fills it in
-	// rather than showing it as a placeholder.
+	// Path makes the instance own the field: its value is the instance
+	// URL and this path, a form shows it and takes no input for it, and
+	// a value sent for it is dropped.
 	Path string `json:"path,omitempty"`
+}
+
+// Fixed reports whether the instance owns the field's value, so a form shows it and saves nothing for it.
+func (f Field) Fixed() bool {
+	return f.Path != ""
 }
 
 // Valid reports whether a value is one the setting takes: any without options, else one of them or empty.

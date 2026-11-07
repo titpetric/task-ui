@@ -27,6 +27,25 @@ func TestField(t *testing.T) {
 	assert.JSONEq(t, `{"name":"model","label":"Model","env":"ANTHROPIC_MODEL","default":"m","toggle":true,"default_on":true}`, string(data))
 }
 
+// The instance owns a field a path names, and no other field.
+func TestField_Fixed(t *testing.T) {
+	t.Parallel()
+	assert.True(t, integration.Field{Name: "redirect_uri", Path: "/api/integrations/spotify/callback"}.Fixed())
+	assert.False(t, integration.Field{Name: "client_id"}.Fixed())
+	assert.False(t, integration.Field{Name: "model", Default: "m"}.Fixed())
+
+	// Spotify's redirect URI is the one the instance owns.
+	fixed := []string{}
+	for _, kind := range integration.Kinds() {
+		for _, field := range kind.Fields {
+			if field.Fixed() {
+				fixed = append(fixed, kind.ID+"."+field.Name)
+			}
+		}
+	}
+	assert.Equal(t, []string{"spotify.redirect_uri"}, fixed)
+}
+
 // A field a path names refuses a value that is no address: a hex
 // secret pasted into a redirect URI is the mistake it catches.
 func TestField_Check(t *testing.T) {

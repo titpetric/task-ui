@@ -215,6 +215,7 @@ func integrationFields(found []IntegrationField) *model.Array {
 			"default_on", field.DefaultOn,
 			"empty", field.Empty,
 			"source", field.Source,
+			"fixed", field.Fixed,
 		))
 	}
 	return out

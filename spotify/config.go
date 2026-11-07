@@ -85,7 +85,10 @@ func (s *Service) Config(ctx context.Context, a Actor) (Config, error) {
 	if c.Who != "" && !listed(c.Who, a.Name) && !listed(c.Who, a.Role) {
 		return Config{}, ErrWho
 	}
-	if c.Redirect == "" && s.BaseURL != "" {
+	// The instance owns the address: Spotify sends the browser to this
+	// instance and nowhere else, so a stored value is only ever a paste
+	// into the wrong box.
+	if s.BaseURL != "" {
 		c.Redirect = strings.TrimRight(s.BaseURL, "/") + CallbackPath
 	}
 	if !validRedirect(c.Redirect) {

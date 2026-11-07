@@ -83,6 +83,17 @@ func (s *Store) Save(ctx context.Context, id string, values map[string]string) e
 	for _, field := range kind.Fields {
 		value := strings.TrimSpace(values[field.Name])
 		row, exists := current[field.Name]
+		// The instance owns a fixed field, so a value sent for one is
+		// dropped and a value stored for one is cleared: a reader who
+		// pasted into it gets the derived address back.
+		if field.Fixed() {
+			if exists {
+				if err := s.Secrets.Delete(ctx, row.ID); err != nil {
+					return err
+				}
+			}
+			continue
+		}
 		if value == "" && len(field.Options) > 0 {
 			value = field.Options[0]
 		}
