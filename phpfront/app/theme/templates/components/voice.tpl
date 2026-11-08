@@ -1,13 +1,14 @@
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
-{if $chrome.agents}		<div class="voice-who">
-			<label for="voice-agent">Talking to</label>
+		<div class="voice-who">
+{if $chrome.agents}			<label for="voice-agent">Talking to</label>
 			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
 				<option value="">{chrome.user.name} (you)</option>
 {foreach $chrome.agents as $agent}				<option value="{agent}">@{agent}</option>
 {/foreach}			</select>
+{/if}			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>
 		</div>
-{/if}		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
+		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
 			<svg class="voice-field" viewBox="0 0 320 320" aria-hidden="true" focusable="false">
 				<defs>

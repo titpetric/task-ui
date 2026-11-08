@@ -1,6 +1,6 @@
 # Dictation
 
-An orb sits in the bottom right of every page. Press it and a window opens over the page with the orb at full size, the words under it and three buttons. Press the orb in the middle to record and press it again to end the recording and send it; **Send** during a recording does the same thing. The left button steps back: it throws a recording away, then dismisses an answer that came back, then closes the window, and its icon says which.
+An orb sits in the bottom right of every page. Press it and a window opens over the page with the orb at full size, the words under it and three buttons. Press the orb in the middle to record and press it again to end the recording and send it; **Send** during a recording does the same thing. The left button steps back: it throws a recording away, then dismisses an answer that came back, then closes the window, and its icon says which. [Wake](#wake) starts the recording on a name you say.
 
 The orb shows wherever the browser can open a microphone: a secure page, so `https://` or `localhost`. It does not show over `http://` on a LAN address.
 
@@ -10,6 +10,16 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 
 - **A run is attached and takes input.** The words go to the terminal as if typed, with no newline: punctuation is spelled out as `[dot]`, `[slash]` and the rest, so a dictated sentence cannot run a command.
 - **Anything else.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
+
+## Wake
+
+**Wake**, the switch above the orb, starts the recording when you say a name. The window keeps the microphone open while it is on and nothing else is going on, reads what it hears a piece at a time and throws every piece away. A piece that holds the name of a user the window may call starts the recording there: that user is picked, their avatar comes up, and whatever followed the name is the first thing said. `miguel, what did the deploy do` is one sentence, and the question reaches `@miguel`.
+
+The names are the ones the picker lists, your own among them, and `hey` or `ok` in front of one is a word like any other. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. It holds between windows and pages, so hands free is one press ever.
+
+A recording a name started ends after two and a half seconds of quiet and sends itself, which is the press that is not made hands free. One a press started still ends on a press, however long the quiet runs. Pressing the orb while the window is listening starts the recording there and then, and drops everything heard before the press.
+
+The listening is a microphone and nothing else: a piece with no name in it is dropped where it is read, no piece is kept, written or sent, and the whole of it stops when the window closes, when the page goes to the background, or while a reply is being read out. A quiet room costs the transcriber nothing, since a piece nobody spoke into is dropped before it is posted.
 
 ## Who transcribes
 
@@ -34,6 +44,8 @@ Only one of the two runs. Where the server transcribes, the device's recogniser 
 Everything the orb sends, bar a run's terminal, goes to one prompt thread. The first clip opens it; every later one replies in it. Claude reads the whole conversation each time and holds [the task tools](mcp.md), so it can run jobs, start workflows and read artifacts to answer, or to do the work itself.
 
 The thread opens with an instruction the orb writes: reply in two or three spoken sentences of plain words; for work that takes a while, leave a sentence saying what you started, do it, then answer with what came of it; and after each reply write the same sentences to `<clip>.N.reply.txt` and run the `speak` job of `titpetric/stt`, so the window has the audio.
+
+Nothing is fed forward while the microphone is open. The transcript goes to `<clip>.txt` as it is built, every ten seconds and once more at the end, and the prompt is written from the same words when the recording is sent. A reply that lands mid sentence waits there: its audio does not play into the recording and its question does not take the window. Sending answers it, and the thread keeps the reply the window moved past; discarding the recording plays it.
 
 The window follows the thread over `/api/sse/notes` for as long as it is open. Nothing is polled: a reply pushes itself, and that holds for the second reply as much as the first, so work that finishes ten minutes later arrives and plays on its own. The replay button plays the last one again.
 
@@ -80,6 +92,7 @@ One formation per state of the window, and one becomes the next over a second an
 | State        | Colour  | What the orbs do                                                                                                                                             |
 |--------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Idle         | violet  | The middle orb holds at the centre and the other three walk their own tilted rosettes around it, each swinging in and out on its own period.                 |
+| Listening    | violet  | The idle formation: a window waiting on a name is a window doing nothing, and an avatar of a user's own reads `listening` off the canvas and may say so.     |
 | Recording    | red     | The middle orb leads, sweeping twice across the canvas for once down, and the other three follow along the path it left, each a gap behind the one in front. |
 | Paused       | orange  | The chain curls onto one upright circle around the middle orb and turns slowly on it.                                                                        |
 | Transcribing | teal    | The three stack into a column and sweep across the canvas, through the middle orb.                                                                           |

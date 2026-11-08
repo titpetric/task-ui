@@ -117,6 +117,37 @@ body:has(.voice[open]) .voice-orb {
   }
 }
 
+/* .voice-wake is the switch that keeps the microphone open for a name. It
+   is lit while the window is listening, which is the only sign that it is. */
+.voice-wake {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: var(--control-sm);
+  padding: 0 0.6rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--fs-button);
+  cursor: pointer;
+
+  & .ic {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  &.on {
+    border-color: var(--signal);
+    color: var(--signal);
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
 /* .voice-stage is the button you press to record, and it holds the well and
    the avatar on one square so the gravity and its cause share a centre. */
 .voice-stage {

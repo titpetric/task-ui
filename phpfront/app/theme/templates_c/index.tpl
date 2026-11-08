@@ -487,8 +487,8 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
-<?php if($_v['chrome']['agents']){?>
 		<div class="voice-who">
+<?php if($_v['chrome']['agents']){?>
 			<label for="voice-agent">Talking to</label>
 			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
 				<option value=""><?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
@@ -497,8 +497,9 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 ">@<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
 </option>
 <?php }?>			</select>
+<?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>
 		</div>
-<?php }?>		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
+		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
 			<svg class="voice-field" viewBox="0 0 320 320" aria-hidden="true" focusable="false">
 				<defs>
