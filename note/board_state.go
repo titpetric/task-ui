@@ -11,10 +11,13 @@ import (
 // MCP lets go of a run of the board's that is over: the note keeps the
 // run it had from an earlier answer, such as the agent's before a reply
 // handed the thread to another user, and only a live run is the board's
-// to wait on. A done or failed report leaves the note working while a
-// run of its thread still goes, as reported folds it in: the last run
-// settles it.
-func (b *Board) setState(ctx context.Context, note *model.Note, state string) error {
+// to wait on.
+//
+// An agent of the thread reporting an end leaves the note working for
+// as long as a second run goes, as reported folds it in: the last run
+// settles it. Anyone else ends the thread where they say, because a run
+// that hangs would otherwise hold the note open for good.
+func (b *Board) setState(ctx context.Context, user *model.User, note *model.Note, state string) error {
 	if state == model.NoteWorking && note.RunID != "" && !b.live(note.RunID) {
 		if err := b.Notes.Release(ctx, note.ID, state); err != nil {
 			return err
@@ -22,12 +25,30 @@ func (b *Board) setState(ctx context.Context, note *model.Note, state string) er
 		note.State, note.RunID = state, ""
 		return nil
 	}
-	state = b.reported(note.ID, state)
+	if b.byAgent(ctx, user, note) {
+		state = b.reported(note.ID, state)
+	} else if state == model.NoteDone || state == model.NoteFailed {
+		b.resolve(note.ID)
+	}
 	if err := b.Notes.SetState(ctx, note.ID, state, ""); err != nil {
 		return err
 	}
 	note.State = state
 	return nil
+}
+
+// byAgent reports whether a state comes from an agent the thread names,
+// whose report waits for the thread's other agents.
+func (b *Board) byAgent(ctx context.Context, user *model.User, note *model.Note) bool {
+	if user == nil || b.Users == nil {
+		return false
+	}
+	for _, agent := range b.threadAgents(ctx, note) {
+		if agent.Name == user.Name {
+			return true
+		}
+	}
+	return false
 }
 
 // live reports whether a run of the board's is going, or still settling.

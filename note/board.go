@@ -43,7 +43,7 @@ import (
 const Topic = "notes"
 
 // ErrInvalid reports a note the board does not take: an empty one, an
-// unknown state, or a reply to a reply.
+// unknown state, a reply to a reply.
 var ErrInvalid = errors.New("invalid note")
 
 // ErrNotAssigned reports a state set by someone the instruction does not
@@ -107,7 +107,7 @@ type Board struct {
 	dispatched   map[string]*dispatches
 }
 
-// Post leaves a note on the board, or a reply to one. A note naming
+// Post leaves a note on the board, or a reply under one of them. A note naming
 // another user opens an instruction, and so does a reply. A reply that
 // names nobody addresses the users its note names. The board starts the
 // agent's job on the whole thread for each agent a message addresses.
@@ -199,7 +199,7 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 		}
 	}
 	if state != "" {
-		if err := b.setState(ctx, note, state); err != nil {
+		if err := b.setState(ctx, user, note, state); err != nil {
 			return nil, err
 		}
 		b.publish(note)

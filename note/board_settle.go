@@ -13,6 +13,9 @@ type dispatches struct {
 	left  int
 	state string
 	run   string
+	// settled says a reader of the thread ended it by hand, which the
+	// runs still counted leave as it is.
+	settled bool
 }
 
 // dispatchFor starts the Notes agent for each agent of a thread, a run
@@ -80,7 +83,8 @@ func (b *Board) reported(id, state string) string {
 
 // settling returns the state one run leaves a thread's note in: working
 // while another run of it goes, else the worst state reported. A thread
-// under no count settles on the state it reports.
+// the board counts nothing for settles on the state it reports, and one
+// a reader settled by hand keeps that state, which is the empty string.
 func (b *Board) settling(id, state string) string {
 	b.dispatchedMu.Lock()
 	defer b.dispatchedMu.Unlock()
@@ -88,7 +92,14 @@ func (b *Board) settling(id, state string) string {
 	if !ok {
 		return state
 	}
-	going.left, going.state = going.left-1, worse(going.state, state)
+	going.left--
+	if going.settled {
+		if going.left < 1 {
+			delete(b.dispatched, id)
+		}
+		return ""
+	}
+	going.state = worse(going.state, state)
 	if going.left > 0 {
 		return model.NoteWorking
 	}
@@ -96,8 +107,18 @@ func (b *Board) settling(id, state string) string {
 	return going.state
 }
 
+// resolve records that a reader ended a thread by hand: the runs of it
+// the board still counts leave the state that reader set.
+func (b *Board) resolve(id string) {
+	b.dispatchedMu.Lock()
+	defer b.dispatchedMu.Unlock()
+	if going, ok := b.dispatched[id]; ok {
+		going.settled, going.state = true, ""
+	}
+}
+
 // worse returns the state two runs settle a thread on where they
-// disagree: failed, because a done hides the failure.
+// disagree: failed, because the failure is the one to read.
 func worse(state, next string) string {
 	if state == model.NoteFailed || next == model.NoteFailed {
 		return model.NoteFailed
@@ -127,9 +148,13 @@ func authors(agents []string) []string {
 	return agents
 }
 
-// settle records the state an instruction ended in, as settling reads it.
+// settle records the state an instruction ended in, as settling reads
+// it; a thread a reader ended by hand keeps the state that reader set.
 func (b *Board) settle(ctx context.Context, note *model.Note, state string) {
 	state = b.settling(note.ID, state)
+	if state == "" {
+		return
+	}
 	if err := b.Notes.SetState(ctx, note.ID, state, ""); err != nil {
 		slog.Warn("note state not saved", "note", note.ID, "err", err)
 	}

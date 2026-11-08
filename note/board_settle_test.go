@@ -1,6 +1,7 @@
 package note
 
 import (
+	"context"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -51,8 +52,8 @@ func TestBoardSettling(t *testing.T) {
 // The runs of one thread write one run on its note. The first to ask
 // takes it; every run beside it leaves it there, so the note links to
 // one run rather than to whichever wrote last. A thread whose runs all
-// ended hands out the next one, and a run the board counts for no
-// thread, a prompt's, takes its own.
+// ended hands out the next; a run the board counts for no thread, a
+// prompt's, takes its own.
 func TestBoardClaims(t *testing.T) {
 	t.Parallel()
 	board := &Board{}
@@ -99,4 +100,32 @@ func TestBoardReported(t *testing.T) {
 	assert.Equal(t, model.NoteDone, board.settling("n3", model.NoteDone), "it folded nothing in")
 
 	assert.Equal(t, model.NoteDone, board.reported("n4", model.NoteDone), "no run of the thread goes")
+}
+
+// A reader who ends a thread by hand ends it: the runs the board counts
+// for it write nothing when they end, and the count goes with the last
+// of them. A run that hangs would otherwise hold the note open for good.
+func TestBoardResolve(t *testing.T) {
+	t.Parallel()
+	board := &Board{}
+	board.dispatching("n1", 2)
+	board.resolve("n1")
+	assert.Equal(t, "", board.settling("n1", model.NoteDone), "the reader's state stands")
+	assert.Equal(t, "", board.settling("n1", model.NoteFailed))
+	assert.Equal(t, model.NoteDone, board.settling("n1", model.NoteDone), "the count is gone")
+
+	// Resolving a thread the board counts nothing for is no-op.
+	board.resolve("n2")
+	assert.Equal(t, model.NoteFailed, board.settling("n2", model.NoteFailed))
+}
+
+// A state comes from an agent of the thread, whose report waits for the
+// other agents, or from anyone else, who ends it. A board with no users
+// knows no agent.
+func TestBoardByAgent(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board := &Board{}
+	assert.False(t, board.byAgent(ctx, nil, &model.Note{Body: "@claude take it"}))
+	assert.False(t, board.byAgent(ctx, &model.User{Name: "claude"}, &model.Note{Body: "@claude take it"}))
 }
