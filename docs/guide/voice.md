@@ -13,13 +13,15 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 
 ## Wake
 
-**Wake**, the switch above the orb, starts the recording when you say a name. The window keeps the microphone open while it is on and nothing else is going on, reads what it hears a piece at a time and throws every piece away. A piece that holds the name of a user the window may call starts the recording there: that user is picked, their avatar comes up, and whatever followed the name is the first thing said. `miguel, what did the deploy do` is one sentence, and the question reaches `@miguel`.
+**Wake**, the switch above the orb, starts the recording when you say a name. With it on the page keeps the microphone open, window open or shut, reads what it hears a piece at a time and throws every piece away. A piece that holds the name of a user the window may call starts the recording: that user is picked, their avatar comes up, and a shut window opens. Five seconds of dead air ends the recording and sends it. `miguel, can you give me a status of your workspace` is one sentence into a quiet room, and the question reaches `@miguel`.
 
-The names are the ones the picker lists, your own among them, and `hey` or `ok` in front of one is a word like any other. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. It holds between windows and pages, so hands free is one press ever.
+**The recording starts at the sentence the name is in.** Everything the listener held before it goes, so the clip is that sentence and the dead air after it, not the minutes of room the page listened through. A sentence is a run of speech with at least six tenths of a second of quiet in front of it.
 
-A recording a name started ends after two and a half seconds of quiet and sends itself, which is the press that is not made hands free. One a press started still ends on a press, however long the quiet runs. Pressing the orb while the window is listening starts the recording there and then, and drops everything heard before the press.
+The names are the ones the picker lists, every agent in the system and your own, and `hey` or `ok` in front of one is a word like any other. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. It holds between windows and pages, so hands free is one press ever, and the orb in the corner stands in the signal colour while the page listens.
 
-**Who reads the pieces is not who transcribes the recording.** A listener takes the browser's own recogniser wherever there is one, Chrome's and Edge's, because it reads every piece for nothing; the recording itself still goes to the instance where the integration is set up. Without a recogniser in the browser the pieces go to `POST /api/voice/transcribe`, which runs whisper over each of them, and a piece covers at most four seconds. The switch turns itself off after two pieces in a row that pass eight seconds: a transcriber slower than the talking holds a core for as long as the window is open, and a name reaches the window minutes late. Two in a row, because the first call of a cold model loads it. Measured on task.cdn.si, the same clip four times:
+One a press started still ends on a press, however long the quiet runs. Pressing the orb while the page is listening starts the recording there and then, and drops everything heard before the press.
+
+**Who reads the pieces is not who transcribes the recording.** A listener takes the browser's own recogniser wherever there is one, Chrome's and Edge's, because it reads every piece for nothing; the recording itself still goes to the instance where the integration is set up. Without a recogniser in the browser the pieces go to `POST /api/voice/transcribe`, which runs whisper over each of them, and a piece covers at most four seconds. The switch turns itself off after two pieces in a row that pass eight seconds: a transcriber slower than the talking holds a core for as long as the page is open, and a name reaches the window minutes late. Two in a row, because the first call of a cold model loads it. Measured on task.cdn.si, the same clip four times:
 
 | Clip  | Transcribed in | Ratio |
 |-------|----------------|-------|
@@ -30,25 +32,25 @@ A recording a name started ends after two and a half seconds of quiet and sends 
 
 The names in those clips, spoken by piper and read back by whisper, come through as `Hey Claude, run the tests.`, `Miguel, what is the deploy doing?`, `Consuela ship the build.` and `Black, open the inventory.`
 
-The listening is a microphone and nothing else: a piece with no name in it is dropped where it is read, no piece is kept, written or sent, and the whole of it stops when the window closes, when the page goes to the background, or while a reply is being read out. A quiet room costs the transcriber nothing, since a piece nobody spoke into is dropped before it is posted.
+The listening is a microphone and nothing else: a piece with no name in it is dropped where it is read, no piece is kept, written or sent, and the whole of it stops while the page is in the background, while a request is out and while a reply is being read out. A quiet room costs the transcriber nothing, since a piece nobody spoke into is dropped before it is posted. The browser shows its own recording indicator for as long as the switch is on, which is the other place to read whether the page is listening.
 
 ## Who transcribes
 
-With the **Speech to text** integration set up, this instance transcribes and the words arrive while you are still talking: every four seconds the window posts the piece of the recording since the last one to `POST /api/voice/transcribe`, which runs whisper.cpp on the server and answers with the words. The transcript the prompt is built from is what those pieces said, and the last piece is waited for before the prompt goes out. Transcribing takes `prompt/edit`, the same as asking Claude.
+With the **Speech to text** integration set up, this instance transcribes: the recording goes to `POST /api/voice/transcribe` once, whole, when it ends, and whisper.cpp answers with the words. **A recording is never cut into pieces.** A cut lands mid-word, each piece is a whisper run of its own on the instance, and the words of one arrive while the next sentence is still being said. The window counts the seconds it waits, under `Transcribing`. Transcribing takes `prompt/edit`, the same as asking Claude.
 
-The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder. A piece is transcribed on its own, so a cut lands mid-word often enough.
+The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder.
 
-**The model has to run faster than the talking.** A piece covers four seconds, so a model that takes longer than four seconds over four seconds of speech falls behind, and the words land after the sentence is finished. One measurement, over `samples/jfk.wav` on the four cores of task.cdn.si with `threads` at 4:
+**The model has to run faster than the talking.** A recording of a minute read back in two is a minute of waiting after the sentence is finished. One measurement, over `samples/jfk.wav` on the four cores of task.cdn.si with `threads` at 4:
 
 | Model      | Clip | Transcribed in | Ratio |
 |------------|------|----------------|-------|
 | `small.en` | 9.4s | 67.7s          | 7.2x  |
 
-`small.en` is what the `setup` job downloads, and 7.2x is too slow for this: run the job with `MODEL=tiny.en` for one that keeps up, and time a clip of your own before trusting it. A slow model breaks nothing, as a piece is posted only once the one before it has come back and the window counts the seconds it waits, but the words stop being live.
+`small.en` is what the `setup` job downloads: time a clip of your own before trusting it, and run the job with `MODEL=tiny.en` for one that answers in less than the clip. A slow model breaks nothing, since the recording is read once and the window counts the wait, but every question costs that wait twice over, once to read the recording and once to speak the reply.
 
 Without the integration, Chrome and Edge transcribe on the device and the words never leave it: the orb reads `SpeechRecognition.available({processLocally: true})` and fetches the language the first time you press record. Safari and Firefox have no such recogniser, and neither do most phones. There the orb records and the session does the rest.
 
-Only one of the two runs. Where the server transcribes, the device's recogniser stays shut, so one transcript is built and not two.
+Only one of the two reads a recording. Where the server transcribes, the device's recogniser stays shut for it, so one transcript is built and not two; [Wake](#wake) is the exception, and takes the device's recogniser for its pieces wherever there is one.
 
 ## The session
 
@@ -56,7 +58,7 @@ Everything the orb sends, bar a run's terminal, goes to one prompt thread. The f
 
 The thread opens with an instruction the orb writes: reply in two or three spoken sentences of plain words; for work that takes a while, leave a sentence saying what you started, do it, then answer with what came of it; and after each reply write the same sentences to `<clip>.N.reply.txt` and run the `speak` job of `titpetric/stt`, so the window has the audio.
 
-Nothing is fed forward while the microphone is open. The transcript goes to `<clip>.txt` as it is built, every ten seconds and once more at the end, and the prompt is written from the same words when the recording is sent. A reply that lands mid sentence waits there: its audio does not play into the recording and its question does not take the window. Sending answers it, and the thread keeps the reply the window moved past; discarding the recording plays it.
+Nothing is fed forward while the microphone is open. The recording is read when the dead air or the press ends it, the words go to `<clip>.txt` beside the `<clip>.wav` they came out of, and the prompt is written from the same words. A reply that lands mid sentence waits there: its audio does not play into the recording and its question does not take the window. Sending answers it, and the thread keeps the reply the window moved past; discarding the recording plays it.
 
 The window follows the thread over `/api/sse/notes` for as long as it is open. Nothing is polled: a reply pushes itself, and that holds for the second reply as much as the first, so work that finishes ten minutes later arrives and plays on its own. The replay button plays the last one again.
 

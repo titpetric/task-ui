@@ -6,28 +6,30 @@
 // collects the samples, so the recording can be kept beside the words it came
 // out as.
 //
-// Where the stt integration is set up the server is the transcriber: a slice
-// of the recording goes to /api/voice/transcribe every SLICE milliseconds and
-// the words come back while the talking goes on. The device's own recogniser
-// then stays shut, so one transcript is built and not two. Where it is not,
-// the device transcribes as before.
+// Where the stt integration is set up the server is the transcriber: the
+// recording goes to /api/voice/transcribe once, whole, when it ends. A
+// recording is never cut into pieces: a cut lands mid-word, each piece is a
+// whisper run of its own on the instance, and the words of one arrive while
+// the next sentence is still being said. The device's own recogniser then
+// stays shut for a recording, so one transcript is built and not two.
 //
 // A press ends the recording and sends it: the orb and the send button are the
 // same act, and pause is for a fault and a page sent to the background.
 //
-// Wake starts a recording on a name the reader says. The window keeps the
-// microphone open, reads what it hears a piece at a time and throws every
-// piece away; a piece that holds the name of a user the window may call starts
-// the recording there, with that user picked, and what followed the name is
-// the first thing said. A recording the name started ends on HOLD of silence,
-// so a question is asked and answered with no press at all. Nothing of the
-// listening is kept, sent or written: a piece with no name in it is dropped
-// where it is read.
+// Wake starts a recording on a name the reader says, with the window open or
+// shut. The page keeps the microphone open, reads what it hears a piece at a
+// time and throws every piece away; a piece holding the name of a user the
+// window may call starts the recording at the sentence that name is in, with
+// that user picked. HOLD of dead air ends it and sends it, so a question is
+// asked and answered with no press at all. Nothing of the listening is kept,
+// sent or written: a piece with no name in it is dropped where it is read,
+// and nothing but the listener posts while a microphone is open.
 //
 // Nothing is fed forward while the microphone is open. A reply that lands
 // during a recording waits, its question card waits with it, and the audio of
-// it plays once the recording has gone. The transcript goes to the .txt of the
-// recording as it is built, and the prompt is written from it at the end.
+// it plays once the recording has gone. The words and the clip go to the .txt
+// and the .wav of the recording when it ends, and the prompt is written from
+// the same words.
 //
 // A reply that holds a form block is a question. The card opens over the
 // window with one field on it, its options as buttons, and Submit and Cancel;
@@ -89,20 +91,15 @@
   // dictation left running cannot fail its upload after the fact.
   var MAX = 16 << 20;
 
-  // SLICE is how long a piece of the recording runs before it is posted to be
-  // transcribed. Four seconds is short enough that the words keep up with the
-  // talking and long enough that whisper has a phrase to work on: a slice is
-  // transcribed on its own, so a cut lands mid-word often enough as it is.
-  var SLICE = 4000;
-
   // WAKE is how long a piece of the listening runs before it is read for a
   // name. Two seconds is a name and the word or two around it, and a quiet
   // room posts nothing at all.
   var WAKE = 2000;
 
-  // HOLD is the silence that ends a recording the name started. A press
-  // still ends one a press began, however long the quiet runs.
-  var HOLD = 2500;
+  // HOLD is the dead air that ends a recording the name started: long
+  // enough to think mid sentence, short enough to answer. A press still
+  // ends one a press began, however long the quiet runs.
+  var HOLD = 5000;
 
   // SLOW is the round trip over a listener's piece that turns the switch
   // off. Past it the instance holds a core for every piece, and a name
@@ -113,10 +110,10 @@
   // Under it the room is all there is.
   var VOICE = 0.06;
 
-  // TEXT is how often the transcript so far is written to the .txt of the
-  // recording. Every write is a commit in the artifact tree, so the file
-  // follows the talking from a distance and lands whole at the end.
-  var TEXT = 10000;
+  // GAP is the quiet that makes the next voice a new sentence. A recording
+  // a name opens starts at that sentence, so it holds the name and the
+  // words around it and nothing of the minutes before.
+  var GAP = 600;
 
   // WAKEKEY remembers the wake switch between windows and pages, so hands
   // free is one press ever.
@@ -196,8 +193,8 @@
   var waking = false;   // the microphone is open and listening for one
   var freely = false;   // a name started this recording, so silence ends it
   var heardAt = 0;      // when the microphone last held a voice
+  var spokeFrom = 0;    // the frame the voice being spoken started at
   var base = "";        // where this recording's files go, taken at its start
-  var wrote = 0;        // when the transcript last went to its .txt
   var holding = "";     // a reply that landed while recording, played after
   var tending = 0;      // the interval that opens and shuts the listener
   var dragging = 0;     // pieces in a row the instance read slowly
@@ -266,7 +263,12 @@
       // keeps the glow from flickering on each frame's noise.
       var now = Math.min(1, rms * 7);
       smoothed += (now - smoothed) * (now > smoothed ? 0.5 : 0.12);
-      if (smoothed > VOICE) heardAt = Date.now();
+      if (smoothed > VOICE) {
+        // A voice after a gap starts a sentence: the frame it starts at is
+        // where a recording the name in it opens is trimmed back to.
+        if (Date.now() - heardAt > GAP) spokeFrom = buffer ? buffer.frames.length : 0;
+        heardAt = Date.now();
+      }
       loud(smoothed);
       raf = requestAnimationFrame(tick);
     };
@@ -469,19 +471,6 @@
     }, function () { return ""; });
   }
 
-  // noting writes the transcript so far to the recording's .txt, at most
-  // every TEXT. Every write is a commit in the artifact tree, so the file
-  // follows the talking from a distance; the last one lands at the end,
-  // and the prompt is written from the same words.
-  function noting() {
-    var words = sanitize(text);
-    if (!words) return;
-    var now = Date.now();
-    if (now - wrote < TEXT) return;
-    wrote = now;
-    put(clipAt() + ".txt", words, "text/plain");
-  }
-
   // ------------------------------------------------------------- transcribe
 
   // asking settles once whether the server transcribes. It does when the stt
@@ -502,39 +491,13 @@
       });
   }
 
-  // slice posts the frames recorded since the last one and adds the words to
-  // the transcript. A slice that fails stops the streaming for this recording:
-  // the whole clip is still written at the end, and the session is asked to
-  // transcribe it as it is for a device that cannot.
-  function slice() {
-    if (flight || !server || !buffer) return;
-    var from = sent;
-    var to = buffer.frames.length;
-    if (to <= from) return;
-    if (waking) {
-      // A listener reads speech: a piece nobody spoke into is dropped
-      // here, and the instance transcribes none of it.
-      if (Date.now() - heardAt > WAKE) {
-        shed(to);
-        return;
-      }
-      // It reads from the start of what it holds and sheds what it read,
-      // bounded: where the transcriber is slower than the talking, a piece
-      // would otherwise grow with every round trip until it is minutes
-      // long and the name in it is an hour old.
-      from = 0;
-      var each = buffer.frames[0] ? buffer.frames[0].length : 128;
-      var most = Math.ceil((buffer.rate * WAKE * 2) / (1000 * each));
-      if (to > most) {
-        shed(to - most);
-        to = most;
-      }
-    }
-    var clip = wav(from, to);
-    if (!clip) return;
+  // post sends a clip to be transcribed and answers with the words, empty
+  // where the transcriber heard none and on a failure, which drops the
+  // instance's transcriber for this page: the session is asked to read the
+  // recording instead, as it is for a device that cannot.
+  function post(clip) {
     flight = true;
-    var went = Date.now();
-    fetch("/api/voice/transcribe", {
+    return fetch("/api/voice/transcribe", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "audio/wav", Accept: "application/json" },
@@ -544,66 +507,79 @@
       if (!res.ok) throw new Error("the server did not transcribe the clip");
       return res.json();
     }).then(function (data) {
-      sent = to;
-      var words = (data && data.text ? data.text : "").trim();
-      if (waking) {
-        // A listener costs the instance a whisper run for every piece it
-        // reads. One that takes SLOW over a piece holds a core for as long
-        // as the window is open, and the name is minutes old when it
-        // lands: the switch goes off after two of them, which the first
-        // call of a cold model is not.
-        dragging = Date.now() - went > SLOW ? dragging + 1 : 0;
-        if (dragging > 1) {
-          switched(false);
-          dress("This instance transcribes too slowly to listen for a name");
-          return;
-        }
-      }
-      if (!words) return;
-      if (waking) {
-        woke(words, from, to);
-        return;
-      }
-      text += (text ? " " : "") + words;
-      heard(text, "");
-      noting();
+      return (data && data.text ? data.text : "").trim();
     }).catch(function (err) {
       flight = false;
-      streaming(false);
       server = false;
       console.info("voice: the server stopped transcribing, the clip goes to the session", err);
+      return "";
     });
   }
 
-  // streaming starts and stops the posting of slices. Stopping posts what is
-  // left, so the last words said are in the transcript the prompt is built
-  // from, and answers once that slice is in. A listener reads shorter pieces:
-  // a name is one word and the window answers it as it is said.
+  // reading transcribes the recording, once, when it ends. A recording is
+  // never cut into pieces: a cut lands mid-word, every piece is a whisper
+  // run of its own on the instance, and the words of one arrive while the
+  // next sentence is still being said.
+  function reading() {
+    if (!server || !buffer || !buffer.frames.length) return Promise.resolve();
+    var clip = wav();
+    if (!clip) return Promise.resolve();
+    return post(clip).then(function (words) {
+      if (words) text += (text ? " " : "") + words;
+    });
+  }
+
+  // slice reads one piece of the listening for a name. Nothing but this
+  // posts while a microphone is open, and it keeps nothing: the frames it
+  // reads are shed whether or not a name is in them.
+  function slice() {
+    if (flight || !server || !buffer || !waking) return;
+    var to = buffer.frames.length;
+    if (!to) return;
+    // A listener reads speech: a piece nobody spoke into is dropped here,
+    // and the instance transcribes none of it.
+    if (Date.now() - heardAt > WAKE) {
+      shed(to);
+      return;
+    }
+    // It reads from the start of what it holds, bounded: where the
+    // transcriber is slower than the talking, a piece would otherwise grow
+    // with every round trip until it is minutes long and the name in it is
+    // an hour old.
+    var each = buffer.frames[0] ? buffer.frames[0].length : 128;
+    var most = Math.ceil((buffer.rate * WAKE * 2) / (1000 * each));
+    if (to > most) {
+      shed(to - most);
+      to = most;
+    }
+    var clip = wav(0, to);
+    if (!clip) return;
+    var went = Date.now();
+    post(clip).then(function (words) {
+      sent = to;
+      if (!waking) return;
+      // A listener costs the instance a whisper run for every piece it
+      // reads. One that takes SLOW over a piece holds a core for as long as
+      // the page is open, and the name is minutes old when it lands: the
+      // switch goes off after two of them, which the first call of a cold
+      // model is not.
+      dragging = Date.now() - went > SLOW ? dragging + 1 : 0;
+      if (dragging > 1) {
+        switched(false);
+        dress("This instance transcribes too slowly to listen for a name");
+        return;
+      }
+      if (words) woke(words, 0, to);
+      else shed(to);
+    });
+  }
+
+  // streaming starts and stops the listener's reading of pieces. Nothing
+  // else posts while a microphone is open.
   function streaming(on) {
     if (posting) window.clearInterval(posting);
     posting = 0;
-    if (on) {
-      posting = window.setInterval(slice, waking ? WAKE : SLICE);
-      return Promise.resolve();
-    }
-    if (waking) return Promise.resolve();
-    if (!server || !buffer || buffer.frames.length <= sent) return Promise.resolve();
-    // The last slice is waited for, up to WAIT: a prompt built before it
-    // landed would be missing the end of the sentence. Past that the words
-    // there are are the question.
-    var WAIT = 30000;
-    var until = Date.now() + WAIT;
-    return new Promise(function (done) {
-      var wait = function () {
-        if (!flight) {
-          slice();
-          if (!flight) return done();
-        }
-        if (Date.now() > until) return done();
-        window.setTimeout(wait, 100);
-      };
-      wait();
-    });
+    if (on) posting = window.setInterval(slice, WAKE);
   }
 
   // ------------------------------------------------------------------ wake
@@ -649,6 +625,7 @@
     buffer.frames.forEach(function (f) { length += f.length; });
     buffer.length = length;
     sent = Math.max(0, sent - count);
+    spokeFrom = Math.max(0, spokeFrom - count);
   }
 
   // forget drops what the listener has read and found no name in, once the
@@ -660,38 +637,41 @@
   }
 
   // woke reads a piece of the listening and reports whether it woke the
-  // window: a name in it starts the recording where that piece started,
-  // with the user named picked and what followed the name as the first
-  // thing said. A piece that names nobody is dropped where it is read.
-  // from and to are the frames it covered, which the device's own
-  // recogniser does not count.
+  // window: a name in it starts the recording, with the user named picked
+  // and what followed the name as the first thing said. A piece that names
+  // nobody is dropped where it is read. from and to are the frames it
+  // covered, which the device's own recogniser does not count.
+  //
+  // The recording opens at the sentence the name is in: everything the
+  // listener held before that goes, so the clip runs from "miguel, what is
+  // the deploy doing" to the dead air and holds nothing of the room before
+  // it.
   function woke(words, from, to) {
     var hit = named(words);
     if (!hit) {
       if (to !== undefined) shed(to);
       return false;
     }
-    if (to !== undefined) {
-      // The piece that holds the name is the start of the recording, and
-      // it has been read already.
-      sent = to;
-    }
+    if (to !== undefined) sent = to;
+    shed(spokeFrom);
     waking = false;
     freely = true;
     heardAt = Date.now();
-    if (to === undefined && server) {
-      // This browser heard the name and the instance transcribes the
-      // recording: the recogniser shuts, the words come back from the
-      // audio already held, and the name is in them.
+    if (server) {
+      // The instance reads the whole recording when the dead air ends it,
+      // and that recording starts at the name: the words of the piece
+      // that woke the window are in that reading already.
       quiet();
-      text = "";
       hit.rest = "";
     }
-    if (server) streaming(true);
+    streaming(false);
     if (agent && agent.value !== hit.value) {
       agent.value = hit.value;
-      wear(agentName());
+      if (overlay.open) wear(agentName());
     }
+    // The window opens on the name where the page listens with it shut, so
+    // the reader sees what is being recorded and for whom.
+    if (!overlay.open) show(true);
     text = hit.rest;
     heard(text, "");
     dress(text || "Recording");
@@ -701,10 +681,11 @@
   // ear opens the microphone and listens for a name. Nothing it hears is
   // kept: a piece is read, tested for a name and dropped.
   function ear() {
-    if (waking || media || starting || !overlay.open) return;
+    if (waking || media || starting) return;
     waking = true;
     starting = true;
     heardAt = 0;
+    spokeFrom = 0;
     text = "";
     asking().then(function () {
       return listening(true);
@@ -747,12 +728,10 @@
     waking = false;
     freely = false;
     heardAt = Date.now();
+    streaming(false);
     // The listener's recogniser goes where the instance transcribes: one
     // transcript is built and not two.
-    if (server) {
-      quiet();
-      streaming(true);
-    }
+    if (server) quiet();
     dress("Recording");
   }
 
@@ -779,7 +758,6 @@
   // name started once the talking stops, which is the press that is not
   // made hands free.
   function tend() {
-    if (!overlay.open) return;
     if (document.hidden) {
       deaf();
       return;
@@ -1123,6 +1101,10 @@
   function dress(note) {
     var now = state();
     overlay.dataset.state = now;
+    // The corner orb says the page is listening, which is the only sign of
+    // it while the window is shut.
+    orb.classList.toggle("listening", waking);
+    orb.title = waking ? "Listening for a name" : (ready || server ? "Dictate" : "Record");
     stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
     stage.title = now === "recording" ? "Stop and send" : (now === "paused" ? "Send" : "Record");
     stage.setAttribute("aria-label", stage.title);
@@ -1171,7 +1153,6 @@
       paint();
       tend();
     });
-    if (!tending) tending = window.setInterval(tend, 1000);
   }
 
   // record starts or resumes capture into the same buffer. install() is the
@@ -1190,7 +1171,6 @@
         : undefined;
     }).then(listening).then(function () {
       starting = false;
-      if (server) streaming(true);
       dress(text || undefined);
     }).catch(function (err) {
       starting = false;
@@ -1220,21 +1200,23 @@
   }
 
   // stop ends the recording the way the reader means it to end: the
-  // microphone closes, the slice still being talked into is posted and waited
-  // for, and the words go wherever send puts them. Pressing the orb and
-  // pressing send during a recording are the same act.
+  // microphone closes, the whole of it is transcribed in one call, and the
+  // words go wherever send puts them. Pressing the orb and pressing send
+  // during a recording are the same act, and so is the dead air after one
+  // a name started.
   function stop() {
     if (state() === "idle" || waking) return;
     starting = false;
     quiet();
     release();
     dress();
-    // The counter runs while the last slice is out: on a machine where the
-    // model costs more than the clip, this is the wait, and a line that does
-    // not move reads as stuck.
+    // The counter runs while the recording is being read: on a machine
+    // where the model costs more than the clip this is the wait, and a
+    // line that does not move reads as stuck.
     if (server) ticking("Transcribing");
-    streaming(false).then(function () {
+    reading().then(function () {
       stopped();
+      heard(text, "");
       send();
     });
   }
@@ -1276,7 +1258,6 @@
         return;
       }
       heard(text, partial.trim());
-      noting();
     };
     rec.onerror = function (event) {
       // A listener whose recogniser refuses hands the pieces to the
@@ -1624,8 +1605,8 @@
     buffer = null;
     text = "";
     sent = 0;
+    spokeFrom = 0;
     base = "";
-    wrote = 0;
     freely = false;
   }
 
@@ -1633,8 +1614,6 @@
   // stays on the board: closing the window is leaving the conversation, and
   // the next one starts a new one.
   function trash() {
-    if (tending) window.clearInterval(tending);
-    tending = 0;
     deaf();
     clear();
     shut();
@@ -1680,7 +1659,6 @@
     text = "";
     sent = 0;
     base = "";
-    wrote = 0;
     freely = false;
     dress();
     if (words && to.kind === "run") {
@@ -1798,6 +1776,12 @@
   });
   try { wakeOn = !!window.localStorage.getItem(WAKEKEY); } catch (e) { wakeOn = false; }
   probe();
+  // The page listens for a name with the window shut as well: the switch
+  // is the reader's standing answer, and this is what acts on it.
+  if (canRecord) {
+    tending = window.setInterval(tend, 1000);
+    if (wakeOn) asking().then(tend);
+  }
 // document.currentScript names this tag only while the file runs, so it is
 // read at the call and passed in; a callback would find it null.
 })(document.currentScript && document.currentScript.src);

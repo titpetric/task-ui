@@ -34,6 +34,13 @@
     border-color: var(--signal);
   }
 
+  /* The page is listening for a name, which with the window shut is the
+     only sign of it. */
+  &.listening {
+    border-color: var(--signal);
+    box-shadow: 0 0 0.9rem color-mix(in srgb, var(--signal) 45%, transparent);
+  }
+
   &[hidden] {
     display: none;
   }
