@@ -263,7 +263,11 @@
       // keeps the glow from flickering on each frame's noise.
       var now = Math.min(1, rms * 7);
       smoothed += (now - smoothed) * (now > smoothed ? 0.5 : 0.12);
-      if (smoothed > VOICE) {
+      // The frame's own level says whether a voice is there, and the
+      // smoothed one draws the avatar: smoothing falls over a count of
+      // frames, so on a page the browser is drawing slowly a sentence
+      // would read as still running seconds after it ended.
+      if (now > VOICE) {
         // A voice after a gap starts a sentence: the frame it starts at is
         // where a recording the name in it opens is trimmed back to.
         if (Date.now() - heardAt > GAP) spokeFrom = buffer ? buffer.frames.length : 0;
