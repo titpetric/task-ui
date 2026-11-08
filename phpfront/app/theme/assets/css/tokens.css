@@ -47,7 +47,11 @@
   src: url("../fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
 }
 
-:root {
+/* .on-dark holds this palette for a region that stays night under a light
+   system, the voice window among them. The light block below reaches :root
+   alone: a region declaring these for itself keeps them. */
+:root,
+.on-dark {
   color-scheme: dark light;
 
   --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono",
