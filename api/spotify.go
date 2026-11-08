@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/spotify"
@@ -92,6 +93,7 @@ func (h *Handlers) spotifyAuthorize(w http.ResponseWriter, r *http.Request) {
 		spotifyFail(w, err)
 		return
 	}
+	spotifyGoesBack(w, r, r.URL.Query().Get("next"))
 	if r.Header.Get("Accept") == "application/json" {
 		writeJSON(w, http.StatusOK, map[string]string{"url": target})
 		return
@@ -102,12 +104,16 @@ func (h *Handlers) spotifyAuthorize(w http.ResponseWriter, r *http.Request) {
 
 var spotifyErrorCode = regexp.MustCompile(`^[a-z_]{1,40}$`)
 
-// SpotifyCallback answers where Spotify sends the browser back. No session
-// signs it in: the session cookie is SameSite=Strict, so a navigation that
-// comes from Spotify carries none. It holds nothing and trusts nothing, and
-// hands the browser on to the finish route from a page of our own, a
-// navigation that does carry the cookie.
+// SpotifyCallback answers where Spotify sends the browser back.
 func SpotifyCallback(w http.ResponseWriter, r *http.Request) {
+	_ = spotifyCallback(w, r)
+}
+
+// spotifyCallback writes the page that hands the browser on to the finish
+// route, a navigation of our own that carries the SameSite=Strict session
+// cookie a redirect from Spotify does not. It holds nothing and trusts
+// nothing, and returns the error of the write.
+func spotifyCallback(w http.ResponseWriter, r *http.Request) error {
 	q := url.Values{}
 	for _, name := range []string{"code", "state", "error"} {
 		if v := r.URL.Query().Get(name); v != "" && len(v) <= 2048 {
@@ -120,9 +126,10 @@ func SpotifyCallback(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	escaped := html.EscapeString(next)
-	_, _ = w.Write([]byte(`<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer">` +
+	_, err := w.Write([]byte(`<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer">` +
 		`<meta http-equiv="refresh" content="0;url=` + escaped + `"><title>Linking Spotify</title></head>` +
 		`<body><p>Linking Spotify… <a href="` + escaped + `">Continue</a></p></body></html>`))
+	return err
 }
 
 // spotifyFinish completes a link inside the user's session: the state has
@@ -146,7 +153,46 @@ func (h *Handlers) spotifyFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	http.Redirect(w, r, "/settings/integrations?spotify=linked#spotify", http.StatusSeeOther)
+	http.Redirect(w, r, spotifyTakeBack(w, r)+"?spotify=linked#spotify", http.StatusSeeOther)
+}
+
+// spotifyBackCookie carries where a link was started from across the
+// consent page, which the browser leaves this instance for.
+const spotifyBackCookie = "spotify_back"
+
+// spotifyGoesBack remembers where a finished link returns to, as long as a
+// link has to finish in, for a path of this instance.
+func spotifyGoesBack(w http.ResponseWriter, r *http.Request, path string) {
+	if !spotifyOwnPath(path) {
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     spotifyBackCookie,
+		Value:    path,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   access.IsHTTPS(r),
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   int(spotify.StateTTL.Seconds()),
+	})
+}
+
+// spotifyTakeBack returns the page the link was started from and drops
+// the cookie that named it; Integrations when no cookie names a page.
+func spotifyTakeBack(w http.ResponseWriter, r *http.Request) string {
+	cookie, err := r.Cookie(spotifyBackCookie)
+	if err != nil || !spotifyOwnPath(cookie.Value) {
+		return "/settings/integrations"
+	}
+	http.SetCookie(w, &http.Cookie{Name: spotifyBackCookie, Path: "/", MaxAge: -1})
+	return cookie.Value
+}
+
+// spotifyOwnPath reports whether a path names a page of this instance:
+// one absolute path, no host of its own and no query.
+func spotifyOwnPath(path string) bool {
+	return strings.HasPrefix(path, "/") && !strings.HasPrefix(path, "//") &&
+		len(path) < 200 && !strings.ContainsAny(path, "?#\\\r\n ")
 }
 
 // spotifyLink reports whether the user has linked an account, and whether

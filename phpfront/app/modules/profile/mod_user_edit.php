@@ -22,7 +22,7 @@ require "ext/autoload.php";
 // would refuse.
 class mod_user_edit implements Module {
 	/** LEAD is the sentence under the heading, which names the blocks. */
-	const LEAD = "The roles, folders, permissions, keys and MCP access of %s.";
+	const LEAD = "The roles, folders, permissions, keys, MCP access and linked accounts of %s.";
 
 	/** NOBODY is what a name no row holds answers. */
 	const NOBODY = "No user by that name.";
@@ -76,6 +76,7 @@ class mod_user_edit implements Module {
 			"permissions" => $this->permissions($chrome, $users, $user, $own),
 			"keys" => $this->keys($chrome, $name, $own),
 			"mcp" => $this->mcp($chrome, $user, $own),
+			"spotify" => $this->spotify($chrome, $name, $own),
 		), "user_edit.tpl");
 	}
 
@@ -165,25 +166,33 @@ class mod_user_edit implements Module {
 	 * permissions is the Permissions block: the user's own rules, which decide
 	 * the ones the role's rules would otherwise.
 	 *
-	 * An admin's is fixed and the paragraph says why. Your own changes only
-	 * where user/edit comes with your role: a rule of your own that granted it
-	 * would let you keep granting yourself more, which the API refuses too.
+	 * An admin holds every rule, so the block is the sentence that says so and
+	 * no table. Your own changes only where user/edit comes with your role: a
+	 * rule of your own that granted it would let you keep granting yourself
+	 * more, which the API refuses too.
 	 */
 	function permissions($chrome, $users, $user, $own) {
-		$access = $users->access($user);
 		$fixed = Task\User::admin($user);
-		$can = $access->effective();
-		$matrix = new Task\Matrix($access->own, $can, $fixed);
+		$block = array(
+			"links" => $chrome->allowed("user/view"),
+			"role" => Task\User::role($user),
+			"fixed" => $fixed,
+			"matrix" => null,
+		);
+
+		if ($fixed) {
+			return $block;
+		}
+
+		$access = $users->access($user);
+		$matrix = new Task\Matrix($access->own, $access->effective(), false);
 
 		$matrix->api = "/api/permissions/users/" . $user->getName();
 		$matrix->effective = true;
-		$matrix->editable = !$fixed && $chrome->allowed("user/edit") && (!$own || self::editsByRole($chrome));
+		$matrix->editable = $chrome->allowed("user/edit") && (!$own || self::editsByRole($chrome));
+		$block["matrix"] = $matrix->data();
 
-		return array(
-			"links" => $chrome->allowed("user/view"),
-			"role" => Task\User::role($user),
-			"matrix" => $matrix->data(),
-		);
+		return $block;
 	}
 
 	/**
@@ -239,6 +248,22 @@ class mod_user_edit implements Module {
 			"add" => Task\Mcp\Connect::add(Task\Route::site()),
 			"settings" => Task\Mcp\Connect::settings(Task\Route::site()),
 		);
+	}
+
+	/**
+	 * spotify is the Spotify block: the Connect that links the reader's own
+	 * account, on their own page and with spotify_link, and null elsewhere.
+	 *
+	 * A link is made in the session that starts it, so a reader links their own
+	 * account and nobody else's. The block draws hidden and the page's script
+	 * shows it once the API says the integration is open to the reader.
+	 */
+	function spotify($chrome, $name, $own) {
+		if (!$own || !$chrome->allowed("spotify_link")) {
+			return null;
+		}
+
+		return array("next" => Task\Route::href("/users/" . $name . "/edit"));
 	}
 
 	/** rows is one table row per token, each with the DELETE of its own. */

@@ -12,7 +12,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// profileCount is how many of each kind of activity a profile lists.
+// profileCount bounds a kind of activity a profile lists, per kind.
 const profileCount = 10
 
 // profile shows a user to read: who they are and what they did lately, as far as the one who looks sees it.
@@ -112,6 +112,11 @@ func (h *Handlers) seesPlace(user *model.User, place string) bool {
 // with user/edit, never an admin's, and your own only with user/edit
 // through your role, as the API takes it.
 func (h *Handlers) userMatrix(r *http.Request, p *view.Page, user *model.User, own bool) *view.Matrix {
+	if user.CanAdmin() {
+		// An admin holds every rule: the table draws one answer in every
+		// row and takes no change.
+		return nil
+	}
 	set := h.opts.Users.Permissions(r.Context(), user)
 	m := view.NewMatrix(config.Default(), set.Own, set.Effective(), user.CanAdmin())
 	m.ID, m.Title, m.API, m.Effective = "user-"+user.Name, user.Name, "/api/permissions/users/"+user.Name, true

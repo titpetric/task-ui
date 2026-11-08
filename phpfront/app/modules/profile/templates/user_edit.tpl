@@ -44,9 +44,18 @@
 
 <section class="block" id="permissions">
 	<h3>Permissions <small>{data.name}'s own rules, before the role's</small></h3>
-	<p>Role: {if $data.permissions.links}<a href="{base}/settings/permissions#role-{data.permissions.role}">{data.permissions.role}</a>{else}{data.permissions.role}{/if}.{if $data.permissions.matrix.fixed} Admins can do everything; this can't change.{/if}</p>
-{if !$data.permissions.matrix.fixed}	<p>An allow or a deny here is {data.name}'s own and decides the rule for them. Inherit, the empty box, leaves it to the role's rules, where a deny denies the action even where another rule allows it. The mark after each box shows the result.</p>
-{/if}{eval $data_matrix = $data.permissions.matrix}{include components/matrix.tpl}
-</section>
+	<p>Role: {if $data.permissions.links}<a href="{base}/settings/permissions#role-{data.permissions.role}">{data.permissions.role}</a>{else}{data.permissions.role}{/if}.{if $data.permissions.fixed} Admins can do everything; this can't change.{/if}</p>
+{if $data.permissions.matrix}	<p>An allow or a deny here is {data.name}'s own and decides the rule for them. Inherit, the empty box, leaves it to the role's rules, where a deny denies the action even where another rule allows it. The mark after each box shows the result.</p>
+{eval $data_matrix = $data.permissions.matrix}{include components/matrix.tpl}
+{/if}</section>
 {if $data.keys}{eval $data_user_keys = $data.keys}{include components/user-keys.tpl}{/if}
 {eval $data_mcp = $data.mcp}{include components/mcp-access.tpl}
+{if $data.spotify}
+<section class="block" id="spotify" data-spotify-block hidden>
+	<h3>Spotify <small>{data.name}'s own account</small></h3>
+	<p>Control your Spotify via the agents.</p>
+	<div class="form-foot">
+		<button type="button" class="btn" data-spotify-link data-what="Spotify" data-next="{data.spotify.next}">Connect Spotify</button>
+	</div>
+</section>
+{/if}

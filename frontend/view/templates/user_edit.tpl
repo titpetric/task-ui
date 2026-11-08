@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>Edit {{ $u.Name }}</h2>
-		<p>The roles, folders, permissions, keys and MCP access of {{ $u.Name }}.</p>
+		<p>The roles, folders, permissions, keys, MCP access and linked accounts of {{ $u.Name }}.</p>
 	</div>
 	<div class="actions">
 		<a class="btn" href="{{ $view }}"><svg class="ic"><use href="#i-users"/></svg>View profile</a>
@@ -59,20 +59,28 @@
 	{{- end }}
 </section>
 
-{{- with $pr.Matrix }}
 <section class="block" id="permissions">
 	<h3>Permissions <small>{{ $u.Name }}'s own rules, before the role's</small></h3>
-	<p>Role: {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.EffectiveRole }}">{{ $u.EffectiveRole }}</a>{{ else }}{{ $u.EffectiveRole }}{{ end }}.{{ if .Fixed }} Admins can do everything; this can't change.{{ end }}</p>
-	{{- if not .Fixed }}
+	<p>Role: {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.EffectiveRole }}">{{ $u.EffectiveRole }}</a>{{ else }}{{ $u.EffectiveRole }}{{ end }}.{{ if $u.Admin }} Admins can do everything; this can't change.{{ end }}</p>
+	{{- with $pr.Matrix }}
 	<p>An allow or a deny here is {{ $u.Name }}'s own and decides the rule for them. Inherit, the empty box, leaves it to the role's rules, where a deny denies the action even where another rule allows it. The mark after each box shows the result.</p>
-	{{- end }}
 	{{- template "matrix" (list $ .) }}
+	{{- end }}
 </section>
-{{- end }}
 
 {{- if or $pr.Own (.Can "key/view") }}
 {{ template "userkeys" (list . $u $edit) }}
 {{- end }}
 
 {{ template "mcp-access" (list $ $u) }}
+
+{{- if and $pr.Own (.Can "spotify_link") }}
+<section class="block" id="spotify" data-spotify-block hidden>
+	<h3>Spotify <small>{{ $u.Name }}'s own account</small></h3>
+	<p>Control your Spotify via the agents.</p>
+	<div class="form-foot">
+		<button type="button" class="btn" data-spotify-link data-what="Spotify" data-next="{{ $edit }}">Connect Spotify</button>
+	</div>
+</section>
+{{- end }}
 {{ end }}

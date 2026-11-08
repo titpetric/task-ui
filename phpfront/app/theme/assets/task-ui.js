@@ -2716,10 +2716,15 @@
   // tokens. The button hides where the reader may not link at all.
   document.querySelectorAll("[data-spotify-link]").forEach(function (button) {
     var path = "/api/integrations/spotify/link";
+    // The block a user's own page draws the button in, hidden with it:
+    // the page is the same bytes for every reader.
+    var block = button.closest("[data-spotify-block]");
+    var what = button.dataset.what ? " " + button.dataset.what : "";
     function draw(status) {
       var linked = !!status.linked;
       button.hidden = !status.available;
-      button.textContent = linked ? "Disconnect" : (status.broken ? "Connect again" : "Connect");
+      if (block) block.hidden = !status.available;
+      button.textContent = (linked ? "Disconnect" : (status.broken ? "Reconnect" : "Connect")) + what;
       button.title = linked
         ? "Unlink your Spotify account and delete its stored tokens"
         : "Link your own Spotify account to this user";
@@ -2737,7 +2742,8 @@
     });
     button.addEventListener("click", function () {
       if (button.dataset.linked !== "true") {
-        window.location.href = "/api/integrations/spotify/authorize";
+        var back = button.dataset.next ? "?next=" + encodeURIComponent(button.dataset.next) : "";
+        window.location.href = "/api/integrations/spotify/authorize" + back;
         return;
       }
       button.disabled = true;

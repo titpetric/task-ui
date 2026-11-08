@@ -235,12 +235,12 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 <a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /settings/permissions#role-<?php echo htmlspecialchars($_v['data']['permissions']['role'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data']['permissions']['role'], ENT_QUOTES);?>
-</a><?php }else{ echo htmlspecialchars($_v['data']['permissions']['role'], ENT_QUOTES); }?>.<?php if($_v['data']['permissions']['matrix']['fixed']){?>
+</a><?php }else{ echo htmlspecialchars($_v['data']['permissions']['role'], ENT_QUOTES); }?>.<?php if($_v['data']['permissions']['fixed']){?>
  Admins can do everything; this can't change.<?php }?></p>
-<?php if(!$_v['data']['permissions']['matrix']['fixed']){?>
+<?php if($_v['data']['permissions']['matrix']){?>
 	<p>An allow or a deny here is <?php echo htmlspecialchars($_v['data']['name'], ENT_QUOTES);?>
 's own and decides the rule for them. Inherit, the empty box, leaves it to the role's rules, where a deny denies the action even where another rule allows it. The mark after each box shows the result.</p>
-<?php }?><?php $_v['data_matrix'] = $_v['data']['permissions']['matrix'];?>
+<?php $_v['data_matrix'] = $_v['data']['permissions']['matrix'];?>
 <form class="matrix-form<?php if($_v['data_matrix']['fixed']){?>
  fixed<?php }?>"<?php if($_v['data_matrix']['editable']){?>
  data-api="<?php echo htmlspecialchars($_v['data_matrix']['api'], ENT_QUOTES);?>
@@ -300,7 +300,7 @@ Administrative privileges (all). <?php }?>Role: <?php echo htmlspecialchars($_v[
 	</div>
 <?php }?></form>
 
-</section>
+<?php }?></section>
 <?php if($_v['data']['keys']){ $_v['data_user_keys'] = $_v['data']['keys'];?>
 <section class="block" id="keys">
 <?php $_v['data_block'] = $_v['data_user_keys']['block'];?>
@@ -505,3 +505,15 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 	</div>
 </section>
 
+<?php if($_v['data']['spotify']){?>
+
+<section class="block" id="spotify" data-spotify-block hidden>
+	<h3>Spotify <small><?php echo htmlspecialchars($_v['data']['name'], ENT_QUOTES);?>
+'s own account</small></h3>
+	<p>Control your Spotify via the agents.</p>
+	<div class="form-foot">
+		<button type="button" class="btn" data-spotify-link data-what="Spotify" data-next="<?php echo htmlspecialchars($_v['data']['spotify']['next'], ENT_QUOTES);?>
+">Connect Spotify</button>
+	</div>
+</section>
+<?php }?>
