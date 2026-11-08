@@ -200,6 +200,7 @@
   var wrote = 0;        // when the transcript last went to its .txt
   var holding = "";     // a reply that landed while recording, played after
   var tending = 0;      // the interval that opens and shuts the listener
+  var dragging = 0;     // pieces in a row the instance read slowly
 
   // ------------------------------------------------------------------ gate
 
@@ -545,14 +546,18 @@
     }).then(function (data) {
       sent = to;
       var words = (data && data.text ? data.text : "").trim();
-      if (waking && Date.now() - went > SLOW) {
+      if (waking) {
         // A listener costs the instance a whisper run for every piece it
-        // reads. One that takes SLOW over a piece of WAKE holds a core for
-        // as long as the window is open, and the name is minutes old when
-        // it lands: the switch goes off and says so.
-        switched(false);
-        dress("This instance transcribes too slowly to listen for a name");
-        return;
+        // reads. One that takes SLOW over a piece holds a core for as long
+        // as the window is open, and the name is minutes old when it
+        // lands: the switch goes off after two of them, which the first
+        // call of a cold model is not.
+        dragging = Date.now() - went > SLOW ? dragging + 1 : 0;
+        if (dragging > 1) {
+          switched(false);
+          dress("This instance transcribes too slowly to listen for a name");
+          return;
+        }
       }
       if (!words) return;
       if (waking) {

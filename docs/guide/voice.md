@@ -19,11 +19,16 @@ The names are the ones the picker lists, your own among them, and `hey` or `ok` 
 
 A recording a name started ends after two and a half seconds of quiet and sends itself, which is the press that is not made hands free. One a press started still ends on a press, however long the quiet runs. Pressing the orb while the window is listening starts the recording there and then, and drops everything heard before the press.
 
-**Who reads the pieces is not who transcribes the recording.** A listener takes the browser's own recogniser wherever there is one, Chrome's and Edge's, because it reads every piece for nothing; the recording itself still goes to the instance where the integration is set up. Without a recogniser in the browser the pieces go to `POST /api/voice/transcribe`, which runs whisper over each of them, and a piece covers at most four seconds. The switch turns itself off where that round trip passes eight seconds: a transcriber slower than the talking holds a core for as long as the window is open, and a name reaches the window minutes late. One measurement, on task.cdn.si:
+**Who reads the pieces is not who transcribes the recording.** A listener takes the browser's own recogniser wherever there is one, Chrome's and Edge's, because it reads every piece for nothing; the recording itself still goes to the instance where the integration is set up. Without a recogniser in the browser the pieces go to `POST /api/voice/transcribe`, which runs whisper over each of them, and a piece covers at most four seconds. The switch turns itself off after two pieces in a row that pass eight seconds: a transcriber slower than the talking holds a core for as long as the window is open, and a name reaches the window minutes late. Two in a row, because the first call of a cold model loads it. Measured on task.cdn.si, the same clip four times:
 
 | Clip  | Transcribed in | Ratio |
 |-------|----------------|-------|
 | 2.07s | 42.9s          | 20.7x |
+| 2.07s | 3.7s           | 1.8x  |
+| 2.07s | 3.6s           | 1.7x  |
+| 2.07s | 3.2s           | 1.5x  |
+
+The names in those clips, spoken by piper and read back by whisper, come through as `Hey Claude, run the tests.`, `Miguel, what is the deploy doing?`, `Consuela ship the build.` and `Black, open the inventory.`
 
 The listening is a microphone and nothing else: a piece with no name in it is dropped where it is read, no piece is kept, written or sent, and the whole of it stops when the window closes, when the page goes to the background, or while a reply is being read out. A quiet room costs the transcriber nothing, since a piece nobody spoke into is dropped before it is posted.
 
