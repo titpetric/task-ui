@@ -392,9 +392,7 @@
   // -------------------------------------------------------------- sanitise
 
   // NAMED is every character that is not a letter, a digit, a space, an
-  // apostrophe or a hyphen, written as the word for it. The transcript is
-  // English, not shell: a recogniser puts in punctuation nobody spoke, and a
-  // newline would press Return on a line the reader never saw.
+  // apostrophe or a hyphen, written as the word for it.
   var NAMED = {
     ",": "comma", ".": "dot", "!": "exclamation", "?": "question",
     "#": "hash", "^": "caret", "`": "backtick", "$": "dollar",
@@ -405,7 +403,9 @@
     '"': "quote", "=": "equals", "%": "percent", "@": "at", "+": "plus",
   };
 
-  function sanitize(raw) {
+  // plain returns the sentence as a reader of it writes it: one line, ASCII
+  // letters and the punctuation NAMED knows, and no control character.
+  function plain(raw) {
     var out = "";
     // NFD splits an accented letter into its base and a combining mark, so an
     // accent the recogniser writes costs the mark and keeps the letter under
@@ -418,11 +418,17 @@
       var ch = flat[i];
       var code = flat.charCodeAt(i);
       if (code < 0x20 || code === 0x7f) continue;
-      if (/[A-Za-z0-9 '-]/.test(ch)) {
-        out += ch;
-        continue;
-      }
-      if (NAMED[ch]) out += "[" + NAMED[ch] + "]";
+      if (/[A-Za-z0-9 '-]/.test(ch) || NAMED[ch]) out += ch;
+    }
+    return out.replace(/\s+/g, " ").trim();
+  }
+
+  // spell names every punctuation mark of a sentence, for a terminal: a mark
+  // typed into a shell runs as itself.
+  function spell(words) {
+    var out = "";
+    for (var i = 0; i < words.length; i++) {
+      out += NAMED[words[i]] ? "[" + NAMED[words[i]] + "]" : words[i];
     }
     return out.replace(/\s+/g, " ").trim();
   }
@@ -1655,7 +1661,7 @@
   // this device could not.
   function send() {
     if (state() === "idle" || waking) return;
-    var words = sanitize(text);
+    var words = plain(text);
     var to = target();
     var at = keep(words);
     pause();
@@ -1666,7 +1672,7 @@
     freely = false;
     dress();
     if (words && to.kind === "run") {
-      window.taskUI.paste(words);
+      window.taskUI.paste(spell(words));
       flush();
       at.then(function (kept) {
         say(kept ? "Recording kept in artifacts, under voice/" : "The recording was not kept", kept ? "ok" : "bad");
