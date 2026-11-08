@@ -119,7 +119,7 @@
 					{{- $can := $.CanRunJob .Folder .Dir .Job }}
 					<a href="/runs/{{ .ID }}" class="recent" title="Open {{ .Name }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
-						<span class="what"><b>{{ .Job }}</b><small>{{ .Place }}</small></span>
+						<span class="what"><b>{{ .Lead }}</b><small>{{ with .Icon }}<svg class="ic lead"><use href="#i-{{ . }}"/></svg>{{ end }}{{ .Trail }}</small></span>
 						{{- with $e.Children }}<span class="badge" title="Runs it started">{{ . }}</span>{{ end }}
 						{{- if not (ended .State) }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 						{{ template "avatar" (list $ .UserName) }}

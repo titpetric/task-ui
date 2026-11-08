@@ -10,8 +10,9 @@ anyone, grouped by when they started.
 | `groups[].label`          | string | What the group heading says                     |
 | `groups[].entries`        | list   | The runs of the group                           |
 | `entries[].href`          | string | The run or the workflow, without the base       |
-| `entries[].name`          | string | The job's name, or the workflow's               |
-| `entries[].place`         | string | Where it ran                                    |
+| `entries[].name`          | string | The job's name, the workflow's, or `@user` for a thread |
+| `entries[].place`         | string | Where it ran, or the job for a thread's run     |
+| `entries[].icon`          | string | A sprite symbol for the line under the name, "" for none |
 | `entries[].state`         | string | The run state, which colours the dot            |
 | `entries[].ended`         | bool   | Whether the run is over                         |
 | `entries[].act`           | string | `play` or `eye`, the icon for what the reader may do |

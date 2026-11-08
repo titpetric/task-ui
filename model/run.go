@@ -119,6 +119,36 @@ func (r Run) Name() string {
 	return r.Place() + " / " + r.Job
 }
 
+// Lead returns what a list of runs calls this one: the user a prompt or
+// a note runs as, @miguel, which is the thread it answers; else the job.
+func (r Run) Lead() string {
+	if (r.IsPrompt() || r.IsNote()) && r.UserName != "" {
+		return "@" + r.UserName
+	}
+	return r.Job
+}
+
+// Trail returns what a list says under Lead: the job of a thread's run
+// without the @, else the place.
+func (r Run) Trail() string {
+	if r.IsPrompt() || r.IsNote() {
+		return strings.TrimPrefix(r.Job, "@")
+	}
+	return r.Place()
+}
+
+// Icon names the sprite symbol a list draws before Trail, none for a run
+// that is not a thread's.
+func (r Run) Icon() string {
+	switch {
+	case r.IsPrompt():
+		return "prompt"
+	case r.IsNote():
+		return "note"
+	}
+	return ""
+}
+
 // Path names the run in one word, folder/job without the root's internal/: @claude-note, deploy/up.
 func (r Run) Path() string {
 	return strings.TrimPrefix(RunKey(r.Folder, r.Dir, r.Job), Default+"/")

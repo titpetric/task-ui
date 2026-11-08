@@ -482,6 +482,40 @@ class Run {
 		return self::place($run) . " / " . $run->getJob();
 	}
 
+	/**
+	 * lead is what a list of runs calls one: the user a prompt or a note runs
+	 * as, @miguel, which is the thread it answers; else the job.
+	 */
+	static function lead($run) {
+		if ((self::isPrompt($run) || self::isNote($run)) && $run->getUserName() !== "") {
+			return "@" . $run->getUserName();
+		}
+
+		return $run->getJob();
+	}
+
+	/** trail is what a list says under lead: the job of a thread's run without the @, else the place. */
+	static function trail($run) {
+		if (self::isPrompt($run) || self::isNote($run)) {
+			return ltrim($run->getJob(), "@");
+		}
+
+		return self::place($run);
+	}
+
+	/** icon names the sprite symbol a list draws before trail, "" for a run that is not a thread's. */
+	static function icon($run) {
+		if (self::isPrompt($run)) {
+			return "prompt";
+		}
+
+		if (self::isNote($run)) {
+			return "note";
+		}
+
+		return "";
+	}
+
 	/** isPrompt reports whether the run is a prompt's. */
 	static function isPrompt($run) {
 		return self::isPromptJob($run->getFolder(), $run->getJob());

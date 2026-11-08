@@ -112,10 +112,16 @@ $table = new Task\Run;
 $first = $table->get("fx-recent-1");
 $entry = $rail->ofRun($first, $access, $roles, array());
 
-echo $entry["href"], " ", $entry["name"], " ", $entry["place"], " ", $entry["state"], "\n";
+echo $entry["href"], " ", $entry["name"], " ", $entry["place"], " [", $entry["icon"], "] ", $entry["state"], "\n";
 echo var_export($entry["ended"], true), " ", var_export($entry["flow"], true), " ", $entry["act"], " ", $entry["children"], "\n";
 echo $entry["title"], "\n";
 echo $entry["avatar"]["name"], " ", $entry["avatar"]["role"], " ", $entry["avatar"]["initials"], "\n";
+
+// A thread's run is called by the user it answers as, because every note runs
+// the same job in the same place and the user is what tells two of them apart.
+$thread = $rail->ofRun($table->get("fx-recent-2"), $access, $roles, array(), 2);
+
+echo $thread["name"], " ", $thread["place"], " [", $thread["icon"], "] ", $thread["children"], "\n";
 
 // runnable is the icon an entry carries: the reader may start the job again
 // where the catalogue lists the run's folder and the host resolves the run's
@@ -181,10 +187,11 @@ In the last hour
 2 hours ago: /runs/a,/workflows/x
 3 hours ago: /runs/b,/workflows/y
 4 hours ago: /runs/c
-/runs/fx-recent-1 build fx-recent running
+/runs/fx-recent-1 build fx-recent [] running
 false false eye 0
 Open fx-recent / build, ops, running
 ops runner OP
+@claude claude-prompt [prompt] 2
 false
 false
 true

@@ -117,3 +117,39 @@ func TestRun_Name(t *testing.T) {
 	assert.Equal(t, "@host:web1", host.Path())
 	assert.Equal(t, "@host:*", model.HostAll)
 }
+
+// A list of runs names a thread's run by the user it answers as, which
+// is the one thing that tells two of them apart: every note runs the
+// same job in the same place. Every other run keeps its job and place.
+func TestRun_Lead(t *testing.T) {
+	t.Parallel()
+	note := model.Run{Folder: model.Default, Job: model.NoteJob, UserName: "miguel"}
+	assert.Equal(t, "@miguel", note.Lead())
+	assert.Equal(t, "claude-note", note.Trail())
+	assert.Equal(t, "note", note.Icon())
+
+	prompt := model.Run{Folder: model.Default, Job: model.PromptJob, UserName: "consuela"}
+	assert.Equal(t, "@consuela", prompt.Lead())
+	assert.Equal(t, "claude-prompt", prompt.Trail())
+	assert.Equal(t, "prompt", prompt.Icon())
+
+	// A note with no user is the job, because @ alone names nobody.
+	assert.Equal(t, model.NoteJob, model.Run{Folder: model.Default, Job: model.NoteJob}.Lead())
+
+	build := model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build", UserName: "black"}
+	assert.Equal(t, "build", build.Lead())
+	assert.Equal(t, "malta/dockerfiles", build.Trail())
+	assert.Equal(t, "", build.Icon())
+}
+
+// TestRun_Trail and TestRun_Icon are read off TestRun_Lead, which takes
+// a whole row at a time.
+func TestRun_Trail(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "internal", model.Run{Folder: model.Default, Job: "@shell"}.Trail())
+}
+
+func TestRun_Icon(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "", model.Run{Folder: model.Default, Job: "@shell"}.Icon())
+}

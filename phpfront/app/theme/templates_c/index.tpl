@@ -345,8 +345,9 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 						<i class="dot <?php echo htmlspecialchars($_v['entry']['state'], ENT_QUOTES);?>
 "></i>
 						<span class="what"><b><?php echo htmlspecialchars($_v['entry']['name'], ENT_QUOTES);?>
-</b><small><?php if($_v['entry']['flow']){?>
-<svg class="ic lead"><use href="#i-flow"/></svg><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
+</b><small><?php if($_v['entry']['icon']){?>
+<svg class="ic lead"><use href="#i-<?php echo htmlspecialchars($_v['entry']['icon'], ENT_QUOTES);?>
+"/></svg><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
 </small></span>
 <?php if($_v['entry']['children']){?>
 						<span class="badge" title="Runs it started"><?php echo htmlspecialchars($_v['entry']['children'], ENT_QUOTES);?>
