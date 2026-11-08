@@ -104,6 +104,11 @@
   // still ends one a press began, however long the quiet runs.
   var HOLD = 2500;
 
+  // SLOW is the round trip over a listener's piece that turns the switch
+  // off. Past it the instance holds a core for every piece, and a name
+  // reaches the window minutes late.
+  var SLOW = 8000;
+
   // VOICE is the level, 0 to 1, over which the microphone holds a voice.
   // Under it the room is all there is.
   var VOICE = 0.06;
@@ -505,15 +510,29 @@
     var from = sent;
     var to = buffer.frames.length;
     if (to <= from) return;
-    // A listener reads speech: a piece nobody spoke into is dropped here,
-    // and the instance transcribes none of it.
-    if (waking && Date.now() - heardAt > WAKE) {
-      sent = to;
-      return;
+    if (waking) {
+      // A listener reads speech: a piece nobody spoke into is dropped
+      // here, and the instance transcribes none of it.
+      if (Date.now() - heardAt > WAKE) {
+        shed(to);
+        return;
+      }
+      // It reads from the start of what it holds and sheds what it read,
+      // bounded: where the transcriber is slower than the talking, a piece
+      // would otherwise grow with every round trip until it is minutes
+      // long and the name in it is an hour old.
+      from = 0;
+      var each = buffer.frames[0] ? buffer.frames[0].length : 128;
+      var most = Math.ceil((buffer.rate * WAKE * 2) / (1000 * each));
+      if (to > most) {
+        shed(to - most);
+        to = most;
+      }
     }
     var clip = wav(from, to);
     if (!clip) return;
     flight = true;
+    var went = Date.now();
     fetch("/api/voice/transcribe", {
       method: "POST",
       credentials: "same-origin",
@@ -526,6 +545,15 @@
     }).then(function (data) {
       sent = to;
       var words = (data && data.text ? data.text : "").trim();
+      if (waking && Date.now() - went > SLOW) {
+        // A listener costs the instance a whisper run for every piece it
+        // reads. One that takes SLOW over a piece of WAKE holds a core for
+        // as long as the window is open, and the name is minutes old when
+        // it lands: the switch goes off and says so.
+        switched(false);
+        dress("This instance transcribes too slowly to listen for a name");
+        return;
+      }
       if (!words) return;
       if (waking) {
         woke(words, from, to);
@@ -621,8 +649,7 @@
   // forget drops what the listener has read and found no name in, once the
   // room is quiet: a microphone open all morning fills the page otherwise.
   function forget() {
-    if (!waking || !buffer || flight) return;
-    if (server && sent < buffer.frames.length) return;
+    if (!waking || !buffer || flight || posting) return;
     if (Date.now() - heardAt < HOLD) return;
     shed(buffer.frames.length);
   }
@@ -639,13 +666,22 @@
       if (to !== undefined) shed(to);
       return false;
     }
-    if (from !== undefined) {
-      shed(from);
-      sent = to - from;
+    if (to !== undefined) {
+      // The piece that holds the name is the start of the recording, and
+      // it has been read already.
+      sent = to;
     }
     waking = false;
     freely = true;
     heardAt = Date.now();
+    if (to === undefined && server) {
+      // This browser heard the name and the instance transcribes the
+      // recording: the recogniser shuts, the words come back from the
+      // audio already held, and the name is in them.
+      quiet();
+      text = "";
+      hit.rest = "";
+    }
     if (server) streaming(true);
     if (agent && agent.value !== hit.value) {
       agent.value = hit.value;
@@ -665,14 +701,18 @@
     starting = true;
     heardAt = 0;
     text = "";
-    asking().then(listening).then(function () {
+    asking().then(function () {
+      return listening(true);
+    }).then(function () {
       starting = false;
       if (!waking) {
         release();
         return;
       }
       sent = 0;
-      if (server) streaming(true);
+      // The pieces go to the instance where this browser has no recogniser
+      // of its own; where it has, that one reads them.
+      if (server && !rec) streaming(true);
       dress();
     }).catch(function (err) {
       starting = false;
@@ -702,7 +742,12 @@
     waking = false;
     freely = false;
     heardAt = Date.now();
-    if (server) streaming(true);
+    // The listener's recogniser goes where the instance transcribes: one
+    // transcript is built and not two.
+    if (server) {
+      quiet();
+      streaming(true);
+    }
     dress("Recording");
   }
 
@@ -1195,9 +1240,12 @@
   // The recogniser opens its own microphone and is what dictation is; the
   // analyser and the worklet are a second consumer of the same device, so
   // they come after and are allowed to fail.
-  function listening() {
+  function listening(wake) {
     var SR = window.SpeechRecognition;
-    if (server || !ready) {
+    // A listener takes this browser's own recogniser wherever there is
+    // one, whoever transcribes a recording: it reads every piece for
+    // nothing, where the instance runs whisper over each of them.
+    if (!ready || (server && !wake)) {
       return listen().then(function () {
         if (!media || !media.node) throw new Error("this browser cannot record");
       }).catch(refused);
@@ -1226,6 +1274,19 @@
       noting();
     };
     rec.onerror = function (event) {
+      // A listener whose recogniser refuses hands the pieces to the
+      // instance, and says so where there is no instance to hand them to.
+      if (waking) {
+        ready = false;
+        quiet();
+        if (server) {
+          streaming(true);
+          return;
+        }
+        switched(false);
+        dress("This browser cannot listen for a name: " + event.error);
+        return;
+      }
       fault(event.error === "not-allowed"
         ? "The microphone was refused. Allow it for this site and press again."
         : "Dictation stopped: " + event.error);
