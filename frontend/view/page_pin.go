@@ -11,20 +11,6 @@ func (p *Page) BrowseID() string {
 	return p.Folder.ID + "/" + strings.TrimSuffix(p.Browse, "/")
 }
 
-// PinnedJobs returns the pinned jobs the sidebar lists under a folder, which is all it lists under one.
-func (p *Page) PinnedJobs(id string) []SidePin {
-	return p.SidePins[id]
-}
-
-// PinnedCount returns how many pinned jobs the whole sidebar lists, which decides whether a row starts folded.
-func (p *Page) PinnedCount() int {
-	out := 0
-	for _, pins := range p.SidePins {
-		out += len(pins)
-	}
-	return out
-}
-
 // PinOf returns the user's pin of a folder, or of a job of it with no args, nil for none.
 func (p *Page) PinOf(folderID, job, dir string) *model.Pin {
 	for i, pin := range p.Pins {
@@ -39,11 +25,26 @@ func (p *Page) PinOf(folderID, job, dir string) *model.Pin {
 func (p *Page) PinItem(folderID, job, dir, what string) MenuItem {
 	key := folderID + "|" + dir + "|" + job
 	attrs := []string{"data-pin-folder", folderID, "data-pin-job", job, "data-pin-dir", dir, "data-pin-key", key}
-	label, title := "Pin "+what, "Show it in the sidebar"
+	label, title := "Pin "+what, pinTitle(job, false)
 	if pin := p.PinOf(folderID, job, dir); pin != nil {
-		label, title = "Unpin "+what, "Take it out of the sidebar, unless the sidebar lists it anyway"
+		label, title = "Unpin "+what, pinTitle(job, true)
 		attrs = append(attrs, "data-pin-id", pin.ID)
 	}
 	item, _ := NewMenuItem("pin", label, append(attrs, "title", title)...)
 	return item
+}
+
+// pinTitle says what a pin of a folder or of a job does, and what
+// removing it does: a folder joins the sidebar, a job is marked out on
+// the page of the folder that runs it.
+func pinTitle(job string, pinned bool) string {
+	switch {
+	case job != "" && pinned:
+		return "Stop marking it out on the folder's page"
+	case job != "":
+		return "Mark it out on the folder's page"
+	case pinned:
+		return "Take it out of the sidebar, unless the sidebar lists it anyway"
+	}
+	return "Show it in the sidebar"
 }

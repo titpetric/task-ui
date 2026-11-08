@@ -34,13 +34,15 @@
  data-path="<?php echo htmlspecialchars($_v['data_cc']['path'], ENT_QUOTES);?>
 "<?php }?><?php if($_v['data_cc']['terminal']){?>
  data-interactive<?php }?>><?php if($_v['data_cc']['run']){?>
-<a class="cc named running" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+<a class="cc named<?php if($_v['data_cc']['pinned']){?>
+ pinned<?php }?> running" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /runs/<?php echo htmlspecialchars($_v['data_cc']['run'], ENT_QUOTES);?>
 " data-attach="<?php echo htmlspecialchars($_v['data_cc']['run'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['data_cc']['title'], ENT_QUOTES);?>
 "><svg class="ic"><use href="#i-eye"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
 </span></a><?php }elseif($_v['data_cc']['can']){?>
-<button type="button" class="cc named <?php echo htmlspecialchars($_v['data_cc']['last'], ENT_QUOTES);?>
+<button type="button" class="cc named<?php if($_v['data_cc']['pinned']){?>
+ pinned<?php }?> <?php echo htmlspecialchars($_v['data_cc']['last'], ENT_QUOTES);?>
 " data-run data-folder="<?php echo htmlspecialchars($_v['data_cc']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_cc']['dir']){?>
  data-dir="<?php echo htmlspecialchars($_v['data_cc']['dir'], ENT_QUOTES);?>
@@ -56,7 +58,8 @@
 terminal<?php }else{?>
 play<?php }?>"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
 </span></button><?php }else{?>
-<a class="cc named idle <?php echo htmlspecialchars($_v['data_cc']['last'], ENT_QUOTES);?>
+<a class="cc named<?php if($_v['data_cc']['pinned']){?>
+ pinned<?php }?> idle <?php echo htmlspecialchars($_v['data_cc']['last'], ENT_QUOTES);?>
 " href="<?php echo htmlspecialchars($_v['data_cc']['href'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['data_cc']['title'], ENT_QUOTES);?>
 "><i class="shebang" aria-hidden="true">#!</i><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>

@@ -23,19 +23,10 @@ func TestPage_PinItem(t *testing.T) {
 	pinItem := p.PinItem("malta/dockerfiles", "build", "", "build")
 	assert.Equal(t, "Pin build", pinItem.Label)
 	assert.NotContains(t, string(pinItem.Attrs), "data-pin-id")
-	// A pin with args is the sidebar's; the job's own Pin stays.
+	// A pin that runs with args is a pin of its own: the job's Pin item
+	// names the one with none, so the item it draws is the one it removes.
 	assert.Nil(t, p.PinOf("malta/dockerfiles", "push", ""))
-	assert.Len(t, p.PinnedJobs("malta"), 0)
-}
-
-// The fold reads the whole sidebar's pinned jobs, which is everything
-// it lists under a folder.
-func TestPage_PinnedCount(t *testing.T) {
-	t.Parallel()
-	p := &view.Page{}
-	assert.Equal(t, 0, p.PinnedCount())
-	p.SidePins = map[string][]view.SidePin{"malta": {{}, {}}, "infra/edge": {{}}}
-	assert.Equal(t, 3, p.PinnedCount())
+	assert.Equal(t, "p3", p.Pins[2].ID)
 }
 
 // A browse page pins the directory it shows, below its folder.

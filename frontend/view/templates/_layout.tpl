@@ -84,9 +84,8 @@
 				{{- end }}
 			</nav>
 			<nav class="folders">
-				{{- $total := .PinnedCount }}
 				{{- range $g := .Groups }}
-				{{- if $g.Workspace }}{{ template "sideworkspace" (list $ $g $total) }}{{ else }}{{ template "sideproject" (list $ $g $total) }}{{ end }}
+				{{- if $g.Workspace }}{{ template "sideworkspace" (list $ $g) }}{{ else }}{{ template "sideproject" (list $ $g) }}{{ end }}
 				{{- else }}
 				<div class="empty">No folders yet. {{ if $.Can "project/edit" }}<a href="{{ addProjectHref "" }}">Add a git repository</a>{{ else }}Add a git repository in Settings{{ end }}, or put a folder with jobs under the root.</div>
 				{{- end }}
@@ -409,32 +408,21 @@
 {{- end }}{{ end }}{{ end }}
 
 {{- define "sideproject" }}
-{{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
-{{- with $p := $g.Top }}
+{{- $ := index . 0 }}{{ $g := index . 1 }}
+{{- with $p := $g.Bare }}
 				{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
 				{{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
-				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
-					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}">
-							{{- template "sideicon" (list "project" ($.Dirty $p.ID)) }}<span>{{ $p.Name }}</span>
-							{{- if $p.Error }}{{ template "sidebad" $p }}{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
-						</a>
-						<svg class="ic chev"><use href="#i-chev"/></svg>
-					</summary>
-					{{- if $.PinnedJobs $p.ID }}
-					<div class="jobs top">
-						{{- template "sidejobs" (list $ $p) }}
-					</div>
-					{{- end }}
-					{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total $g.ID) }}{{ end }}
-				</details>
-{{- else }}
-{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total $g.ID) }}{{ end }}
+				<div class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}">
+					<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+						{{- template "sideicon" (list "project" ($.Dirty $p.ID)) }}<span>{{ $p.Name }}</span>
+						{{- if $p.Error }}{{ template "sidebad" $p }}{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
+					</a>
+				</div>
 {{- end }}
 {{- end }}
 
 {{- define "sideworkspace" }}
-{{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
+{{- $ := index . 0 }}{{ $g := index . 1 }}
 {{- with $p := $g.Top }}
 {{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
 {{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
@@ -446,36 +434,11 @@
 			{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $g.Projects }}</small>{{ end }}
 		</a>
 	</summary>
-	{{- if or $p.Jobs ($.PinnedJobs $p.ID) }}
-	<div class="jobs top">
-		{{- template "sidejobs" (list $ $p) }}
-	</div>
-	{{- end }}
-	{{- range $g.Projects }}{{ template "sideproject" (list $ . $total) }}{{ end }}
+	{{- range $g.Projects }}{{ template "sideproject" (list $ .) }}{{ end }}
 </details>
 {{- else }}
-{{- range $g.Projects }}{{ template "sideproject" (list $ . $total) }}{{ end }}
+{{- range $g.Projects }}{{ template "sideproject" (list $ .) }}{{ end }}
 {{- end }}
-{{- end }}
-
-{{- define "sidefolder" }}
-{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}{{ $top := index . 3 }}
-{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
-{{- $icon := "folder" }}{{ if $active }}{{ $icon = "folder-open" }}{{ end }}
-{{- $pins := $.PinnedJobs $p.ID }}
-<details class="folder{{ if $active }} active{{ end }}{{ if not $pins }} leaf{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
-	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-		<a href="{{ $.Href $p.ID }}">{{ template "sideicon" (list $icon ($.Dirty $p.ID)) }}<span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
-		<i class="dot"></i>
-		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
-		{{- if $pins }}<svg class="ic chev"><use href="#i-chev"/></svg>{{ end }}
-	</summary>
-	{{- if $pins }}
-	<div class="jobs">
-		{{- template "sidejobs" (list $ $p) }}
-	</div>
-	{{- end }}
-</details>
 {{- end }}
 
 {{- define "sideicon" }}
@@ -582,25 +545,6 @@
 {{ define "runButton" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
-{{- end }}
-
-{{- define "sidejobs" }}
-{{- $ := index . 0 }}{{ $p := index . 1 }}
-{{- range $.PinnedJobs $p.ID }}{{ template "sidepin" (list $ $p .) }}{{ end }}
-{{- end }}
-
-{{- define "sidepin" }}
-{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $s := index . 2 }}{{ $r := $s.Job }}
-{{- $run := $.RunningRun $r.Key }}
-<div class="job pinned{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
-	<i class="shebang{{ if $run }} running{{ end }}" aria-hidden="true">#!</i>
-	<a href="{{ $.JobHref $p $r }}" title="Pinned: {{ $p.ID }} / {{ $s.Label }}">{{ $s.Label }}</a>
-	{{- if $run }}
-	<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
-	{{- else if $.CanRun $p $r }}
-	<button type="button" class="play" data-run data-folder="{{ $p.ID }}"{{ with $s.Pin.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}"{{ with $s.ArgsJSON }} data-run-args="{{ . }}"{{ end }} data-title="{{ $p.ID }} / {{ $s.Label }}" title="Run {{ $s.Label }}" aria-label="Run {{ $s.Label }}"><svg class="ic"><use href="#i-play"/></svg></button>
-	{{- end }}
-</div>
 {{- end }}
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}

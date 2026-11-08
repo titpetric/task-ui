@@ -68,17 +68,34 @@ class Pin {
 			"data-pin-key" => $folder . "|" . $dir . "|" . $job,
 		);
 		$label = "Pin " . $what;
-		$title = "Show it in the sidebar";
+		$title = self::says($job, false);
 
 		if ($held !== null) {
 			$label = "Unpin " . $what;
-			$title = "Take it out of the sidebar, unless the sidebar lists it anyway";
+			$title = self::says($job, true);
 			$attrs["data-pin-id"] = $held->getId();
 		}
 
 		$attrs["title"] = $title;
 
 		return array("label" => $label, "attrs" => $attrs);
+	}
+
+	/**
+	 * says is what a pin of a folder or of a job does, and what removing it
+	 * does: a folder joins the sidebar, a job is marked out on the page of the
+	 * folder that runs it.
+	 */
+	static function says($job, $pinned) {
+		if ($job !== "") {
+			return $pinned ? "Stop marking it out on the folder's page" : "Mark it out on the folder's page";
+		}
+
+		if ($pinned) {
+			return "Take it out of the sidebar, unless the sidebar lists it anyway";
+		}
+
+		return "Show it in the sidebar";
 	}
 
 	/**

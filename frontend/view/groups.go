@@ -1,6 +1,7 @@
 package view
 
 import (
+	"path"
 	"sort"
 	"strings"
 
@@ -19,6 +20,16 @@ type Group struct {
 	Nested    []*folder.Folder
 	Workspace bool
 	Projects  []Group
+}
+
+// Bare returns the group's top folder, or the folder its ID stands for
+// where the catalogue holds none, so the sidebar draws a row for every
+// project.
+func (g Group) Bare() *folder.Folder {
+	if g.Top != nil {
+		return g.Top
+	}
+	return &folder.Folder{ID: g.ID, Title: path.Base(g.ID)}
 }
 
 // Groups puts the folders under their projects, and each workspace's projects under the workspace.

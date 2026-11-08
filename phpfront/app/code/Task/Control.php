@@ -216,6 +216,7 @@ class Control {
 			"confirm" => Row::text($job, "confirm"),
 			"path" => Row::text($job, "kind") === "file" ? Row::text($job, "source") : "",
 			"terminal" => $terminal,
+			"pinned" => Pin::of($this->pins, Row::text($folder, "id"), $id, $dir) !== null,
 			"what" => $what,
 			"run" => $run === null ? "" : $run->getId(),
 			"href" => Route::href(Route::placeHref(Row::text($folder, "id"), $dir, $this->workspaces) . "/" . $id),

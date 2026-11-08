@@ -16,8 +16,6 @@ folds the projects under it, each a project with a fold of its own.
 | `badge`    | string | What the badge of a bad folder says                      |
 | `badTitle` | string | What that badge says on a mouse-over                     |
 | `count`    | int    | How many projects it lists                               |
-| `jobs`     | list   | The rows under it, for `sidebar-jobs`                    |
-| `empty`    | string | What the line says where it lists none, for `sidebar-jobs` |
 | `projects` | list   | The projects, each a `sidebar-project` scope             |
 
 A workspace's row draws no icon: the chevron stands in front of the name and

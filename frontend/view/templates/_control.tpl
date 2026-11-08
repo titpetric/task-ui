@@ -46,13 +46,14 @@
 {{- $desc := "" }}{{ if and $r.Description (ne $r.Description $r.Name) }}{{ $desc = $r.Description }}{{ end }}
 {{- $confirm := $.RunConfirm $r }}
 {{- $term := and $r.Interactive $.JobGroups }}
+{{- $pin := "" }}{{ if $.PinOf $f.ID $r.ID $r.Dir }}{{ $pin = " pinned" }}{{ end }}
 <span class="cc-slot" data-cc="{{ $r.Key }}" data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-name="{{ $r.Name }}" data-label="{{ if $named }}{{ $label }}{{ end }}" data-last="{{ $last }}"{{ if $.CanRun $f $r }} data-can{{ end }}{{ with $r.Dir }} data-dir="{{ . }}"{{ end }}{{ with $desc }} data-desc="{{ . }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }}{{ with $confirm }} data-confirm="{{ . }}"{{ end }}{{ if eq $r.Kind "file" }} data-path="{{ $r.Source }}"{{ end }}{{ if $term }} data-interactive{{ end }}>
 {{- if $run -}}
-<a class="cc{{ if $named }} named{{ end }} running" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $what }}, running{{ with $run.Title }}: {{ . }}{{ end }}"><svg class="ic"><use href="#i-eye"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
+<a class="cc{{ if $named }} named{{ end }}{{ $pin }} running" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $what }}, running{{ with $run.Title }}: {{ . }}{{ end }}"><svg class="ic"><use href="#i-eye"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
 {{- else if $.CanRun $f $r -}}
-<button type="button" class="cc{{ if $named }} named{{ end }} {{ $last }}" data-run data-folder="{{ $f.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $what }}"{{ with $confirm }} data-confirm="{{ . }}" data-confirm-ok="Run {{ $r.Name }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run {{ $what }}{{ with $desc }}: {{ . }}{{ end }}{{ with $r.ArgsCommand }}, with arguments after {{ . }}{{ end }}{{ if $term }}, in a terminal{{ end }}"><svg class="ic"><use href="#i-{{ if $term }}terminal{{ else }}play{{ end }}"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</button>
+<button type="button" class="cc{{ if $named }} named{{ end }}{{ $pin }} {{ $last }}" data-run data-folder="{{ $f.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $what }}"{{ with $confirm }} data-confirm="{{ . }}" data-confirm-ok="Run {{ $r.Name }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run {{ $what }}{{ with $desc }}: {{ . }}{{ end }}{{ with $r.ArgsCommand }}, with arguments after {{ . }}{{ end }}{{ if $term }}, in a terminal{{ end }}"><svg class="ic"><use href="#i-{{ if $term }}terminal{{ else }}play{{ end }}"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</button>
 {{- else -}}
-<a class="cc{{ if $named }} named{{ end }} idle {{ $last }}" href="{{ $.JobHref $f $r }}" title="{{ $what }}{{ with $desc }}: {{ . }}{{ end }}: no permission to run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
+<a class="cc{{ if $named }} named{{ end }}{{ $pin }} idle {{ $last }}" href="{{ $.JobHref $f $r }}" title="{{ $what }}{{ with $desc }}: {{ . }}{{ end }}: no permission to run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
 {{- end -}}
 </span>
 {{- end }}

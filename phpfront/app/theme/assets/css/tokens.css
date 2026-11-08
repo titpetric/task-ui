@@ -70,6 +70,8 @@
   --signal-ink: #07090c;
   --ok: #57b894;
   --bad: #e06c6c;
+  /* --pin outlines a pinned job, over whatever its last run coloured it. */
+  --pin: var(--signal);
 
   --signal-wash: color-mix(in srgb, var(--signal) 12%, transparent);
   --ok-wash: color-mix(in srgb, var(--ok) 10%, transparent);

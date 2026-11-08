@@ -56,9 +56,6 @@ type Page struct {
 	// SideFolders are the folders the sidebar lists: Folders less the
 	// projects set not to show there.
 	SideFolders []*folder.Folder
-	// SidePins are the pinned jobs a folder of the sidebar lists besides
-	// its own, by folder ID.
-	SidePins map[string][]SidePin
 	// SideDirty counts the changed and untracked files under each folder
 	// of the sidebar that is in a git checkout, by folder ID; a folder
 	// with none is not in it.

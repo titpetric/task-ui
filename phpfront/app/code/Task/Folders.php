@@ -12,9 +12,6 @@ namespace Task;
 // reader's pins placed among them. A row reads nothing for itself: the whole
 // tree is one scope and the components walk it.
 class Folders {
-	/** FOLD is the number of jobs above which a folder's row starts folded. */
-	const FOLD = 24;
-
 	/** HOME is the folder of a workspace's home, which the tree leaves out. */
 	const HOME = "home";
 
@@ -27,9 +24,8 @@ class Folders {
 	/** workspaces is the folder of every named workspace, in the sidebar's order. */
 	var $workspaces = array();
 
-	/** here is the folder of the page being read, and job its job's key. */
+	/** here is the folder of the page being read. */
 	var $here = "";
-	var $job = "";
 
 	/** running is the ID of the run in progress of a job, by the job's key. */
 	var $running = array();
@@ -53,9 +49,6 @@ class Folders {
 	/** dirs is the directory of a folder, asked of the host once for each. */
 	var $dirs = array();
 
-	/** total is how many jobs the whole tree lists, which decides a fold. */
-	var $total = 0;
-
 	function __construct($db = null, $access = null) {
 		if ($db === null) {
 			$db = DB::reader();
@@ -74,14 +67,12 @@ class Folders {
 	 * of the root first, in the catalogue's order, then each named workspace
 	 * with its own projects folded under it.
 	 *
-	 * here is the folder the page is about and job the key of its job, which
-	 * is what marks a row as the one being read. A page that names no place
-	 * passes neither.
+	 * here is the folder the page is about, which marks its row and the rows
+	 * above it as the ones being read. A page that names no place passes none.
 	 */
-	function tree($folders, $workspaces, $here = "", $job = "") {
+	function tree($folders, $workspaces, $here = "") {
 		$this->workspaces = $workspaces;
 		$this->here = $here;
-		$this->job = $job;
 		$this->running = $this->runs();
 		$this->pinned = array();
 
@@ -98,8 +89,6 @@ class Folders {
 		$placed = $this->placed($limited, $pins);
 
 		$this->warm($this->places($placed));
-
-		$this->total = $this->jobCount();
 
 		$groups = $this->group($placed, 0, true);
 		$out = array();
@@ -629,11 +618,11 @@ class Folders {
 
 	/**
 	 * scope is one group as the components read it: the row of its top folder,
-	 * what is folded under it, and whether it is a workspace.
+	 * the projects folded under it, and whether it is a workspace.
 	 *
-	 * top says whether the folder the group is named after is listed at all.
-	 * Without it the folders inside stand on their own, and the row's own
-	 * fields go nowhere.
+	 * A project whose directory declares no job is a row drawn from its ID, so
+	 * the tree lists every project it placed. top says whether a workspace's
+	 * own folder is listed, and without it the projects stand on their own.
 	 */
 	function scope($group) {
 		$top = $group["top"];
@@ -647,19 +636,13 @@ class Folders {
 			$out["top"] = true;
 		}
 
-		$nested = array();
 		$projects = array();
-
-		foreach ($group["nested"] as $folder) {
-			$nested[] = $this->nested($folder, $group["id"]);
-		}
 
 		foreach ($group["projects"] as $project) {
 			$projects[] = $this->scope($project);
 		}
 
 		$out["workspace"] = $group["workspace"];
-		$out["nested"] = $nested;
 		$out["projects"] = $projects;
 
 		if ($group["workspace"]) {
@@ -671,28 +654,9 @@ class Folders {
 	}
 
 	/**
-	 * nested is a folder inside a project: it names its path below the
-	 * project, counts the pinned jobs with its own, and starts folded on a
-	 * tree with more jobs than the sidebar shows at once.
-	 */
-	function nested($folder, $top) {
-		$out = $this->row($folder);
-		$here = $this->here === $out["id"];
-
-		$out["active"] = $here;
-		$out["here"] = $here;
-		$out["icon"] = $here ? "folder-open" : "folder";
-		$out["open"] = $here || $this->total <= self::FOLD;
-		$out["dir"] = self::dirUnder($out["id"], $top);
-		$out["counted"] = true;
-
-		return $out;
-	}
-
-	/**
 	 * row is what every row of the tree carries: where it links, what its
-	 * summary says, git's count of changed files under it, the badge a folder
-	 * whose pipeline would not read draws, and the jobs it lists.
+	 * link says, git's count of changed files under it, the badge a folder
+	 * whose pipeline would not read draws, and how many jobs it declares.
 	 */
 	function row($folder) {
 		$id = Row::text($folder, "id");
@@ -725,97 +689,7 @@ class Folders {
 			"badTitle" => $said,
 			"count" => $own,
 			"counted" => $own > 0,
-			"jobs" => $this->jobs($folder),
 		);
-	}
-
-	/** jobs is what a folder's row lists, which is the reader's pins under it and nothing else. */
-	function jobs($folder) {
-		$id = Row::text($folder, "id");
-		$out = array();
-
-		if (!isset($this->pinned[$id])) {
-			return $out;
-		}
-
-		foreach ($this->pinned[$id] as $pin) {
-			$out[] = $this->pinRow($folder, $pin);
-		}
-
-		return $out;
-	}
-
-	/**
-	 * jobRow is a job of a folder's own pipeline as the sidebar draws it: its
-	 * link, the convention its ID carries where its name does not say it, and
-	 * the button that attaches to its run or starts one.
-	 */
-	function jobRow($folder, $job) {
-		$id = Row::text($folder, "id");
-		$name = Row::text($job, "name");
-		$named = Row::text($job, "id");
-		$key = self::key($id, Row::text($job, "dir"), $named);
-		$attach = isset($this->running[$key]) ? $this->running[$key] : "";
-		$kind = $named === $name ? "" : self::kindOf($named);
-
-		return array(
-			"key" => $key,
-			"pinned" => false,
-			"active" => $this->job === $key && $key !== "",
-			"running" => $attach !== "",
-			"attach" => $attach,
-			"href" => Route::folderHref($id, $this->workspaces) . "/" . $named,
-			"hint" => "",
-			"kind" => $kind,
-			"label" => $name,
-			"can" => $this->canRun($folder, $job),
-			"folder" => $id,
-			"dir" => "",
-			"job" => $named,
-			"args" => "",
-			"said" => $name,
-			"name" => $name,
-		);
-	}
-
-	/**
-	 * pinRow is a pinned job under its folder, which the folder's row does
-	 * not list: it says where it is and what it runs with, and it runs with
-	 * the pin's directory and arguments.
-	 */
-	function pinRow($folder, $pin) {
-		$id = Row::text($folder, "id");
-		$job = $pin["job"];
-		$named = Row::text($job, "id");
-		$dir = Row::text($job, "dir");
-		$label = $pin["label"];
-		$key = self::key($id, $dir, $named);
-		$attach = isset($this->running[$key]) ? $this->running[$key] : "";
-		$href = Route::placeHref($id, $dir, $this->workspaces);
-
-		return array(
-			"key" => $key,
-			"pinned" => true,
-			"active" => $this->job === $key && $key !== "",
-			"running" => $attach !== "",
-			"attach" => $attach,
-			"href" => $href . "/" . $named,
-			"hint" => "Pinned: " . $id . " / " . $label,
-			"kind" => "",
-			"label" => $label,
-			"can" => $this->canRun($folder, $job),
-			"folder" => $id,
-			"dir" => $pin["dir"],
-			"job" => $named,
-			"args" => $pin["argsJSON"],
-			"said" => $label,
-			"name" => Row::text($job, "name"),
-		);
-	}
-
-	/** canRun reports whether the reader may start a job from its row in the tree. */
-	function canRun($folder, $job) {
-		return self::allows($this->access, $folder, $job);
 	}
 
 	/**
@@ -1036,17 +910,6 @@ class Folders {
 		$files = $dirty === 1 ? " file " : " files ";
 
 		return $dirty . $files . "changed or untracked";
-	}
-
-	/** jobCount is how many pinned jobs the whole tree lists, which decides whether a folder's row starts folded. */
-	function jobCount() {
-		$out = 0;
-
-		foreach ($this->pinned as $pins) {
-			$out += count($pins);
-		}
-
-		return $out;
 	}
 
 	/** dirOf is the directory a folder is in, asked of the host once for each. */

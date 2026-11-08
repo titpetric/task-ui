@@ -17,6 +17,7 @@ Input scope: `data_cc`, from `Task\Control::button()`.
 | `confirm`  | string | What it asks before it runs; empty asks nothing       |
 | `path`     | string | The file a job of a file runs; empty for every other kind |
 | `terminal` | bool   | Whether it takes a terminal, which the glyph and the hover say |
+| `pinned`   | bool   | Whether the reader pinned it, which outlines the button        |
 | `what`     | string | `folder[/dir] / name`, the title the run is listed under |
 | `run`      | string | The run in progress; empty draws the Run instead      |
 | `href`     | string | The job's own page, where a reader who may not run it goes |

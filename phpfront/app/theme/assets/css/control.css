@@ -178,6 +178,13 @@
     --cc: var(--text-faint);
   }
 
+  /* A pin outlines the cell and leaves .ok and .bad their colour. */
+  &.pinned {
+    --cc-line: var(--pin);
+
+    border-width: 2px;
+  }
+
   &:hover {
     color: var(--signal-ink);
     background: var(--signal);

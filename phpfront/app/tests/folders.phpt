@@ -65,6 +65,24 @@ echo Task\Host::$folderDirCalls, "\n";
 // The single reader is still there for the pages that ask about one folder,
 // and it keeps its answer too.
 echo $bare->dirOf("infra"), " ", Task\Host::$folderDirCalls, " ", $bare->dirOf("infra"), " ", Task\Host::$folderDirCalls, "\n";
+
+// A group is a row and the projects under it: the row of its own folder, or
+// one drawn from the ID where the catalogue holds none, and no folder inside
+// it. A project's jobs are on its page, so no row carries them.
+$scoped = new Task\Folders;
+$scoped->workspaces = array("malta");
+$group = array(
+	"id" => "malta/deploy",
+	"top" => null,
+	"nested" => array(array("id" => "malta/deploy/api")),
+	"projects" => array(),
+	"workspace" => false,
+);
+
+$out = $scoped->scope($group);
+
+echo $out["id"], " ", $out["name"], " ", $out["top"] ? "top" : "bare", " ", $out["icon"], " ", $out["count"], "\n";
+echo isset($out["jobs"]) ? "jobs" : "no jobs", " ", isset($out["nested"]) ? "nested" : "no nested", " ", count($out["projects"]), "\n";
 ---
 infra,malta/deploy/api,malta/deploy,malta,nowhere
 1
@@ -74,3 +92,5 @@ infra,malta/deploy/api,malta/deploy,malta,nowhere
 2 []
 2
 /src/infra 3 /src/infra 3
+malta/deploy deploy bare project 0
+no jobs no nested 0

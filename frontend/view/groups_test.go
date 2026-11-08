@@ -95,6 +95,22 @@ func TestGroup(t *testing.T) {
 	assert.Equal(t, []string{"deploy/terraform"}, idsOf(g.Nested))
 }
 
+// Bare is the row the sidebar draws for a project: the catalogue's
+// folder where it holds one, and the ID's own folder where it does not,
+// so a project whose directory declares no job is still a row.
+func TestGroup_Bare(t *testing.T) {
+	t.Parallel()
+	listed := view.Groups([]*folder.Folder{{ID: "deploy", Title: "Deploy"}}, nil)[0]
+	assert.Equal(t, listed.Top, listed.Bare())
+
+	g := view.Groups([]*folder.Folder{{ID: "malta/apps/task"}}, map[string]int{"malta": 1})[0].Projects[0]
+	assert.Equal(t, "malta/apps", g.ID)
+	assert.Nil(t, g.Top)
+	assert.Equal(t, "malta/apps", g.Bare().ID)
+	assert.Equal(t, "apps", g.Bare().Name())
+	assert.Len(t, g.Bare().Jobs, 0)
+}
+
 // The top-level projects come first, in their order, and the workspaces
 // after them: a project cloned at the root lists above every workspace,
 // with any name, and none of it falls under a workspace's fold.

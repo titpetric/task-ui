@@ -182,7 +182,7 @@ func TestView_RenderJobRunMenu(t *testing.T) {
 	assert.Contains(t, out, `<summary class="btn btn-primary btn-sm run-caret"`)
 	assert.Contains(t, out, `<span>Run and summarize</span>`)
 	assert.Contains(t, out, `<span>Run force</span>`)
-	assert.Contains(t, out, `data-pin-folder="infra" data-pin-job="plan" data-pin-dir="" data-pin-key="infra||plan" title="Show it in the sidebar"`)
+	assert.Contains(t, out, `data-pin-folder="infra" data-pin-job="plan" data-pin-dir="" data-pin-key="infra||plan" title="Mark it out on the folder&#39;s page"`)
 	assert.Contains(t, out, `>Pin plan</button>`)
 
 	p.Pins = []model.Pin{{ID: "p1", Folder: "infra", Job: "plan"}}

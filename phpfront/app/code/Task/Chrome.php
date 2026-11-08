@@ -251,7 +251,7 @@ class Chrome {
 		if ($this->tree === null) {
 			$tree = new Folders($this->db, $this->access);
 			$this->built = $tree;
-			$this->tree = $tree->tree($this->folders(), $this->workspaces(), $this->folder, $this->job);
+			$this->tree = $tree->tree($this->folders(), $this->workspaces(), $this->folder);
 		}
 
 		return $this->tree;

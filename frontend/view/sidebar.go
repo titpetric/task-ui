@@ -6,20 +6,16 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/model"
 )
 
-// Sidebar is the folder tree of the sidebar: the folders it lists, in
-// the catalogue's order, and the pinned jobs each lists besides its own.
-// With no pins it lists the folders seen and the directories right
-// inside the workspaces' src, less the projects set not to show there,
-// the workspaces' homes and the folders inside those. A pin adds
-// to that in its place: a pinned folder with its workspace and project
-// above it, a pinned job under its folder; a folder listed for its
-// pinned jobs alone lists only those, and a pin in a home stays out.
-type Sidebar struct {
-	Folders []*folder.Folder
-	// Pins are the pinned jobs a folder's row does not list, by folder ID.
-	Pins map[string][]SidePin
+// SidePin is a pin of the user as the sidebar places it: the pin and the
+// folder it names, with the job for a pin of one.
+type SidePin struct {
+	Pin    model.Pin
+	Folder *folder.Folder
+	// Job is the pinned job, nil for a folder pin.
+	Job *folder.Job
 }
 
 // SideDefaults returns what the sidebar lists with no pins, the folders under hidden left out.
@@ -40,20 +36,26 @@ func SideDefaults(folders []*folder.Folder, dirs []string, hidden map[string]boo
 	return side
 }
 
-// NewSidebar returns the tree of the default folders with the pins placed among them.
-func NewSidebar(defaults []*folder.Folder, pins []SidePin, workspaces map[string]int, homes map[string]bool) Sidebar {
-	s := Sidebar{Folders: append([]*folder.Folder(nil), defaults...), Pins: map[string][]SidePin{}}
+// NewSidebar returns the folders the sidebar lists, in the catalogue's
+// order, with the pins placed among them.
+//
+// With no pins it lists the folders seen and the directories right inside
+// the workspaces' src, less the projects set not to show there and
+// everything at or under a workspace's home. A pin adds to that in its
+// place: the folder it names, with the workspace and the project above it,
+// so a pin reaches a folder no default listed. A pin in a home stays out.
+func NewSidebar(defaults []*folder.Folder, pins []SidePin, workspaces map[string]int, homes map[string]bool) []*folder.Folder {
+	folders := append([]*folder.Folder(nil), defaults...)
 	listed := map[string]*folder.Folder{}
 	for _, f := range defaults {
 		listed[f.ID] = f
 	}
-	add := func(f *folder.Folder) *folder.Folder {
-		if had, ok := listed[f.ID]; ok {
-			return had
+	add := func(f *folder.Folder) {
+		if _, ok := listed[f.ID]; ok {
+			return
 		}
 		listed[f.ID] = f
-		s.Folders = append(s.Folders, f)
-		return f
+		folders = append(folders, f)
 	}
 	kept := pins[:0:0]
 	for _, pin := range pins {
@@ -73,18 +75,17 @@ func NewSidebar(defaults []*folder.Folder, pins []SidePin, workspaces map[string
 		}
 		bare := *pin.Folder
 		bare.Jobs = nil
-		f := add(&bare)
-		s.Pins[f.ID] = append(s.Pins[f.ID], pin)
+		add(&bare)
 	}
 	for _, pin := range pins {
 		for _, id := range above(pin.Folder.ID, workspaces) {
 			add(&folder.Folder{ID: id, Title: path.Base(id)})
 		}
 	}
-	sort.SliceStable(s.Folders, func(i, j int) bool {
-		return strings.ToLower(s.Folders[i].ID) < strings.ToLower(s.Folders[j].ID)
+	sort.SliceStable(folders, func(i, j int) bool {
+		return strings.ToLower(folders[i].ID) < strings.ToLower(folders[j].ID)
 	})
-	return s
+	return folders
 }
 
 // above returns the workspace and the project a folder is in, those above it.

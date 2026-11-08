@@ -42,9 +42,8 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 			}
 		}
 	}
-	tree := view.NewSidebar(side, pins, p.Workspaces, homes)
-	p.SideFolders, p.SidePins = tree.Folders, tree.Pins
-	p.SideDirty = h.sideDirty(tree.Folders, h.dirOf(ctx, tree.Folders))
+	p.SideFolders = view.NewSidebar(side, pins, p.Workspaces, homes)
+	p.SideDirty = h.sideDirty(p.SideFolders, h.dirOf(ctx, p.SideFolders))
 	p.FillSide(h.sideRows(ctx))
 }
 

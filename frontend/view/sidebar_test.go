@@ -27,7 +27,7 @@ func TestSideDefaults(t *testing.T) {
 	assert.Len(t, side[2].Jobs, 0)
 
 	// The home project never makes a workspace bar or a project of its own.
-	groups := view.Groups(view.NewSidebar(side, nil, map[string]int{"malta": 0}, nil).Folders, map[string]int{"malta": 0})
+	groups := view.Groups(view.NewSidebar(side, nil, map[string]int{"malta": 0}, nil), map[string]int{"malta": 0})
 	assert.Len(t, groups, 1)
 	assert.True(t, groups[0].Workspace)
 	assert.Equal(t, []string{"malta/apps", "malta/dockerfiles", "malta/vhosts"}, groupIDs(groups[0].Projects))
@@ -42,10 +42,10 @@ func groupIDs(groups []view.Group) []string {
 }
 
 // A pin adds to the sidebar in its natural place: a deep folder with
-// its workspace and project above it, in the catalogue's order, and a
-// job pin under its folder. Every job pin is listed, the folder's row
-// having nothing else under it. A pin of a folder the sidebar lists
-// already adds nothing, and a pin in a home project stays out.
+// its workspace and project above it, in the catalogue's order. A job
+// pin places its folder with no jobs on it, the catalogue's own folder
+// untouched. A pin of a folder the sidebar lists already adds nothing,
+// and a pin in a home project stays out.
 func TestSidebar(t *testing.T) {
 	t.Parallel()
 	ws := map[string]int{"malta": 0}
@@ -68,35 +68,30 @@ func TestSidebar(t *testing.T) {
 		pin(&folder.Folder{ID: "malta/workspace"}, "", "", ""),
 		pin(defaults[0], "", "", ""),
 	}
-	s := view.NewSidebar(defaults, pins, ws, map[string]bool{"malta/workspace": true})
-	assert.Equal(t, []string{"apps", "infra", "infra/edge", "malta", "malta/apps", "malta/apps/blog", "malta/dockerfiles"}, idsOf(s.Folders))
+	side := view.NewSidebar(defaults, pins, ws, map[string]bool{"malta/workspace": true})
+	assert.Equal(t, []string{"apps", "infra", "infra/edge", "malta", "malta/apps", "malta/apps/blog", "malta/dockerfiles"}, idsOf(side))
 
 	// infra/edge is there for its pinned plan alone.
 	var listedEdge *folder.Folder
-	for _, f := range s.Folders {
+	for _, f := range side {
 		if f.ID == "infra/edge" {
 			listedEdge = f
 		}
 	}
 	assert.Len(t, listedEdge.Jobs, 0)
 	assert.Len(t, edge.Jobs, 2, "the catalogue's folder stays as it is")
-	assert.Len(t, s.Pins["infra/edge"], 1)
-	assert.Equal(t, "plan", s.Pins["infra/edge"][0].Label())
 
-	// Both pins of build are listed, the bare one and the one with args.
-	assert.Len(t, s.Pins["malta/dockerfiles"], 2)
-	assert.Equal(t, "build", s.Pins["malta/dockerfiles"][0].Label())
-	assert.Equal(t, "build --push", s.Pins["malta/dockerfiles"][1].Label())
-
-	groups := view.Groups(s.Folders, ws)
+	groups := view.Groups(side, ws)
 	assert.Equal(t, []string{"apps", "infra", "malta"}, groupIDs(groups))
 	assert.Equal(t, []string{"malta/apps", "malta/dockerfiles"}, groupIDs(groups[2].Projects))
 	assert.Equal(t, []string{"malta/apps/blog"}, idsOf(groups[2].Projects[0].Nested))
 }
 
-// The sidebar draws a pinned job as a run item under its folder: its
-// play runs the job with the pin's directory and args.
-func TestView_RenderSidePin(t *testing.T) {
+// The sidebar is workspaces and projects: a project is one row and a
+// link, with no folder under it, no job and no pin. A pin puts the
+// project of the folder it names in the tree and draws nothing itself;
+// the project's page is where it is highlighted.
+func TestView_RenderSideRows(t *testing.T) {
 	t.Parallel()
 	v := shared(t)
 	p := admin(t)
@@ -104,18 +99,17 @@ func TestView_RenderSidePin(t *testing.T) {
 	edge := jobs("infra/edge", "plan")
 	plan := edge.Jobs[0]
 	plan.Dir = "eu"
-	s := view.NewSidebar(nil, []view.SidePin{{Pin: model.Pin{ID: "p1", Folder: "infra/edge", Job: "plan", Dir: "eu", Args: `["-x"]`}, Folder: edge, Job: plan}}, nil, nil)
-	p.SideFolders, p.SidePins = s.Folders, s.Pins
+	p.SideFolders = view.NewSidebar(nil, []view.SidePin{{Pin: model.Pin{ID: "p1", Folder: "infra/edge", Job: "plan", Dir: "eu", Args: `["-x"]`}, Folder: edge, Job: plan}}, nil, nil)
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "home", p))
 	out := buf.String()
 	side := out[strings.Index(out, `<nav class="folders">`):]
 	side = side[:strings.Index(side, "</nav>")]
-	assert.Contains(t, side, `data-project="infra"`)
-	assert.Contains(t, side, `<div class="job pinned" data-job-key="infra/edge/eu/plan">`)
-	assert.Contains(t, side, `data-run data-folder="infra/edge" data-dir="eu" data-job="plan" data-run-args="[&#34;-x&#34;]"`)
-	assert.Contains(t, side, `>eu/ plan -x</a>`)
-	assert.NotContains(t, side, "Nothing to run.")
+	assert.Contains(t, side, `<div class="project active" data-project="infra">`)
+	assert.Contains(t, side, `<a class="section active" href="/f/internal/infra" data-folder="infra" title="infra/">`)
+	for _, gone := range []string{"data-job-key", `data-folder="infra/edge"`, `class="jobs`, `<details class="folder`, "Nothing to run."} {
+		assert.NotContains(t, side, gone)
+	}
 }
 
 // jobs returns a folder of the ID with a job per name.
