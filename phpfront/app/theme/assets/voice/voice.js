@@ -51,6 +51,7 @@
   var discardBtn = document.getElementById("voice-discard");
   var replayBtn = document.getElementById("voice-replay");
   var avatar = document.getElementById("voice-avatar");
+  var agent = document.getElementById("voice-agent");
   if (!stage || !replayBtn || !discardBtn) return;
   var discardIcon = discardBtn.querySelector("use");
   var acts = discardBtn.parentNode;
@@ -208,7 +209,7 @@
       // keeps the glow from flickering on each frame's noise.
       var now = Math.min(1, rms * 7);
       smoothed += (now - smoothed) * (now > smoothed ? 0.5 : 0.12);
-      if (window.voiceOrbs) window.voiceOrbs.level(smoothed);
+      loud(smoothed);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -273,7 +274,7 @@
   function release() {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
-    if (window.voiceOrbs) window.voiceOrbs.level(0);
+    loud(0);
     if (!media) return;
     if (media.node) media.node.port.onmessage = null;
     media.stream.getTracks().forEach(function (t) { t.stop(); });
@@ -677,6 +678,74 @@
 
   // ------------------------------------------------------------------ flow
 
+  // ------------------------------------------------------------- avatar
+
+  // The window draws one avatar at a time, the one of the user it calls.
+  // An avatar is a file of the artifact tree, upload/users/<name>/avatar.js,
+  // which sets window.voiceAvatar to an object with start, stop and the two
+  // optional hooks level and tap. The canvas carries the window's state as
+  // data-state, so an avatar reads what it is drawing without a call.
+  //
+  // docs/guide/voice.md holds the contract and what a user's own avatar may
+  // do with the canvas.
+  var AVATARS = "/api/artifacts/files/upload/users/";
+  var dressed = {};
+  var worn = null;
+
+  // agentName is the user the window calls, "" for the reader themselves.
+  function agentName() {
+    return agent && agent.value ? agent.value : "";
+  }
+
+  // loud hands the microphone's level to the avatar, 0 to 1.
+  function loud(level) {
+    if (worn && worn.level) worn.level(level);
+  }
+
+  // bare stops the avatar on the canvas and clears it.
+  function bare() {
+    if (worn && worn.stop) worn.stop();
+    worn = null;
+    var out = avatar.getContext && avatar.getContext("2d");
+    if (out) out.clearRect(0, 0, avatar.width, avatar.height);
+  }
+
+  // wear puts the avatar of a user on the canvas, the built-in orbs where
+  // the user has none, and draws the state at once.
+  function wear(name) {
+    avatar.dataset.user = name;
+    look(name, function (found) {
+      // A second switch while this one loaded wins.
+      if (avatar.dataset.user !== name || !overlay.open) return;
+      bare();
+      worn = found;
+      if (worn && worn.start) worn.start(avatar);
+      shape();
+    });
+  }
+
+  // look answers the avatar of a user, loading the file once and keeping
+  // whatever it registered. A file that is not there, or that registers
+  // nothing, leaves the user with the built-in orbs.
+  function look(name, then) {
+    if (dressed[name]) return then(dressed[name]);
+    if (!name) {
+      dressed[name] = window.voiceOrbs;
+      return then(dressed[name]);
+    }
+    var script = document.createElement("script");
+    var done = function (found) {
+      script.remove();
+      window.voiceAvatar = null;
+      dressed[name] = found || window.voiceOrbs;
+      then(dressed[name]);
+    };
+    script.src = AVATARS + encodeURIComponent(name) + "/avatar.js?raw";
+    script.onload = function () { done(window.voiceAvatar); };
+    script.onerror = function () { done(null); };
+    document.head.appendChild(script);
+  }
+
   // target picks where send puts the words. A run that is attached and takes
   // input is the terminal; anything else is the header prompt, which is on
   // every page a user may ask Claude from.
@@ -687,17 +756,17 @@
   }
 
   // show opens and closes the window. showModal puts it in the top layer, so
-  // it draws over a run window, which is a modal dialog of its own. The orbs
-  // draw only while the window is open: nothing of them is seen after.
+  // it draws over a run window, which is a modal dialog of its own. The
+  // avatar draws only while the window is open: nothing of it is seen after.
   function show(on) {
     if (on) {
       if (!overlay.open) overlay.showModal();
-      if (window.voiceOrbs) window.voiceOrbs.start(avatar);
+      wear(agentName());
       return;
     }
     said.textContent = "";
     where.textContent = "";
-    if (window.voiceOrbs) window.voiceOrbs.stop();
+    bare();
     if (overlay.open) overlay.close();
   }
 
@@ -720,18 +789,27 @@
     Working: "thinking",
   };
 
-  // shape tells the orbs which formation the window is in. Every path the
-  // window can be on ends here: a press, a step of the run, an answer, a
-  // failure.
-  function shape() {
-    if (!window.voiceOrbs) return;
+  // mood is the one name for what the window is doing, which the avatar
+  // draws: recording, transcribing, thinking, speaking, answered, failed,
+  // paused or idle. Every path the window can be on ends here: a press, a
+  // step of the run, an answer, a failure.
+  function mood() {
     var now = state();
-    if (now === "recording") return window.voiceOrbs.mood("recording");
-    if (answer || reply) return window.voiceOrbs.mood("answered");
-    if (failed) return window.voiceOrbs.mood("failed");
-    if (pending) return window.voiceOrbs.mood(FLIGHT[doing] || "thinking");
-    if (now === "paused" || buffer) return window.voiceOrbs.mood("paused");
-    window.voiceOrbs.mood("idle");
+    if (now === "recording") return "recording";
+    if (answer || reply) return "answered";
+    if (failed) return "failed";
+    if (pending) return FLIGHT[doing] || "thinking";
+    if (now === "paused" || buffer) return "paused";
+    return "idle";
+  }
+
+  // shape writes the mood where the avatar reads it: the canvas carries it
+  // as data-state, which is what an avatar of a user's own reads, and the
+  // built-in orbs take it as a call.
+  function shape() {
+    var name = mood();
+    avatar.dataset.state = name;
+    if (worn && worn.mood) worn.mood(name);
   }
 
   // dress writes the state onto the window and says what the orb will do.
@@ -1013,7 +1091,7 @@
       }
       if (update.state === "done") return;
       tell(label(update.text || update.state));
-    }, thread);
+    }, thread, agentName());
   }
 
   // follow watches the thread for as long as the window is open, so a reply
@@ -1299,8 +1377,11 @@
 
   orb.addEventListener("click", visit);
   if (mic) mic.addEventListener("click", visit);
+  // The pick of user is the pick of avatar: the window wears whoever it
+  // calls, and the words go to that user's Claude.
+  if (agent) agent.addEventListener("change", function () { wear(agentName()); });
   stage.addEventListener("click", function () {
-    if (window.voiceOrbs) window.voiceOrbs.tap();
+    if (worn && worn.tap) worn.tap();
     if (media || starting) stop();
     else record();
   });

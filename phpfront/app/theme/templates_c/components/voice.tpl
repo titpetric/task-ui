@@ -1,7 +1,18 @@
 <?php $_v=&$this->vars;?>
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
-		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
+<?php if($_v['chrome']['agents']){?>
+		<div class="voice-who">
+			<label for="voice-agent">Talking to</label>
+			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
+				<option value=""><?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
+ (you)</option>
+<?php if(!empty($_v['chrome']['agents']))foreach($_v['chrome']['agents'] as $_v['agent']){?>				<option value="<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
+">@<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
+</option>
+<?php }?>			</select>
+		</div>
+<?php }?>		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
 			<svg class="voice-field" viewBox="0 0 320 320" aria-hidden="true" focusable="false">
 				<defs>

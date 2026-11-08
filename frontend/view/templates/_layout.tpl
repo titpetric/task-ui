@@ -324,7 +324,18 @@
 
 {{ define "voice" }}
 <button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
-<dialog class="voice" id="voice-overlay" aria-label="Dictate">
+<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
+	{{- with .Agents }}
+	<div class="voice-who">
+		<label for="voice-agent">Talking to</label>
+		<select id="voice-agent" class="voice-agent" aria-label="Talking to">
+			<option value="">{{ $.User.Name }} (you)</option>
+			{{- range . }}
+			<option value="{{ .Name }}">@{{ .Name }}</option>
+			{{- end }}
+		</select>
+	</div>
+	{{- end }}
 	<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 		<span class="voice-well" aria-hidden="true"></span>
 		<svg class="voice-field" viewBox="0 0 320 320" aria-hidden="true" focusable="false">

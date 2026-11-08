@@ -373,6 +373,27 @@ class Chrome {
 	}
 
 	/**
+	 * agents is who the voice window may call, by name: every user whose
+	 * runs answer as an agent, out of the users a prompt runs as.
+	 *
+	 * The window draws no pick where there is none, which is every reader
+	 * who may not run a prompt as somebody else.
+	 */
+	function agents() {
+		$out = array();
+
+		foreach ($this->runAsUsers() as $option) {
+			$user = $this->users->byName($option["name"]);
+
+			if ($user !== null && $user->getAgentReply() && $user->getMcp()) {
+				$out[] = $option["name"];
+			}
+		}
+
+		return $out;
+	}
+
+	/**
 	 * runAs is the select that picks who the header's prompt runs as: the
 	 * users, the reader picked, in the short form the header draws.
 	 *
@@ -432,6 +453,7 @@ class Chrome {
 			"prompt" => $this->prompt === null ? Prompt::root() : $this->prompt,
 			"upload" => $this->upload(),
 			"runAs" => $this->runAs(),
+			"agents" => $this->agents(),
 			"recents" => $this->recents(),
 			"running" => count($this->live()) > 0,
 		);

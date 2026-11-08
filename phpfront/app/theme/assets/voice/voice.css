@@ -91,6 +91,32 @@ body:has(.voice[open]) .voice-orb {
   }
 }
 
+/* .voice-who picks who the window calls, which is who answers and whose
+   avatar the canvas wears. It sits above the stage, out of the way. */
+.voice-who {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+
+  & label {
+    letter-spacing: var(--ls-sm);
+    text-transform: uppercase;
+  }
+
+  & select {
+    height: var(--control-sm);
+    padding: 0 0.5rem;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--ink-2);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-button);
+  }
+}
+
 /* .voice-stage is the button you press to record, and it holds the well and
    the avatar on one square so the gravity and its cause share a centre. */
 .voice-stage {

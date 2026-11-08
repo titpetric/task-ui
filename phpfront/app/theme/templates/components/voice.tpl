@@ -1,6 +1,13 @@
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
-		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
+{if $chrome.agents}		<div class="voice-who">
+			<label for="voice-agent">Talking to</label>
+			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
+				<option value="">{chrome.user.name} (you)</option>
+{foreach $chrome.agents as $agent}				<option value="{agent}">@{agent}</option>
+{/foreach}			</select>
+		</div>
+{/if}		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
 			<svg class="voice-field" viewBox="0 0 320 320" aria-hidden="true" focusable="false">
 				<defs>
