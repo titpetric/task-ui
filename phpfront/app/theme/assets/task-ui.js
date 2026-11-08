@@ -5959,7 +5959,7 @@
     return '<a href="' + mount() + "/runs/" + encodeURIComponent(r.id) + '" class="recent" title="' +
       escapeHTML("Open " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
-      '<span class="what"><b>' + escapeHTML(r.job + (r.target ? " · " + r.target : "")) + '</b><small>' + escapeHTML(runPlace(r)) + '</small></span>' +
+      '<span class="what"><b>' + escapeHTML(runLead(r)) + '</b><small>' + iconHTML(runIcon(r)) + escapeHTML(runTrail(r)) + '</small></span>' +
       (e.children ? '<span class="badge" title="Runs it started">' + e.children + "</span>" : "") +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
       avatarHTML(r.user_name) + "</a>";
@@ -5969,6 +5969,39 @@
   // internal/claude-prompt of an older thread.
   function isPromptRun(r) {
     return r.job === "@claude-prompt" || (r.folder === "internal" && r.job === "claude-prompt");
+  }
+
+  // isNoteRun reports whether a run is the Notes agent's: @claude-note, or
+  // internal/claude-note of an older note.
+  function isNoteRun(r) {
+    return r.job === "@claude-note" || (r.folder === "internal" && r.job === "claude-note");
+  }
+
+  // runLead is what the rail calls a run: the user a thread answers as,
+  // which is what tells two threads apart, else the job and its host.
+  function runLead(r) {
+    if ((isPromptRun(r) || isNoteRun(r)) && r.user_name) return "@" + r.user_name;
+    return r.job + (r.target ? " · " + r.target : "");
+  }
+
+  // runTrail is what the rail says under runLead: the job of a thread's run
+  // without the @, else the place.
+  function runTrail(r) {
+    if (isPromptRun(r) || isNoteRun(r)) return r.job.replace(/^@/, "");
+    return runPlace(r);
+  }
+
+  // runIcon names the sprite the rail draws before runTrail, "" for a run
+  // that is not a thread's.
+  function runIcon(r) {
+    if (isPromptRun(r)) return "prompt";
+    if (isNoteRun(r)) return "note";
+    return "";
+  }
+
+  // iconHTML is a sprite as a line of the rail draws it, nothing for "".
+  function iconHTML(name) {
+    return name ? '<svg class="ic lead"><use href="#i-' + name + '"/></svg>' : "";
   }
 
   function poll() {
