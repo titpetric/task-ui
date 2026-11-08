@@ -45,7 +45,7 @@
 			<span class="label" id="preview-label">Artifact</span>
 			<h3 id="preview-title"></h3>
 		</div>
-		<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div><iframe id="preview-frame" class="preview-frame" title="The page the run wrote" sandbox referrerpolicy="no-referrer" hidden></iframe></div>
+		<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div><audio id="preview-audio" class="preview-audio" controls preload="metadata" hidden></audio><iframe id="preview-frame" class="preview-frame" title="The page the run wrote" sandbox referrerpolicy="no-referrer" hidden></iframe></div>
 		<div class="run-foot">
 			<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 			<a class="btn" id="preview-download" href="#" download>Download</a>

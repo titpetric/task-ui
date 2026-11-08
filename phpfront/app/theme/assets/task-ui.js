@@ -3577,15 +3577,16 @@
   });
 
   // The preview window: a file of the artifact tree, an image scaled to
-  // fit, an HTML page in a frame, markdown rendered, or text, with a pick
-  // of the versions the runs wrote, or a file of a checkout the same way,
-  // without versions. The link still opens the file on its own
-  // with Ctrl or a middle click.
+  // fit, a sound file in a player, an HTML page in a frame, markdown
+  // rendered, or text, with a pick of the versions the runs wrote, or a
+  // file of a checkout the same way, without versions. The link still
+  // opens the file on its own with Ctrl or a middle click.
   var previewDialog = document.getElementById("preview-dialog");
   if (previewDialog) {
     var previewImage = document.getElementById("preview-image");
     var previewDoc = document.getElementById("preview-doc");
     var previewFrame = document.getElementById("preview-frame");
+    var previewAudio = document.getElementById("preview-audio");
     var previewVersion = document.getElementById("preview-version");
     var previewDownload = document.getElementById("preview-download");
     var previewEdit = document.getElementById("preview-edit");
@@ -3598,29 +3599,34 @@
     document.getElementById("preview-close").addEventListener("click", function () { previewDialog.close(); });
     previewDialog.addEventListener("close", function () {
       closeEditing();
-      previewImage.removeAttribute("src");
-      previewDoc.innerHTML = "";
-      // A frame left standing keeps the page it holds loaded, which for
-      // an artifact that polls or animates is work after the close.
-      previewFrame.hidden = true;
-      previewFrame.removeAttribute("src");
+      bare();
     });
 
     var fileURL = function (rel, version) {
       return "/artifacts/files/" + rel.split("/").map(encodeURIComponent).join("/") + (version ? "?version=" + encodeURIComponent(version) : "");
     };
-    var showImage = function (src) {
+    // bare empties the window's body: a frame or a player left standing
+    // keeps loading the file behind whatever opens next.
+    var bare = function () {
+      previewImage.hidden = true;
+      previewImage.removeAttribute("src");
       previewDoc.hidden = true;
+      previewDoc.innerHTML = "";
       previewFrame.hidden = true;
       previewFrame.removeAttribute("src");
+      if (previewAudio) {
+        previewAudio.hidden = true;
+        previewAudio.pause();
+        previewAudio.removeAttribute("src");
+      }
+    };
+    var showImage = function (src) {
+      bare();
       previewImage.hidden = false;
       previewImage.src = src;
     };
     var showDoc = function (html, kind) {
-      previewImage.hidden = true;
-      previewImage.removeAttribute("src");
-      previewFrame.hidden = true;
-      previewFrame.removeAttribute("src");
+      bare();
       previewDoc.hidden = false;
       previewDoc.className = "preview-doc " + kind;
       previewDoc.innerHTML = html;
@@ -3628,19 +3634,24 @@
     // showFrame opens a page a run wrote as a page: the frame reads the
     // file from its own URL, which answers text/html under a sandbox, so
     // the markup renders without the page around it being reachable. The
-    // markup is never put into this document — it is not ours.
+    // markup is never put into this document - it is not ours.
     var showFrame = function (src) {
-      previewImage.hidden = true;
-      previewImage.removeAttribute("src");
-      previewDoc.hidden = true;
-      previewDoc.innerHTML = "";
+      bare();
       previewFrame.hidden = false;
       previewFrame.src = src;
+    };
+    // showAudio plays a sound file a run left: the player reads it from
+    // its own URL, by byte range, and seeks in it without this page.
+    var showAudio = function (src) {
+      bare();
+      previewAudio.hidden = false;
+      previewAudio.src = src;
     };
     var previewLabel = document.getElementById("preview-label");
     var showView = function (view, src) {
       previewDownload.setAttribute("href", src + (src.indexOf("?") < 0 ? "?" : "&") + "download");
       if (view.kind === "image") showImage(src);
+      else if (view.kind === "audio" && previewAudio) showAudio(src);
       else if (view.kind === "page") showFrame(src);
       else if (view.kind === "markdown") showDoc(view.html, "markdown");
       else if (view.kind === "text") {

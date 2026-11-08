@@ -23,6 +23,10 @@ dialog.preview .preview-body:has(.preview-frame:not([hidden])) {
   align-items: flex-start;
 }
 
+dialog.preview .preview-audio {
+  width: min(34rem, 100%);
+}
+
 dialog.preview .preview-frame {
   width: 100%;
   height: calc(100vh - 10rem);

@@ -106,6 +106,9 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 		// text/html in a sandbox, so neither the size of the page nor
 		// the encoding of its bytes is this answer's business.
 		view.Kind = "page"
+	case strings.HasPrefix(view.ContentType, "audio/"):
+		// The player reads the file from its own URL, by byte range.
+		view.Kind = "audio"
 	case len(data) > maxPreview || !utf8.Valid(data):
 		view.Kind = "file"
 	case ext == ".md" || ext == ".markdown":

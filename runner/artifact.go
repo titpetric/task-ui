@@ -148,13 +148,31 @@ func describeArtifact(run *model.Run, dir, path string, entry fs.DirEntry) (*mod
 	}, nil
 }
 
-// ContentType guesses a media type from a file name, text/plain when the
-// name says nothing.
+// ContentType returns the media type a file name names, octet-stream
+// when the name says nothing.
 func ContentType(name string) string {
-	if kind := mime.TypeByExtension(strings.ToLower(filepath.Ext(name))); kind != "" {
+	ext := strings.ToLower(filepath.Ext(name))
+	if kind := mime.TypeByExtension(ext); kind != "" {
+		return kind
+	}
+	if kind, ok := audioTypes[ext]; ok {
 		return kind
 	}
 	return "application/octet-stream"
+}
+
+// audioTypes are the types of the sound files a run leaves, for an image
+// whose mime database holds none: the preview window plays what answers
+// an audio type and downloads the rest.
+var audioTypes = map[string]string{
+	".mp3":  "audio/mpeg",
+	".wav":  "audio/wav",
+	".ogg":  "audio/ogg",
+	".oga":  "audio/ogg",
+	".opus": "audio/ogg",
+	".m4a":  "audio/mp4",
+	".aac":  "audio/aac",
+	".flac": "audio/flac",
 }
 
 // ArtifactPath returns where an artifact's file is under the root.

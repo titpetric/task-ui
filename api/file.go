@@ -60,6 +60,8 @@ func (h *Handlers) viewFile(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case imageTypes[ext]:
 		view.Kind, view.Truncated = "image", false
+	case strings.HasPrefix(view.ContentType, "audio/"):
+		view.Kind, view.Truncated = "audio", false
 	case !utf8.Valid(data) || bytes.IndexByte(data, 0) >= 0:
 		view.Kind, view.Truncated = "file", false
 	case (ext == ".md" || ext == ".markdown") && !view.Truncated:
