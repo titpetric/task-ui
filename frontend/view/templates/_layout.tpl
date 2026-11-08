@@ -323,7 +323,7 @@
 {{ end }}
 
 {{ define "voice" }}
-<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden></button>
+<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 <dialog class="voice" id="voice-overlay" aria-label="Dictate">
 	<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 		<span class="voice-well" aria-hidden="true"></span>

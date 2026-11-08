@@ -485,7 +485,7 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 		</div>
 	</dialog>
 
-	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden></button>
+	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
 		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>

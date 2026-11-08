@@ -1,50 +1,37 @@
-/* .voice-orb is the thing to press: a small cloud of the same light, parked
-   out of the way, that opens the window where the avatar is full size. It
-   breathes on its own so the page says dictation is here before anyone asks. */
+/* .voice-orb is the thing to press: a flat button in the corner holding a
+   microphone, which opens the window where the avatar is full size. It is the
+   page's other buttons in every way but where it sits. */
 .voice-orb {
-  --voice-hot: #ffd9a0;
-  --voice-warm: var(--signal);
-  --voice-cool: #5fc1c9;
   position: fixed;
   inset-inline-end: 1rem;
   bottom: 1rem;
   z-index: 69;
-  width: 3.4rem;
-  height: 3.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control);
+  height: var(--control);
   padding: 0;
-  border: 0;
-  border-radius: var(--radius-round);
-  /* Last gradient is the body and the first is the specular on top of it. A
-     small hot point over a deep sphere is what reads as light; a wide one
-     reads as paint. */
-  background:
-    radial-gradient(circle at 33% 27%, #fffaf0 0%, color-mix(in srgb, var(--voice-hot) 90%, transparent) 7%, transparent 22%),
-    radial-gradient(circle at 56% 58%, color-mix(in srgb, var(--voice-warm) 70%, transparent) 0%, transparent 46%),
-    radial-gradient(circle at 74% 78%, color-mix(in srgb, var(--voice-violet, #a98ce8) 55%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 50% 46%, #1d5f66 0%, #0c2a34 72%, #061218 100%);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--voice-hot) 40%, transparent),
-    0 0 1.1rem color-mix(in srgb, var(--voice-warm) 55%, transparent),
-    0 0 2.6rem color-mix(in srgb, var(--voice-cool) 38%, transparent),
-    inset 0 -0.3rem 0.7rem color-mix(in srgb, #02060a 45%, transparent);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--signal);
   cursor: pointer;
-  transition: transform 0.14s ease-out;
+  transition:
+    color 0.14s ease-out,
+    background 0.14s ease-out,
+    border-color 0.14s ease-out;
 
-  /* The halo breathes and the orb holds still. Dropping the whole thing's
-     opacity on a dark page reads as a smudge. */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: -0.7rem;
-    border-radius: inherit;
-    background: radial-gradient(circle, color-mix(in srgb, var(--voice-warm) 34%, transparent) 0%, transparent 66%);
-    animation: voice-breathe 6s ease-in-out infinite;
-    pointer-events: none;
+  & .ic {
+    width: 1.1rem;
+    height: 1.1rem;
   }
 
   &:hover,
   &:focus-visible {
-    transform: scale(1.08);
+    color: var(--signal-ink);
+    background: var(--signal);
+    border-color: var(--signal);
   }
 
   &[hidden] {
@@ -54,26 +41,13 @@
 
 /* The toasts share the corner, so they stack above the orb when it is up. */
 body:has(.voice-orb:not([hidden])) .toasts {
-  bottom: 5.4rem;
+  bottom: 4.3rem;
 }
 
-/* The window the orb opens draws over it, and a translucent backdrop leaves
-   its glow showing through in the corner. */
+/* The window the orb opens draws over it, and the button stays down while
+   the window is up. */
 body:has(.voice[open]) .voice-orb {
   display: none;
-}
-
-@keyframes voice-breathe {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(0.92);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
 }
 
 /* .voice is the window the orb opens: the avatar over the page, what it heard,
