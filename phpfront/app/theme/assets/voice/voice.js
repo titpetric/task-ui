@@ -660,7 +660,7 @@
     shed(spokeFrom);
     waking = false;
     freely = true;
-    heardAt = Date.now();
+    // heardAt stays put: a name read late is dead air that has already run.
     if (server) {
       // The instance reads the whole recording when the dead air ends it,
       // and that recording starts at the name: the words of the piece
