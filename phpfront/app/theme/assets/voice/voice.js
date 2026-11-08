@@ -138,7 +138,9 @@
   var played = 0;       // how many answers of the thread have been played
   var source = null;    // the event stream the thread is followed over
   var gen = 0;          // a send or a discard retires the watch before it
-  var since = 0;        // when the request went out, for the counter
+  var since = 0;        // when the step the counter sits beside started
+  var began = 0;        // when the act started, for the total beside the step
+  var marks = [];       // every step of the act so far, as "Thinking 48s"
   var clock = 0;        // the interval writing the counter
   var doing = "";       // the step the counter sits beside
   var failed = false;   // the run ended and left nothing beside the recording
@@ -903,29 +905,61 @@
     return Math.floor(secs / 60) + "m" + ("0" + (secs % 60)).slice(-2) + "s";
   }
 
-  // tell writes the step and how long it has been going. A transcription on a
-  // busy machine takes a minute, and a line that does not move reads as stuck.
-  function tell(now) {
-    if (now !== undefined) {
-      doing = now;
-      shape();
-    }
-    where.textContent = doing + " · " + span(Math.round((Date.now() - since) / 1000));
+  // aged is the whole seconds between a stamp and now.
+  function aged(at) {
+    return Math.round((Date.now() - at) / 1000);
   }
 
-  // ticking starts the counter beside a step; ended stops it and leaves how
-  // long the whole thing took on the line.
-  function ticking(now) {
+  // mark closes the step the counter sits beside, keeping how long that step
+  // took, and starts the counter on the next one.
+  function mark(next) {
+    if (doing && since) marks.push(doing + " " + span(aged(since)));
+    doing = next;
     since = Date.now();
+  }
+
+  // tell writes the step, how long it has been going, and the total since the
+  // act began. A transcription on a busy machine takes a minute, and a line
+  // that does not move reads as stuck; the step's own seconds say nothing
+  // about the wait so far, which is the number a reader is counting.
+  function tell(now) {
+    if (now !== undefined) {
+      if (now !== doing) mark(now);
+      shape();
+    }
+    var line = doing + " · " + span(aged(since));
+    if (marks.length) line += " · " + span(aged(began));
+    where.textContent = line;
+  }
+
+  // ticking starts the counter beside a step, and the first step of an act
+  // starts the total: a reader waits out every step of it, where the one on
+  // screen is a fraction of the wait.
+  function ticking(now) {
+    if (!began) {
+      began = Date.now();
+      marks = [];
+    }
     if (clock) window.clearInterval(clock);
     clock = window.setInterval(function () { tell(); }, 1000);
     tell(now);
   }
 
+  // ended stops the counter and leaves the total on the line, with every step
+  // of the act in the console: a reply that took two minutes is a question
+  // about which step took them.
   function ended(word) {
-    var secs = Math.round((Date.now() - since) / 1000);
+    if (!began) {
+      stopped();
+      where.textContent = word;
+      return;
+    }
+    mark("");
+    var total = span(aged(began));
     stopped();
-    where.textContent = since ? word + " · " + span(secs) : word;
+    where.textContent = word + " · " + total;
+    console.info("voice: " + word.toLowerCase() + " in " + total + " · " + marks.join(", "));
+    began = 0;
   }
 
   function stopped() {
@@ -1120,6 +1154,8 @@
     gen++;
     stopped();
     since = 0;
+    began = 0;
+    marks = [];
     answer = "";
     reply = "";
     pending = false;
