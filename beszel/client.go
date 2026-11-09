@@ -15,15 +15,17 @@ import (
 
 // ErrToken reports a hub that refused the token: it expired, or the
 // user's password changed, which revokes every token of the user.
-var ErrToken = errors.New("beszel refused the token")
+var ErrToken = errors.New("beszel refused the token: it expired, or the hub user's password changed; enter a new one under Settings, Integrations")
 
-// Client reads a hub's systems with a token, and keeps the last answer
-// for TTL so a page that shows them does not call the hub on every view.
+// authPath answers 401 for a token the hub refuses.
+const authPath = "/api/collections/users/auth-refresh"
+
+// Client reads a hub's systems with a token, and keeps what the hub
+// answered for TTL so a page that shows them calls it once.
 //
-// The token is an impersonation token of a read-only user, which a
-// superuser mints with POST /api/collections/users/impersonate/{id} and a
-// duration: nothing refreshes it and it needs no password, so task-ui keeps
-// no login to the hub.
+// The token is a PocketBase auth token of a Beszel user: one a password
+// login minted renews through Alive, and one minted by impersonation
+// stands until its duration runs out.
 type Client struct {
 	URL   string
 	Token string
@@ -61,9 +63,34 @@ func (c *Client) Systems(ctx context.Context) ([]System, error) {
 	if err != nil {
 		return nil, err
 	}
+	// An empty page is a hub with no host and a hub that refused the token
+	// alike, and Alive is what tells them apart.
+	if len(list.Items) == 0 {
+		if _, err := c.Alive(ctx); err != nil {
+			return nil, err
+		}
+	}
 	c.stats(ctx, list.Items)
 	c.systems, c.at = list.Items, time.Now()
 	return c.systems, nil
+}
+
+// Alive returns the token the hub accepts, a new one where a password login
+// minted the one it holds, or ErrToken for a token the hub refuses. This is
+// the one call that reports the token at all: PocketBase reads a list rule
+// as a filter, so a refused token lists an empty page under 200.
+func (c *Client) Alive(ctx context.Context) (string, error) {
+	var out struct {
+		Token string `json:"token"`
+	}
+	status, err := c.send(ctx, http.MethodPost, authPath, &out)
+	if status == http.StatusUnauthorized || status == http.StatusForbidden {
+		return "", ErrToken
+	}
+	if err != nil {
+		return "", err
+	}
+	return out.Token, nil
 }
 
 // statRecord is a row of the system_stats collection.
@@ -104,7 +131,13 @@ func (c *Client) stats(ctx context.Context, systems []System) {
 // do reads a path from the hub and decodes a success into out. It returns
 // the status, and an error for anything but a success.
 func (c *Client) do(ctx context.Context, path string, out any) (int, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(c.URL, "/")+path, nil)
+	return c.send(ctx, http.MethodGet, path, out)
+}
+
+// send calls a path of the hub with the token and decodes a success into
+// out. It returns the status, and an error for anything but a success.
+func (c *Client) send(ctx context.Context, method, path string, out any) (int, error) {
+	req, err := http.NewRequestWithContext(ctx, method, strings.TrimRight(c.URL, "/")+path, nil)
 	if err != nil {
 		return 0, err
 	}

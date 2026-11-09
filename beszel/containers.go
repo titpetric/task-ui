@@ -8,7 +8,7 @@ import (
 )
 
 // Containers returns the containers each host runs, by the host's ID, at most TTL old.
-// They come from the hub's containers collection, which holds what its agents reported in the last ten minutes.
+// They come from the hub's containers collection, which holds what its agents report over ten minutes.
 // On a hub without that collection, they are the newest container_stats record of each host.
 func (c *Client) Containers(ctx context.Context) (map[string][]Container, error) {
 	c.mu.Lock()
