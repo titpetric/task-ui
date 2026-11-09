@@ -168,11 +168,38 @@ func TestFrontHost_Inventory(t *testing.T) {
 	t.Parallel()
 
 	host := &FrontHost{}
-	assert.True(t, host.Inventory(context.Background(), true).Off)
+	assert.True(t, host.Inventory(context.Background(), true, nil).Off)
 
 	facts := host.HostFacts(context.Background(), "web1", true)
 	assert.False(t, facts.Found)
 	assert.Equal(t, beszel.ErrOff.Error(), facts.Error)
+}
+
+// A page's own inventory is a host whatever the hub says: an address the hub
+// reports is left to the hub's own system, and one it says nothing of becomes
+// a host named the way the page names it.
+func TestUnreported(t *testing.T) {
+	t.Parallel()
+
+	systems := []beszel.System{{ID: "sys1", Name: "web1", Host: "10.0.0.1"}}
+	held := map[string]string{"10.0.0.1": "web1", "10.0.0.2": "box", "10.0.0.3": ""}
+	out := unreported(systems, held)
+
+	// The names order them, and a row with no name reads as its address.
+	assert.Len(t, out, 2)
+	assert.Equal(t, "10.0.0.3", out[0].Name)
+	assert.Equal(t, "10.0.0.2", out[1].Host)
+	assert.Equal(t, "box", out[1].Name)
+	assert.Len(t, unreported(systems, nil), 0)
+}
+
+// Reach needs a prober, and an address is named.
+func TestFrontHost_Reach(t *testing.T) {
+	t.Parallel()
+
+	host := &FrontHost{}
+	assert.Equal(t, "", host.Reach(context.Background(), "10.0.0.2"))
+	assert.Equal(t, "", host.Reach(context.Background(), ""))
 }
 
 // frontUptime words how long a host has run: days past two, else hours past

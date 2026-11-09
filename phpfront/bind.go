@@ -328,11 +328,17 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// The hosts: beszel's hub, the ssh prober and hostinfo, none of them a
 	// row. The hosts permission is the reader's, which PHP decides, and it
 	// decides whether task-ui reads a host now or answers from what it kept.
-	rt.RegisterFunc(HostClass+"::inventory", func(ctx context.Context, hosts bool) (*model.Array, error) {
+	rt.RegisterFunc(HostClass+"::inventory", func(ctx context.Context, hosts bool, held any) (*model.Array, error) {
 		if opts.Host == nil {
 			return inventory(Inventory{Off: true}), nil
 		}
-		return inventory(opts.Host.Inventory(ctx, hosts)), nil
+		return inventory(opts.Host.Inventory(ctx, hosts, pairs(held))), nil
+	})
+	rt.RegisterFunc(HostClass+"::reach", func(ctx context.Context, address string) (string, error) {
+		if opts.Host == nil {
+			return "", nil
+		}
+		return opts.Host.Reach(ctx, address), nil
 	})
 	rt.RegisterFunc(HostClass+"::host", func(ctx context.Context, name string, hosts bool) (*model.Array, error) {
 		if opts.Host == nil {

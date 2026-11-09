@@ -1,7 +1,7 @@
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
-{if $data.off}<p class="empty-state">The Beszel integration isn't set up yet.{if $data.integrations} Add its URL and token under <a href="{base}/settings/integrations#beszel">Settings, Integrations</a>.{/if}</p>
-{else}{if $data.form}<section class="block inventory-run">
+{if $data.off}<p class="empty-state">The hosts below are the inventory's own. Beszel isn't set up, so no host has measures.{if $data.integrations} Add its URL and token under <a href="{base}/settings/integrations#beszel">Settings, Integrations</a>.{/if}</p>
+{/if}{if $data.form}<section class="block inventory-run">
 	<h3>Run on the hosts</h3>
 	<form data-inventory-run>
 		<div class="run-commands">
@@ -59,7 +59,20 @@
 {/if}{if $data.cluster.charts}	<div class="charts">{foreach $data.cluster.charts as $chart}{eval $data_line_chart = $chart}{include components/line-chart.tpl}{/foreach}	</div>
 {/if}</div>
 {/if}<h3>Hosts</h3>
-<div class="table-wrap">
+{if $data.add}<form class="form inline inventory-add" method="post" action="{data.add}">
+	<div class="field">
+		<label for="host-address">Address</label>
+		<input type="text" id="host-address" name="address" required spellcheck="false" placeholder="dev1 or 10.0.0.2">
+		<small class="faint">task-ui signs in over ssh before it keeps the host, which takes a moment.</small>
+	</div>
+	<div class="field">
+		<label for="host-name">Name</label>
+		<input type="text" id="host-name" name="name" spellcheck="false" placeholder="the address">
+		<small class="faint">What the pages call it. Empty is the address.</small>
+	</div>
+	<div class="form-foot"><span></span><span class="actions"><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add the host</button></span></div>
+</form>
+{/if}<div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th>{if $data.logins}<th>SSH</th>{/if}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory <small>GB</small></th><th colspan="2">Disk <small>GB</small></th><th class="actions" aria-label="Actions"></th></tr></thead>
 	<tbody>
@@ -72,12 +85,11 @@
 			<td class="size faint nowrap">{if $row.measured}{row.memoryUsed} / {row.memoryTotal}{/if}</td>
 			<td>{eval $data_meter = $row.disk}{include components/meter.tpl}			</td>
 			<td class="size faint nowrap">{if $row.measured}{row.diskUsed} / {row.diskTotal}{/if}</td>
-			<td class="actions">{eval $data_menu = $row.menu}{include components/menu.tpl}			</td>
+			<td class="actions">{if $row.drop}<form class="inline inventory-drop" method="post" action="{row.drop}" data-confirm="{row.asked}"><button class="btn-icon" type="submit" title="Remove from the inventory" aria-label="Remove {row.name} from the inventory"><svg class="ic"><use href="#i-trash"/></svg></button></form>{/if}{eval $data_menu = $row.menu}{include components/menu.tpl}			</td>
 		</tr>
-{else}		<tr class="empty"><td colspan="9">Beszel isn't monitoring any hosts.</td></tr>
+{else}		<tr class="empty"><td colspan="9">No hosts yet.{if $data.add} Add one above.{/if}</td></tr>
 {/foreach}	</tbody>
 </table>
 </div>
 <p class="faint live-stamp">Updated {data.now}</p>
 </section>
-{/if}

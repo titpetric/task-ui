@@ -106,17 +106,17 @@ func Kinds() []Kind {
 		{
 			ID:          Beszel,
 			Title:       "Beszel",
-			Description: "The host monitor; task-ui reads its systems for the Inventory page.",
+			Description: "The host monitor; task-ui folds its systems into the Inventory's hosts, which are task-ui's own rows and stay when this integration goes.",
 			Fields: []Field{
 				{Name: "url", Label: "URL", Placeholder: "http://beszel:8090", Help: "Where task-ui reaches the hub."},
-				{Name: "token", Label: "Token", Secret: true, Help: "An impersonation token of a read-only Beszel user, minted by a superuser with a duration; see the Integrations chapter. Changing that user's password revokes it."},
+				{Name: "token", Label: "Token", Secret: true, Help: "An impersonation token of a read-only Beszel user, minted by a superuser for ten years; see the Integrations chapter. Nothing renews one, and changing that user's password revokes it."},
 			},
 			Steps: []string{
 				"In Beszel, add a read-only user that nobody signs in as, with a password nobody keeps.",
 				"As a superuser, sign in to the hub's API: `POST /api/collections/_superusers/auth-with-password` with your identity and password answers with your token.",
-				"Mint a token for the read-only user with it: `POST /api/collections/users/impersonate/<user id>` with `{\"duration\": 31536000}`, the seconds it lasts; the guide has both commands as curl.",
+				"Mint a token for the read-only user with it: `POST /api/collections/users/impersonate/<user id>` with a `duration` in seconds, a decade of them; the guide has both commands as curl. A token of that endpoint is not refreshable, so its duration is the whole of its life.",
 				"Enter the hub's URL as task-ui reaches it, and the token.",
-				"Save. The Inventory page lists the hub's systems. Changing that user's password revokes the token.",
+				"Save. The Inventory page draws the hub's measures on its hosts. A token the hub refuses says so on the page.",
 			},
 		},
 		{

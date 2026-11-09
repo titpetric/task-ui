@@ -5,6 +5,16 @@ hide empty members
 skinparam linetype ortho
 skinparam shadowing false
 skinparam backgroundColor transparent
+entity "host" {
+  * id : text
+  + name : text
+  + address : text
+  + source : TEXT
+  + login : text
+  + added_by : text
+  + created_at : timestamp
+}
+
 entity "note" {
   * id : text
   + channel : TEXT
@@ -49,6 +59,8 @@ entity "run" {
   + batch_id : text
   + message : text
   + title : text
+  + parent_id : text
+  + parent_kind : text
 }
 
 entity "user" {

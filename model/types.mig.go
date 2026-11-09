@@ -303,6 +303,81 @@ var EnvFileFields = []string{"id", "folder", "path", "content", "created_at", "u
 // EnvFilePrimaryFields are the primary key fields in the DB table.
 var EnvFilePrimaryFields = []string{"id"}
 
+// Host generated for db table `host`.
+type Host struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Address
+	Address string `db:"address" json:"address"`
+
+	// Source
+	Source string `db:"source" json:"source"`
+
+	// Login
+	Login string `db:"login" json:"login"`
+
+	// Added By
+	AddedBy string `db:"added_by" json:"added_by"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (h *Host) GetID() string { return h.ID }
+
+// SetID sets ID to the provided value.
+func (h *Host) SetID(val string) { h.ID = val }
+
+// GetName will return the value of Name.
+func (h *Host) GetName() string { return h.Name }
+
+// SetName sets Name to the provided value.
+func (h *Host) SetName(val string) { h.Name = val }
+
+// GetAddress will return the value of Address.
+func (h *Host) GetAddress() string { return h.Address }
+
+// SetAddress sets Address to the provided value.
+func (h *Host) SetAddress(val string) { h.Address = val }
+
+// GetSource will return the value of Source.
+func (h *Host) GetSource() string { return h.Source }
+
+// SetSource sets Source to the provided value.
+func (h *Host) SetSource(val string) { h.Source = val }
+
+// GetLogin will return the value of Login.
+func (h *Host) GetLogin() string { return h.Login }
+
+// SetLogin sets Login to the provided value.
+func (h *Host) SetLogin(val string) { h.Login = val }
+
+// GetAddedBy will return the value of AddedBy.
+func (h *Host) GetAddedBy() string { return h.AddedBy }
+
+// SetAddedBy sets AddedBy to the provided value.
+func (h *Host) SetAddedBy(val string) { h.AddedBy = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (h *Host) GetCreatedAt() *time.Time { return h.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (h *Host) SetCreatedAt(stamp time.Time) { h.CreatedAt = &stamp }
+
+// HostTable is the name of the table in the DB.
+const HostTable = "`host`"
+
+// HostFields is a list of all columns in the DB table.
+var HostFields = []string{"id", "name", "address", "source", "login", "added_by", "created_at"}
+
+// HostPrimaryFields are the primary key fields in the DB table.
+var HostPrimaryFields = []string{"id"}
+
 // KeyInfo generated for db table `key_info`.
 //
 // Key Info.
@@ -3643,6 +3718,67 @@ func (e *EnvFile) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (e *EnvFile) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: EnvFileTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (h *Host) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: HostTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := HostFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (h *Host) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: HostTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (h *Host) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: HostTable}).Apply(opts...)
+	cols := HostFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (h *Host) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: HostTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

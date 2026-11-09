@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -40,11 +41,15 @@ type Starter struct {
 	Catalogue interface {
 		Find(id string) *folder.Folder
 	}
-	// Hosts is the inventory, and SSH who task-ui signs in to each host
+	// Hosts is the Beszel hub, and SSH who task-ui signs in to each host
 	// as and the ssh command a run starts.
 	Hosts  *beszel.Inventory
 	SSH    *sshprobe.Prober
 	Runner *runner.Manager
+	// Held is the inventory the Inventory page keeps, a host's name by the
+	// address it answers on: a host a person entered is a target as much as
+	// one the hub reports. Nil leaves the hub's hosts as the whole list.
+	Held func(ctx context.Context) map[string]string
 	// Timeout bounds the command on one host, Timeout unless set; Wait
 	// bounds finding the logins, ten seconds unless set.
 	Timeout time.Duration
@@ -59,7 +64,8 @@ func (s *Starter) Resolve(ctx context.Context, targets []string) ([]string, map[
 		return nil, nil, beszel.ErrOff
 	}
 	systems, err := s.Hosts.Systems(ctx)
-	if err != nil {
+	held := s.held(ctx)
+	if err != nil && len(held) == 0 {
 		return nil, nil, err
 	}
 	known := map[string]bool{}
@@ -67,6 +73,15 @@ func (s *Starter) Resolve(ctx context.Context, targets []string) ([]string, map[
 	for _, system := range beszel.ByCapacity(systems) {
 		known[system.Host] = true
 		all = append(all, system.Host)
+	}
+	// The inventory is task-ui's list and the hub is one source of it, so a
+	// host a person entered is a target while the hub answers nothing.
+	for _, address := range held {
+		if known[address] {
+			continue
+		}
+		known[address] = true
+		all = append(all, address)
 	}
 	every := len(targets) == 0
 	var hosts []string
@@ -101,6 +116,19 @@ func (s *Starter) Resolve(ctx context.Context, targets []string) ([]string, map[
 		return nil, nil, ErrNoHosts
 	}
 	return hosts, logins, nil
+}
+
+// held is the addresses of the inventory, sorted, and none for a nil Held.
+func (s *Starter) held(ctx context.Context) []string {
+	if s.Held == nil {
+		return nil
+	}
+	out := make([]string, 0, len(s.Held(ctx)))
+	for address := range s.Held(ctx) {
+		out = append(out, address)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // Start starts the command on each host the request names, as the user, one run a host, all at once.

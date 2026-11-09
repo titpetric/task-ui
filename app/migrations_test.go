@@ -26,6 +26,7 @@ var migrations = []string{
 	"artifact_commit.up.sql",
 	"artifact_user.up.sql",
 	"env_file.up.sql",
+	"host.up.sql",
 	"key_info.up.sql",
 	"key_info_backup.up.sql",
 	"key_read.up.sql",

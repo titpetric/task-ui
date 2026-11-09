@@ -11,8 +11,10 @@ import (
 // declares the shapes.
 
 // The hosts permission decides whether task-ui reads a host now, so the
-// double answers a login only where the reader has it.
-func (h *host) Inventory(_ context.Context, hosts bool) phpfront.Inventory {
+// double answers a login only where the reader has it. A held address the
+// double reports nothing of is a host with no measures, as the page's own
+// inventory is.
+func (h *host) Inventory(_ context.Context, hosts bool, held map[string]string) phpfront.Inventory {
 	out := phpfront.Inventory{
 		Hosts: []phpfront.System{{
 			ID: "sys1", Name: "web1", Host: "10.0.0.1", Status: "up", Up: true,
@@ -32,11 +34,25 @@ func (h *host) Inventory(_ context.Context, hosts bool) phpfront.Inventory {
 	if hosts {
 		out.Logins = []phpfront.Login{{Host: "10.0.0.1", Login: "debian@10.0.0.1"}}
 	}
+	for address, name := range held {
+		if address == "10.0.0.1" {
+			continue
+		}
+		out.Hosts = append(out.Hosts, phpfront.System{Name: name, Host: address})
+	}
 	return out
 }
 
 func (h *host) Reachable(context.Context) []string {
 	return []string{"10.0.0.1"}
+}
+
+// Reach signs in to the one address the double knows.
+func (h *host) Reach(_ context.Context, address string) string {
+	if address != "10.0.0.2" {
+		return ""
+	}
+	return "debian@" + address
 }
 
 func (h *host) HostFacts(_ context.Context, name string, hosts bool) phpfront.HostFacts {

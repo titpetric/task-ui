@@ -30,6 +30,7 @@ type AppStorage struct {
 	Sidebar      *storage.SidebarStorage
 	Notes        *storage.NoteStorage
 	Pins         *storage.PinStorage
+	Hosts        *storage.HostStorage
 	Settings     *storage.SettingStorage
 	EnvFiles     *storage.EnvFileStorage
 
@@ -65,6 +66,7 @@ func NewAppStorage(db storage.DB) *AppStorage {
 		Sidebar:      storage.NewSidebarStorage(db),
 		Notes:        storage.NewNoteStorage(db),
 		Pins:         storage.NewPinStorage(db),
+		Hosts:        storage.NewHostStorage(db),
 		Settings:     storage.NewSettingStorage(db),
 		EnvFiles:     storage.NewEnvFileStorage(db),
 

@@ -121,7 +121,16 @@ type Host interface {
 	// logins, the pools the hosts sum into and the month the charts draw.
 	// hosts says the reader has the hosts permission, which is what makes
 	// task-ui read a host rather than answer from what it kept.
-	Inventory(ctx context.Context, hosts bool) Inventory
+	//
+	// held is the inventory the page keeps, the name of each host by the
+	// address it answers on. A held address the hub reports nothing of is a
+	// host of the answer all the same, with no measures on it.
+	Inventory(ctx context.Context, hosts bool, held map[string]string) Inventory
+
+	// Reach is the ssh login that signs in to an address, user@address, or
+	// "" for an address no login of the instance reaches. It waits for the
+	// probe: a page adds a host once this answers.
+	Reach(ctx context.Context, address string) string
 
 	// HostFacts is one host of the inventory in full: its containers as
 	// Beszel and docker ps report them together, its durable filesystems,

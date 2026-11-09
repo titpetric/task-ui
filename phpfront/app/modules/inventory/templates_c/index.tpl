@@ -142,10 +142,10 @@
 <?php }?></div>
 
 <?php if($_v['data']['off']){?>
-<p class="empty-state">The Beszel integration isn't set up yet.<?php if($_v['data']['integrations']){?>
+<p class="empty-state">The hosts below are the inventory's own. Beszel isn't set up, so no host has measures.<?php if($_v['data']['integrations']){?>
  Add its URL and token under <a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /settings/integrations#beszel">Settings, Integrations</a>.<?php }?></p>
-<?php }else{ if($_v['data']['form']){?>
+<?php }?><?php if($_v['data']['form']){?>
 <section class="block inventory-run">
 	<h3>Run on the hosts</h3>
 	<form data-inventory-run>
@@ -587,7 +587,22 @@ s are down or send<?php }else{?>
 <?php }?>	</div>
 <?php }?></div>
 <?php }?><h3>Hosts</h3>
-<div class="table-wrap">
+<?php if($_v['data']['add']){?>
+<form class="form inline inventory-add" method="post" action="<?php echo htmlspecialchars($_v['data']['add'], ENT_QUOTES);?>
+">
+	<div class="field">
+		<label for="host-address">Address</label>
+		<input type="text" id="host-address" name="address" required spellcheck="false" placeholder="dev1 or 10.0.0.2">
+		<small class="faint">task-ui signs in over ssh before it keeps the host, which takes a moment.</small>
+	</div>
+	<div class="field">
+		<label for="host-name">Name</label>
+		<input type="text" id="host-name" name="name" spellcheck="false" placeholder="the address">
+		<small class="faint">What the pages call it. Empty is the address.</small>
+	</div>
+	<div class="form-foot"><span></span><span class="actions"><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add the host</button></span></div>
+</form>
+<?php }?><div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th><?php if($_v['data']['logins']){?>
 <th>SSH</th><?php }?><th class="center">Cores</th><th>CPU</th><th colspan="2">Memory <small>GB</small></th><th colspan="2">Disk <small>GB</small></th><th class="actions" aria-label="Actions"></th></tr></thead>
@@ -643,7 +658,11 @@ down<?php }?>" role="img" aria-label="<?php echo htmlspecialchars($_v['row']['st
 			</td>
 			<td class="size faint nowrap"><?php if($_v['row']['measured']){ echo htmlspecialchars($_v['row']['diskUsed'], ENT_QUOTES);?>
  / <?php echo htmlspecialchars($_v['row']['diskTotal'], ENT_QUOTES); }?></td>
-			<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
+			<td class="actions"><?php if($_v['row']['drop']){?>
+<form class="inline inventory-drop" method="post" action="<?php echo htmlspecialchars($_v['row']['drop'], ENT_QUOTES);?>
+" data-confirm="<?php echo htmlspecialchars($_v['row']['asked'], ENT_QUOTES);?>
+"><button class="btn-icon" type="submit" title="Remove from the inventory" aria-label="Remove <?php echo htmlspecialchars($_v['row']['name'], ENT_QUOTES);?>
+ from the inventory"><svg class="ic"><use href="#i-trash"/></svg></button></form><?php }?><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
@@ -688,11 +707,11 @@ down<?php }?>" role="img" aria-label="<?php echo htmlspecialchars($_v['row']['st
 			</td>
 		</tr>
 <?php }else{?>
-		<tr class="empty"><td colspan="9">Beszel isn't monitoring any hosts.</td></tr>
+		<tr class="empty"><td colspan="9">No hosts yet.<?php if($_v['data']['add']){?>
+ Add one above.<?php }?></td></tr>
 <?php }?>	</tbody>
 </table>
 </div>
 <p class="faint live-stamp">Updated <?php echo htmlspecialchars($_v['data']['now'], ENT_QUOTES);?>
 </p>
 </section>
-<?php }?>

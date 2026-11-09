@@ -30,6 +30,16 @@ CREATE TABLE env_file (
     updated_at DATETIME
 );
 CREATE UNIQUE INDEX idx_env_file_folder_path ON env_file(folder, path);
+CREATE TABLE host (
+    id CHAR(26) PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('manual', 'beszel')),
+    login TEXT NOT NULL DEFAULT '',
+    added_by TEXT NOT NULL DEFAULT '',
+    created_at DATETIME
+);
+CREATE UNIQUE INDEX idx_host_address ON host(address);
 CREATE TABLE key_info (
     name TEXT PRIMARY KEY NOT NULL,
     purpose TEXT NOT NULL CHECK (purpose IN ('encrypt', 'ssh')),

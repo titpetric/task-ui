@@ -312,10 +312,14 @@ Beszel has no API keys. task-ui takes a token of a read-only user that no one si
 super=$(curl -s -X POST http://beszel:8090/api/collections/_superusers/auth-with-password \
   -H 'Content-Type: application/json' -d '{"identity":"<admin email>","password":"<admin password>"}' | jq -r .token)
 curl -s -X POST http://beszel:8090/api/collections/users/impersonate/<user id> \
-  -H "Authorization: $super" -H 'Content-Type: application/json' -d '{"duration":31536000}' | jq -r .token
+  -H "Authorization: $super" -H 'Content-Type: application/json' -d '{"duration":315360000}' | jq -r .token
 ```
 
-The token works until it expires, and changing the user's password in Beszel revokes it.
+**Mint it for ten years.** The `duration` above is a decade in seconds, and a decade is the right number because nothing renews a token of that endpoint: PocketBase writes it with `refreshable: false`, and its own `auth-refresh` answers with the same token. A fresh one is this pair of calls again. Changing that user's password in Beszel revokes it whatever the duration says.
+
+A token the hub refuses lists an empty inventory under `200`, because PocketBase applies a collection's list rule as a filter and a request nobody is signed in for matches no row. task-ui asks `POST /api/collections/users/auth-refresh` whenever the hub lists no system; that path answers `401` for a token the hub refuses, and the Inventory page says the token expired.
+
+The hosts stay either way. The inventory is task-ui's own list (see [Inventory](inventory.md)), and a hub that stops answering takes no row out of it.
 
 ### Forgejo
 

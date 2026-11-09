@@ -109,6 +109,52 @@
         - folder
         - path
       unique: true
+- name: host
+  comment: Host
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: address
+      type: text
+      key: MUL
+      comment: Address
+      datatype: varchar
+    - name: source
+      type: TEXT
+      comment: Source
+      datatype: varchar
+      values:
+        - beszel
+        - manual
+    - name: login
+      type: text
+      comment: Login
+      datatype: varchar
+    - name: added_by
+      type: text
+      comment: Added By
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_host_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_host_address
+      columns:
+        - address
+      unique: true
 - name: key_info
   comment: Key Info
   columns:

@@ -36,13 +36,18 @@ func hostDataShown(dataDir, host string) string {
 // promptHosts lists the inventory for a prompt's run: the hosts, largest
 // first, with who task-ui signs in to each as, waiting at most 10s for
 // the hosts not yet probed.
-func promptHosts(hosts *beszel.Inventory, prober *sshprobe.Prober) func(ctx context.Context) (string, error) {
+//
+// held is the inventory the Inventory page keeps, a name by address. A host
+// a person entered is in the list whether the hub reports it or not, and a
+// hub that answers nothing leaves the rows.
+func promptHosts(hosts *beszel.Inventory, prober *sshprobe.Prober, held func(ctx context.Context) map[string]string) func(ctx context.Context) (string, error) {
 	return func(ctx context.Context) (string, error) {
 		systems, err := hosts.Systems(ctx)
-		if err != nil {
+		rows := held(ctx)
+		if err != nil && len(rows) == 0 {
 			return "", err
 		}
-		systems = beszel.ByCapacity(systems)
+		systems = beszel.ByCapacity(append(systems, unreported(systems, rows)...))
 		names := make([]string, len(systems))
 		for i, system := range systems {
 			names[i] = system.Host

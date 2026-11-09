@@ -1,6 +1,18 @@
 # Inventory
 
-The hosts Beszel monitors, inline in task-ui, the largest first by cores, then RAM: whether each is up, its icon green when up and red otherwise, who task-ui signs in to it as over ssh, its cores, how busy its CPU is, and how full its memory and disk are, with what it uses of each and the size, in GB. A share turns amber past 75% and red past 90%. A host whose agent sends no core count shows its threads.
+The hosts task-ui keeps, the largest first by cores, then RAM: whether each is up, its icon green when up and red otherwise, who task-ui signs in to it as over ssh, its cores, how busy its CPU is, and how full its memory and disk are, with what it uses of each and the size, in GB. A share turns amber past 75% and red past 90%. A host whose agent sends no core count shows its threads.
+
+## The list
+
+**The hosts are rows of this instance, and Beszel is a source.** A host the hub reports goes into the list on the first read that sees it; a host nobody monitors is entered by address. Dropping the [Beszel integration](settings.md#integrations) leaves every row where it is, and so does a hub that stops answering: the measures go and the hosts stay, each line drawn with empty meters.
+
+**Add a host** with `inventory/edit`, Allow Edits on Inventory: the address task-ui signs in to, and a name for the page, the address itself where none is given. task-ui signs in over ssh before it writes the row, with the instance keys and the logins of the SSH column, and an address no login reaches is refused: a host of the inventory is a host task-ui can read and run a command on. The probe waits up to twenty seconds, which is the ssh timeout on a host that is not there.
+
+A host you entered is a target of a [host command](#running-a-command-on-the-hosts) as much as one the hub reports, `@host:<address>`, and it is in the inventory a [prompt](#prompts-on-the-hosts) reads. Its line draws with no meters until Beszel monitors it: the measures, the pools and the charts are the hub's.
+
+**Remove a host** with `inventory/delete`, from the row's **⋯** menu. Nothing else takes a row out: a host the hub stopped reporting, a host that is down and a host somebody rebuilt all stay until someone removes them. A host the hub still reports comes back on the next read, because the hub is a source and removing a row says nothing to it.
+
+A row's menu names where it came from, Beszel or entered here. The two writes are pages of the Inventory and not routes of `/api`: the form posts to `/inventory/hosts` and Remove posts to `/inventory/hosts/<id>/delete`, both redirecting back to the page with what happened. `GET /api/inventory` lists the hosts for an agent, the hub's measures on them.
 
 ![The Inventory page: the cluster's pools and month, and the hosts](https://cdn.si/titpetric/task-ui/docs/assets/inventory-dark.png)
 
@@ -49,7 +61,7 @@ The runs started together are a batch. The panel shows your last batch under the
 
 **Run and summarize** runs the command the same way, and after the last host finishes asks Claude about the batch, as you: a prompt thread about the batch's first run, "Summarize the runs on these hosts.", which Claude answers with every host's run and output in one or two short paragraphs, leading with what needs attention, and a table with a row a host. The thread shows under the panel and on the page of every run of the batch, where you can ask about the batch again. The button shows when the Claude Code integration has a token for you (see [Settings](settings.md#integrations)).
 
-A [schedule](scheduled.md) or a [workflow](workflows.md) step runs `@host:<name>` or `@host:*` too, with the command as its args; `@host:*` starts a batch. Their job pickers list the host jobs under **Hosts** for a user with `hosts`, and nothing new for anyone else. A workflow step of `@host:*` ends ok when every host's run did. Both take the `hosts` permission of the user they run as. An agent on a [prompt](#prompts-on-the-hosts) reaches the hosts through the inventory in its context; the `@host:` jobs are for the commands to record and to schedule.
+A [schedule](scheduled.md) or a [workflow](workflows.md) step runs `@host:<name>` or `@host:*` too, with the command as its args; `@host:*` starts a batch. Their job pickers list the host jobs under **Hosts** for a user with `hosts`, and nothing new for anyone else; a picker lists the hub's hosts, and a host nobody monitors is typed as `@host:<address>`. A workflow step of `@host:*` ends ok when every host's run did. Both take the `hosts` permission of the user they run as. An agent on a [prompt](#prompts-on-the-hosts) reaches the hosts through the inventory in its context; the `@host:` jobs are for the commands to record and to schedule.
 
 The logins sign in as `debian` or `root`, and the panel shows only with `hosts`, which no role but admin holds until [Settings, Permissions](settings.md#permissions) grants it. The page itself takes Allow View on Inventory, `inventory/view`, which the runner and viewer roles hold.
 
@@ -61,7 +73,7 @@ A [prompt](projects.md#prompt) on a folder page sees the inventory. Its run gets
 
 The ssh agent of the run holds the keys that sign in: the instance keys [Settings, Keys](settings.md#keys) links to your role or your name, and the SSH keys of the workspace its links let through. The SSH column comes from every instance SSH key, as a host command does. A host there may still refuse a prompt whose run lacks the key that reaches it; link that key to the admin role, or to you, in Settings, Keys. When Beszel does not answer, the prompt runs all the same, and Claude reads that task-ui got no inventory. The notes agent, `@claude` on the Notes board, gets no inventory.
 
-task-ui reads the hub at most once a minute, and the page fetches the hosts again each minute on its own, with the time of the fetch under the table as **Updated**. The page needs the Beszel integration: its URL and a token (see [Settings](settings.md#integrations)). Without one, the page says so.
+task-ui reads the hub at most once a minute, and the page fetches the hosts again each minute on its own, with the time of the fetch under the table as **Updated**. The measures, the pools and the charts are the hub's and need the Beszel integration, its URL and a token (see [Settings](settings.md#integrations)); the hosts, their ssh logins, their filesystems and a command on them need none.
 
 ---
 

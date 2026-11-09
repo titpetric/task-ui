@@ -89,3 +89,15 @@ func fields(array any) map[string]any {
 	})
 	return out
 }
+
+// pairs reads a PHP array as a map of strings, the keys and the values each
+// as they come; anything that is not a string is left out.
+func pairs(array any) map[string]string {
+	out := make(map[string]string)
+	for key, value := range fields(array) {
+		if text, ok := value.(string); ok {
+			out[key] = text
+		}
+	}
+	return out
+}

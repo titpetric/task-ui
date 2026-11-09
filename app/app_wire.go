@@ -97,7 +97,7 @@ func (a *App) wire(version string) error {
 		APIURL:        func() string { return strings.TrimSuffix(MCPURL(a.Addr()), "/mcp") },
 		Tooling:       toolSummary(store.Tools),
 	})
-	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: svc.Hosts, SSH: svc.SSH, Runner: a.Runner}
+	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: svc.Hosts, SSH: svc.SSH, Runner: a.Runner, Held: store.Hosts.Names}
 	a.Scheduler = scheduler.NewLoop(store.Schedules, store.Users, a.Catalogue.Steps(), a.Runner)
 	a.Scheduler.Hosts = hostRuns
 	a.Workflows = workflow.New(store.Workflows, store.WorkflowRuns, a.Catalogue.Steps(), a.Runner)
@@ -116,7 +116,7 @@ func (a *App) wire(version string) error {
 	a.Board = &note.Board{
 		Notes: store.Notes, Users: store.Users, Runs: store.Runs, WorkflowRuns: store.WorkflowRuns, RunSummaries: store.RunSummaries, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: svc.Recordings, Events: svc.Events, Root: cfg.Root, Workspaces: store.Workspaces,
-		Hosts: promptHosts(svc.Hosts, svc.SSH), BaseURL: cfg.URL,
+		Hosts: promptHosts(svc.Hosts, svc.SSH, store.Hosts.Names), BaseURL: cfg.URL,
 		RunTokens: a.Guard.RunTokens, MCPURL: func() string { return MCPURL(a.Addr()) },
 	}
 	a.Workflows.Prompter = a.Board

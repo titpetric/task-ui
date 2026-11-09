@@ -47,6 +47,9 @@ class Host {
 	public static $space = array();
 	public static $spaces = array();
 	public static $inventory = array();
+
+	/** reach is the ssh login of each address, for a fixture. */
+	public static $reach = array();
 	public static $hosts = array();
 	public static $reachable = array();
 	public static $tooling = array();
@@ -414,8 +417,12 @@ class Host {
 	 *
 	 * $hosts is the reader's hosts permission, which is what makes task-ui
 	 * read a host rather than answer out of what it kept.
+	 *
+	 * $held is the inventory the page keeps, a host's name by the address it
+	 * answers on. An address the hub reports nothing of is a host of the
+	 * answer with no measures on it.
 	 */
-	static function inventory($hosts) {
+	static function inventory($hosts, $held = array()) {
 		if (self::$inventory) {
 			return self::$inventory;
 		}
@@ -446,6 +453,17 @@ class Host {
 	 */
 	static function tooling() {
 		return self::$tooling;
+	}
+
+	/**
+	 * The ssh login that signs in to an address, `user@address`, or "" for
+	 * an address no login of the instance reaches.
+	 *
+	 * It waits for the probe, up to twenty seconds, because a page enters a
+	 * host once this answers.
+	 */
+	static function reach($address) {
+		return isset(self::$reach[$address]) ? self::$reach[$address] : "";
 	}
 
 	/**

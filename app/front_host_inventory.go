@@ -18,6 +18,9 @@ import (
 const (
 	frontProbe = 4 * time.Second
 	frontRead  = 15 * time.Second
+	// frontReach bounds the probe of an address a page is entering as a
+	// host, which is the one probe a reader waits on.
+	frontReach = 20 * time.Second
 )
 
 // Inventory is the hosts page's facts: what Beszel monitors largest first,
@@ -26,7 +29,11 @@ const (
 //
 // hosts is the reader's permission, which PHP decides. True reads each host
 // now; false answers out of what the host last told.
-func (h *FrontHost) Inventory(ctx context.Context, hosts bool) phpfront.Inventory {
+//
+// held is the page's own inventory, a name by the address it answers on: a
+// held address the hub reports nothing of is a host with no measures, and
+// the hub's own hosts are in the answer whether the page holds them or not.
+func (h *FrontHost) Inventory(ctx context.Context, hosts bool, held map[string]string) phpfront.Inventory {
 	if h.Hosts == nil {
 		return phpfront.Inventory{Off: true}
 	}
@@ -38,7 +45,7 @@ func (h *FrontHost) Inventory(ctx context.Context, hosts bool) phpfront.Inventor
 	case err != nil:
 		out.Error = err.Error()
 	}
-	sorted := beszel.ByCapacity(systems)
+	sorted := beszel.ByCapacity(append(systems, unreported(systems, held)...))
 	out.Hosts = frontSystems(sorted)
 	if len(sorted) == 0 {
 		return out
@@ -62,6 +69,37 @@ func (h *FrontHost) Inventory(ctx context.Context, hosts bool) phpfront.Inventor
 	out.Cluster = frontCluster(summary)
 	out.History = frontHistory(records)
 	return out
+}
+
+// unreported is a system for each held address the hub says nothing about,
+// named the way the page names it: a host of the inventory is a host of the
+// page, measures or none.
+func unreported(systems []beszel.System, held map[string]string) []beszel.System {
+	reported := map[string]bool{}
+	for _, each := range systems {
+		reported[each.Host] = true
+	}
+	out := make([]beszel.System, 0, len(held))
+	for address, name := range held {
+		if reported[address] {
+			continue
+		}
+		if name == "" {
+			name = address
+		}
+		out = append(out, beszel.System{Name: name, Host: address})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
+// Reach is the ssh login of an address, or "": a page enters a host once a
+// login answers, so the probe is waited out.
+func (h *FrontHost) Reach(ctx context.Context, address string) string {
+	if h.SSH == nil || address == "" {
+		return ""
+	}
+	return h.SSH.Logins(ctx, []string{address}, frontReach)[address]
 }
 
 // HostFacts is one host of the inventory in full, the expanded row of its

@@ -21,7 +21,7 @@ require "ext/autoload.php";
 // task-ui read a host now rather than answer out of what the host last told.
 class mod_inventory implements Module {
 	/** LEAD is the sentence under the heading. */
-	const LEAD = "The hosts Beszel monitors, largest first. For each host: whether it's up, the ssh login task-ui uses, its cores, and how busy its CPU, memory and disk are. With Run on Hosts, you can run a command on many hosts at once, like pssh: each host gets a run of its own, with a recording, in Runs and the recents.";
+	const LEAD = "The hosts task-ui keeps, largest first. For each host: whether it's up, the ssh login task-ui uses, its cores, and how busy its CPU, memory and disk are. Add a host by the address ssh signs in to and task-ui proves the login before keeping it; Beszel's hosts come in on their own, and every host stays until someone removes it. With Run on Hosts, you can run a command on many hosts at once, like pssh: each host gets a run of its own, with a recording, in Runs and the recents.";
 
 	/** COMMANDS are the quick commands over the field, which a button fills it with. */
 	const COMMANDS = array(
@@ -46,7 +46,7 @@ class mod_inventory implements Module {
 	}
 
 	function tables() {
-		return array("run", "note", "user", "workspace");
+		return array("host", "run", "note", "user", "workspace");
 	}
 
 	function serve() {
@@ -62,7 +62,14 @@ class mod_inventory implements Module {
 		$chrome->heading("Inventory", array(array("text" => "Inventory", "href" => "")));
 
 		$hosts = $chrome->allowed("hosts");
-		$facts = Task\Host::inventory($hosts);
+		$drops = $chrome->allowed("inventory/delete");
+		$store = new Task\Inventory\Hosts(Task\DB::writer());
+		$held = $store->all();
+		$facts = Task\Host::inventory($hosts, self::names($held));
+
+		// A host the hub reports and the inventory does not hold goes in on
+		// this read, so the list keeps it once the hub stops answering.
+		$held = $this->sync($store, $held, $facts["hosts"]);
 
 		if ($facts["error"] !== "") {
 			$chrome->reports($facts["error"]);
@@ -79,7 +86,7 @@ class mod_inventory implements Module {
 		$rows = array();
 
 		foreach ($facts["hosts"] as $system) {
-			$rows[] = $this->row($system, $logins, $hosts);
+			$rows[] = $this->row($system, $logins, $hosts, isset($held[$system["host"]]) ? $held[$system["host"]] : null, $drops);
 		}
 
 		$head = new Task\Head("Inventory", self::LEAD);
@@ -88,6 +95,7 @@ class mod_inventory implements Module {
 			"head" => $head->data(),
 			"off" => $facts["off"],
 			"integrations" => $chrome->allowed("integration/view"),
+			"add" => $chrome->allowed("inventory/edit") ? Task\Route::href("/inventory/hosts") : "",
 			"form" => $this->form($facts, $logins, $hosts),
 			"batch" => $last["batch"],
 			"prompt" => $last["prompt"],
@@ -96,6 +104,56 @@ class mod_inventory implements Module {
 			"rows" => $rows,
 			"now" => $now->format("15:04"),
 		));
+	}
+
+	/** names is the name of each held host by the address it answers on, the inventory the binding folds the hub into. */
+	static function names($held) {
+		$out = array();
+
+		foreach ($held as $host) {
+			$out[$host->address] = $host->name;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * sync writes a host the hub reports and the inventory does not hold, and
+	 * returns every held host by address.
+	 *
+	 * The hub is a source and the rows are the list: a system nobody entered
+	 * is entered here, once, and a row the hub stopped reporting is left
+	 * where it is. Nothing of a row is rewritten, so the name a person gave a
+	 * host outlives the hub renaming it.
+	 */
+	function sync($store, $held, $systems) {
+		$by = array();
+
+		foreach ($held as $host) {
+			$by[$host->address] = $host;
+		}
+
+		foreach ($systems as $system) {
+			$address = $system["host"];
+
+			if ($address === "" || isset($by[$address])) {
+				continue;
+			}
+
+			$id = $store->seen($system["name"], $address);
+
+			if ($id === "") {
+				continue;
+			}
+
+			$row = $store->find($address);
+
+			if (is_array($row)) {
+				$by[$address] = new Task\Model\Host($row);
+			}
+		}
+
+		return $by;
 	}
 
 	/**
@@ -407,16 +465,28 @@ class mod_inventory implements Module {
 	 * line a button. href is the host's page, which the menu links and the
 	 * script fetches the expanded row from, so the row carries the mount of
 	 * the front end that drew it.
+	 *
+	 * entry is the inventory row this host is held by, and drops Allow
+	 * Deletes on Inventory: together they draw the Remove button, which posts
+	 * to the row's own path. A host the hub still reports comes back on the
+	 * next read, which the question on the form says.
 	 */
-	function row($system, $logins, $open) {
+	function row($system, $logins, $open, $entry = null, $drops = false) {
 		$name = $system["name"];
 		$host = $system["host"];
 		$login = isset($logins[$host]) ? $logins[$host] : "";
 		$href = Task\Route::href("/inventory/hosts/" . $name);
 		$menu = new Task\Menu("Actions on " . $name);
 
+		$status = $system["status"] === "" ? "no measures" : $system["status"];
+
 		$menu->detail("Address", $host, true);
-		$menu->detail("Status", $system["status"]);
+		$menu->detail("Status", $status);
+
+		if ($entry !== null) {
+			$menu->detail("Source", $entry->source === Task\Inventory\Hosts::BESZEL ? "Beszel" : "entered here");
+		}
+
 		$menu->when($open, "server", "Open the host's page", array("href" => $href));
 		$menu->when($login !== "", "copy", "Copy ssh " . $login, array("data-copy" => "ssh " . $login));
 
@@ -424,7 +494,9 @@ class mod_inventory implements Module {
 			"name" => $name,
 			"host" => $host,
 			"href" => $href,
-			"status" => $system["status"],
+			"drop" => $drops && $entry !== null ? Task\Route::href("/inventory/hosts/" . Task\Route::pathEscape($entry->id) . "/delete") : "",
+			"asked" => "Remove " . $name . " from the inventory? A host Beszel reports comes back on the next read; one nobody monitors is gone until it is entered again.",
+			"status" => $status,
 			"up" => $system["up"],
 			"open" => $open,
 			"login" => $login,
