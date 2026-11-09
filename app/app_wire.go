@@ -205,7 +205,7 @@ func (a *App) wire(version string) error {
 		FolderRefs: store.FolderRefs,
 		Workflows:  store.Workflows, WorkflowRuns: store.WorkflowRuns, Flows: a.Workflows, Events: svc.Events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: svc.Git, Keys: svc.Keystore, Env: svc.Env, Recordings: svc.Recordings, Root: cfg.Root, Board: a.Board,
-		Integrations: svc.Integrations, Hosts: svc.Hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
+		Integrations: svc.Integrations, Hosts: svc.Hosts, HostRows: store.Hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: store.RunSummaries, Version: version,
 		Cleaner: svc.Cleaner, Pins: store.Pins, Tools: store.Tools,
 		Sidebar: store.Sidebar, Modules: a.Modules, Telemetry: svc.Telemetry,

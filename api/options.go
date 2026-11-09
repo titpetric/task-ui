@@ -69,10 +69,12 @@ type Options struct {
 	Root string
 	// Board is the notes board and the chat; nil turns them off.
 	Board *note.Board
-	// Integrations keep the integrations' settings, and Hosts reads the
-	// host inventory through the Beszel one.
+	// Integrations keep the integrations' settings, and Hosts reads what
+	// Beszel reports of a host. HostRows is the inventory itself, the list
+	// the Inventory page keeps and writes; nil answers the hub alone.
 	Integrations *integration.Store
 	Hosts        *beszel.Inventory
+	HostRows     *storage.HostStorage
 	// Spotify links users' accounts and acts on them; nil turns the
 	// Spotify routes off.
 	Spotify *spotify.Service

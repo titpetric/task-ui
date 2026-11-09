@@ -100,8 +100,10 @@ func (h *Handlers) deleteIntegration(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// listHosts returns the inventory: the hosts of the Beszel integration,
-// largest first.
+// listHosts returns the inventory: rows, the hosts this instance keeps, and
+// hosts, what Beszel reports of them, largest first. A hub that answers
+// nothing leaves the rows and says why in error, because the inventory is
+// this instance's list and the hub is a source of it.
 func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "inventory/view") {
 		return
@@ -110,16 +112,28 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
 		return
 	}
+	rows := []model.Host{}
+	if h.opts.HostRows != nil {
+		held, err := h.opts.HostRows.List(r.Context())
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		rows = held
+	}
 	systems, err := h.opts.Hosts.Systems(r.Context())
+	answer := map[string]any{"hosts": beszel.ByCapacity(systems), "rows": rows}
 	switch {
-	case errors.Is(err, beszel.ErrOff):
+	case err != nil && len(rows) == 0 && errors.Is(err, beszel.ErrOff):
 		fail(w, http.StatusNotFound, err.Error())
 		return
-	case err != nil:
+	case err != nil && len(rows) == 0:
 		fail(w, http.StatusBadGateway, err.Error())
 		return
+	case err != nil:
+		answer["error"] = err.Error()
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"hosts": beszel.ByCapacity(systems)})
+	writeJSON(w, http.StatusOK, answer)
 }
 
 // runOnHosts runs a command on hosts of the inventory, all at once, a
