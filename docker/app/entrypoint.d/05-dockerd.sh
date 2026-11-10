@@ -18,10 +18,16 @@ set -eu
 
 [ "${TASK_UI_DOCKER:-}" = "dind" ] || exit 0
 
-if [ -S /var/run/docker.sock ]; then
+# A mount is the operator naming a daemon. A socket that is no mount is
+# this daemon's own from a previous boot, which nothing unlinked, and
+# `restart: always` restarts the same container: taking the file for a
+# mount leaves the daemon unstarted and every docker job failing later.
+if grep -q " /var/run/docker.sock " /proc/self/mountinfo; then
 	echo "dockerd: /var/run/docker.sock is mounted, using it"
 	exit 0
 fi
+
+rm -f /var/run/docker.sock
 
 dockerd >/var/log/dockerd.log 2>&1 &
 

@@ -39,6 +39,8 @@ Every tool installs at `@latest`, or `@main` where the repository has no tag, an
 
 A missing or empty directory is not an error, so an instance with no provisioning starts. A script that fails stops the boot, because a half-provisioned instance that serves is worse than one that does not come up: its jobs fail one at a time, somewhere else, with nothing naming the cause. `exit 1` in `run_scripts` is the one word to change to make a failure a warning.
 
+PID 1 of the image is `docker-init`, tini, and the entrypoint runs under it with `-g`. A script that backgrounds a daemon leaves it parented to PID 1 once that script's shell exits, and tini is what reaps it; `-g` signals the process group, so `docker stop` reaches the daemon as well as the server.
+
 ## Docker and registries
 
 A job that builds an image needs a daemon to build on and, to push, a login to the registry. The two are separate choices and neither is a step on one ladder.
@@ -52,7 +54,7 @@ Which daemon:
 
 A daemon inside the container is better isolation of the docker state and worse isolation of the host, because it needs `privileged: true`. Reach for it when a job must not see the host's containers, not when the host must be protected from the job.
 
-`docker/docker-compose.yml` ships the second, with the socket line commented out: most hosts this runs on have no socket to mount. `docker/app/entrypoint.d/05-dockerd.sh` starts `dockerd` when `TASK_UI_DOCKER` is `dind`, waits for it to answer, and does nothing at all when a socket is already mounted on `/var/run/docker.sock` - the mount is the operator naming which daemon to use. The daemon, its shim, `runc` and the two helpers are the release's static binaries, copied from `docker:29-dind`; docker 29 builds containerd into `dockerd`, so there is no separate containerd to run.
+`docker/docker-compose.yml` ships the second, with the socket line commented out: most hosts this runs on have no socket to mount. `docker/app/entrypoint.d/05-dockerd.sh` starts `dockerd` when `TASK_UI_DOCKER` is `dind`, waits for it to answer, and does nothing at all when a socket is already mounted on `/var/run/docker.sock` - the mount is the operator naming which daemon to use, read off `/proc/self/mountinfo` and not off the file, because the daemon's own socket from a previous boot is a file in the container's layer and `restart: always` restarts the same container. The daemon, its shim, `runc` and the two helpers are the release's static binaries, copied from `docker:29-dind`; docker 29 builds containerd into `dockerd`, so there is no separate containerd to run.
 
 The volume on `/var/lib/docker` is required, and not as a cache. The layers the daemon writes there are overlayfs, and an overlayfs upperdir may not itself sit on overlayfs: without the volume `dockerd` starts, pulls an image, and then fails every container with `failed to mount ... fstype: overlay ... invalid argument`. With it, `docker run` works in a privileged container on a cgroup v2 host, measured on docker 29.9.3.
 

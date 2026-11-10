@@ -107,4 +107,9 @@ ENV HOME=/app \
 
 EXPOSE 3000
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# docker-init is tini, from the dind image above. It is PID 1 so that
+# dockerd, which an entrypoint script backgrounds and whose shell then
+# exits, has a parent that reaps it; -g signals the process group, so a
+# `docker stop` takes the daemon down with the server rather than leaving
+# /var/lib/docker to a SIGKILL.
+ENTRYPOINT ["/usr/local/bin/docker-init", "-g", "--", "/usr/local/bin/entrypoint.sh"]
