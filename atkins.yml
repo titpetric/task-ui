@@ -157,6 +157,10 @@ jobs:
   lint:
     desc: "Lint the Go source, the permission rules and the conventions"
     steps:
+      # gofmt is at zero and stays there: two files landed unformatted in one
+      # week with nothing to catch them, and two commits of that week exist
+      # only to fix the same thing.
+      - gofmt -l . | tee /dev/stderr | (! read)
       # splint prints and does not fail: `splint ./...` is 559 findings on
       # this tree, most of them coverage and prose. Drop the `|| true` the
       # day the count reaches zero, and the count is why it is printed on

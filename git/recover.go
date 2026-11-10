@@ -31,7 +31,7 @@ func (g *Git) Recover(ctx context.Context, dir, failure string, clone bool, w io
 	stamp := time.Now().UTC().Format("20060102-150405.000")
 	url := g.originURL(ctx, dir)
 	if _, err := g.capture(ctx, dir, localTimeout, "rev-parse", "--git-dir"); err != nil {
-		return g.reclone(ctx, dir, url, "", stamp, clone, Recovery{Case: CaseBroken, Done:"git does not open the checkout"}, w)
+		return g.reclone(ctx, dir, url, "", stamp, clone, Recovery{Case: CaseBroken, Done: "git does not open the checkout"}, w)
 	}
 	// The remote first: a pull nothing answered is no reason to touch the tree.
 	remote, err := g.capture(ctx, dir, remoteTimeout, "ls-remote", "--symref", "origin", "HEAD")
@@ -50,7 +50,7 @@ func (g *Git) Recover(ctx context.Context, dir, failure string, clone bool, w io
 	}
 	s, ok := g.read(ctx, dir, defaultBranch(remote))
 	if !ok {
-		return g.reclone(ctx, dir, url, "", stamp, clone, Recovery{Case: CaseBroken, Done:"git does not read the checkout's state"}, w)
+		return g.reclone(ctx, dir, url, "", stamp, clone, Recovery{Case: CaseBroken, Done: "git does not read the checkout's state"}, w)
 	}
 	return g.mend(ctx, dir, url, stamp, failure, s, lock != "", clone, w)
 }
