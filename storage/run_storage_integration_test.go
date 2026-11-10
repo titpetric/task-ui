@@ -173,15 +173,35 @@ func TestRunStorage_Finish(t *testing.T) {
 	assert.NotNil(t, got.FinishedAt)
 }
 
+// Deleting a run frees the runs it dispatched: a child of a row nothing
+// holds is in no listing, because a sidebar asks for the roots.
 func TestRunStorage_Delete(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	runs := storage.NewRunStorage(newDB(t))
 	run := &model.Run{Folder: "infra", Job: "deploy"}
 	assert.NoError(t, runs.Create(ctx, run))
+	child := &model.Run{Folder: "infra", Job: "plan", ParentID: run.ID}
+	assert.NoError(t, runs.Create(ctx, child))
+	step := &model.Run{Folder: "infra", Job: "step", ParentID: run.ID, ParentKind: storage.ParentWorkflowRun}
+	assert.NoError(t, runs.Create(ctx, step))
+
 	assert.NoError(t, runs.Delete(ctx, run.ID))
 	_, err := runs.Get(ctx, run.ID)
 	assert.ErrorIs(t, err, storage.ErrNotFound)
+
+	got, err := runs.Get(ctx, child.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", got.ParentID)
+	assert.Equal(t, "", got.ParentKind)
+	roots, err := runs.List(ctx, storage.RunFilter{Roots: true})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{child.ID}, ids(roots))
+
+	// A workflow run's step points at a workflow_run row of the same ID.
+	got, err = runs.Get(ctx, step.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, run.ID, got.ParentID)
 }
 
 func TestRunStorage_KillActive(t *testing.T) {
