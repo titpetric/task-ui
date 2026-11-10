@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -33,7 +34,15 @@ func (h *Handlers) rerunRun(w http.ResponseWriter, r *http.Request) {
 }
 
 // askAgain puts the question a prompt's run answered to the board again, in the thread it was asked in and as the caller, and answers what POST /api/prompts answers; 404 once the thread is gone.
+// It takes what POST /api/prompts takes, because it starts the same run: prompt/edit, and no run's own token, which would be a builder starting another builder.
 func (h *Handlers) askAgain(w http.ResponseWriter, r *http.Request, run *model.Run) {
+	if !h.require(w, r, "prompt/edit") {
+		return
+	}
+	if access.FromRun(r.Context()) {
+		fail(w, http.StatusConflict, "a run's token can't start a prompt: do the work with the task tools")
+		return
+	}
 	if h.opts.Board == nil {
 		fail(w, http.StatusNotFound, "not found")
 		return

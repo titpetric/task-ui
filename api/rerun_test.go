@@ -171,3 +171,17 @@ func TestRerun_Claude(t *testing.T) {
 		assert.NotContains(t, out["error"], "Notes board")
 	}
 }
+
+// The board's path takes what POST /api/prompts takes, asked through a
+// rerun as well: a user who sees their own prompt run and may not ask
+// again is refused the permission, before any board is reached.
+func TestRerun_Asking(t *testing.T) {
+	t.Parallel()
+	h := rerunRoutes(&memRuns{runs: []model.Run{
+		{ID: "r1", Folder: "infra", Job: model.PromptJob, State: model.StateOK, UserID: rerunViewer.ID, UserName: rerunViewer.Name},
+	}})
+
+	code, out := rerunCall(t, h, rerunViewer, "r1")
+	assert.Equal(t, http.StatusForbidden, code, out)
+	assert.Equal(t, "you need the prompt/edit permission", out["error"])
+}
