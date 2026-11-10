@@ -68,8 +68,12 @@ class mod_inventory implements Module {
 		$facts = Task\Host::inventory($hosts, self::names($held));
 
 		// A host the hub reports and the inventory does not hold goes in on
-		// this read, so the list keeps it once the hub stops answering.
-		$held = $this->sync($store, $held, $facts["hosts"]);
+		// this read, so the list keeps it once the hub stops answering. A
+		// reader who may add a host is who seeds them: a GET of the page is
+		// the write, and a prefetch of it by anyone else writes nothing.
+		if ($chrome->allowed("inventory/edit")) {
+			$held = $this->sync($store, $held, $facts["hosts"]);
+		}
 
 		if ($facts["error"] !== "") {
 			$chrome->reports($facts["error"]);

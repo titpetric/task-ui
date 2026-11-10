@@ -4,7 +4,7 @@ The hosts task-ui keeps, the largest first by cores, then RAM: whether each is u
 
 ## The list
 
-**The hosts are rows of this instance, and Beszel is a source.** A host the hub reports goes into the list on the first read that sees it; a host nobody monitors is entered by address. Dropping the [Beszel integration](settings.md#integrations) leaves every row where it is, and so does a hub that stops answering: the measures go and the hosts stay, each line drawn with empty meters.
+**The hosts are rows of this instance, and Beszel is a source.** A host the hub reports goes into the list on the first read of the page by somebody who may add one, `inventory/edit`; a host nobody monitors is entered by address. Dropping the [Beszel integration](settings.md#integrations) leaves every row where it is, and so does a hub that stops answering: the measures go and the hosts stay, each line drawn with empty meters.
 
 **Add a host** with `inventory/edit`, Allow Edits on Inventory: the address task-ui signs in to, and a name for the page, the address itself where none is given. task-ui signs in over ssh before it writes the row, with the instance keys and the logins of the SSH column, and an address no login reaches is refused: a host of the inventory is a host task-ui can read and run a command on. The probe waits up to twenty seconds, which is the ssh timeout on a host that is not there.
 
