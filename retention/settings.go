@@ -12,14 +12,17 @@ const (
 	Prompts      = "prompts"
 	WorkflowRuns = "workflow_runs"
 	Artifacts    = "artifacts"
-	SecretReads  = "secret_reads"
+	// Dictations is what the voice window writes under voice/ in the
+	// artifact tree: a recording, its transcript and the answers read back.
+	Dictations  = "dictations"
+	SecretReads = "secret_reads"
 	// Tooling is the tool history atkins keeps in each workspace's home
 	// and the instance's own, which the cleanup prunes through atkins.
 	Tooling = "tooling"
 )
 
 // Kinds are the kinds of data with a rule, in the order the page shows them.
-var Kinds = []string{Recordings, Runs, Prompts, WorkflowRuns, Artifacts, SecretReads, Tooling}
+var Kinds = []string{Recordings, Runs, Prompts, WorkflowRuns, Artifacts, Dictations, SecretReads, Tooling}
 
 // Settings are the rules of every kind of data, by kind, as the Data
 // retention page sets them. A kind the map lacks keeps the default.

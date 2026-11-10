@@ -13,14 +13,16 @@ import (
 func TestSettings(t *testing.T) {
 	t.Parallel()
 	defaults := retention.Load(nil)
+	assert.Equal(t, retention.Defaults(), defaults)
 	assert.Len(t, defaults, len(retention.Kinds))
 	for _, kind := range retention.Kinds {
 		assert.Equal(t, retention.Rule{Age: retention.Month}, defaults.Rule(kind), kind)
 	}
-	assert.Equal(t, []string{"recordings", "runs", "prompts", "workflow_runs", "artifacts", "secret_reads", "tooling"}, retention.Kinds)
+	assert.Equal(t, []string{"recordings", "runs", "prompts", "workflow_runs", "artifacts", "dictations", "secret_reads", "tooling"}, retention.Kinds)
 
 	s := retention.Settings{retention.Recordings: retention.Rule{Age: retention.Week, Limit: 1 << 30}, retention.Runs: retention.Rule{Age: retention.Year}, retention.Prompts: retention.Rule{Age: retention.Quarter},
-		retention.WorkflowRuns: retention.Rule{Age: retention.Never}, retention.Artifacts: retention.Rule{Age: retention.Day}, retention.SecretReads: retention.Rule{Age: retention.Never}, retention.Tooling: retention.Rule{Age: retention.Month}}
+		retention.WorkflowRuns: retention.Rule{Age: retention.Never}, retention.Artifacts: retention.Rule{Age: retention.Day}, retention.Dictations: retention.Rule{Age: retention.Week, Limit: 1 << 28},
+		retention.SecretReads: retention.Rule{Age: retention.Never}, retention.Tooling: retention.Rule{Age: retention.Month}}
 	assert.True(t, s.Valid())
 	assert.Equal(t, s, retention.Load(s.Values()))
 	assert.Equal(t, retention.Rule{Age: retention.Year}, s.Rule(retention.Runs))

@@ -2,10 +2,13 @@ package retention
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"slices"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/titpetric/task-ui/artifactstore"
@@ -180,6 +183,8 @@ func (c *Cleaner) items(ctx context.Context, kind string) ([]Item, error) {
 		return c.flows(ctx)
 	case Artifacts:
 		return c.history(ctx)
+	case Dictations:
+		return c.dictations(ctx)
 	case Signins:
 		return c.signins(ctx)
 	case Tooling:
@@ -247,6 +252,62 @@ func (c *Cleaner) history(ctx context.Context) ([]Item, error) {
 		items = append(items, Item{ID: record.CommitID, At: at, Size: record.ByteSize})
 	}
 	return items, nil
+}
+
+// VoiceDir is where the voice window writes in the artifact tree.
+const VoiceDir = "voice/"
+
+// Dictated reports whether a path of the artifact tree is the voice window's.
+func Dictated(path string) bool {
+	return strings.HasPrefix(path, VoiceDir)
+}
+
+// dictations are the files the voice window wrote, the latest version of
+// each, by when that version landed.
+func (c *Cleaner) dictations(ctx context.Context) ([]Item, error) {
+	if c.Artifacts == nil || c.Store == nil {
+		return nil, nil
+	}
+	latest, err := c.Artifacts.Latest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items := []Item{}
+	for _, record := range latest {
+		if !Dictated(record.Path) {
+			continue
+		}
+		at := time.Time{}
+		if record.CreatedAt != nil {
+			at = *record.CreatedAt
+		}
+		items = append(items, Item{ID: record.Path, At: at, Size: record.ByteSize})
+	}
+	sort.SliceStable(items, func(i, j int) bool { return items[i].At.Before(items[j].At) })
+	return items, nil
+}
+
+// removeDictations takes each file out of the artifact tree and deletes
+// every record of it, the earlier versions with the latest: a dictation is
+// a recording of a room and the history is no place to keep one.
+func (c *Cleaner) removeDictations(ctx context.Context, items []Item) (int, error) {
+	gone := 0
+	for _, item := range items {
+		if _, err := c.Store.Remove(ctx, item.ID, "task-ui"); err != nil && !errors.Is(err, artifactstore.ErrNotFound) {
+			return gone, err
+		}
+		records, err := c.Artifacts.List(ctx, storage.ArtifactFilter{Path: item.ID})
+		if err != nil {
+			return gone, err
+		}
+		for _, record := range records {
+			if err := c.Artifacts.Delete(ctx, record.ID); err != nil {
+				return gone, err
+			}
+			gone++
+		}
+	}
+	return gone, nil
 }
 
 // reads are the reads of the secret read log.
@@ -320,6 +381,8 @@ func (c *Cleaner) remove(ctx context.Context, kind string, items []Item, now tim
 		return len(items), nil
 	case Artifacts:
 		return c.expireHistory(ctx, items)
+	case Dictations:
+		return c.removeDictations(ctx, items)
 	case Signins:
 		return len(items), c.removeSignins(ctx, now)
 	}

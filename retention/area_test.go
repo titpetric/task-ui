@@ -17,7 +17,7 @@ func TestAreas(t *testing.T) {
 		titles = append(titles, area.Title)
 		assert.NotEqual(t, "Key read log", area.Title)
 	}
-	assert.Equal(t, []string{"Run recordings", "Run history", "Prompt threads", "Workflow run history", "Artifact history", "Secret read log", "Expired sign-ins", "Tool history"}, titles)
+	assert.Equal(t, []string{"Run recordings", "Run history", "Prompt threads", "Workflow run history", "Artifact history", "Dictations", "Secret read log", "Expired sign-ins", "Tool history"}, titles)
 	for _, kind := range retention.Kinds {
 		assert.Equal(t, kind, retention.AreaOf(kind).Kind)
 		assert.Equal(t, "", retention.AreaOf(kind).Fixed, kind)
@@ -29,6 +29,13 @@ func TestAreas(t *testing.T) {
 	assert.True(t, tooling.Sized, "the row shows the bytes")
 	assert.False(t, tooling.Limited(), "but takes no size limit")
 	assert.Equal(t, retention.Area{}, retention.AreaOf("key_reads"))
+
+	// The voice window's own directory, and nothing that merely starts
+	// with the same letters.
+	assert.True(t, retention.Dictated("voice/2026-11-10T09-00-00-000.wav"))
+	assert.True(t, retention.Dictated("voice/2026-11-10T09-00-00-000.1.reply.wav"))
+	assert.False(t, retention.Dictated("voices/take.wav"))
+	assert.False(t, retention.Dictated("reports/voice/take.wav"))
 
 	usage := retention.Usage{Count: 2, Bytes: 2048}
 	assert.Equal(t, "2 recordings, 2.0 KB", retention.AreaOf(retention.Recordings).Holds(usage))

@@ -39,6 +39,8 @@ var Areas = []Area{
 		What: "The runs of workflows older than the age, with their steps, answers and the threads of their prompts. The workflows stay."},
 	{Kind: Artifacts, Title: "Artifact history", One: "version", Many: "versions", Sized: true,
 		What: "The earlier versions of the artifact tree's files, which the history keeps when a run or a user writes a file again. The latest version of every file stays."},
+	{Kind: Dictations, Title: "Dictations", One: "file", Many: "files", Sized: true,
+		What: "The files the voice window wrote under voice/ in the artifact tree: a recording, its transcript and the answers read back. Every version of each goes, the latest with them."},
 	{Kind: SecretReads, Title: "Secret read log", One: "read", Many: "reads",
 		What: "Which run got which secret in its environment. The log always keeps the last 1000 reads of each secret."},
 	{Kind: Signins, Title: "Expired sign-ins", One: "row", Many: "rows",
