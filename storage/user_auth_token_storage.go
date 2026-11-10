@@ -71,7 +71,9 @@ func (s *UserAuthTokenStorage) List(ctx context.Context, userID string) ([]model
 
 // ListKind returns a user's tokens of one kind, newest first: the order their page lists them in, because the one they just issued is the one they are looking for.
 func (s *UserAuthTokenStorage) ListKind(ctx context.Context, userID, kind string) ([]model.UserAuthToken, error) {
-	return client(s.db).Select[model.UserAuthToken](ctx, "SELECT * FROM user_auth_token WHERE user_id = ? AND kind = ? ORDER BY created_at DESC, name", userID, kind)
+	// The IDs are ULIDs: two tokens minted inside one millisecond still come
+	// back in the order they were inserted.
+	return client(s.db).Select[model.UserAuthToken](ctx, "SELECT * FROM user_auth_token WHERE user_id = ? AND kind = ? ORDER BY created_at DESC, id DESC", userID, kind)
 }
 
 // Delete removes a user's token of a kind by name.
