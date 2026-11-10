@@ -296,10 +296,13 @@ func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request
 		b.finishAs(ctx, note, model.NoteFailed, what+" did not start: "+err.Error(), as, again)
 		return false
 	}
-	if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, b.claims(note.ID, session.ID())); err != nil {
+	// The first run of the round owns the row, and the stream says what the
+	// row says: a second agent of one note publishes no run of its own.
+	held := b.claims(note.ID, session.ID())
+	if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, held); err != nil {
 		slog.Warn("note state not saved", "note", note.ID, "err", err)
 	}
-	note.State, note.RunID = model.NoteWorking, session.ID()
+	note.State, note.RunID = model.NoteWorking, held
 	b.publish(note)
 	if again != nil {
 		if err := b.Notes.Answer(ctx, again.ID, again.Body, model.NoteWorking, session.ID()); err != nil {
