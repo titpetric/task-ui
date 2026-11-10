@@ -104,6 +104,41 @@ func TestStylesheetImports(t *testing.T) {
 	}
 }
 
+// The head links four files outside the @import graph, the vendor sheets and
+// the voice window's among them, and a rename of one of those 404s with no
+// log either. The href of every link and script of the chrome is read off the
+// templates and stat-ed in the theme.
+func TestStylesheetLinks(t *testing.T) {
+	t.Parallel()
+
+	theme := phpfront.ThemeAssets()
+	found := 0
+	for _, tpl := range []string{"theme/templates/components/head.tpl", "theme/templates/components/footer.tpl", "theme/templates/index.tpl"} {
+		data, err := fs.ReadFile(phpfront.App(), tpl)
+		assert.NoError(t, err, tpl)
+		for _, ref := range themeRefs(string(data)) {
+			found++
+			_, err := fs.ReadFile(theme, ref)
+			assert.NoError(t, err, tpl+": "+ref+" is linked and not in the theme")
+		}
+	}
+	assert.True(t, found >= 4, "the chrome links the sheets and the scripts of the theme")
+}
+
+// themeRefs are the theme's own files a template names, as paths under the
+// assets: {data.assets}/theme/<path>, the ?v= and the query dropped.
+func themeRefs(tpl string) []string {
+	var out []string
+	for _, part := range strings.Split(tpl, "{data.assets}/theme/")[1:] {
+		ref, _, _ := strings.Cut(part, `"`)
+		ref, _, _ = strings.Cut(ref, "?")
+		if ref != "" && !strings.Contains(ref, "{") {
+			out = append(out, ref)
+		}
+	}
+	return out
+}
+
 // Extract writes the tree where a runtime can read and write it. Setenv and
 // t.Parallel do not mix, so these three run in order.
 func TestExtract(t *testing.T) {
