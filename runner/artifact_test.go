@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -23,6 +24,20 @@ func TestContentType(t *testing.T) {
 	assert.Equal(t, "audio/mpeg", runner.ContentType("dictation.MP3"))
 	assert.Contains(t, runner.ContentType("take.wav"), "audio/")
 	assert.Contains(t, runner.ContentType("take.flac"), "audio/")
+}
+
+// Every path that answers a file of the artifact tree sandboxes it,
+// because a run wrote the bytes: the page, the frame it opens in and the
+// ?raw a client reads.
+func TestSandboxFile(t *testing.T) {
+	t.Parallel()
+	rec := httptest.NewRecorder()
+	runner.SandboxFile(rec)
+	assert.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
+	assert.Equal(t, "no-cache", rec.Header().Get("Cache-Control"))
+	policy := rec.Header().Get("Content-Security-Policy")
+	assert.Contains(t, policy, "default-src 'none'")
+	assert.Contains(t, policy, "sandbox")
 }
 
 // A write with no artifact store is not found: the store is where a file

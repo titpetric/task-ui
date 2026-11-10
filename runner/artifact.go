@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,6 +160,13 @@ func ContentType(name string) string {
 		return kind
 	}
 	return "application/octet-stream"
+}
+
+// SandboxFile sets the headers a file of the artifact tree answers under. A run wrote the bytes: an svg or an html page among them opens sandboxed, its scripts refused.
+func SandboxFile(w http.ResponseWriter) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox")
+	w.Header().Set("Cache-Control", "no-cache")
 }
 
 // audioTypes are the types of the sound files a run leaves, for an image

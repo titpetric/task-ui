@@ -94,6 +94,7 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", view.ContentType)
 		w.Header().Set("X-Artifact-Version", view.Version)
 		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+		runner.SandboxFile(w)
 		_, _ = w.Write(data)
 		return
 	}

@@ -162,11 +162,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, rel, contentType string, 
 	}
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Disposition", disposition+`; filename="`+strings.ReplaceAll(path.Base(rel), `"`, "")+`"`)
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	// A run or a commit wrote the file: an svg or an html page opens
-	// without its scripts, in a sandbox of its own.
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox")
-	w.Header().Set("Cache-Control", "no-cache")
+	runner.SandboxFile(w)
 	http.ServeContent(w, r, "", modified, content)
 }
 
