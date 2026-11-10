@@ -33,7 +33,7 @@ func (h *Handlers) rerunRun(w http.ResponseWriter, r *http.Request) {
 	h.start(w, r, RerunRequest(run))
 }
 
-// askAgain puts the question a prompt's run answered to the board again, in the thread it was asked in and as the caller, and answers what POST /api/prompts answers; 404 once the thread is gone.
+// askAgain puts the question a prompt's run answered to the board again, in its own thread and as the caller, and answers what POST /api/prompts answers; 404 once the thread is gone.
 // It takes what POST /api/prompts takes, because it starts the same run: prompt/edit, and no run's own token, which would be a builder starting another builder.
 func (h *Handlers) askAgain(w http.ResponseWriter, r *http.Request, run *model.Run) {
 	if !h.require(w, r, "prompt/edit") {

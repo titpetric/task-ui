@@ -520,9 +520,9 @@
   var vu = 0;
   var swell = 1;
 
-  // place asks a formation where an orb goes, and names it for wide.
-  // An orb of one formation alone waits at the centre of every other, so it
-  // grows out of the middle rather than flying in from off the canvas.
+  // place returns where a formation puts an orb, and names that formation
+  // for wide. An orb drawn in one formation alone holds at the centre of
+  // every other: it grows out of the middle as its own forms.
   function place(shape, orb, i, secs) {
     drawing = shape;
     if (orb.only && FORMS[orb.only] !== shape) return { x: MID, y: MID, r: 0 };

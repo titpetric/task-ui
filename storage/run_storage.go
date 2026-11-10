@@ -247,7 +247,7 @@ func (s *RunStorage) Finish(ctx context.Context, run *model.Run) error {
 }
 
 // Delete removes a run by ID, and the runs it dispatched keep no parent.
-// A child pointing at a row nothing holds is in no listing: the sidebar asks for the roots, which are the runs with an empty parent_id.
+// A child pointing at a row nothing holds is in no listing: a sidebar lists the roots, the runs with an empty parent_id.
 func (s *RunStorage) Delete(ctx context.Context, id string) error {
 	db := client(s.db)
 	if err := db.Exec(ctx, "UPDATE run SET parent_id = '', parent_kind = '', updated_at = ? WHERE parent_id = ? AND parent_kind = ?",
