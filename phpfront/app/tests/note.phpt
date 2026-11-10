@@ -14,6 +14,11 @@ $run = "fx-note-run";
 
 $db = Task\DB::writer();
 
+// The rows of a previous pass go first: --matrix runs this fixture twice in
+// one process over the one shared database, and the notes the sections below
+// post would otherwise be in the first listing of the second pass.
+$db->query("DELETE FROM note WHERE id LIKE 'fx-note-%'");
+
 // Two board threads with a reply each, a thread of the other channel, and a
 // prompt thread with its answer. Every note holds a channel, replies among
 // them; a prompt is the one that holds a workspace and the run it is about.
