@@ -1,13 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"net/http"
 	"os"
 	"path"
-	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/titpetric/task-ui/access"
@@ -90,12 +91,12 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 	view.ByteSize = int64(len(data))
 	if _, raw := r.URL.Query()["raw"]; raw {
 		// The file itself, for a client that reads it, as MCP's
-		// read_artifact does.
+		// read_artifact does. ServeContent answers a byte range, which an
+		// audio element takes before it plays anything.
 		w.Header().Set("Content-Type", view.ContentType)
 		w.Header().Set("X-Artifact-Version", view.Version)
-		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 		runner.SandboxFile(w)
-		_, _ = w.Write(data)
+		http.ServeContent(w, r, path.Base(rel), time.Time{}, bytes.NewReader(data))
 		return
 	}
 	ext := strings.ToLower(path.Ext(rel))
