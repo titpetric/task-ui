@@ -196,6 +196,7 @@
   var spokeFrom = 0;    // the frame the voice being spoken started at
   var base = "";        // where this recording's files go, taken at its start
   var holding = "";     // a reply that landed while recording, played after
+  var holdingAt = 0;    // which answer of the thread that reply is
   var tending = 0;      // the interval that opens and shuts the listener
   var dragging = 0;     // pieces in a row the instance read slowly
 
@@ -307,11 +308,11 @@
       src.connect(analyser);
       media = { stream: stream, ctx: ctx };
       // The buffer outlives the stream, so a pause and a resume write one
-      // file. cap bounds the frames whose downsampled bytes reach MAX.
+      // file. cap bounds the frames whose bytes and RIFF header reach MAX.
       if (!buffer) {
         buffer = {
           frames: [], length: 0, rate: ctx.sampleRate,
-          cap: Math.floor((MAX / 2) * (ctx.sampleRate / RATE)),
+          cap: Math.floor(((MAX - 44) / 2) * (ctx.sampleRate / RATE)),
         };
       }
       level(analyser);
@@ -403,9 +404,9 @@
     '"': "quote", "=": "equals", "%": "percent", "@": "at", "+": "plus",
   };
 
-  // plain returns the sentence as a reader of it writes it: one line, ASCII
+  // spoken returns the sentence as a reader of it writes it: one line, ASCII
   // letters and the punctuation NAMED knows, and no control character.
-  function plain(raw) {
+  function spoken(raw) {
     var out = "";
     // NFD splits an accented letter into its base and a combining mark, so an
     // accent the recogniser writes costs the mark and keeps the letter under
@@ -522,6 +523,11 @@
       flight = false;
       server = false;
       console.info("voice: the server stopped transcribing, the clip goes to the session", err);
+      // A listener with no recogniser of its own now hears nothing: the switch goes off rather than holding the microphone open on a buffer nobody reads.
+      if (waking && !rec) {
+        switched(false);
+        dress("The instance stopped transcribing. Hands free is off.");
+      }
       return "";
     });
   }
@@ -907,16 +913,16 @@
   // held marks what is selected and refuses an empty answer to a required
   // field, so Submit is pressed only once there is something to send.
   function held(field) {
-    var answer = String(quizzing.values[field.key] || "");
-    var set = answer.split(",").filter(Boolean);
+    var given = String(quizzing.values[field.key] || "");
+    var set = given.split(",").filter(Boolean);
     quizPicks.querySelectorAll(".voice-pick").forEach(function (button) {
       var on = field.component === "multi"
         ? set.indexOf(button.dataset.value) >= 0
-        : button.dataset.value === answer;
+        : button.dataset.value === given;
       button.setAttribute("aria-pressed", on ? "true" : "false");
       button.classList.toggle("on", on);
     });
-    quizSubmit.disabled = !!field.required && !answer.trim();
+    quizSubmit.disabled = !!field.required && !given.trim();
   }
 
   // step takes the answer and moves on, or sends once the last field is
@@ -1122,12 +1128,12 @@
     // The left button is whatever there is to undo: the recording, then the
     // answer it brought back, then the window. A listener holds nothing, so
     // the button closes while one is open.
-    var shut = now === "idle" || now === "listening";
-    var told = shut && !!(answer || reply);
-    discardIcon.setAttribute("href", !shut ? "#i-trash" : (told ? "#i-back" : "#i-x"));
-    discardBtn.title = !shut ? "Discard" : (told ? "Back" : "Close");
+    var empty = now === "idle" || now === "listening";
+    var told = empty && !!(answer || reply);
+    discardIcon.setAttribute("href", !empty ? "#i-trash" : (told ? "#i-back" : "#i-x"));
+    discardBtn.title = !empty ? "Discard" : (told ? "Back" : "Close");
     discardBtn.setAttribute("aria-label", discardBtn.title);
-    discardBtn.classList.toggle("shut", shut);
+    discardBtn.classList.toggle("shut", empty);
     shape();
     // A question in flight owns the line; the state does not take it back.
     if (!pending) {
@@ -1242,10 +1248,12 @@
     // A listener takes this browser's own recogniser wherever there is
     // one, whoever transcribes a recording: it reads every piece for
     // nothing, where the instance runs whisper over each of them.
+    // The refusal is thrown on: a caller that swallowed it here would run its
+    // own then and write the state over the reason.
     if (!ready || (server && !wake)) {
       return listen().then(function () {
         if (!media || !media.node) throw new Error("this browser cannot record");
-      }).catch(refused);
+      });
     }
     rec = new SR();
     rec.lang = lang;
@@ -1403,6 +1411,7 @@
     // A reply held back by a recording is answered by this one: the thread
     // keeps it, and the window moves on with what was just said.
     holding = "";
+    holdingAt = 0;
     pending = true;
     failed = false;
     replayBtn.hidden = true;
@@ -1423,7 +1432,7 @@
         return;
       }
       if (update.state === "answered") {
-        landed(update.body);
+        landed(update.body, played + 1);
         return;
       }
       if (update.state === "failed") {
@@ -1475,12 +1484,11 @@
         if (mine !== gen) return;
         var mineThread = ((data && data.notes) || []).filter(function (n) { return n.id === thread; })[0];
         if (!mineThread) return;
-        var answers = (mineThread.replies || []).filter(function (reply) {
-          return reply.user_name !== mineThread.user_name;
+        var answers = (mineThread.replies || []).filter(function (note) {
+          return note.user_name !== mineThread.user_name;
         });
         if (answers.length <= played) return;
-        played = answers.length;
-        landed(answers[answers.length - 1].body);
+        landed(answers[answers.length - 1].body, answers.length);
       })
       .catch(function () {});
   }
@@ -1493,7 +1501,10 @@
   // window with the first question on it, and the answers go back as the
   // next thing said. The words are still read out, so the question is heard
   // as well as read.
-  function landed(body) {
+  // n is which answer of the thread this is, counted from one. A caller that
+  // knows the count passes it; the watcher's stream carries one reply and
+  // counts the one after what the window has played.
+  function landed(body, n) {
     var mine = gen;
     var words = plain(body);
     if (!words || words === answer) return;
@@ -1503,6 +1514,7 @@
     // the thread holds every one of them whatever the window shows.
     if ((media || starting) && !waking) {
       holding = body;
+      holdingAt = n;
       return;
     }
     // A reply is read out loud: the listener shuts, so an answer naming a
@@ -1511,7 +1523,7 @@
     pending = false;
     answer = words;
     said.textContent = answer.slice(0, 400);
-    if (played < 1) played = 1;
+    played = n > 0 ? n : Math.max(played, 1);
     tell(STAGES[2]);
     audio(mine, stamp + "." + played, 0);
     if (body.indexOf("```form") < 0) return;
@@ -1527,9 +1539,11 @@
   function flush() {
     if (!holding || media || starting) return;
     var body = holding;
+    var at = holdingAt;
     holding = "";
+    holdingAt = 0;
     if (pending) return;
-    landed(body);
+    landed(body, at);
   }
 
   // audio waits for the wav of a reply and plays it, and reads the words out
@@ -1632,6 +1646,7 @@
     stamp = "";
     played = 0;
     holding = "";
+    holdingAt = 0;
     show(false);
   }
 
@@ -1661,7 +1676,7 @@
   // this device could not.
   function send() {
     if (state() === "idle" || waking) return;
-    var words = plain(text);
+    var words = spoken(text);
     var to = target();
     var at = keep(words);
     pause();
@@ -1780,9 +1795,11 @@
     dialog.addEventListener("run-buttons", paint);
     dialog.addEventListener("close", function () { if (overlay.open) trash(); });
   }
-  // A page sent to the background keeps the words and stops the microphone.
+  // A page sent to the background stops the microphone: a recording is kept, and what a listener heard goes with the listener.
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden && media) pause();
+    if (!document.hidden) return;
+    if (waking) deaf();
+    else if (media) pause();
   });
   try { wakeOn = !!window.localStorage.getItem(WAKEKEY); } catch (e) { wakeOn = false; }
   probe();
