@@ -66,6 +66,8 @@ An option is a `value`, an optional `label` shown in its place, and an optional 
 
 A placeholder that names no field of the form is an error. Parsing the block reports it, so the form draws the reason and the button is never there to press.
 
+**A form that names a job runs it, and the prompt is then never asked.** The values of the fields it shows are the run's arguments, in the order the fields are declared, empty ones left out: a `hidden` field is how a flag goes in front of the value after it. The foot of the form names the job the button starts, `<folder>/<job>`, because the label is whatever the block's author wrote.
+
 ## Where it is parsed
 
 [`form/`](https://github.com/titpetric/task-ui/tree/main/form) holds the dialect and nothing else: it reads no database, no template and no file. `POST /api/forms` takes a markdown body and answers with the blocks in it, each parsed or refused. A client draws a form off that answer and holds no yaml parser of its own.

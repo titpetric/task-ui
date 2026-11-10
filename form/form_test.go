@@ -156,6 +156,39 @@ func TestForm_Visible(t *testing.T) {
 	}
 }
 
+// A when over a bool reads both spellings of a truth: a toggle posts 1 or
+// 0 and Bind writes true or false.
+func TestForm_VisibleBool(t *testing.T) {
+	t.Parallel()
+	f, err := form.Parse([]byte("fields:\n" +
+		"  - {key: deploy, component: bool}\n" +
+		"  - {key: reason, component: text, when: deploy=true}\n"))
+	assert.NoError(t, err)
+
+	for name, test := range map[string]struct {
+		values map[string]string
+		want   []string
+	}{
+		"a toggle that posts 1":   {map[string]string{"deploy": "1"}, []string{"deploy", "reason"}},
+		"a toggle that posts on":  {map[string]string{"deploy": "on"}, []string{"deploy", "reason"}},
+		"the bound value":         {map[string]string{"deploy": "true"}, []string{"deploy", "reason"}},
+		"a toggle that posts 0":   {map[string]string{"deploy": "0"}, []string{"deploy"}},
+		"a toggle nobody touched": {nil, []string{"deploy"}},
+	} {
+		var keys []string
+		for _, field := range f.Visible(test.values) {
+			keys = append(keys, field.Key)
+		}
+		assert.Equal(t, test.want, keys, name)
+	}
+
+	// A when over a bool that names no truth is a parse error.
+	_, err = form.Parse([]byte("fields:\n" +
+		"  - {key: deploy, component: bool}\n" +
+		"  - {key: reason, component: text, when: deploy=maybe}\n"))
+	assert.ErrorContains(t, err, "is no yes or no")
+}
+
 func TestForm_Render(t *testing.T) {
 	t.Parallel()
 	f, err := form.Parse([]byte("fields:\n" +

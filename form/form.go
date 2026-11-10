@@ -113,10 +113,14 @@ func Parse(data []byte) (*Form, error) {
 func (f *Form) Visible(values map[string]string) []Field {
 	var list []Field
 	shown := map[string]bool{}
+	by := map[string]*Field{}
+	for i := range f.Fields {
+		by[f.Fields[i].Key] = &f.Fields[i]
+	}
 	for _, field := range f.Fields {
 		if field.When != "" {
 			key, value, _ := strings.Cut(field.When, "=")
-			if !shown[key] || strings.TrimSpace(values[key]) != value {
+			if !shown[key] || !holds(by[key], values[key], value) {
 				continue
 			}
 		}
@@ -124,6 +128,19 @@ func (f *Form) Visible(values map[string]string) []Field {
 		list = append(list, field)
 	}
 	return list
+}
+
+// holds reports whether the posted value of a field is the one When names.
+// A bool is read as a truth on both sides: a toggle posts 1 or 0, Bind writes
+// true or false, and either spelling is accepted.
+func holds(on *Field, posted, want string) bool {
+	posted = strings.TrimSpace(posted)
+	if on != nil && on.Component == componentBool {
+		got, ok := truthOf(posted)
+		wanted, fine := truthOf(want)
+		return ok && fine && got == wanted
+	}
+	return posted == want
 }
 
 // Render returns Submit.Prompt with every placeholder replaced by the submitted value, "" for a field with none.
@@ -218,6 +235,9 @@ func (f *Field) validateRefs(keys map[string]*Field) error {
 		return fmt.Errorf("form: field %q: when names no field %q", f.Key, key)
 	case len(keys[key].Options) > 0 && !keys[key].hasOption(value):
 		return fmt.Errorf("form: field %q: when %q is no option of field %q", f.Key, value, key)
+	}
+	if _, ok := truthOf(value); keys[key].Component == componentBool && !ok {
+		return fmt.Errorf("form: field %q: when %q is no yes or no of field %q", f.Key, value, key)
 	}
 	return nil
 }
