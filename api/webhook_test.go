@@ -129,8 +129,9 @@ func TestWebhook(t *testing.T) {
 	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
 }
 
-// A repository checked out twice has both pulled, in folder order, and
-// the one that failed is 502 with the other already pulled.
+// A repository checked out three times has each pulled, in folder order,
+// and the one that failed answers 207 beside the two that pulled: the
+// sender reads which, because a second push is the only retry there is.
 func TestWebhook_Partial(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -161,12 +162,24 @@ func TestWebhook_Partial(t *testing.T) {
 	}
 
 	rec := hook(h, "push", "s3", `{"repository":{"full_name":"ops/infra","clone_url":"https://git.cdn.si/ops/infra.git"}}`)
-	assert.Equal(t, http.StatusBadGateway, rec.Code)
+	assert.Equal(t, http.StatusMultiStatus, rec.Code)
 	assert.Contains(t, rec.Body.String(), "a/infra: index.lock held")
+	assert.Contains(t, rec.Body.String(), `"pulled":["m/infra","z/infra"]`)
 	assert.Equal(t, []string{
 		filepath.Join(root, "m", "src", "infra"),
 		filepath.Join(root, "z", "src", "infra"),
 	}, pulled)
+}
+
+// A push whose every checkout failed is 502, which is the pull reported
+// as the failure it is.
+func TestWebhook_Failed(t *testing.T) {
+	t.Parallel()
+	h, _ := hookInstance(t.TempDir(), map[string]string{"url": "https://git.cdn.si", "token": "t", "secret": "s3"})
+	h.Pull = func(context.Context, string, io.Writer) error { return errors.New("index.lock held") }
+	rec := hook(h, "push", "s3", `{"repository":{"full_name":"malta/apps","clone_url":"https://git.cdn.si/malta/apps.git"}}`)
+	assert.Equal(t, http.StatusBadGateway, rec.Code)
+	assert.Contains(t, rec.Body.String(), "index.lock held")
 }
 
 // With the integration off, or without a webhook secret, every call is

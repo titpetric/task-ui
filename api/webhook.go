@@ -135,10 +135,16 @@ func (h *Webhook) push(w http.ResponseWriter, r *http.Request, body []byte) erro
 		pulled = append(pulled, folder)
 	}
 	slog.Info("forgejo push pulled", "repository", push.Repository.FullName, "ref", push.Ref, "folders", strings.Join(pulled, ", "))
-	if len(failed) > 0 {
+	switch {
+	case len(failed) > 0 && len(pulled) == 0:
 		return fmt.Errorf("%w: %s: %s", errWebhookPull, strings.Join(failed, "; "), strings.TrimSpace(out.String()))
+	case len(failed) > 0:
+		// Some of them pulled: the sender is told which, because a second
+		// push is the only retry there is and it pulls them all again.
+		writeJSON(w, http.StatusMultiStatus, map[string]any{"pulled": pulled, "failed": failed, "output": out.String()})
+	default:
+		writeJSON(w, http.StatusAccepted, map[string]any{"pulled": pulled, "output": out.String()})
 	}
-	writeJSON(w, http.StatusAccepted, map[string]any{"pulled": pulled, "output": out.String()})
 	return nil
 }
 
