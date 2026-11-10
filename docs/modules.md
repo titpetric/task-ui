@@ -239,21 +239,24 @@ Two things about the jobs are not obvious, and each one has cost an hour:
 
 ## What the runtime refuses
 
-phpscript decided against these, and they will not arrive. The full list is in the runtime's own `docs/design.md`; these are the ones that catch a plugin author.
+The runtime's own `docs/design.md` holds the whole list, the names it will not build in a two-column table with the replacement beside each. These are the ones that catch a plugin author, in the three kinds they come in.
 
-- `extends`, `parent::`, traits, `abstract`, `final`, `readonly`, `new self()`, `new static()`, enums, cloning. An `interface` with `implements` is the only contract there is, and it is checked.
-- Generators, `yield`, fibers, `eval`, `goto`, `global`, references outside `foreach`, `$$name`.
-- `??` and `??=`, the null coalescing operators: the parser refuses the second `?`. Write `isset($a["k"]) ? $a["k"] : $fallback`. The short ternary, `$a ?: $b`, does parse.
-- `strtok`. Use `explode` and take the first entry.
-- `date()`, which answers with the layout it was handed rather than a time. `DateTime::now()->format("2006-01-02 15:04:05.000000")` is the one that reads the clock, and a row written through `date()` carries the layout as its timestamp with nothing to say it went wrong.
-- A monotonic `ulid()`. Two in one millisecond share the timestamp and carry unordered random tails, so an identifier is no tiebreak for a second-resolution stamp: order rows by a timestamp that holds microseconds.
-- `session_start` and `$_SESSION`, PDO, `mysqli_*`, `curl_*`, `proc_*`, `uniqid`, `strftime`, `mktime`, the spaceship operator. `ulid()` is there, which is what a primary key wants.
+**A parse error.** `parent::`, traits, `readonly`, `new self()`, `new static()`, enums, cloning, generators and `yield`, fibers, `goto`, `$$name`. An `interface` with `implements` is the only contract there is, and it is checked at the declaration: a class that implements one and misses a method is refused there, and `phpscript lint` reports the same. `??` and `??=`, the null coalescing operators, are a parse error at the pin and parse upstream, as does the spaceship operator; until the next bump write `isset($a["k"]) ? $a["k"] : $fallback`. The short ternary, `$a ?: $b`, parses either way.
+
+**A no-op the linter names.** `extends` parses and confers nothing: no parent method, and `instanceof` is false. `abstract` parses and the class instantiates. `global` parses, the variable is NULL inside the function and the outer value is untouched; `$GLOBALS` does not exist. A reference outside `foreach`, `$b = &$a` or a `&$x` parameter, parses and binds by value, so a write inside is not seen outside; `foreach ($a as &$v)` does alias. `phpscript lint` warns on each of those by name. `final` parses, means nothing and warns about nothing.
+
+**An unbound name with a replacement.** `strtok`, use `explode` and take the first entry. `session_start` and `$_SESSION`: `Session\Manager` with `Session\Storage\Disk` or `Memory`, and `Auth\Storage\PasswordFile` for the credentials. PDO: `Database` and `Database\Migrate`. `curl_*`: `HTTP\Client` and `HTTP\Request`. `proc_*`: `exec`, `shell_exec`, `system` and `passthru` are bound. `mysqli_*`, `uniqid`, `strftime` and `mktime` have none, and `ulid()` is what a primary key wants.
+
+Two that are bound and answer something other than what their name says:
+
+- `date()` answers the clock with PHP's format letters, and `date("2006-01-02 15:04:05")` echoes that string back because it holds no format letter, which real PHP does too. The trap is the zone: it reads the process's, and the instance's own is what a row wants. `DateTime::now()->format(...)` takes a Go layout.
+- A monotonic `ulid()`. Six in one millisecond share the timestamp and hold unordered random tails: an identifier is no tiebreak for a second-resolution stamp, and a listing orders by a timestamp that holds microseconds.
 
 `$db->get()` answers a missing row with `false`, the way PHP does, and not with `null`. Test it with `is_array($row)`: a `=== null` reads every missing row as a hit, and the page draws an empty one.
 
 Four behaviours differ from PHP without saying so, and each one has cost an hour somewhere:
 
-- **Arrays are handles.** `$a = $b` on an array shares storage.
+- **Arrays are handles.** `$a = $b` on an array shares storage, and so does a by-value argument: a function that writes `$arr[1] = 77` into its own parameter leaves that write in the caller's array. PHP copies on a by-value pass.
 - **Declared types are never checked.** A type hint is a comment.
 - **There is no exception hierarchy.** `catch` matches on the class name: `Exception` takes any name not ending in `Error`, `Error` takes any name that does, and `$e instanceof Throwable` is false.
 - **Dates are Go times with Go layouts.** The format is `2006-01-02`, not `Y-m-d`, and `$t->add(86400)` adds 86.4 microseconds.

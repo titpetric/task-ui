@@ -8,7 +8,7 @@ The Go pages are kept to be read against the ported ones and not to be browsed. 
 
 Five things answer at the root because they are pages of neither front end, and `frontend.Handlers.Root` is where they are registered: the session POSTs, `/healthz`, the theme's files, the four byte streams, and a plugin's pages under `/m`.
 
-Equivalent means the whole page, chrome included, so no page is marked until the sidebar's folder tree arrives with the `folders` module: every page draws it, and a marked Go handler would be deleted in favour of a page whose sidebar is empty. A helper is marked only where no unported page calls it, and a partial only where no unported template includes it, which today leaves `_thread.tpl`, `_tooling.tpl`, `_chart.tpl` and `_schedule.tpl` unmarked whatever their pages do. `scripts/compare.sh` is what proves a page, and it takes several in one run.
+Equivalent means the whole page, chrome included, and the chrome's folder tree is drawn by `theme/templates/components/sidebar-folders.tpl` over the `folders` module. A helper is marked only where no unported page calls it, and a partial only where no unported template includes it, which today leaves `_thread.tpl`, `_tooling.tpl`, `_chart.tpl` and `_schedule.tpl` unmarked whatever their pages do. `scripts/compare.sh` is what proves a page, and it takes several in one run.
 
 **The whole site is the gate, and the crawl is the page list.** `scripts/compare-site.sh` walks every link from `/` with `scripts/crawl.sh` and hands each page it reached to `scripts/compare.sh`, which is 224 pages of the demo data against 46 a list kept by hand named — every job page of every folder, every filter a query writes, every row's own page. A list goes stale the moment a page is added and reads as a clean sweep; the site cannot. `scripts/demo.sh` runs it over the instance it builds, as the admin and again as the viewer, so the comparison is [a suite](testing.md#the-front-end) rather than a ritual: `TASK_UI_SHOT_FILTER='^$' scripts/demo.sh` is the crawl and the comparison with no screenshot taken.
 
@@ -16,7 +16,7 @@ Equivalent means the whole page, chrome included, so no page is marked until the
 
 Two kinds of path are not compared, and the run names each one it dropped. A byte stream is not a page, which is `/files/*`, `/artifacts/files/*` and the archives. A page under `/m` belongs to a module and not to this front end: the refinement board is the one that moved here, and the move changed the page — the module chrome around it is gone, its badges and its render footer with it, and the thread page became a page with a heading, a crumb trail and the thread's files in its actions. Its `.phpt` fixtures are what cover it, as for any module's PHP.
 
-[Corrections](todo-correction.md), sections 9 to 18, records every place the runtime lacks what this needs, with the workaround taken.
+[Corrections](todo-correction.md), sections 9 to 26, records every place the runtime lacks what this needs, with the workaround taken.
 
 ## The tree
 
@@ -33,7 +33,7 @@ Two kinds of path are not compared, and the run names each one it dropped. A byt
 | `modules/<name>/`             | one directory per sidebar entry                                                    |
 | `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime  |
 | `tools/`                      | the generators and the precompiler                                                 |
-| `tests/`                      | the `.phpt` fixtures, and `bootstrap.php`                                          |
+| `tests/`                      | the `.phpt` fixtures, `bootstrap.php`, `setup.php` and `schema.sql`                |
 
 A module directory holds:
 
@@ -53,7 +53,7 @@ A module directory holds:
 
 Ownership is a decision and not a read set. `user` and `run` are each read by seven modules; what decides is which pages' writes the table exists for. The 12 tables no page queries sit with the Go package that owns them.
 
-Twelve modules in, none has a `docs/`. The generated `README.md` already lists the tables and the operations over them, and a module that reads the instance's rows through `code/Task` owns no data model to write up; the directory is for one that owns a model through `storage/` and needs prose the generator cannot write. An empty `docs/` restating its README is worse than no directory.
+Fourteen modules in, none has a `docs/`. The generated `README.md` already lists the tables and the operations over them, and a module that reads the instance's rows through `code/Task` owns no data model to write up; the directory is for one that owns a model through `storage/` and needs prose the generator cannot write. An empty `docs/` restating its README is worse than no directory.
 
 ## A module
 
@@ -110,7 +110,7 @@ if (PHP_SAPI === "http") {
 
 `Module` names five methods and an interface here inherits nothing, so each one is written out. `tables()` is what the generated docs read.
 
-**`tables()` is the module body's own read set, not the chrome's.** Every page draws the chrome, and `Task\Chrome` reads `user`, `workspace`, `sidebar`, `pin`, `workflow`, `workflow_step`, `key_info`, `key_role`, `key_user` and the recents' `run` and `note` — eleven tables on every page in the tree. Naming them in each `tables()` would draw the same eleven-table diagram twelve times and the per-module diagram would stop telling modules apart, which is the only thing it is for. So a module names what its own body queries, the directory's data model is what its pages name together, and a module that queries nothing names nothing: `tools/docs.php` then writes no `schema.puml`, deletes a stale one, and the README says in words that the chrome does the reading. `modules/notfound/` is the one that does.
+**`tables()` is the module body's own read set, not the chrome's.** Every page draws the chrome, and `Task\Chrome` reads `user`, `workspace`, `sidebar`, `pin`, `workflow`, `workflow_step`, `key_info`, `key_role`, `key_user` and the recents' `run` and `note` — eleven tables on every page in the tree. Naming them in each `tables()` would draw the same eleven-table diagram fourteen times and the per-module diagram would stop telling modules apart, which is the only thing it is for. So a module names what its own body queries, the directory's data model is what its pages name together, and a module that queries nothing names nothing: `tools/docs.php` then writes no `schema.puml`, deletes a stale one, and the README says in words that the chrome does the reading. `modules/notfound/` is the one that does.
 
 A path is written without the mount. `Task\Host::base()` answers it and the templates write it as `{base}`, which is the empty string now that the ported pages hold the root; nothing in the tree spells a prefix of its own, and nothing spells the Go pages' `/legacy` either. `rules/` refuses both literals.
 
@@ -171,7 +171,7 @@ Where the element the script reads is server-drawn, the server names the URL and
 
 ### Writes
 
-**A page of the instance writes nothing, and a module's page is the one that does.** Every form on a page of the instance posts to `/api`, which is Go and stays Go, so the twenty-eight routes ported so far are all `GET` and none of them writes. A module is the exception the Go router already makes for the same reason — `frontend/frontend.go:85` wraps a module's pages in `access.SameOrigin` because a module's forms post to itself — and `modules/refinement` is the only module, so its five `POST` routes are every write this tree will hold until a page of the instance grows one of its own.
+**A page of the instance writes through `/api`, and a module's page writes itself.** Of the 57 routes ported so far, 49 are `GET` and 8 are `POST`: every form of a page of the instance posts to `/api`, which is Go and stays Go. A module is the exception the Go router already makes for the same reason - `frontend/frontend.go` wraps a module's pages in `access.SameOrigin` because a module's forms post to itself - and `modules/refinement` holds five of the eight. The other three are `modules/inventory`, which owns the `host` table: a page that owns a table writes it, and nothing of it is in `/api`.
 
 A handler validates and the storage class writes. One statement where that does, and a transaction inside the storage class where it does not. A handler that changed something answers with a redirect, `Task\Route::go("/notes")`, so a reload does not repeat the work.
 
@@ -210,7 +210,7 @@ A number a page prints is Go's arithmetic and not an equivalent of it. `Task\Act
 
 `Task\Host::x()` is Go. Every other `Task\` name is PHP. That spelling is the whole of the boundary.
 
-All fifty-two of them, in the order `phpfront/bind.go` registers them. Calls sharing a reason share a row.
+All fifty-seven of them, in the order `phpfront/bind.go` registers them. Calls sharing a reason share a row.
 
 | Call                                            | Why it is not PHP                                                                    |
 |-------------------------------------------------|--------------------------------------------------------------------------------------|
@@ -243,13 +243,15 @@ All fifty-two of them, in the order `phpfront/bind.go` registers them. Calls sha
 | `artifacts($folder)`, `artifact($path)`         | the artifact tree, outside the directory the PHP may open                            |
 | `tree($dir)`                                    | one directory of that tree, listed a level at a time                                 |
 | `space()`, `spaces($dirs)`                      | `diskusage`, which walks the folders                                                 |
-| `inventory($hosts)`, `host($n, $hosts)`         | `beszel`, `hostinfo` and the ssh prober, one instance of each                        |
+| `inventory($hosts, $held)`, `host($n, $hosts)`  | `beszel`, `hostinfo` and the ssh prober, one instance of each                        |
 | `reachable()`                                   | the same prober, for the hosts a command can run on                                  |
+| `reach($address)`                               | the same prober over one address, which is what an added host is proven with         |
 | `tooling()`                                     | atkins' report, which task-ui reads by running atkins                                |
 | `place($folder, $rel)`                          | a folder of the catalogue, or a directory inside one                                 |
 | `groups($folder, $rel, $seen, $shell, $claude)` | the Jobs table of a place: a row per pipeline file the walk found                    |
 | `listing($folder, $rel, $seen)`                 | a directory as the Files panel draws it                                              |
 | `rootTree($named, $seen)`                       | the root's own directories, as the root's page draws them                            |
+| `folderDirs($ids, $workspaces)`                 | the same for many folders at once, which a tree asks for in two batches              |
 | `modTime($dir)`                                 | when a directory last changed, which no row records                                  |
 | `status($dir)`                                  | git's branch, ahead, behind and remote of a checkout                                 |
 | `checkout($dir)`                                | the commit a checkout is at and the space it takes                                   |
@@ -260,6 +262,8 @@ All fifty-two of them, in the order `phpfront/bind.go` registers them. Calls sha
 | `usage()`                                       | what each area of the retention table holds now, measured off disk                   |
 | `telemetry()`                                   | the options the tracer runs on, which the tracer owns                                |
 | `integrations()`                                | the services' registry, Go data, and their settings, which the instance key encrypts |
+| `variables()`, `variable($name)`                | the environment of the server, which a page of the instance reports                  |
+| `integrationEnv($name)`                         | what an integration puts in a run's environment, read off the registry               |
 | `modules()`                                     | the plugins the instance serves under `/m`, which the module host loaded             |
 | `entries($workspaces)`                          | the project directories under each workspace's `src`, a walk                         |
 
@@ -298,7 +302,7 @@ Every component has a sibling `.md` stating its input scope and the schema of th
 
 A module's `templates/index.tpl` is the body. `Task\View` renders it with the module's templates and the theme's as the search paths, in that order, so `{include components/table.tpl}` resolves into the theme, then renders the shell around it.
 
-**A component cannot include itself.** `{include}` is a compile-time pre-pass: `Compiler.php:62` runs `while (preg_match_all("/\{include (.*?)\}/s", …))` and `str_replace`s each tag with the file's text, so a template that names itself reintroduces its own tag on every turn of the loop and the compile never finishes. There is no depth cap and no error. `{load}` is no way round it either — `Template.php:65` pushes `$this->filename` onto the stack and leaves `$this->vars` alone, so a nested load renders against the caller's scope and overwrites it. A recursive Go partial is therefore unrolled into one component per level, each fed a scope the PHP flattened for it; the class that builds the scope may recurse as deep as it likes, because that is PHP and not the compiler.
+**A component cannot include itself.** `{include}` is a compile-time pre-pass: `Compiler.php:62` runs `while (preg_match_all("/\{include (.*?)\}/s", …))` and `str_replace`s each tag with the file's text, so a template that names itself reintroduces its own tag on every turn of the loop and the compile never finishes. There is no depth cap and no error. `{load}` is no way round it either — `Compiler.php:79` compiles it to `push()`, `load()`, `assign()`, `render()`, `pop()`, and `push()` stacks the filename while `_default_vars()` keeps the variables, clearing them on an empty stack alone (`Template.php:46-49`), so a nested load renders against the caller's scope and overwrites it. A recursive Go partial is therefore unrolled into one component per level, each fed a scope the PHP flattened for it; the class that builds the scope may recurse as deep as it likes, because that is PHP and not the compiler.
 
 No `set_compile_location` is called. MiniTPL's default writes beside each search path, which is `modules/<name>/templates_c/` and `theme/templates_c/`.
 
@@ -320,7 +324,7 @@ A tag adds no whitespace of its own. The compiler closes every tag as `?>` and a
 
 ## Running it
 
-**A template edit takes effect on the next request; a PHP edit needs a restart.** `TASK_UI_PHP_FRONT` serves the checkout, but the runtime's include cache keys on the path alone and never stats the file (`runner/include_cache.go`), so a parsed `.php` lives as long as the process. MiniTPL compiles a template against its mtime, which is why the two differ. This is worth knowing because of how it fails: the fix is on disk, the page still draws the old answer, and the diagnosis reads as wrong when it was right. Restart before concluding anything about a `code/` or `mod_*` edit, and restart before a sweep — a comparison run against a long-lived process compares pages the process parsed hours ago.
+**A template edit takes effect on the next request; a PHP edit needs a restart.** `TASK_UI_PHP_FRONT` serves the checkout, but the runtime's include cache keys on the path alone and never stats the file (`runner/include_cache.go`), so a parsed `.php` lives as long as the process. MiniTPL compiles a template against its own mtime (`Template.php:84`), and against that file's alone: a component is inlined at compile time, so an edit to one shows nowhere until the template that includes it is compiled again. This is worth knowing because of how it fails: the fix is on disk, the page still draws the old answer, and the diagnosis reads as wrong when it was right. Restart before concluding anything about a `code/` or `mod_*` edit, and restart before a sweep — a comparison run against a long-lived process compares pages the process parsed hours ago.
 
 ```sh
 # the instance, with the tree served from the checkout so a template edit
@@ -353,7 +357,7 @@ sqlite3 .live/data/task-ui.db "INSERT INTO note …"
 
 **The entrypoint of a request is re-read; everything it includes is not.** `mod_*.php` is parsed on every request, because `runner.LoadFile` goes past the include cache when `Precompile` is off, which is how `phpfront/front.go` builds the runtime. Every `include` under it — `ext/autoload.php`, each `code/Task/*.php` the autoloader pulls and each compiled template MiniTPL includes — goes through `runner.resolveInclude`, which consults the cache unconditionally, keyed by cleaned path with no mtime; `SessionPool.Put` resets the session between requests and never clears it. One cache serves the whole source tree for the life of the process.
 
-So an edit to `mod_*.php` shows on the next request, and an edit to a class under `code/Task`, to a template, or to `composer`'s autoload map needs the instance restarted. A method added to `Task\Buttons` is `call to undefined method` until then — on the page, not in the log of the editor, which is why a 500 after an edit under `code/` is this and not the edit. A template edit also needs `php tools/precompile.php` first, and the restart after it. A new `@route` needs a restart too: the tree is scanned once, when the front end is built.
+So an edit to `mod_*.php` shows on the next request, and an edit to a class under `code/Task`, to a template, or to `composer`'s autoload map needs the instance restarted. A method added to `Task\Buttons` is `call to undefined method` until then — on the page, not in the log of the editor, which is why a 500 after an edit under `code/` is this and not the edit. A template edit also needs `phpscript run tools/precompile.php` first, which is what the atkins step runs, and the restart after it. A new `@route` needs a restart too: the tree is scanned once, when the front end is built.
 
 **A page's trace is the interpreter's, filtered by the recorder.** `phpfront/front.go` runs the runtime at `trace_level: info`: the interpreter reports a span per PHP frame and marks each as detail, and reports the files a page included as one `includes` span at the end of the request rather than one span each. What a reader then sees is the Shortest debug span setting of `/settings/telemetry`, a millisecond on this instance: a frame under it is dropped and counted, and its slot in Spans per trace goes back to the work that took the time. `trace_level: debug` reports every frame unmarked and a span per include with them, which is a page being taken apart rather than a page being served; `off` reports none of the interpreter's own work, and the spans a binding or a `start_span` recorded still arrive.
 
@@ -371,9 +375,9 @@ So an edit to `mod_*.php` shows on the next request, and an edit to a class unde
 | `docs`       | each module's `README.md`, `schema.puml` and `schema.svg`         |
 | `rules`      | the semgrep conventions                                           |
 
-`atkins` runs them in that order. The Go side keeps its own: `atkins test` and `splint ./...`.
+`atkins` runs five of them: `fmt`, `lint`, `precompile`, `test`, `rules`. Precompile is ahead of test because a compiled template is an input to `tests/form.phpt`. `models` and `docs` write generated files and are run by name. The Go side keeps its own: `atkins test` and `splint ./...`.
 
-Run `atkins fmt`, never the bare command. `phpscript fmt -l .` prints nothing on an unformatted tree, because `.` is a directory and not a package pattern; the gate is `phpscript fmt -l ./code/... ./modules/... ./stubs/... ./tools/...`, which is the four trees and not `./...`, because `./...` reaches `ext/`, which is composer's to format, and every `templates_c`, which the next precompile would write back. `-l` exits zero whether or not it named a file, so the job's test is whether it printed anything.
+Run `atkins fmt`, never the bare command. `phpscript fmt -l .` prints nothing here because `.` reads the files of the directory it names and this root holds no `.php`; the gate is `phpscript fmt -l ./code/... ./modules/... ./stubs/... ./tools/...`, which is the four trees and not `./...`, because the recursive walk reaches `ext/`, which is composer's to format. `tests/` is the one tree the gate leaves out, and `fmt -l ./...` names `tests/setup.php`. `-l` exits zero whether or not it named a file, so the job's test is whether it printed anything.
 
 `rules` names its files rather than the tree. Given a directory, semgrep scans what git tracks — it says so in its own summary — so the module directory written an hour ago is held by no rule until it is committed, which is the hour the rules are for. `git ls-files -co --exclude-standard` is the list: tracked, untracked, and nothing git ignores. The Go gate at the repository root keeps the directory, because a named file also escapes semgrep's own ignore list, which holds the Go test files.
 

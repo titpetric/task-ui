@@ -2,11 +2,11 @@
 
 Two specifications here stand against phpscript and MiniTPL sight unseen: the module system, and the [front end](phpfront.md) that replaces the Go pages. Each one names things neither runtime has. Every requirement is below with the snippet the specification calls for, what the runtime does instead, and the correction the code takes.
 
-Sections 1 to 8 are the module system, 9 to 25 the front end.
+Sections 1 to 8 are the module system, 9 to 26 the front end.
 
 A gap of this port's own making is not one of these and is not recorded here: a binding that answered less than the Go page it replaced is a binding to widen, which [the front end](phpfront.md) states as a rule.
 
-Checked against `github.com/titpetric/phpscript` at commit `ee889fe`, which `@main` resolves to as `v0.6.1-0.20261027175813-ee889febddf9`, and `titpetric/minitpl` v1.3.4.
+Checked against `github.com/titpetric/phpscript` at commit `502335c`, which `go.mod` pins as `v0.6.1-0.20261104140326-502335c56309`, and `titpetric/minitpl` v1.3.4.
 
 ## 1. `new Task::Module()` does not parse
 
@@ -32,11 +32,11 @@ Task::register($module);
 
 `Task::register`, `Task::migrate` and `Task::dispatch` keep the `::` spelling: a host function whose name holds `::` is the first thing `helperStaticCall` resolves, so a static call on a class that does not exist reaches it. The two spellings coexist. Only the constructor moved.
 
-## 2. MiniTPL has no precompiler and no `templates_c`
+## 2. MiniTPL's precompiler is in the package and not in an install
 
 Specified: a `templates/` and a `templates_c/` in every module, the second precompiled, so every template that runs is compiled ahead of time.
 
-MiniTPL compiles lazily, inside `load()`, when the source is newer than the compiled file. Its compile directory defaults to `cache/` under each template path, and `set_compile_location($path, $absolute)` moves it. The package is pure PHP with three classes and a composer autoload, it ships no command line tool, and `templates_c/` is a Smarty name.
+MiniTPL compiles lazily, inside `load()`, when the source is newer than the compiled file. Its compile directory defaults to `cache/` under each template path, and `set_compile_location($path, $absolute)` moves it. v1.3.4 does ship `cmd/minitpl`, whose `compile` transpiles a tree into a directory named `templates_c`; it is unreachable from an install, because `composer.json` declares no `bin` and the script requires `<pkg>/vendor/autoload.php`, which composer writes in a clone alone.
 
 Correction: `precompile.php` in the module walks `templates/` and calls the compiler per file, which does exist:
 
@@ -48,7 +48,7 @@ foreach (glob("templates/*.tpl") as $source) {
 }
 ```
 
-`atkins precompile` in the module runs it, so `templates_c/` is a shipped artefact and the pipeline keeps it in step. `index.php` compiles into the same directory, so a request finds every template already compiled.
+`atkins precompile` in the module runs it, so `templates_c/` is a shipped artefact and the pipeline keeps it in step. `index.php` compiles into the same directory, so a request finds every template already compiled. `precompile.php` stays until minitpl declares the bin.
 
 ## 3. An embedded tree cannot be served with options
 
@@ -133,6 +133,8 @@ Correction: the host class is registered as `Task\Host`. Every reference is mult
 
 Filed as [phpscript#187](https://github.com/titpetric/phpscript/issues/187). A formatter that changes name resolution is the one class of bug a formatter must not have, so the fix belongs upstream and `Task\Host` stands on its own merits.
 
+**Closed upstream**, `edaac81`, below the pin: `fmt` leaves `\Task::base()` as written. The multi-segment requirement on `phpfront.HostClass` is free, and the name stays what it is.
+
 ## 10. A property cannot be named by a variable
 
 Specified: one hydrator over every generated model, `fill($object, $fields, $row)`, so the row to model mapping is written once.
@@ -142,6 +144,8 @@ Specified: one hydrator over every generated model, `fill($object, $fields, $row
 Correction: `tools/models.php` writes the assignments out, one per column, and `Task\Row::values()` is `get_object_vars`. The repetition lives in `tools/templates/model.tpl`.
 
 Filed as [phpscript#188](https://github.com/titpetric/phpscript/issues/188). The workaround holds for a generated class; hand-written code that maps a row by name has none.
+
+**Closed upstream**, `2983cb8`, below the pin: `$obj->$name` parses. The generated models can take a loop over their own field list in place of the per-column assignments, which are 6483 lines of `code/Task/Model/`.
 
 ## 11. There is no `gmdate`, and `date` is not UTC
 
@@ -157,9 +161,11 @@ Specified: a module's `README.md` generated from the API of its storage classes.
 
 `list.Row` holds a route, a filename and the class names of a file. A method, its signature and its docblock are not there, and `phpscript ast` answers a token stream.
 
-Correction: `tools/apidoc.php` reads the classes with `token_get_all()` and writes the API as JSON, which `tools/render.php` feeds to `README.md.tpl`.
+Correction: `tools/docs.php` reads the classes with `token_get_all()` and renders `tools/templates/readme.md.tpl` from what it found.
 
 Filed as [phpscript#189](https://github.com/titpetric/phpscript/issues/189), proposing `list --api`. The generator re-finds in PHP what the parser already holds.
+
+**Closed upstream**, `d854a3a`, below the pin: `phpscript list --api --json` answers a class, a member, a signature and a docblock per row. The 519 lines of `tools/docs.php` that walk the tokens can read that instead, and section 20 goes with them.
 
 ## 13. A class receives nothing through `extends` and there are no traits
 
@@ -209,6 +215,8 @@ Correction: the call gets its own statement and the result is tested afterwards.
 
 Filed as [phpscript#190](https://github.com/titpetric/phpscript/issues/190).
 
+**Closed upstream**, `b31dd39`, below the pin: an out parameter is readable in the expression that wrote it. The split statements can rejoin; `tests/notes.phpt` states the four shapes either way.
+
 ## 18. A timestamp column takes two shapes
 
 Specified: a row the front end writes read back by the Go pages while both answer.
@@ -223,13 +231,13 @@ Correction: the generated model names its timestamp columns in `static $stamps`,
 
 Recorded as a boundary and not a gap: two writers share one table and the format is the Go driver's. It is the first thing a module's write gets right, and the only sign of getting it wrong is a page that lists nothing.
 
-## 19. A write inside a fixture fails silently
+## 19. A fixture writes under its own directory and reads under the suite root
 
 Specified: a fixture renders a module's page and states the markup, since the template is the page.
 
-A fixture runs under a sandbox that refuses a write. `file_put_contents` returns false and leaves no file, while `is_writable` on the same directory returns true. MiniTPL compiles inside `load()` where the source is newer than the compiled file, the write fails silently, and `_find_path` then reports `Template file 'run.tpl' doesn't exist! Is the compile dir writable?`, naming the condition the fixture reports as true. A page whose template is compiled renders in a fixture; a new template renders nowhere until `atkins precompile` writes it.
+A write inside a fixture is not refused: `file_put_contents` answers the byte count, the bytes land on disk and a `require` of the file runs it. What moves is where: with a suite root set, a read resolves against the suite root and a write lands under the fixture's own directory. MiniTPL compiles inside `load()` where the source is newer than the compiled file, writes the compiled file beside the fixture, and `_find_path` then looks for it under the suite root and reports `Template file 'run.tpl' doesn't exist! Is the compile dir writable?`, naming a condition that is not the fault. A page whose template is already compiled renders in a fixture; a new template renders nowhere until `atkins precompile` writes it where the suite root looks.
 
-Correction: a module holds what the template reads in a `scope()` method and `serve()` renders it, so `tests/run-page.phpt` and `tests/report-page.phpt` state every key of the scope and no fixture compiles anything. `is_writable` under the sandbox needs to answer what a write does.
+Correction: a module holds what the template reads in a `scope()` method and `serve()` renders it, so `tests/run-page.phpt` and `tests/report-page.phpt` state every key of the scope and no fixture compiles anything. The design stands on its own merits; the runtime does not force it.
 
 ## 20. A modifier tokenizes as a name and the `T_STATIC` family is undefined
 
@@ -282,7 +290,7 @@ Correction: nothing in the tree writes a comment inside an expression. Where one
 
 ## 24. An empty path parameter lets the query string stand in for it
 
-`runner/request.go:479` writes a path parameter into `$_REQUEST` only when it matched something:
+`runner/context.go:429-433` writes a path parameter into `$_REQUEST` only when it matched something:
 
 ```go
 value := r.PathValue(param.Name)
@@ -316,7 +324,7 @@ call(): Argument #1 must be of type array, array given
 
 `Task\Folders::warm` asks `Host::folderDirs(array_keys($ask), ...)`. The folder tree is drawn on every page, and every page answered 500. No fixture saw it: `stubs/host.php` answers in PHP, where both spellings are one type.
 
-Correction: every binding parameter that takes a list is declared `any` and read in `phpfront/names` or `phpfront/fields` with `model.LenValues` and `model.RangeValues`, the runtime's own readers of both spellings. The fix belongs in Go, in `coerceArg`: a `[]any` bound for a `*model.Array` parameter wraps, the way an `int` bound for a `float64` converts. Until then a binding signature states nothing about what it takes, and the error message states nothing about the fault.
+Correction: every binding parameter that takes a list is declared `any` and read through `names()` or `fields()` in `phpfront/message.go:61,76` with `model.LenValues` and `model.RangeValues`, the runtime's own readers of both spellings. The fix belongs in Go, in `coerceArg`: a `[]any` bound for a `*model.Array` parameter wraps, the way an `int` bound for a `float64` converts. Until then a binding signature states nothing about what it takes, and the error message states nothing about the fault.
 
 ## Not a runtime gap
 

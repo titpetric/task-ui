@@ -104,7 +104,7 @@ cd workspace && /usr/bin/time -f "%M KB peak" /tmp/pkg.test -test.count=1
 
 A binary that peaks in the hundreds holds an input it could read in pieces. `TestReadBundle_TooLarge` feeds `ReadBundle` its padding through an `io.LimitReader` over a reader of zeros, which is the last row of the table it does not pay. What that padding trips is age's authentication of the stream, before the byte limit is reached; `TestReadBundle_TooLargeUnpacked` is the one that reaches a size limit, `MaxUnpacked`, off a bundle under a megabyte. The other rule is the one `view.New` follows: a parsed template set is built once per binary, never once per fixture.
 
-Three tools look at a template. `atkins precompile` compiles every `.tpl` and reports a syntax error, `phpscript lint ./...` reports a name the interpreter cannot resolve, and a six-line script renders one template over data you wrote. The `templates` skill has the script and the one trap in it.
+Two tools look at a template: `atkins precompile`, run in `phpfront/app` or in a module, which compiles every `.tpl` and reports a syntax error, and a six-line script that renders one template over data you wrote. `phpscript lint` reads `.php` and `.phpt` alone and never opens a template.
 
 ## Integration tests
 
@@ -144,11 +144,11 @@ One `go test` per package, and a package holding more tests than the batch size 
 
 The split is what keeps the suite inside the memory cap. A cap binds a process, not a run: `go test -tags integration ./...` builds one binary per package, and `frontend` holds enough tests that running them together needs more than the cap, which ends the whole suite in an OOM that names no package. One `go test` per batch keeps a failure local and prints which package and which batch it is.
 
-Nothing here runs a benchmark: the repository holds none, and `go test` runs one only under `-bench`. Coverage is its own target, `task cover`, because `-cover` instruments every package and the correctness run does not read the number.
+Nothing here runs a benchmark: the repository holds none, and `go test` runs one only under `-bench`. Coverage is its own target, `task test:cover`, because `-cover` instruments every package and the correctness run does not read the number.
 
 ## Where integration tests belong
 
-Integration tests belong in the `storage` package, and it is the only one that holds them: 28 files over a throwaway database, testing the real implementation with no mocks. A package that consumes storage, such as `api`, `frontend`, `mcp` or `note`, tests its own code with unit tests over fakes.
+Integration tests belong in the `storage` package, which holds most of them: a file per storage over a throwaway database, testing the real implementation with no mocks. A package that consumes storage, such as `api`, `frontend`, `mcp` or `note`, tests its own code with unit tests over fakes. The ones outside `storage` are what cross a boundary nothing else can: `app` wiring a whole instance, `note` dispatching an agent, `git` over a real checkout, `workflow` running a pipeline, and the clients of a service behind an `httptest` server.
 
 A driver — `git`, `runner`, `sshprobe`, `agent`, the packages that wrap a process or a protocol — has none of its own. The instance the shots suite builds is what runs them: real runs through the real runner, over real checkouts, read back through the pages that draw them, with the counters of that server in the coverage the suite reports. A driver whose behaviour no page reaches needs a test of its own, and this is the package it goes in.
 
@@ -209,25 +209,35 @@ Print with `echo`, not `var_dump`. `echo` writes the value and nothing else, whi
 
 `phpscript test` roots a fixture at the directory the fixture sits in, so a fixture in `tests/` sees `tests/` as `/` and nothing of the module. A `phpscript.yml` in the tree moves that root: the directory holding the file is the application root for every fixture below it. The module keeps one at its own root, so a fixture reads the tree `index.php` reads and `require "ext/autoload.php"` means the same path in both.
 
+`phpfront/app/phpscript.yml` is the front end's, and the whole file:
+
 ```yaml
+env:
+  - "PLATFORM_DB_TASK-UI=sqlite://file:phpfront?mode=memory&cache=shared"
+
 test:
   include: tests/bootstrap.php
+  hooks:
+    setup: tests/setup.php
 ```
 
-`include` runs ahead of every fixture. `tests/bootstrap.php` requires `ext/autoload.php` and nothing else, so a fixture names the class it is about and the classmap finds it.
+`include` loads the bootstrap once per session, `hooks.setup` applies `tests/schema.sql`, and `env` is the connection `new Database` resolves: without it the suite builds no provider and a storage class has nothing to open. A module's own file is the `test:` block alone.
+
+`tests/bootstrap.php` of a module requires `ext/autoload.php` and nothing else, so a fixture names the class it is about and the classmap finds it. The front end's adds `stubs/host.php` and `stubs/fixture.php`: the host calls are Go, and a fixture reads the stubs' statics in their place.
 
 ### What runs and what cannot
 
-phpscript is the runtime, not the instance. It carries the PHP standard library and nothing of task-ui: `Task\Module`, `Task::register`, `Task::dispatch`, `Task::markdown`, `Task::artifacts`, `Task::artifact` and `Database` are Go bindings the host registers on a runtime it builds itself, and a `phpscript test` or `phpscript run` has none of them.
+phpscript is the runtime and the instance is task-ui. The runtime holds the PHP standard library, `Database` among it, and nothing of task-ui: `Task\Module`, `Task::register`, `Task::dispatch`, `Task::run`, `Task::markdown`, `Task::artifacts` and `Task::artifact` are Go bindings the host registers on a runtime it builds itself, and a `phpscript test` or `phpscript run` has none of them.
 
 So a fixture covers what stands on its own, which is most of what a module decides:
 
-| Runs under phpscript                                                       | Does not                                             |
-|----------------------------------------------------------------------------|------------------------------------------------------|
-| a manager's static side: routing a path, a title, grouping rows for a page | a manager's instance methods, which reach `Task::`   |
-| composing a prompt out of rows, over plain arrays                          | the store, a class over a `Database`                 |
-| the stamp functions, over the runtime's own `DateTime`                     | `modinfo.php`, which is `Task::` from its first line |
-| MiniTPL: compiling a template, rendering one with data                     |                                                      |
+| Runs under phpscript                                                                   | Does not                                             |
+|----------------------------------------------------------------------------------------|------------------------------------------------------|
+| a manager's static side: routing a path, a title, grouping rows for a page             | a manager's instance methods, which reach `Task::`   |
+| composing a prompt out of rows, over plain arrays                                      | `modinfo.php`, which is `Task::` from its first line |
+| a store over a `Database`, where the suite's `phpscript.yml` names the DSN under `env` |                                                      |
+| the stamp functions, over the runtime's own `DateTime`                                 |                                                      |
+| MiniTPL: compiling a template, rendering one with data                                 |                                                      |
 
 Naming a class is not constructing one, which is why the static side is static: `RefinementManager::title` and `RefinementPrompt::flatten` are called straight off the class, and the fixture never reaches the constructor that wants a `Database`.
 

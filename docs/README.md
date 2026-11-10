@@ -53,6 +53,6 @@ Beside the guide:
 - [The front end's shared markup](framework.md): the behaviour a page gets by writing an attribute, the run status label among it;
 - [The front end](phpfront.md): the pages being replaced by a phpscript application, its theme, its modules and the task-ui data model as PHP;
 - [Modules](modules.md): writing a plugin in PHP, the bindings and what the runtime refuses;
-- [Corrections](todo-correction.md): where the PHP runtime lacks what the module system needs;
+- [Corrections](todo-correction.md): where phpscript and MiniTPL lack what the module system and the ported front end need;
 - [Sitemap](sitemap.md): every page, its lists, actions, forms and empty lines;
 - [Testing](testing.md): the unit tests of the default run, the integration tests behind a build tag, and a module's PHP under `phpscript test`.
