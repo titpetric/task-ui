@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"io"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -155,7 +156,9 @@ func (zeros) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// ReadBundle refuses a file over MaxBundle before reading it through.
+// ReadBundle refuses a file with bytes after the ciphertext, which is
+// what padding one past MaxBundle makes: age authenticates the stream it
+// decrypts, so the trailing run is refused before the limit is reached.
 // The pad is a reader: held as one slice it is 64 MiB of the test's heap.
 func TestReadBundle_TooLarge(t *testing.T) {
 	t.Parallel()
@@ -163,4 +166,21 @@ func TestReadBundle_TooLarge(t *testing.T) {
 	padded := io.MultiReader(bytes.NewReader(big), io.LimitReader(zeros{}, workspace.MaxBundle))
 	_, err := workspace.ReadBundle(padded, "pass")
 	assert.True(t, errors.Is(err, workspace.ErrBundle), err)
+}
+
+// The entries are bounded together and not only one at a time: a small
+// file of compressed zeros holds a thousand key files of a megabyte, and
+// every one of them is kept.
+func TestReadBundle_TooLargeUnpacked(t *testing.T) {
+	t.Parallel()
+	entries := map[string]string{"manifest.json": manifest}
+	key := strings.Repeat("\x00", workspace.MaxKeyFile)
+	for i := 0; i <= workspace.MaxUnpacked/workspace.MaxKeyFile; i++ {
+		entries[".ssh/id_"+strconv.Itoa(i)+".key"] = key
+	}
+	packed := raw(t, "pass", entries)
+	assert.True(t, len(packed) < 1<<20, "the bundle itself is under a megabyte")
+
+	_, err := workspace.ReadBundle(bytes.NewReader(packed), "pass")
+	assert.ErrorContains(t, err, "over 32 MiB together")
 }

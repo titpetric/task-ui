@@ -102,7 +102,7 @@ cd workspace && /usr/bin/time -f "%M KB peak" /tmp/pkg.test -test.count=1
 | `storage` under `-tags integration`, 194 tests    | 46 MB  |
 | `MaxBundle` of padding held as one `bytes.Repeat` | 190 MB |
 
-A binary that peaks in the hundreds holds an input it could read in pieces. `TestReadBundle_TooLarge` feeds `ReadBundle` the padding that trips `MaxBundle` through an `io.LimitReader` over a reader of zeros, which is the last row of the table it does not pay. The other rule is the one `view.New` follows: a parsed template set is built once per binary, never once per fixture.
+A binary that peaks in the hundreds holds an input it could read in pieces. `TestReadBundle_TooLarge` feeds `ReadBundle` its padding through an `io.LimitReader` over a reader of zeros, which is the last row of the table it does not pay. What that padding trips is age's authentication of the stream, before the byte limit is reached; `TestReadBundle_TooLargeUnpacked` is the one that reaches a size limit, `MaxUnpacked`, off a bundle under a megabyte. The other rule is the one `view.New` follows: a parsed template set is built once per binary, never once per fixture.
 
 Three tools look at a template. `atkins precompile` compiles every `.tpl` and reports a syntax error, `phpscript lint ./...` reports a name the interpreter cannot resolve, and a six-line script renders one template over data you wrote. The `templates` skill has the script and the one trap in it.
 

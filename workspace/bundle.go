@@ -30,6 +30,10 @@ const (
 	MaxManifest = 16 << 20
 	MaxKeyFile  = 1 << 20
 	MaxEntries  = 1024
+	// MaxUnpacked bounds the entries together, which MaxBundle does not:
+	// a 2 MB file of compressed zeros holds a thousand key files of a
+	// megabyte each, and a reader keeps every one of them.
+	MaxUnpacked = 32 << 20
 )
 
 // manifestName and sshDir are where a bundle keeps the manifest and
@@ -157,10 +161,12 @@ func ReadBundle(r io.Reader, passphrase string) (*Bundle, error) {
 	return bundle, nil
 }
 
-// readArchive reads the manifest and the key files of an archive.
+// readArchive reads the manifest and the key files of an archive, up to
+// MaxUnpacked of them together.
 func readArchive(archive *tar.Reader) (*Bundle, error) {
 	bundle := &Bundle{Keys: map[string][]byte{}}
 	var manifest []byte
+	held := int64(0)
 	for count := 0; ; count++ {
 		header, err := archive.Next()
 		if errors.Is(err, io.EOF) {
@@ -185,6 +191,9 @@ func readArchive(archive *tar.Reader) (*Bundle, error) {
 		}
 		if int64(len(data)) > limit {
 			return nil, fmt.Errorf("%w: %s is over %d bytes", ErrBundle, header.Name, limit)
+		}
+		if held += int64(len(data)); held > MaxUnpacked {
+			return nil, fmt.Errorf("%w: the entries are over %d MiB together", ErrBundle, MaxUnpacked>>20)
 		}
 		if name == manifestName {
 			manifest = data
