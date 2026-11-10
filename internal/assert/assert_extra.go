@@ -90,8 +90,10 @@ func Brief(haystack, needle any) any {
 }
 
 // nearest is where the longest prefix of want appears in text, -1 for none.
+// It starts at the window the message prints: a needle of a megabyte would
+// otherwise cost one search of the haystack per byte of it.
 func nearest(text, want string) int {
-	for n := len(want); n > 0; n-- {
+	for n := min(len(want), briefWindow); n > 0; n-- {
 		if at := strings.Index(text, want[:n]); at >= 0 {
 			return at
 		}
