@@ -30,11 +30,11 @@ scripts/test.sh --tag integration ./storage/...
 
 Two costs were measured and both are now paid once per test binary rather than once per test:
 
-| What                 | Was  | Is     | How                                                                |
-|----------------------|------|--------|--------------------------------------------------------------------|
-| a migrated database  | 64ms | 0.22ms | `internal/testdb.New(t)` copies a template migrated once           |
-| a 4096 bit RSA key   | 1.5s | 0ms    | `internal/testkey.RSA(t)` reads one generated once into `testdata` |
-| the parsed templates | 65ms | once   | `shared(t)` in the view tests                                      |
+| What                 | Was  | Is     | How                                                                                  |
+|----------------------|------|--------|--------------------------------------------------------------------------------------|
+| a migrated database  | 64ms | 0.22ms | `newDB(t)` in `storage/storage_integration_test.go`, one in-memory database per test |
+| a 4096 bit RSA key   | 1.5s | 0ms    | `internal/testkey.RSA(t)` reads one generated once into `testdata`                   |
+| the parsed templates | 65ms | once   | `shared(t)` in the view tests                                                        |
 
 Reach for the same shape when a fixture builds something expensive and unchanging: build it once behind a `sync.Once`, hand out a copy.
 

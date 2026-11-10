@@ -20,7 +20,7 @@ import (
 // second CREATE TABLE is conditional and survives; the second ALTER TABLE of a
 // column that is already there fails.
 //
-// A change to this list is therefore an edit of 86 strings, which a review sees.
+// A change to this list is therefore an edit of every name in it, which a review sees.
 var migrations = []string{
 	"artifact.up.sql",
 	"artifact_commit.up.sql",

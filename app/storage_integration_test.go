@@ -35,6 +35,13 @@ func nilFields(container any, skip ...string) []string {
 		if !field.IsExported() || slices.Contains(skip, field.Name) {
 			continue
 		}
+		// A value field is never nil, and IsNil panics on one: an exported
+		// one added here is a finding for the test to report, not a crash.
+		switch field.Type.Kind() {
+		case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		default:
+			continue
+		}
 		if value.Field(i).IsNil() {
 			missing = append(missing, field.Name)
 		}
