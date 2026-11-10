@@ -108,10 +108,6 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "inventory/view") {
 		return
 	}
-	if h.opts.Hosts == nil {
-		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
-		return
-	}
 	rows := []model.Host{}
 	if h.opts.HostRows != nil {
 		held, err := h.opts.HostRows.List(r.Context())
@@ -121,7 +117,13 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 		}
 		rows = held
 	}
-	systems, err := h.opts.Hosts.Systems(r.Context())
+	// The rows are read before the hub is asked for, because the list is
+	// this instance's: an unwired Beszel is a source that is not there.
+	var systems []beszel.System
+	err := beszel.ErrOff
+	if h.opts.Hosts != nil {
+		systems, err = h.opts.Hosts.Systems(r.Context())
+	}
 	answer := map[string]any{"hosts": beszel.ByCapacity(systems), "rows": rows}
 	switch {
 	case err != nil && len(rows) == 0 && errors.Is(err, beszel.ErrOff):
