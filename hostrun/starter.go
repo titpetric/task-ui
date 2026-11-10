@@ -123,8 +123,9 @@ func (s *Starter) held(ctx context.Context) []string {
 	if s.Held == nil {
 		return nil
 	}
-	out := make([]string, 0, len(s.Held(ctx)))
-	for address := range s.Held(ctx) {
+	names := s.Held(ctx)
+	out := make([]string, 0, len(names))
+	for address := range names {
 		out = append(out, address)
 	}
 	sort.Strings(out)
