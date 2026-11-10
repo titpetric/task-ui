@@ -178,7 +178,7 @@ class Host {
 	 * else where the layout puts the project among the named workspaces.
 	 */
 	static function folderDir($id, $workspaces) {
-		self::$folderDirCalls++;
+		self::$folderDirCalls = self::$folderDirCalls + 1;
 
 		return isset(self::$folderDirs[$id]) ? self::$folderDirs[$id] : "";
 	}
@@ -188,7 +188,7 @@ class Host {
 	 * asks: an ID the layout places nowhere is absent from the answer.
 	 */
 	static function folderDirs($ids, $workspaces) {
-		self::$folderDirCalls++;
+		self::$folderDirCalls = self::$folderDirCalls + 1;
 		$out = array();
 
 		foreach ($ids as $id) {

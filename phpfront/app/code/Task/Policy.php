@@ -51,10 +51,16 @@ class Policy {
 		return $effect;
 	}
 
-	/** set writes an entry, or removes it when the effect is "". */
+	/**
+	 * set writes an entry, or removes it when the effect is "". The removal
+	 * goes through a local, because the flatstack engine compiles no unset of
+	 * an index of a property access.
+	 */
 	function set($path, $effect) {
 		if ($effect === "") {
-			unset($this->entries[$path]);
+			$entries = $this->entries;
+			unset($entries[$path]);
+			$this->entries = $entries;
 
 			return $this;
 		}
