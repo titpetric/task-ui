@@ -163,16 +163,16 @@ func (t TelemetryRequest) Apply(opts *oida.Options) error {
 	// time.ParseDuration refuses "" and nobody clearing the box means an
 	// error.
 	if t.DebugSpanMinDuration != nil {
-		value := strings.TrimSpace(*t.DebugSpanMinDuration)
-		if value == "" {
+		switch value := strings.TrimSpace(*t.DebugSpanMinDuration); value {
+		case "":
 			opts.DebugSpanMinDuration = 0
-			return nil
+		default:
+			parsed, err := time.ParseDuration(value)
+			if err != nil {
+				return fmt.Errorf("debug_span_min_duration: %w", err)
+			}
+			opts.DebugSpanMinDuration = parsed
 		}
-		parsed, err := time.ParseDuration(value)
-		if err != nil {
-			return fmt.Errorf("debug_span_min_duration: %w", err)
-		}
-		opts.DebugSpanMinDuration = parsed
 	}
 	return nil
 }

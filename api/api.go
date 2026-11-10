@@ -14,7 +14,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -275,12 +274,6 @@ func statusOf(err error) int {
 // storageNotFound is the not found error, named for the handlers that
 // find nothing themselves.
 var storageNotFound = storage.ErrNotFound
-
-// sorted returns the list in order.
-func sorted(list []string) []string {
-	sort.Strings(list)
-	return list
-}
 
 // queryInt reads an integer query parameter, or the fallback.
 func queryInt(r *http.Request, name string, fallback int) int {
