@@ -17,7 +17,7 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 
 **The recording starts at the sentence the name is in.** Everything the listener held before it goes, so the clip is that sentence and the dead air after it, not the minutes of room the page listened through. A sentence is a run of speech with at least six tenths of a second of quiet in front of it.
 
-The names are the ones the picker lists, every agent in the system and your own, and `hey` or `ok` in front of one is a word like any other. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. It holds between windows and pages, so hands free is one press ever, and the orb in the corner stands in the signal colour while the page listens.
+The names are the ones the picker lists, every agent in the system and your own, and `hey` or `ok` in front of one is a word like any other. A name under three letters is left out: `ed` and `al` are words of a sentence as often as they are names, and the listener cannot tell the two apart. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. It holds between windows and pages, so hands free is one press ever, and the orb in the corner stands in the signal colour while the page listens.
 
 One a press started still ends on a press, however long the quiet runs. Pressing the orb while the page is listening starts the recording there and then, and drops everything heard before the press.
 

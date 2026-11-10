@@ -106,6 +106,10 @@
   // reaches the window minutes late.
   var SLOW = 8000;
 
+  // WORD is the shortest name a listener acts on. A two letter name is a
+  // word of English as well, and the listener cannot tell the two apart.
+  var WORD = 3;
+
   // VOICE is the level, 0 to 1, over which the microphone holds a voice.
   // Under it the room is all there is.
   var VOICE = 0.06;
@@ -604,12 +608,14 @@
   // ------------------------------------------------------------------ wake
 
   // callers are the users a name may start a recording for: whoever the
-  // picker lists, and the reader alone where there is no picker.
+  // picker lists, and the reader alone where there is no picker. A name
+  // under WORD letters is left out: "ed" or "al" is a word of a sentence as
+  // often as it is a name, and every one of those would open a microphone.
   function callers() {
     var out = [];
     var add = function (value, word) {
       word = String(word || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-      if (word) out.push({ value: value, word: word });
+      if (word.length >= WORD) out.push({ value: value, word: word });
     };
     if (agent) {
       Array.prototype.forEach.call(agent.options, function (option) {
