@@ -134,7 +134,7 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *mode
 // TASK_UI_PROMPT_WORKFLOW, and the summary of Run and summarize its
 // shape in TASK_UI_PROMPT_INSTRUCTIONS; a run with task-ui's MCP tools
 // gets the thread it answers in TASK_UI_PROMPT_SOURCE, to reply there.
-// A file it cannot write fails the note, and promptEnv returns false.
+// A run it cannot describe, or a reply file it cannot make, fails the note, and promptEnv returns false.
 func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Note) (runner.Request, string, func(), bool) {
 	ctx := context.Background()
 	answer, err := replyFile()

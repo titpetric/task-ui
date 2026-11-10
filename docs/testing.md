@@ -71,7 +71,7 @@ for _, name := range v.Names() {
 
 Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, rows, 3)` and `assert.Equal(t, 1, strings.Count(body, …))` assert the fixture; `assert.True(t, len(rows) > 0)` is the form. A golden file a tool regenerates is a diff against the last state and not an assertion somebody typed, so the `.phpt` fixtures and `scripts/compare-site.sh` below stay as they are.
 
-`frontend/view` holds 125 markup assertions, and they are being removed. Until then `shared(t)` skips the tests that hold them, and `atkins test:view` runs them:
+`frontend/view` holds the markup assertions, and they are being removed. Until then `shared(t)` skips the tests that hold them, and `atkins test:view` runs them, which is the only job that does:
 
 ```bash
 atkins test:view     # TASK_UI_VIEW_TESTS=1, under the caps the file sets
