@@ -4216,8 +4216,13 @@
   }
 
   // runFormRun starts the job the form names and leaves the link to the run.
-  function runFormRun(form, button) {
-    var body = { folder: form.dataset.folder || "", dir: form.dataset.dir || "", job: form.dataset.job, cols: 120, rows: 30 };
+  // The values the form shows are the run's arguments, in the order the
+  // fields are declared: a job form that collects nothing passes nothing.
+  function runFormRun(form, button, values) {
+    var args = runFormFields(form).filter(function (field) { return !field.hidden; })
+      .map(function (field) { return values[field.dataset.key]; })
+      .filter(function (value) { return value !== undefined && value !== ""; });
+    var body = { folder: form.dataset.folder || "", dir: form.dataset.dir || "", job: form.dataset.job, args: args, cols: 120, rows: 30 };
     return api("POST", "/api/runs", body).then(function (res) {
       button.disabled = false;
       if (res.status >= 300) {
@@ -4287,7 +4292,7 @@
     var values = runFormValues(form);
     button.disabled = true;
     runFormSays(form, "starting");
-    if (form.dataset.job) runFormRun(form, button);
+    if (form.dataset.job) runFormRun(form, button, values);
     else runFormAsk(form, button, values);
   });
 
