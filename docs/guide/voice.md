@@ -124,6 +124,24 @@ Every orb puts the same field into the middle of itself. The trail is normalised
 
 Reduced motion draws one frame and runs no loop.
 
+## An avatar of a user's own
+
+The window draws one avatar at a time, the one of the user it calls, and the orbs above are what it draws for a user with no avatar of their own. An avatar is a theme asset, `theme/assets/voice/avatars/<name>.js`, built into the binary beside `orbs.js` and `voice.js` and served under whichever prefix the front end serves the theme from. A name that is not `[a-zA-Z0-9_-]+`, and a file that is not there, draw the orbs.
+
+**An avatar is a page script and not a file of the artifact tree.** It runs with the reader's session, and every holder of `artifact/edit` writes the tree, a job's run among them: a tree file loaded as a script in the window of whoever calls that agent is a job writing script into an admin's browser. A new face is a commit and a deploy, which is the trust the rest of the page's JavaScript is under.
+
+The file sets `window.voiceAvatar` as the script runs, and the window reads it once and keeps it:
+
+| Member          | Takes                                                    | When                                                        |
+|-----------------|----------------------------------------------------------|-------------------------------------------------------------|
+| `start(canvas)` | the window's `<canvas>`, 256 by 256                      | the window opens on this user, and on every avatar swap     |
+| `stop()`        | nothing                                                  | the window closes, or another avatar comes up               |
+| `level(loud)`   | how loud the microphone is, 0 to 1                       | every animation frame while a microphone is open (optional) |
+| `mood(state)`   | the state as a word, the first column of the table above | the state changes (optional)                                |
+| `tap()`         | nothing                                                  | the reader presses the canvas (optional)                    |
+
+The canvas holds the state as `data-state` besides: an avatar that draws off its own loop reads the word there without a call. `start` owns the canvas for as long as it is worn: nothing else draws on it, and `stop` has to end whatever loop `start` began, because a window that opens again calls `start` on the same element.
+
 ## What the recording is
 
 16 kHz mono, as a transcriber reads it: whisper resamples to that rate, so capturing more buys a later pass nothing. A recording is bounded at the size an artifact write takes, which is about eight minutes of it. What the server transcribes as you talk and what is written at the end are the same samples: the pieces are slices of the one buffer, and the artifact holds every frame.

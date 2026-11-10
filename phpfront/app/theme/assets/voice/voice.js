@@ -983,14 +983,18 @@
   // ------------------------------------------------------------- avatar
 
   // The window draws one avatar at a time, the one of the user it calls.
-  // An avatar is a file of the artifact tree, upload/users/<name>/avatar.js,
+  // An avatar is a theme asset, voice/avatars/<name>.js beside this file,
   // which sets window.voiceAvatar to an object with start, stop and the two
   // optional hooks level and tap. The canvas carries the window's state as
   // data-state, so an avatar reads what it is drawing without a call.
   //
-  // docs/guide/voice.md holds the contract and what a user's own avatar may
-  // do with the canvas.
-  var AVATARS = "/api/artifacts/files/upload/users/";
+  // A theme asset and not a file of the artifact tree: this runs as a page
+  // script with the reader's session, and the tree takes artifact/edit from
+  // anybody, a run of a job among them.
+  //
+  // docs/guide/voice.md holds the contract and what an avatar may do with
+  // the canvas.
+  var AVATARS = TAP ? new URL("avatars/", TAP).href : "";
   var dressed = {};
   var worn = null;
 
@@ -1031,7 +1035,9 @@
   // nothing, leaves the user with the built-in orbs.
   function look(name, then) {
     if (dressed[name]) return then(dressed[name]);
-    if (!name) {
+    // A name is a file name here: one that is not a word of the theme's own
+    // naming reads as no avatar at all.
+    if (!name || !AVATARS || !/^[a-zA-Z0-9_-]+$/.test(name)) {
       dressed[name] = window.voiceOrbs;
       return then(dressed[name]);
     }
@@ -1042,7 +1048,7 @@
       dressed[name] = found || window.voiceOrbs;
       then(dressed[name]);
     };
-    script.src = AVATARS + encodeURIComponent(name) + "/avatar.js?raw";
+    script.src = AVATARS + name + ".js" + TAP.replace(/^[^?]*/, "");
     script.onload = function () { done(window.voiceAvatar); };
     script.onerror = function () { done(null); };
     document.head.appendChild(script);
