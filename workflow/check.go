@@ -32,7 +32,7 @@ func (r *Runner) checked(ctx context.Context, step Step, before []model.Workflow
 	case marker == "":
 		return fmt.Sprintf("no %s in %s", strings.Join(step.Markers, ", "), at), false
 	case pass >= step.Passes:
-		return fmt.Sprintf("found %q in %s, and pass %d of %d was the last", marker, at, pass, step.Passes), false
+		return fmt.Sprintf("found %q in %s, and pass %d of %d was the last", marker, at, min(pass, step.Passes), step.Passes), false
 	}
 	return fmt.Sprintf("found %q in %s: the steps go round again, pass %d of %d", marker, at, pass+1, step.Passes), true
 }
@@ -72,12 +72,13 @@ func groupAt(steps []Step, i int) int {
 
 // ranLast is the last of the steps walked that ran and left something to
 // read, the checks among them passed over, so a skipped or disabled step
-// reads past to its predecessor.
+// reads past to its predecessor. A row of a pass that skipped it keeps
+// the run and the answer of the pass before, which is nothing to read.
 func ranLast(before []model.WorkflowRunStep) *model.WorkflowRunStep {
 	for i := len(before) - 1; i >= 0; i-- {
 		row := &before[i]
 		switch {
-		case row.IsCheck():
+		case row.IsCheck(), row.State == model.StepSkipped:
 		case row.RunID != "", row.Answer != "":
 			return row
 		}

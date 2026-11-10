@@ -59,7 +59,7 @@ A check step reads the last step before it that ran and left something to read â
 
 So a prompt that ends with `Next: build the index` keeps the chain going, and the same prompt that has nothing left to do ends it. The prompt gets each pass's steps as it got the first's, so it reads what the pass before it did.
 
-**Passes** bounds it, the first pass counted: 3 lets the steps run twice more, 2 at the fewest, since one pass leaves a check nothing to send round, and 20 at the most, so a step that keeps writing the marker ends the run instead of looping on. The pass that spends the last one says so in the check's answer and the run goes on to the step after it.
+**Passes** bounds it, the first pass counted: 3 lets the steps run twice more, 2 at the fewest, since one pass leaves a check nothing to send round, and 20 at the most, so a step that keeps writing the marker ends the run instead of looping on. The pass that spends the last one says so in the check's answer and the run goes on to the step after it. Each check counts its own looks, so two checks in one project each spend the passes they declare, and a check reads only the steps of its own project.
 
 A check runs nothing and ends ok whatever it found, so it never fails a run. Its answer is its finding, on its row of the pipeline: `found "Next:" in step 2: the steps go round again, pass 2 of 3`, `no Next: in step 2`, or that the step before it left nothing to read. A check makes no run of its own, so it is no stop in the chain of a table cell. A failed step skips the rest of its pass, the check among them, so a failure ends the loop rather than retrying it; a summary still runs.
 

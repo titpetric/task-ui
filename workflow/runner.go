@@ -250,12 +250,12 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 	store := context.Background()
 	run := a.run
 	run.State = model.StateOK
-	// A check sends its own project's steps round again, so the passes are
-	// counted by project, and a workflow that runs over no workspace has
-	// the one project.
-	passes := make([]int, len(steps)+1)
+	// A check sends its own project's steps round again, and its tries are
+	// its own: two checks in one project each spend the passes they
+	// declare, counted by the step they are.
+	tries := make([]int, len(steps))
 	for from := 0; from >= 0; {
-		from = r.pass(ctx, a, steps, rows, user, from, passes)
+		from = r.pass(ctx, a, steps, rows, user, from, tries)
 		if from >= 0 {
 			slog.Info("workflow goes round again", "workflow", run.Name, "step", from+1)
 		}
@@ -273,20 +273,18 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 // the project's steps back to, -1 for a walk that ran through. It returns
 // at the check, so the steps after it keep the state they had and the
 // pass after this one reaches them.
-func (r *Runner) pass(ctx context.Context, a *active, steps []Step, rows []model.WorkflowRunStep, user *model.User, from int, passes []int) int {
+func (r *Runner) pass(ctx context.Context, a *active, steps []Step, rows []model.WorkflowRunStep, user *model.User, from int, tries []int) int {
 	store := context.Background()
 	run := a.run
 	// Each project of a workflow that runs over a workspace starts ok: a
 	// failure skips the rest of its own steps alone, and a stop all.
 	group, state := groupAt(steps, from), model.StateOK
-	passes[group]++
 
 	for i, step := range steps[from:] {
 		i += from
 		row := &rows[i]
 		if step.Group != group && state != model.StateStopped {
 			group, state = step.Group, model.StateOK
-			passes[group]++
 		}
 		if skips(state, step) {
 			row.State = model.StepSkipped
@@ -302,7 +300,8 @@ func (r *Runner) pass(ctx context.Context, a *active, steps []Step, rows []model
 			// A check runs nothing, so it ends ok whatever it found; its
 			// answer is the finding.
 			ended = model.StateOK
-			row.Answer, again = r.checked(ctx, step, rows[:i], passes[group])
+			tries[i]++
+			row.Answer, again = r.checked(ctx, step, rows[groupStart(steps, group):i], tries[i])
 		case step.Asks:
 			ended, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
 		case step.Workflow != nil:
