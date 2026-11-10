@@ -466,8 +466,8 @@
     return base;
   }
 
-  // keep writes the recording and the words beside each other in the artifact
-  // tree, which versions them and ages them out on its own schedule. It
+  // keep writes the recording and the words beside each other under voice/ in
+  // the artifact tree, where the Dictations retention rule ages them out. It
   // returns the path the pair shares, or empty when a write failed: a reader
   // without artifact/edit dictates all the same. With no words there is no
   // .txt, and the clip alone is what the session is asked to transcribe.
@@ -515,6 +515,9 @@
       body: clip,
     }).then(function (res) {
       flight = false;
+      // A busy transcriber is not a dead one: this piece goes unread and the
+      // next one is posted as if the room had been quiet.
+      if (res.status === 429) return { text: "" };
       if (!res.ok) throw new Error("the server did not transcribe the clip");
       return res.json();
     }).then(function (data) {

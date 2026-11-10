@@ -8,11 +8,13 @@ package stt
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,11 +23,17 @@ var (
 	ErrOff   = errors.New("speech to text is not set up")
 	ErrEmpty = errors.New("the clip holds no audio")
 	ErrLarge = errors.New("the clip is too long to transcribe in one call")
+	ErrBusy  = errors.New("the transcriber is busy: this clip was not read")
 )
 
-// MaxClip bounds a clip at ten minutes of the 16 kHz mono the recorder
-// writes.
+// MaxClip bounds a clip at what an artifact write takes, about eight
+// minutes of the 16 kHz mono the recorder writes.
 const MaxClip = 16 << 20
+
+// Calls is how many clips one instance transcribes at once, for a service
+// that names no other number. Each is a whisper.cpp process of up to 32
+// threads, and a page listening for a name posts one every two seconds.
+const Calls = 2
 
 // Config is the integration's settings, read.
 type Config struct {
@@ -43,6 +51,11 @@ type Service struct {
 	// Run executes the transcriber, and New is what sets it; nil
 	// transcribes nothing and answers ErrOff.
 	Run Transcriber
+	// Limit is how many clips are read at once; zero is Calls.
+	Limit int
+
+	opens sync.Once
+	slots chan struct{}
 }
 
 // Transcriber runs the transcriber over the clip at in, leaving out.txt beside it.
@@ -91,6 +104,11 @@ func (s *Service) Text(ctx context.Context, clip []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	done, err := s.hold()
+	if err != nil {
+		return "", err
+	}
+	defer done()
 	dir, err := os.MkdirTemp("", "stt-")
 	if err != nil {
 		return "", err
@@ -117,6 +135,26 @@ func (s *Service) Text(ctx context.Context, clip []byte) (string, error) {
 	return clean(string(said)), nil
 }
 
+// hold takes one of the call slots and returns what frees it, ErrBusy
+// where every slot is taken. A clip nobody read is dropped by its caller:
+// a listener's piece is two seconds of a room, and queueing one behind a
+// whisper run lands its words after the sentence has moved on.
+func (s *Service) hold() (func(), error) {
+	s.opens.Do(func() {
+		n := s.Limit
+		if n < 1 {
+			n = Calls
+		}
+		s.slots = make(chan struct{}, n)
+	})
+	select {
+	case s.slots <- struct{}{}:
+		return func() { <-s.slots }, nil
+	default:
+		return nil, ErrBusy
+	}
+}
+
 // run transcribes in, leaving out.txt beside it.
 func (s *Service) run(ctx context.Context, c Config, in, out string) error {
 	if s.Run == nil {
@@ -136,13 +174,16 @@ func (s *Service) run(ctx context.Context, c Config, in, out string) error {
 	return s.Run(ctx, c.Bin, args, append(os.Environ(), "LD_LIBRARY_PATH="+filepath.Dir(c.Bin)))
 }
 
-// whisper runs whisper-cli, answering with its output on a failure.
+// whisper runs whisper-cli, answering with the exit status on a failure.
+// Its output is logged and not returned: it names the model path and the
+// temp directory, and a caller holding prompt/edit reads what is returned.
 func whisper(ctx context.Context, bin string, args, env []string) error {
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = env
 	said, err := cmd.CombinedOutput()
 	if err != nil {
-		return errors.New(strings.TrimSpace(string(said)) + ": " + err.Error())
+		slog.Warn("the transcriber failed", "err", err, "output", strings.TrimSpace(string(said)))
+		return errors.New("the transcriber failed: " + err.Error())
 	}
 	return nil
 }

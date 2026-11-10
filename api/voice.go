@@ -52,6 +52,8 @@ func voiceStatusOf(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, stt.ErrLarge):
 		return http.StatusRequestEntityTooLarge
+	case errors.Is(err, stt.ErrBusy):
+		return http.StatusTooManyRequests
 	}
 	return http.StatusInternalServerError
 }

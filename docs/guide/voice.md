@@ -6,7 +6,7 @@ The orb shows wherever the browser can open a microphone: a secure page, so `htt
 
 ## What send does
 
-Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifacts.md), which needs `artifact/edit`; without it you still dictate and a toast says the recording went nowhere. Where it goes next depends on the browser and the page:
+Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifacts.md), which needs `artifact/edit`; without it you still dictate and a toast says the recording went nowhere. The **Dictations** rule on the [Data retention](settings.md#data-retention) page is what takes it out again, every version of it, 31 days on at the start. Where it goes next depends on the browser and the page:
 
 - **A run is attached and takes input.** The words go to the terminal as if typed, with no newline: punctuation is spelled out as `[dot]`, `[slash]` and the rest, so a dictated sentence cannot run a command.
 - **Anything else.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
@@ -39,6 +39,8 @@ The listening is a microphone and nothing else: a piece with no name in it is dr
 With the **Speech to text** integration set up, this instance transcribes: the recording goes to `POST /api/voice/transcribe` once, whole, when it ends, and whisper.cpp answers with the words. **A recording is never cut into pieces.** A cut lands mid-word, each piece is a whisper run of its own on the instance, and the words of one arrive while the next sentence is still being said. The window counts the seconds it waits, under `Transcribing`. Transcribing takes `prompt/edit`, the same as asking Claude.
 
 The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder.
+
+Two clips are read at once and a third is answered `429`, because each read is a whisper process holding up to 32 threads. A listener's piece refused that way is dropped and the next one posted; a recording refused that way goes to the session, the same path a browser with no transcriber at all takes.
 
 **The model has to run faster than the talking.** A recording of a minute read back in two is a minute of waiting after the sentence is finished. One measurement, over `samples/jfk.wav` on the four cores of task.cdn.si with `threads` at 4:
 

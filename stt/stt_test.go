@@ -126,6 +126,41 @@ func TestService_Text(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// One instance reads as many clips at once as Limit says and refuses the
+// next: a page listening for a name posts a piece every two seconds, and
+// each read is a whisper process of its own.
+func TestService_TextBusy(t *testing.T) {
+	t.Parallel()
+	bin, model := touch(t, "whisper-cli"), touch(t, "ggml-small.en.bin")
+	held := make(chan struct{})
+	ran := make(chan struct{}, 2)
+	s := &stt.Service{
+		Settings: settings(map[string]string{"bin": bin, "model": model}),
+		Limit:    1,
+		Run: func(_ context.Context, _ string, args, _ []string) error {
+			ran <- struct{}{}
+			<-held
+			return os.WriteFile(args[5]+".txt", []byte(" Deploy the api.\n"), 0o600)
+		},
+	}
+	over := make(chan struct{})
+	go func() {
+		_, _ = s.Text(context.Background(), []byte("RIFFclip"))
+		close(over)
+	}()
+	<-ran
+
+	_, err := s.Text(context.Background(), []byte("RIFFclip"))
+	assert.ErrorIs(t, err, stt.ErrBusy)
+
+	// The slot frees as the call ends, and the next clip is read.
+	close(held)
+	<-over
+	said, err := s.Text(context.Background(), []byte("RIFFclip"))
+	assert.NoError(t, err)
+	assert.Equal(t, "Deploy the api.", said)
+}
+
 func settings(values map[string]string) func(context.Context) (map[string]string, error) {
 	return func(context.Context) (map[string]string, error) { return values, nil }
 }
