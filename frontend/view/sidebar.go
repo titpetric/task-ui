@@ -43,7 +43,9 @@ func SideDefaults(folders []*folder.Folder, dirs []string, hidden map[string]boo
 // the workspaces' src, less the projects set not to show there and
 // everything at or under a workspace's home. A pin adds to that in its
 // place: the folder it names, with the workspace and the project above it,
-// so a pin reaches a folder no default listed. A pin in a home stays out.
+// so a pin of a folder no default listed draws that folder's project. The
+// sidebar draws workspaces and projects, and a folder inside one is a row
+// of the project's page. A pin in a home stays out.
 func NewSidebar(defaults []*folder.Folder, pins []SidePin, workspaces map[string]int, homes map[string]bool) []*folder.Folder {
 	folders := append([]*folder.Folder(nil), defaults...)
 	listed := map[string]*folder.Folder{}

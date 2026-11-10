@@ -35,8 +35,9 @@ func (p *Page) PinItem(folderID, job, dir, what string) MenuItem {
 }
 
 // pinTitle says what a pin of a folder or of a job does, and what
-// removing it does: a folder joins the sidebar, a job is marked out on
-// the page of the folder that runs it.
+// removing it does: a folder brings its project to the sidebar, which
+// lists workspaces and projects, and a job is marked out on the page of
+// the folder that runs it.
 func pinTitle(job string, pinned bool) string {
 	switch {
 	case job != "" && pinned:
@@ -44,7 +45,7 @@ func pinTitle(job string, pinned bool) string {
 	case job != "":
 		return "Mark it out on the folder's page"
 	case pinned:
-		return "Take it out of the sidebar, unless the sidebar lists it anyway"
+		return "Take its project out of the sidebar, unless the sidebar lists it anyway"
 	}
-	return "Show it in the sidebar"
+	return "Show its project in the sidebar"
 }

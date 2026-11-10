@@ -43,9 +43,6 @@ class Folders {
 	 */
 	var $held = array();
 
-	/** pinned is the pinned jobs a folder's row does not list, by folder. */
-	var $pinned = array();
-
 	/** dirs is the directory of a folder, asked of the host once for each. */
 	var $dirs = array();
 
@@ -74,7 +71,6 @@ class Folders {
 		$this->workspaces = $workspaces;
 		$this->here = $here;
 		$this->running = $this->runs();
-		$this->pinned = array();
 
 		// The directories are asked for in two batches, because the tree is
 		// decided in two steps: the limit of a workspace orders its projects
@@ -406,10 +402,10 @@ class Folders {
 	}
 
 	/**
-	 * placed is the default folders with the pins among them: a pinned folder
-	 * in its place with the workspace and the project above it, a pinned job
-	 * under its folder, and a folder listed for its pinned jobs alone listing
-	 * only those. A pin in a home stays out, as the tree leaves a home out.
+	 * placed is the default folders with the pins among them: the folder a pin
+	 * names, with the workspace and the project above it, so the sidebar draws
+	 * the project of a folder no default listed. A pin in a home stays out, as
+	 * the tree leaves a home out.
 	 *
 	 * The folders come back by ID, ignoring case, which is the order the
 	 * sidebar lists them in whether a pin put one there or not.
@@ -442,8 +438,6 @@ class Folders {
 			$folders[] = $pin["folder"];
 		}
 
-		$pinned = array();
-
 		foreach ($kept as $pin) {
 			if ($pin["job"] === null) {
 				continue;
@@ -457,10 +451,6 @@ class Folders {
 				$at[$id] = count($folders);
 				$folders[] = $bare;
 			}
-
-			$held = isset($pinned[$id]) ? $pinned[$id] : array();
-			$held[] = $pin;
-			$pinned[$id] = $held;
 		}
 
 		foreach ($kept as $pin) {
@@ -473,8 +463,6 @@ class Folders {
 				$folders[] = self::bare($id);
 			}
 		}
-
-		$this->pinned = $pinned;
 
 		usort($folders, array("Task\\Folders", "byName"));
 
