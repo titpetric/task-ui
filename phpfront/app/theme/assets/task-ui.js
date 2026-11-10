@@ -6001,10 +6001,11 @@
   }
 
   // runLead is what the rail calls a run: the user a thread answers as,
-  // which is what tells two threads apart, else the job and its host.
+  // which tells two threads apart, else the job. model.Run.Lead draws the
+  // first paint of the same row, and a host run names its host in the job.
   function runLead(r) {
     if ((isPromptRun(r) || isNoteRun(r)) && r.user_name) return "@" + r.user_name;
-    return r.job + (r.target ? " · " + r.target : "");
+    return r.job;
   }
 
   // runTrail is what the rail says under runLead: the job of a thread's run
