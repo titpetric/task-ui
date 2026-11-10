@@ -60,6 +60,30 @@ func TestClient_Systems(t *testing.T) {
 	assert.ErrorIs(t, err, beszel.ErrToken)
 }
 
+// A refused token is answered out of the cache for TTL: the hub is asked
+// twice, the list and the auth probe, and not once per page view.
+func TestClient_SystemsCachesTheRefusal(t *testing.T) {
+	t.Parallel()
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/api/collections/users/auth-refresh" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		_, _ = w.Write([]byte(`{"items":[]}`))
+	}))
+	t.Cleanup(server.Close)
+	client := &beszel.Client{URL: server.URL, Token: "t", TTL: time.Minute, HTTP: server.Client()}
+
+	for range 3 {
+		_, err := client.Systems(context.Background())
+		assert.ErrorIs(t, err, beszel.ErrToken)
+	}
+	assert.Equal(t, 2, calls, "the list and the probe, once")
+}
+
 // Alive returns the token the hub answers with, and ErrToken for one it
 // refuses.
 func TestClient_Alive(t *testing.T) {

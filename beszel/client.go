@@ -35,6 +35,8 @@ type Client struct {
 	mu      sync.Mutex
 	systems []System
 	at      time.Time
+	// err is what the last read answered, kept as long as an answer.
+	err error
 
 	containers       map[string][]Container
 	containersAt     time.Time
@@ -49,12 +51,20 @@ type systemList struct {
 }
 
 // Systems returns the hub's systems by name, at most TTL old.
+// A refusal is kept for TTL as an answer is, because every page of the inventory reads this and a hub that refused the token refuses it again.
 func (c *Client) Systems(ctx context.Context) ([]System, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.systems != nil && time.Since(c.at) < c.TTL {
-		return c.systems, nil
+	if !c.at.IsZero() && time.Since(c.at) < c.TTL {
+		return c.systems, c.err
 	}
+	c.systems, c.err = c.read(ctx)
+	c.at = time.Now()
+	return c.systems, c.err
+}
+
+// read asks the hub for its systems and fills in the measures of each.
+func (c *Client) read(ctx context.Context) ([]System, error) {
 	var list systemList
 	status, err := c.do(ctx, "/api/collections/systems/records?perPage=500&sort=name", &list)
 	if status == http.StatusUnauthorized || status == http.StatusForbidden {
@@ -71,8 +81,7 @@ func (c *Client) Systems(ctx context.Context) ([]System, error) {
 		}
 	}
 	c.stats(ctx, list.Items)
-	c.systems, c.at = list.Items, time.Now()
-	return c.systems, nil
+	return list.Items, nil
 }
 
 // Alive returns the token the hub accepts, a new one where a password login
