@@ -56,9 +56,10 @@ jobs:
   # and run a binary per package, and the budget rots one test at a time.
   # The gate itself is not here, because every push already ran it.
   ci:daily:
-    desc: "CI on a schedule: the integration suite and the per-test budget"
+    desc: "CI on a schedule: the integration suite, the markup tests and the per-test budget"
     cmds:
       - task: test:budget
+      - task: test:view
       - task: test:integration
 
   # The release image, tagged with the commit as well as latest so a running

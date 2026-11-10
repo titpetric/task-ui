@@ -60,7 +60,13 @@ func TestRetentionRow_Page(t *testing.T) {
 		last = at
 	}
 	assert.Equal(t, len(retention.Kinds), strings.Count(body, `.age" aria-label="Keep `), "a Keep select per rule")
-	assert.Equal(t, 3, strings.Count(body, `.limit" aria-label="Size limit of `), "a Size limit select per sized rule")
+	limited := 0
+	for _, area := range retention.Areas {
+		if area.Limited() {
+			limited++
+		}
+	}
+	assert.Equal(t, limited, strings.Count(body, `.limit" aria-label="Size limit of `), "a Size limit select per sized rule")
 	assert.NotContains(t, body, "Key read log")
 	assert.Contains(t, body, `<select name="artifacts.age" aria-label="Keep Artifact history for">`)
 	assert.Contains(t, body, `<option value="90d" selected>90 days</option>`)
