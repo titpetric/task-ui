@@ -241,7 +241,7 @@ data-api="/api/telemetry" data-method="PUT" data-next="<?php echo htmlspecialcha
 	</div>
 
 	<div class="field">
-		<label for="telemetry-path">Path <span class="faint">where the dashboard is mounted</span></label>
+		<label for="telemetry-path">Path <span class="faint">where the dashboard is mounted, from the next restart</span></label>
 		<input type="text" id="telemetry-path" name="path" value="<?php echo htmlspecialchars($_v['data']['opts']['option_path'], ENT_QUOTES);?>
 "<?php if(!$_v['data']['admin']){?>
  disabled<?php }?>>
@@ -290,6 +290,7 @@ data-api="/api/telemetry" data-method="PUT" data-next="<?php echo htmlspecialcha
 	</div>
 <?php if($_v['data']['admin']){?>
 	<div class="form-foot">
+		<p class="faint">Saving anything but Enabled starts an empty buffer: the traces recorded so far go.</p>
 		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 <?php }?></section>

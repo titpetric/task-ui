@@ -87,7 +87,7 @@
 	</div>
 
 	<div class="field">
-		<label for="telemetry-path">Path <span class="faint">where the dashboard is mounted</span></label>
+		<label for="telemetry-path">Path <span class="faint">where the dashboard is mounted, from the next restart</span></label>
 		<input type="text" id="telemetry-path" name="path" value="{{ .Options.Path }}"{{ if not $admin }} disabled{{ end }}>
 		<p class="faint"><code>{{ .Path }}</code></p>
 	</div>
@@ -128,6 +128,7 @@
 
 	{{- if $admin }}
 	<div class="form-foot">
+		<p class="faint">Saving anything but Enabled starts an empty buffer: the traces recorded so far go.</p>
 		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 	{{- end }}
