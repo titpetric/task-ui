@@ -237,7 +237,7 @@ func (a *App) wire(version string) error {
 	// costs single digit milliseconds on a body this size. text/event-stream
 	// is not a compressible type here, so the SSE stream passes through, and
 	// a response that set its own Content-Encoding is left alone.
-	r.Use(middleware.Compress(5))
+	r.Use(uncompressedRanges(middleware.Compress(5)))
 	// MCP clients sign with a bearer token; its tools call the API as
 	// the token's user.
 	server := mcp.New(routes, version)
