@@ -93,6 +93,7 @@ func (c *Catalogue) discover(every bool) *folder.Discovery {
 }
 
 // List returns the folders of the root ordered by ID, cached for listTTL.
+// The slice is the caller's own, because a page sorting one in place rewrites what every page reads for the second after.
 func (c *Catalogue) List() []*folder.Folder {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -100,7 +101,7 @@ func (c *Catalogue) List() []*folder.Folder {
 		c.walks.Add(1)
 		c.seen, c.seenAt = c.discover(false).List(), time.Now()
 	}
-	return c.seen
+	return slices.Clone(c.seen)
 }
 
 // Find returns a folder by ID, or nil; internal that no folder takes is
