@@ -520,6 +520,15 @@
   var vu = 0;
   var swell = 1;
 
+  // place asks a formation where an orb goes, and names it for wide.
+  // An orb of one formation alone waits at the centre of every other, so it
+  // grows out of the middle rather than flying in from off the canvas.
+  function place(shape, orb, i, secs) {
+    drawing = shape;
+    if (orb.only && FORMS[orb.only] !== shape) return { x: MID, y: MID, r: 0 };
+    return shape(orb, i, secs);
+  }
+
   // draw sums the orbs and their trails into the field, reads the sum
   // through the palette and puts the colour on the page's canvas.
   function draw(secs) {
@@ -537,6 +546,7 @@
     var w = 1;
     if (morphAt >= 0) {
       w = (secs - morphAt) / MORPH;
+      if (w < 0) w = 0;
       if (w >= 1) {
         morphAt = -1;
         w = 1;
@@ -547,11 +557,9 @@
     var i, orb;
     for (i = 0; i < ORBS.length; i++) {
       orb = ORBS[i];
-      drawing = form;
-      var goes = form(orb, i, secs);
+      var goes = place(form, orb, i, secs);
       if (w < 1) {
-        drawing = fore;
-        var came = fore(orb, i, secs);
+        var came = place(fore, orb, i, secs);
         goes = {
           x: came.x + (goes.x - came.x) * w,
           y: came.y + (goes.y - came.y) * w,
@@ -624,8 +632,16 @@
         paint = field.getContext("2d", { willReadFrequently: true });
       }
       // A window that opens again starts from nothing: a kept path draws a
-      // trail from wherever the last one ended.
+      // trail from wherever the last one ended, and a kept meter draws the
+      // centre orb at the size the last loud word left it.
       ORBS.forEach(function (orb) { orb.path = []; });
+      level = vu = 0;
+      swell = 1;
+      tapAt = 0;
+      morphAt = -1;
+      form = fore = drawing = FORMS.idle;
+      from = into = PALETTE.idle;
+      blendAt = -1;
       paint.globalCompositeOperation = "source-over";
       paint.fillStyle = "#000000";
       paint.fillRect(0, 0, SIZE, SIZE);
