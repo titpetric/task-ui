@@ -148,7 +148,7 @@ func (h *Handlers) Routes() http.Handler {
 func (h *Handlers) Root(r chi.Router) {
 	r.Method(http.MethodPost, "/login", policy(access.SameOrigin(http.HandlerFunc(h.login))))
 	r.Method(http.MethodPost, "/logout", policy(access.SameOrigin(http.HandlerFunc(h.logout))))
-	r.Method(http.MethodGet, "/healthz", h.Health())
+	r.Method(http.MethodGet, "/healthz", policy(h.Health()))
 	r.Handle(view.AssetPrefix+"*", policy(assets()))
 
 	guarded := func(next http.HandlerFunc) http.Handler {
