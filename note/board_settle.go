@@ -44,7 +44,9 @@ func (b *Board) dispatching(id string, n int) {
 		b.dispatched = map[string]*dispatches{}
 	}
 	if going, ok := b.dispatched[id]; ok {
-		going.left += n
+		// A thread a reader settled by hand is open again once it dispatches:
+		// the state of a run started after that is the thread's.
+		going.left, going.settled = going.left+n, false
 		return
 	}
 	b.dispatched[id] = &dispatches{left: n}
