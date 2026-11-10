@@ -91,6 +91,9 @@
 <small class="faint"><?php echo htmlspecialchars($_v['field']['help'], ENT_QUOTES);?>
 </small>
 <?php }?></div>
-<?php }?><?php }?><div class="form-foot"><span class="faint form-state"></span><button class="btn btn-primary" type="submit"><?php echo htmlspecialchars($_v['data_form']['label'], ENT_QUOTES);?>
+<?php }?><?php }?><div class="form-foot"><?php if($_v['data_form']['job']){?>
+<span class="faint form-runs">Runs <?php if($_v['data_form']['folder']){ echo htmlspecialchars($_v['data_form']['folder'], ENT_QUOTES);?>
+/<?php }?><?php echo htmlspecialchars($_v['data_form']['job'], ENT_QUOTES);?>
+</span><?php }?><span class="faint form-state"></span><button class="btn btn-primary" type="submit"><?php echo htmlspecialchars($_v['data_form']['label'], ENT_QUOTES);?>
 </button></div>
 </form><?php }?>

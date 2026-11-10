@@ -15,5 +15,5 @@
 <select name="{field.key}" aria-label="{field.label}"{if $field.required} required{/if}>{if !$field.required}<option value=""></option>{/if}{foreach $field.options as $option}<option value="{option.value}"{if $option.next} data-next="{option.next}"{/if}{if $option.selected} selected{/if}>{option.label}</option>{/foreach}</select>
 {/if}{if $field.help}<small class="faint">{field.help}</small>
 {/if}</div>
-{/if}{/foreach}<div class="form-foot"><span class="faint form-state"></span><button class="btn btn-primary" type="submit">{data_form.label}</button></div>
+{/if}{/foreach}<div class="form-foot">{if $data_form.job}<span class="faint form-runs">Runs {if $data_form.folder}{data_form.folder}/{/if}{data_form.job}</span>{/if}<span class="faint form-state"></span><button class="btn btn-primary" type="submit">{data_form.label}</button></div>
 </form>{/if}

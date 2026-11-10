@@ -308,6 +308,13 @@ a.mention:hover {
     margin-inline-end: auto;
     font-size: var(--fs-xs);
   }
+
+  /* .form-runs names the job the button starts, which the label need not. */
+  & .form-runs {
+    margin-inline-end: auto;
+    font-size: var(--fs-xs);
+    font-family: var(--font-mono);
+  }
 }
 
 /* .form-started is what the form leaves behind: the link to the run. */

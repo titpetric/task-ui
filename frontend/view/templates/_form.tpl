@@ -5,7 +5,7 @@
 <form class="note-form run-form" data-run-form{{ with .Folder }} data-folder="{{ . }}"{{ end }}{{ with .Dir }} data-dir="{{ . }}"{{ end }}{{ with .Job }} data-job="{{ . }}"{{ end }}{{ with .Prompt }} data-prompt="{{ . }}"{{ end }}>
 {{ with .Title }}<p class="form-title">{{ . }}</p>
 {{ end }}{{ range .Fields }}{{ template "formfield" . }}
-{{ end }}<div class="form-foot"><span class="faint form-state"></span><button class="btn btn-primary" type="submit">{{ .Label }}</button></div>
+{{ end }}<div class="form-foot">{{ with .Job }}<span class="faint form-runs">Runs {{ if $.Folder }}{{ $.Folder }}/{{ end }}{{ . }}</span>{{ end }}<span class="faint form-state"></span><button class="btn btn-primary" type="submit">{{ .Label }}</button></div>
 </form>
 {{- end -}}
 {{- end }}

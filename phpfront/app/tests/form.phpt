@@ -170,7 +170,7 @@ a
 <span class="label">Change ticket</span>
 <input type="text" name="ticket" value="" aria-label="Change ticket" placeholder="OPS-1">
 </div>
-<div class="form-foot"><span class="faint form-state"></span><button class="btn btn-primary" type="submit">Deploy it</button></div>
+<div class="form-foot"><span class="faint form-runs">Runs infra/deploy</span><span class="faint form-state"></span><button class="btn btn-primary" type="submit">Deploy it</button></div>
 </form>
 selected shown
 <form class="note-form run-form" data-run-form data-prompt="go {{name}}">
