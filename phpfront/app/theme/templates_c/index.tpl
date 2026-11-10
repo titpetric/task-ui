@@ -34,9 +34,9 @@
 ' data-workspaces='<?php echo htmlspecialchars($_v['chrome']['workspaces'], ENT_QUOTES);?>
 '<?php if($_v['chrome']['user']){?>
  data-me="<?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
-" data-upload="<?php echo htmlspecialchars($_v['chrome']['upload'], ENT_QUOTES);?>
 "<?php }?><?php if($_v['chrome']['can']['artifact/edit']){?>
- data-artifact-edit<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
+ data-upload="<?php echo htmlspecialchars($_v['chrome']['upload'], ENT_QUOTES);?>
+" data-artifact-edit<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
 edit<?php }elseif($_v['chrome']['can']['user/view']){?>
 view<?php }?>">
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">

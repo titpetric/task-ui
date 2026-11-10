@@ -3933,7 +3933,11 @@
     if (!window.mdedit) return null;
     var dir = uploadDir(area);
     var options = {};
-    if (area.dataset.toolbar === "inline") options.toolbar = window.mdedit.TOOLBAR_INLINE.concat("upload");
+    // The upload button is drawn where a directory is named: nothing says one
+    // for a reader who may not write the tree.
+    if (area.dataset.toolbar === "inline") {
+      options.toolbar = dir === null ? window.mdedit.TOOLBAR_INLINE : window.mdedit.TOOLBAR_INLINE.concat("upload");
+    }
     if (dir !== null) options.uploads = uploads(dir);
     area.mdeditor = new window.mdedit.MarkdownEditor(area, options);
     return area.mdeditor;
