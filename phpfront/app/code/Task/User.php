@@ -38,54 +38,42 @@ class User {
 
 	var $db;
 
+	/** store is the settings module, which owns the table. */
+	var $store;
+
 	function __construct($db = null) {
 		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Settings\Users($this->db);
 	}
 
 	/** get is one user by ID, or null. */
 	function get($id) {
-		$row = $this->db->get("SELECT * FROM user WHERE id = ?", $id);
-
-		if (!is_array($row)) {
-			return null;
-		}
-
-		return new Model\User($row);
+		return $this->store->get($id);
 	}
 
 	/** byName is one user by name, or null. */
 	function byName($name) {
-		$row = $this->db->get("SELECT * FROM user WHERE name = ?", $name);
-
-		if (!is_array($row)) {
-			return null;
-		}
-
-		return new Model\User($row);
+		return $this->store->byName($name);
 	}
 
 	/** all is every user, by name. */
 	function all() {
-		return Model\User::rows($this->db->get_all("SELECT * FROM user ORDER BY name"));
+		return $this->store->all();
 	}
 
 	/** count is how many users there are. */
 	function count() {
-		$row = $this->db->get("SELECT COUNT(*) AS found FROM user");
-
-		return Row::number($row, "found");
+		return $this->store->count();
 	}
 
 	/** admins is how many users carry the admin flag. */
 	function admins() {
-		$row = $this->db->get("SELECT COUNT(*) AS found FROM user WHERE admin = 1");
-
-		return Row::number($row, "found");
+		return $this->store->admins();
 	}
 
 	/** agents is every user an agent may reply as. */
 	function agents() {
-		return Model\User::rows($this->db->get_all("SELECT * FROM user WHERE agent_reply = 1 AND mcp = 1 ORDER BY name"));
+		return $this->store->agents();
 	}
 
 	/** roles is the role each user acts with, by name. */

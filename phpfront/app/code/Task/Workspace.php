@@ -18,10 +18,11 @@ class Workspace {
 	/** PAGE is the Workspaces step of the settings, which every workspace's page hangs under. */
 	const PAGE = "/settings/workspaces";
 
-	var $db;
+	/** store is the settings module, which owns the table. */
+	var $store;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Settings\Workspaces($db);
 	}
 
 	/**
@@ -51,13 +52,7 @@ class Workspace {
 
 	/** folders is the folder of every named workspace, in the sidebar's order. */
 	function folders() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT folder FROM workspace WHERE folder != ? ORDER BY sort, folder", Route::INTERNAL) as $row) {
-			$out[] = Row::text($row, "folder");
-		}
-
-		return $out;
+		return $this->store->folders();
 	}
 
 	/**
@@ -69,13 +64,7 @@ class Workspace {
 	 * workspace's do, and the settings count the rows themselves.
 	 */
 	function names() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT folder FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, sort, folder", Route::INTERNAL) as $row) {
-			$out[] = Row::text($row, "folder");
-		}
-
-		return $out;
+		return $this->store->names();
 	}
 
 	/**
@@ -83,7 +72,7 @@ class Workspace {
 	 * the sidebar's order after it, which is storage/workspace_storage.go:69.
 	 */
 	function all() {
-		return Model\Workspace::rows($this->db->get_all("SELECT * FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, sort, folder", Route::INTERNAL));
+		return $this->store->all();
 	}
 
 	/**
@@ -121,9 +110,7 @@ class Workspace {
 	 * shorter one.
 	 */
 	function row($folder) {
-		$row = $this->db->get("SELECT * FROM workspace WHERE folder = ?", $folder);
-
-		return is_array($row) ? $row : null;
+		return $this->store->row($folder);
 	}
 
 	/**
@@ -377,13 +364,7 @@ class Workspace {
 	 * it is the row's title that names it where the row carries one.
 	 */
 	function titles() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT folder, title FROM workspace") as $row) {
-			$out[Row::text($row, "folder")] = Row::text($row, "title");
-		}
-
-		return $out;
+		return $this->store->titles();
 	}
 
 	/**
@@ -394,13 +375,7 @@ class Workspace {
 	 * projects are the root's and its row carries their limit.
 	 */
 	function limits() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT folder, sidebar_limit FROM workspace WHERE sidebar_limit > 0") as $row) {
-			$out[Row::text($row, "folder")] = Row::number($row, "sidebar_limit");
-		}
-
-		return $out;
+		return $this->store->limits();
 	}
 
 	/**

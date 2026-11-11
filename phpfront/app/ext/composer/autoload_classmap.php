@@ -104,6 +104,8 @@ return array(
     'Task\\Settings\\Settings' => $baseDir . '/modules/settings/storage/Settings.php',
     'Task\\Settings\\Sidebars' => $baseDir . '/modules/settings/storage/Sidebars.php',
     'Task\\Settings\\Tools' => $baseDir . '/modules/settings/storage/Tools.php',
+    'Task\\Settings\\Users' => $baseDir . '/modules/settings/storage/Users.php',
+    'Task\\Settings\\Workspaces' => $baseDir . '/modules/settings/storage/Workspaces.php',
     'Task\\Setup' => $baseDir . '/code/Task/Setup.php',
     'Task\\Sidebar' => $baseDir . '/code/Task/Sidebar.php',
     'Task\\Size' => $baseDir . '/code/Task/Size.php',

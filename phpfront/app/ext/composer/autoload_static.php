@@ -127,6 +127,8 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         'Task\\Settings\\Settings' => __DIR__ . '/../..' . '/modules/settings/storage/Settings.php',
         'Task\\Settings\\Sidebars' => __DIR__ . '/../..' . '/modules/settings/storage/Sidebars.php',
         'Task\\Settings\\Tools' => __DIR__ . '/../..' . '/modules/settings/storage/Tools.php',
+        'Task\\Settings\\Users' => __DIR__ . '/../..' . '/modules/settings/storage/Users.php',
+        'Task\\Settings\\Workspaces' => __DIR__ . '/../..' . '/modules/settings/storage/Workspaces.php',
         'Task\\Setup' => __DIR__ . '/../..' . '/code/Task/Setup.php',
         'Task\\Sidebar' => __DIR__ . '/../..' . '/code/Task/Sidebar.php',
         'Task\\Size' => __DIR__ . '/../..' . '/code/Task/Size.php',
