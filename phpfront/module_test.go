@@ -40,6 +40,14 @@ func TestModule(t *testing.T) {
 	assert.Equal(t, "titpetric/refinement", m.Name(), "a name it refused leaves the one it had")
 }
 
+func TestModule_SetTables(t *testing.T) {
+	t.Parallel()
+	m := &phpfront.Module{}
+	m.SetTables([]any{"run_summary", "run", " ", "run_queued"})
+	assert.Equal(t, []string{"run", "run_queued", "run_summary"}, m.Tables,
+		"the tables read in the order a schema is listed in")
+}
+
 func TestModuleLabel(t *testing.T) {
 	t.Parallel()
 	m := &phpfront.Module{Vendor: "titpetric", Plugin: "mysql"}

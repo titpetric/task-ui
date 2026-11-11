@@ -10,11 +10,11 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/titpetric/task-ui/app"
-	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/feature/secret"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/spotify"
 	"github.com/titpetric/task-ui/integration/ssh/sshkey"
+	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/storage"
 )
 

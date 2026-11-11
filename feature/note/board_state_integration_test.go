@@ -8,8 +8,8 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/assert"
 )
 
 // A restart starts every agent an open instruction with no run names, one

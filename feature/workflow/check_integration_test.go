@@ -10,10 +10,10 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/titpetric/task-ui/app"
-	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/app/model"
-	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/feature/workflow"
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // A check step reads the step it follows and sends the steps round again

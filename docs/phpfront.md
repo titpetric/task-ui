@@ -39,6 +39,7 @@ A module directory holds:
 
 | Path                                     | What it is                                                       |
 |------------------------------------------|------------------------------------------------------------------|
+| `modinfo.php`                            | `@startup`: what the module is called, and the tables it bundles |
 | `mod_<name>.php`                         | one per view: its `@route` lines, its class, its dispatch        |
 | `schema/`                                | the `*.up.sql` of each table this module's pages own             |
 | `storage/`                               | the SQL of a data model the module owns                          |
@@ -48,6 +49,8 @@ A module directory holds:
 | `api/`                                   | new JSON endpoints, `@route` annotated                           |
 | `docs/`                                  | what a module owning `storage/` adds to its generated README     |
 | `README.md`, `schema.puml`, `schema.svg` | generated; the last two only where `tables()` names one          |
+
+`modinfo.php` is the directory stating its own shape, the same file and the same `Task\Module` a plugin under `data/modules/` registers with. It runs on a runtime of its own, never on a request's, and nothing serves it: a feature of the interface is drawn by the theme's router and is not a plugin. `Front.Modules` runs all fourteen and `TestFront_Modules` reads what they declared against the directories. A name other than `taskui/<dir>`, a missing title or icon, or a `setTables` list the module's `schema/*.up.sql` does not create fails there. `phpfront/app/.ruleslint.conf` is the rest of the shape, and `atkins lint` runs it at zero findings.
 
 `schema/` is where a table's migration lives, with the pages that own it, and `//go:embed all:app` is what ships it. `phpfront.Migrations()` answers the module tree and `app.Migrations` merges it with the other three owners — `keystore/schema/`, `access/schema/`, `phpscript/schema/` — into one flat filesystem keyed by base name, which the instance applies at start. Flat is load-bearing: the `migrations` table records the name of a file relative to the root it was applied from, so a file that gains a directory is a file nobody ran, and the second `ALTER TABLE` of a column that is already there takes the database with it. [schema/schema.go](../schema/schema.go) carries the whole argument, and `atkins schema` is what regenerates the data model after adding one.
 

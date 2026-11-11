@@ -185,9 +185,11 @@ func TestFront_Guarded(t *testing.T) {
 	}
 }
 
-// testGate is the Guard as the mount reads it: Require refuses, Attach says it
-// named the reader and passes the request on.
+// testGate stands in for the Guard: Require refuses, Attach says it named the
+// reader and passes the request on.
 type testGate struct{}
+
+var _ Gate = (*testGate)(nil)
 
 func (g *testGate) Require(http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

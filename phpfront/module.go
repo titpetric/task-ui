@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -35,6 +36,11 @@ type Module struct {
 
 	// Version is whatever the module calls its own, for the module table.
 	Version string
+
+	// Tables are the tables the module bundles: the ones its own schema/
+	// creates, which nothing else may create. A table it reads and does not
+	// own is not one of these.
+	Tables []string
 }
 
 // NewModule returns the empty module `new Task\Module` builds, which names
@@ -68,6 +74,12 @@ func (m *Module) SetIcon(icon string) { m.Icon = strings.TrimSpace(icon) }
 
 // SetVersion sets what the module calls its own version.
 func (m *Module) SetVersion(version string) { m.Version = strings.TrimSpace(version) }
+
+// SetTables names the tables the module bundles, the array PHP hands over.
+func (m *Module) SetTables(tables any) {
+	m.Tables = names(tables)
+	sort.Strings(m.Tables)
+}
 
 // Name is the module's name, <vendor>/<plugin>, and the unique key of its row.
 func (m *Module) Name() string {

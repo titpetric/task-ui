@@ -34,7 +34,7 @@ func (m *Manager) Start(ctx context.Context) error {
 			m.opts.report(fmt.Errorf("%s: no @startup annotation, so the module is not registered", entry.File))
 			continue
 		}
-		module, err := m.startup(ctx, entry)
+		module, err := startModule(ctx, m.opts, entry)
 		if err != nil {
 			m.opts.report(fmt.Errorf("%s: %w", entry.File, err))
 			continue
@@ -55,30 +55,15 @@ func (m *Manager) Start(ctx context.Context) error {
 	return nil
 }
 
-// Reload drops every module and reads the roots again, so a module added to a
-// checkout appears without a restart.
-func (m *Manager) Reload(ctx context.Context) error {
-	if m == nil {
-		return nil
-	}
-	m.reset()
-	return m.Start(ctx)
-}
-
-// startup runs one modinfo.php on a runtime of its own and returns what
-// Task::register recorded.
-//
-// The runtime is not pooled. It runs once, at startup, and a module's
-// registration is not a request: a fresh runtime holds nothing of another
-// module's, and nothing keeps it alive afterwards.
-func (m *Manager) startup(ctx context.Context, entry Found) (*Module, error) {
+// startModule runs one modinfo.php on an unpooled runtime and returns what Task::register recorded.
+func startModule(ctx context.Context, opts ModuleOptions, entry Found) (*Module, error) {
 	own := &Module{Root: entry.Root}
 
 	var registered *Module
-	rt := runner.New(io.Discard, runtimeOptions(m.opts, own))
+	rt := runner.New(io.Discard, runtimeOptions(opts, own))
 	stdlib.Register(rt)
 	stdlib.RegisterFS(rt, entry.Root)
-	BindModule(rt, m.opts, func(module *Module) { registered = module })
+	BindModule(rt, opts, func(module *Module) { registered = module })
 	rt.SetContext(WithModule(ctx, own))
 
 	prog, err := rt.LoadFile(ModInfo)
@@ -114,8 +99,7 @@ func (m *Manager) startup(ctx context.Context, entry Found) (*Module, error) {
 	return registered, nil
 }
 
-// runStartup loads and runs one of a module's startup files. A script
-// that calls exit has ended on purpose and is not a failure.
+// runStartup loads and runs one of a module's startup files, counting exit as an end and not a failure.
 func runStartup(rt *runner.Runtime, rel string) error {
 	prog, err := rt.LoadFile(rel)
 	if err != nil {

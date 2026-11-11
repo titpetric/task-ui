@@ -1,6 +1,9 @@
 <?php $_v=&$this->vars;?>
 <section class="login">
 	<h2>Sign in</h2>
+	<?php if($_v['data']['error']){?>
+<div class="alert bad" role="alert"><?php echo htmlspecialchars($_v['data']['error'], ENT_QUOTES);?>
+</div><?php }?>
 	<form method="post" action="/login">
 		<input type="hidden" name="back" value="<?php echo htmlspecialchars($_v['data']['back'], ENT_QUOTES);?>
 ">

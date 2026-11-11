@@ -9,6 +9,8 @@
 
 require "ext/autoload.php";
 require "stubs/host.php";
+require "stubs/task.php";
+require "stubs/module.php";
 require "stubs/fixture.php";
 require "stubs/database.php";
 require "stubs/time.php";
