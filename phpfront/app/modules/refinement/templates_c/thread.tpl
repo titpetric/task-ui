@@ -161,7 +161,7 @@
 <?php }else{?>
 	<p class="faint">The first run has not written its report yet. It appears here once the run ends.</p>
 <?php }?>
-	<ol class="refinement-thread">
+	<ol class="refinement-thread" data-reload-on-note>
 <?php if(!empty($_v['data']['entries']))foreach($_v['data']['entries'] as $_v['entry']){?><?php if($_v['entry']['folded_count']){?>
 		<li class="refinement-folded">
 			<details>
@@ -189,7 +189,9 @@
 <?php }?>				</ol>
 			</details>
 		</li>
-<?php }?>		<li class="refinement-comment">
+<?php }?>		<li class="refinement-comment"<?php if($_v['entry']['comment']['note_id']){?>
+ data-note-id="<?php echo htmlspecialchars($_v['entry']['comment']['note_id'], ENT_QUOTES);?>
+"<?php }?>>
 			<div class="refinement-comment-head">
 				<strong><?php echo htmlspecialchars($_v['entry']['comment']['user'], ENT_QUOTES);?>
 </strong>

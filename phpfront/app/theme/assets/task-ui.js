@@ -5020,6 +5020,32 @@
     runsHandlers.push(fn);
   }
 
+  // A page whose content a run writes - the refinement thread's report,
+  // drawn from the artifact tree as it stood when the page rendered -
+  // reads itself again once the note that started the run ends. The run's
+  // own ID is no use here: the page is drawn right after the dispatch and
+  // the run does not exist yet, where the note already does.
+  //
+  // data-reload-on-note names the element holding the notes, each row
+  // carrying data-note-id. docs/framework.md is the contract.
+  var watching = document.querySelector("[data-reload-on-note]");
+  if (watching && window.EventSource) {
+    var pending = {};
+    watching.querySelectorAll("[data-note-id]").forEach(function (row) {
+      if (row.dataset.noteId) pending[row.dataset.noteId] = true;
+    });
+    if (Object.keys(pending).length) {
+      var notes = new EventSource("/api/sse/notes");
+      notes.addEventListener("note", function (event) {
+        var changed;
+        try { changed = JSON.parse(event.data); } catch (e) { return; }
+        if (!pending[changed.id] || (changed.state !== "done" && changed.state !== "failed")) return;
+        notes.close();
+        window.location.reload();
+      });
+    }
+  }
+
   // A run status label: <span class="state" data-run-id="01ABC"></span>,
   // anywhere in the interface, kept current from the runs event stream.
   //

@@ -13,7 +13,7 @@
 	</div>
 {else}	<p class="faint">The first run has not written its report yet. It appears here once the run ends.</p>
 {/if}
-	<ol class="refinement-thread">
+	<ol class="refinement-thread" data-reload-on-note>
 {foreach $data.entries as $entry}{if $entry.folded_count}		<li class="refinement-folded">
 			<details>
 				<summary>{entry.folded_count} folded into the request below</summary>
@@ -30,7 +30,7 @@
 {/foreach}				</ol>
 			</details>
 		</li>
-{/if}		<li class="refinement-comment">
+{/if}		<li class="refinement-comment"{if $entry.comment.note_id} data-note-id="{entry.comment.note_id}"{/if}>
 			<div class="refinement-comment-head">
 				<strong>{entry.comment.user}</strong>
 				<span class="faint">{entry.comment.created_at}</span>

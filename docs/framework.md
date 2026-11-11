@@ -64,6 +64,22 @@ It is not a progress bar. A run reports two things over the stream, that it star
 
 `onRuns(fn)` in `task-ui.js` is the one subscription to `/api/sse/runs`; every handler on the page shares it. `runLabels()` is the label's handler and the only thing a page has to know about is the markup above.
 
+## A page a run rewrites
+
+A label says how a run is going. A page whose *content* the run writes needs the page again: the refinement thread draws the report out of the artifact tree as it stood when the page rendered, and the run that ends has written another one.
+
+```php
+<ol class="refinement-thread" data-reload-on-note>
+	<li class="refinement-comment" data-note-id="{entry.comment.note_id}">
+```
+
+| Attribute             | What it does                                                                    |
+|-----------------------|---------------------------------------------------------------------------------|
+| `data-reload-on-note` | On the element holding the rows: the page reloads when one of their notes ends. |
+| `data-note-id`        | On a row: the note to follow, as `Task::dispatch` answered it.                  |
+
+The note and not the run, because a page drawn right after a dispatch has a note and no run yet: `Task::run($note)` answers `""` until the board starts it. The stream is `/api/sse/notes`, the states that reload are `done` and `failed`, and the page reads itself once.
+
 ---
 
 [Contents](README.md) · [Modules](modules.md) · [Development](development.md)
