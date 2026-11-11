@@ -4,10 +4,10 @@ import (
 	"io/fs"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/migrate"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/phpscript"
-	"github.com/titpetric/task-ui/schema"
 )
 
 // Migrations returns the schema of the instance: every owner's migrations,
@@ -20,14 +20,14 @@ import (
 // takes the filesystem it applies for the same reason: a package that owns
 // tables cannot be imported by the package that applies them.
 //
-// schema.Migrations flattens the merged names, which keeps an instance's
+// migrate.Migrations flattens the merged names, which keeps an instance's
 // migrations table valid when a file moves between owners.
 //
 // It answers no error. Two owners can collide on one base name, and every
 // owner here is an embedded tree, so the collision is settled at build time and
 // panics like phpfront's sub. TestMigrations catches it.
 func Migrations() fs.FS {
-	merged, err := schema.Migrations(
+	merged, err := migrate.Migrations(
 		phpfront.Migrations(),
 		keystore.Migrations(),
 		access.Migrations(),

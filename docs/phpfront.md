@@ -112,7 +112,7 @@ if (PHP_SAPI === "http") {
 
 **`tables()` is the module body's own read set, not the chrome's.** Every page draws the chrome, and `Task\Chrome` reads `user`, `workspace`, `sidebar`, `pin`, `workflow`, `workflow_step`, `key_info`, `key_role`, `key_user` and the recents' `run` and `note` — eleven tables on every page in the tree. Naming them in each `tables()` would draw the same eleven-table diagram fourteen times and the per-module diagram would stop telling modules apart, which is the only thing it is for. So a module names what its own body queries, the directory's data model is what its pages name together, and a module that queries nothing names nothing: `tools/docs.php` then writes no `schema.puml`, deletes a stale one, and the README says in words that the chrome does the reading. `modules/notfound/` is the one that does.
 
-A path is written without the mount. `Task\Host::base()` answers it and the templates write it as `{base}`, which is the empty string now that the ported pages hold the root; nothing in the tree spells a prefix of its own, and nothing spells the Go pages' `/legacy` either. `rules/` refuses both literals.
+A path is written without the mount. `Task\Host::base()` answers it and the templates write it as `{base}`, which is the empty string now that the ported pages hold the root; nothing in the tree spells a prefix of its own, and nothing spells the Go pages' `/legacy` either. `phpfront/app/semgrep/` refuses both literals.
 
 A file holds no `use` block. `phpscript fmt` inlines an alias and leaves the import behind, so a file writes the qualified name the formatter would leave: `Task\Chrome` from the global namespace of a `mod_` file, `\Task\Chrome` from inside a namespace.
 
@@ -126,7 +126,7 @@ $view = new Task\View($this, $chrome);
 $view->page($scope, "run.tpl");
 ```
 
-The same holds for an allocation reached as an argument, as an array value or inside a ternary: `Task\User::options($users, (new Task\Key)->ofUsers($users))` reads the key table in the middle of an argument list, where nothing names the store it read it from. `rules/` refuses all four shapes.
+The same holds for an allocation reached as an argument, as an array value or inside a ternary: `Task\User::options($users, (new Task\Key)->ofUsers($users))` reads the key table in the middle of an argument list, where nothing names the store it read it from. `phpfront/app/semgrep/` refuses all four shapes.
 
 An argument is a name or a literal wherever the call it would otherwise hold does work worth naming. A read, a build and a call that each do something are each a line:
 
@@ -153,7 +153,7 @@ return new Model\Note($row);
 
 The matched pattern reaches no superglobal, so a file holding several routes matches on the method and the segments: `Task\Route::posted()` and `Task\Route::segments()`.
 
-An `@route` never names a file. The static files are Go's, at `/assets/theme/` and `/assets/<module>/`, and `rules/` refuses a route path with an extension.
+An `@route` never names a file. The static files are Go's, at `/assets/theme/` and `/assets/<module>/`, and `phpfront/app/semgrep/` refuses a route path with an extension.
 
 **A byte stream is not a page and is not ported.** `/artifacts/files/*`, `/artifacts/*.tgz` and `/artifacts.tgz` answer with the bytes of a file of the artifact tree or a tar of a directory of it, which the tree opens outside the directory the PHP may read; they stay Go, at the root of the instance, in the same class as `/login` POST and `/logout`. `/files/*` is one of them, which the plan had down as a page: `frontend/file.go`'s `checkoutFile` resolves the folder, joins `f.Path(rel)`, demands a regular file and hands it to `serveFile`, and the only markup it can answer with is the shared 404. So the plan's `mod_file` row drops, and a folder's listing links `/files/...` unmounted. So a link to a stream is written **without** `Task\Host::base()` — `mod_artifacts::FILES` and `mod_artifacts::archive()` are the two places that spell them — and every link to a page of this application carries the mount. The same holds for `/api/*`, which the browser reads from `task-ui.js` and which has no mount either.
 
@@ -200,7 +200,7 @@ A write publishes. `Task\Host::publish($topic, $payload)` sends the event every 
 
 A class owns a table and the behaviour of its rows both, because the runtime merges no methods into a generated class: `Task\User` holds the statements and `Task\User::admin($row)` answers what a row means.
 
-**Every SQL statement lives in `code/Task/*.php` or `modules/*/storage/*.php`.** `rules/` refuses one anywhere else. A read page takes `Task\DB::reader()`, which refuses a statement that does not start with a read-only keyword, so a view that only lists cannot write.
+**Every SQL statement lives in `code/Task/*.php` or `modules/*/storage/*.php`.** `phpfront/app/semgrep/` refuses one anywhere else. A read page takes `Task\DB::reader()`, which refuses a statement that does not start with a read-only keyword, so a view that only lists cannot write.
 
 A nullable timestamp column holds null and not `""`. The generated model names its timestamp columns and `Task\Row::values()` writes null for an empty one; writing `""` makes the Go scanner fail and the Go page lists nothing, silently.
 
@@ -373,13 +373,15 @@ So an edit to `mod_*.php` shows on the next request, and an edit to a class unde
 | `models`     | rewrites `code/Task/Model` from `schema/schema.yml`, then formats |
 | `precompile` | compiles every template into the `templates_c` beside it          |
 | `docs`       | each module's `README.md`, `schema.puml` and `schema.svg`         |
-| `rules`      | the semgrep conventions                                           |
+| `ruleslint`  | the structure of a module, and the semgrep conventions            |
 
-`atkins` runs five of them: `fmt`, `lint`, `precompile`, `test`, `rules`. Precompile is ahead of test because a compiled template is an input to `tests/form.phpt`. `models` and `docs` write generated files and are run by name. The Go side keeps its own: `atkins test` and `splint ./...`.
+`atkins` runs five of them: `fmt`, `lint`, `precompile`, `test`, `ruleslint`. Precompile is ahead of test because a compiled template is an input to `tests/form.phpt`. `models` and `docs` write generated files and are run by name. The Go side keeps its own: `atkins test` and `splint ./...`.
 
 Run `atkins fmt`, never the bare command. `phpscript fmt -l .` prints nothing here because `.` reads the files of the directory it names and this root holds no `.php`; the gate is `phpscript fmt -l ./code/... ./modules/... ./stubs/... ./tools/...`, which is the four trees and not `./...`, because the recursive walk reaches `ext/`, which is composer's to format. `tests/` is the one tree the gate leaves out, and `fmt -l ./...` names `tests/setup.php`. `-l` exits zero whether or not it named a file, so the job's test is whether it printed anything.
 
-`rules` names its files rather than the tree. Given a directory, semgrep scans what git tracks — it says so in its own summary — so the module directory written an hour ago is held by no rule until it is committed, which is the hour the rules are for. `git ls-files -co --exclude-standard` is the list: tracked, untracked, and nothing git ignores. The Go gate at the repository root keeps the directory, because a named file also escapes semgrep's own ignore list, which holds the Go test files.
+`ruleslint` reads `.ruleslint.conf`: the directories a module keeps and the text its files hold, then the commands of the `linters` block. The semgrep pass is one of those commands, and its rules sit beside the tree they read, in `phpfront/app/semgrep/`.
+
+The semgrep line names its files rather than the tree. Given a directory, semgrep scans what git tracks — it says so in its own summary — so the module directory written an hour ago is held by no rule until it is committed, which is the hour the rules are for. `git ls-files -co --exclude-standard` is the list: tracked, untracked, and nothing git ignores. The Go gate at the repository root keeps the directory, because a named file also escapes semgrep's own ignore list, which holds the Go test files.
 
 ---
 

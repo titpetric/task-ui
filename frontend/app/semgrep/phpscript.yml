@@ -1,0 +1,63 @@
+# Two shapes the runtime and its formatter get wrong, held as rules so the
+# tree cannot grow one back.
+#
+# Both are documented in docs/todo-correction.md with a probe, and both are
+# the kind of defect a linter cannot see: `phpscript fmt` and `phpscript
+# lint` are clean on either, and the page is wrong or 500s at runtime.
+#
+# Both belong fixed in Go, in github.com/titpetric/phpscript. These rules
+# retire the day that lands — that is the point of writing the section number
+# into each message.
+#
+# History:
+#   2026-11-03  Written at zero. Section 21 was found by Task\Chart's axis
+#               and section 22 by Task\User's role list, both the hard way.
+rules:
+  # docs/todo-correction.md section 21. `fmt` rewrites 100.0 to 100, so the
+  # literal changes type between one commit and the next. `100.0 === 100` is
+  # false, and a chart whose axis compared the two drew nothing.
+  #
+  # Generic, not php: semgrep's PHP parser normalises a float literal, so the
+  # pattern cannot tell 100.0 from 100 by the time it sees it.
+  #
+  # A fraction that is not all zeros is left alone by `fmt` and is not this.
+  #
+  # The literal has to sit in a value position — after an operator, an open
+  # paren, a comma, a `=>` or a `return` — because a generic match reads
+  # inside a string too, and `Clock::stamp()` carries the Go time layout
+  # "2006-01-02 15:04:05.000000", whose fractional seconds are not a float.
+  - id: task-ui.find.whole-float-literal
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A float literal with an all-zero fraction does not survive `phpscript
+      fmt`: it is rewritten without the fraction and becomes an int, so an
+      identity comparison against it turns false. Write the int, or cast both
+      sides at the comparison. docs/todo-correction.md section 21.
+    paths:
+      include:
+        - "**/*.php"
+      exclude:
+        - "**/ext/**"
+        - "**/templates_c/**"
+    pattern-regex: '(?:[=<>!+\-*/(,]\s*|\breturn\s+)\d+\.0+(?![\d\w.])'
+
+  # docs/todo-correction.md section 22. A const array holding self::X
+  # resolves self against the class that *reads* the const, not the one that
+  # declares it, so `mod_settings` reading Task\User::ROLES raises
+  # "undefined class constant mod_settings::ADMIN". Write the strings out.
+  - id: task-ui.find.self-in-const-array
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      `self::` inside a const array resolves against the class that reads the
+      const, not the one that declares it, so the read raises an undefined
+      class constant on the reader. Write the values out.
+      docs/todo-correction.md section 22.
+    paths:
+      include:
+        - "**/*.php"
+      exclude:
+        - "**/ext/**"
+        - "**/templates_c/**"
+    pattern-regex: '(?s)\bconst\s+\w+\s*=\s*(array\(|\[)[^;]*\bself::'

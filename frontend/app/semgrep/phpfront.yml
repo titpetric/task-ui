@@ -1,0 +1,157 @@
+# The front end's conventions, as rules.
+#
+# docs/phpfront.md states them in prose. These hold them, so a change that
+# breaks one fails rather than being noticed in review a year later.
+#
+# The SQL rule is the same one rules/sql.yml holds for a module, with the two
+# places this tree keeps statements: code/Task, which owns a table of the
+# instance, and a module's own storage/, which owns a data model the module
+# brought. Every other file asks one of them.
+#
+# History:
+#   2026-11-02  Written at zero, with the theme, the domain and the notes
+#               module in the tree.
+rules:
+  - id: task-ui.front.sql-outside-storage
+    languages: [php]
+    severity: ERROR
+    message: >-
+      Every statement lives in code/Task, which owns a table of the
+      instance, or in a module's storage/, which owns the module's own.
+      Add the method the page needs there and ask for it.
+    paths:
+      include:
+        - "**"
+      exclude:
+        - "code/Task/**"
+        - "modules/*/storage/**"
+        - "stubs/**"
+        - "ext/**"
+        - "tests/**"
+        - "**/templates_c/**"
+    # The receiver is named, not just the method: get() is the database
+    # stub's read and also how a MiniTPL template renders itself.
+    patterns:
+      - pattern-either:
+          - pattern: $this->db->$METHOD(...)
+          - pattern: $db->$METHOD(...)
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: ^(query|get|get_all|get_one|insert|replace|update|exec|prepare|begin|commit|rollback)$
+
+  # The same convention as a text match, for the statement built in a page
+  # and handed to something this does not name.
+  #
+  # The match is case sensitive. Every statement in the tree writes its
+  # keywords in capitals, and a case insensitive match reads the menu label
+  # "Delete from the tree" as SQL, which is a sentence no rule may forbid.
+  - id: task-ui.front.sql-literal-outside-storage
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A SQL statement in a literal outside code/Task or a module's storage/.
+    paths:
+      include:
+        - "**/*.php"
+      exclude:
+        - "code/Task/**"
+        - "modules/*/storage/**"
+        - "stubs/**"
+        - "ext/**"
+        - "tests/**"
+        - "**/templates_c/**"
+    pattern-regex: '[''"]\s*(SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE)\s'
+
+  # A mount is Go's. app.FrontBase is where this tree's is spelled,
+  # Task\Host::base() is how the tree reads it, and it is the empty string now
+  # that the ported pages hold the root.
+  #
+  # app.GoBase is the other one, where the Go pages being replaced answer. No
+  # page of this tree links one: the pages here are what the instance serves,
+  # and a link into the front end being compared against would take a reader
+  # out of it. It goes at cutover with the pages under it.
+  - id: task-ui.front.prefix-in-php
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A mount is spelled once, in app.FrontBase or app.GoBase. Build a link
+      with Task\Route::href() and write {base} in a template.
+    paths:
+      include:
+        - "**/*.php"
+        - "**/*.tpl"
+      exclude:
+        - "**/templates_c/**"
+    pattern-regex: '/development|/legacy'
+
+  # A static file is served by Go, at /assets/theme/ or /assets/<module>/. A
+  # route that names one is a page the native router should have answered.
+  - id: task-ui.front.route-names-a-file
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      An @route answers a page or an endpoint, never a file. The static
+      files are internal/assets, under /assets/.
+    paths:
+      include:
+        - "**/*.php"
+    pattern-regex: '@route\s+(\w+\s+)?\S+\.(css|js|svg|png|jpg|jpeg|gif|webp|woff2?|ico|map)\b'
+
+  # The theme draws; it answers nothing. A route under theme/ is a view that
+  # belongs to a module.
+  - id: task-ui.front.route-in-the-theme
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      The theme holds components, not views. The route belongs to the module
+      whose page draws it.
+    paths:
+      include:
+        - "theme/**"
+      exclude:
+        - "**/templates_c/**"
+    pattern-regex: '@route\s'
+
+  # A generated model is written by tools/models.php from schema/schema.yml,
+  # the same file mig gen reads for the Go types. Editing one drifts the two.
+  - id: task-ui.front.model-edited
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      code/Task/Model is generated from schema/schema.yml. Change the
+      migration and run `atkins models`, or put the behaviour on the DAO.
+    paths:
+      include:
+        - "code/Task/Model/*.php"
+    pattern-regex: '^(?!.*Code generated from schema/schema\.yml).*DO NOT EDIT'
+
+  # An allocation inside an expression does two things on one line and names
+  # neither. The four shapes are a parenthesised allocation, which is almost
+  # always (new X)->m(); one passed as a later argument; one in a ternary; and
+  # one as an array value.
+  #
+  # The three extensions are named, the way the SQL literal rule names one: the
+  # match is generic and reads any language it is given, and a module ships CSS
+  # and JavaScript beside its templates, where `new Event(...)` is how the
+  # language is written. A .tpl is in because {eval} compiles to a statement.
+  - id: task-ui.front.allocation-in-expression
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      An allocation is a statement of its own, bound to a name: $view = new
+      Task\View(...); then $view->page(...). See docs/phpfront.md, Statements.
+    paths:
+      include:
+        - "**/*.php"
+        - "**/*.phpt"
+        - "**/*.tpl"
+      exclude:
+        - "stubs/**"
+        - "**/templates_c/**"
+        - "**/ext/**"
+    pattern-either:
+      - pattern-regex: '\(\s*new\s+\\?[A-Z]'
+      - pattern-regex: ',\s*new\s+\\?[A-Z]'
+      - pattern-regex: '\?\s*new\s+\\?[A-Z]'
+      - pattern-regex: '=>\s*new\s+\\?[A-Z]'
+      - pattern-regex: '[^:\s]\s:\s*new\s+\\?[A-Z]'
