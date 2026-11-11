@@ -234,7 +234,7 @@ class mod_profile implements Module {
 	 * filled with rows Seen is about to drop.
 	 */
 	function runs($chrome, $seen, $name, $workspaces) {
-		$store = new Task\Run($chrome->db);
+		$store = new Task\Runs\Runs($chrome->db);
 		$filter = array(
 			"user" => $name,
 			"folders" => Task\User::folders($chrome->user),

@@ -209,7 +209,7 @@ class Prompt {
 		}
 
 		$notes = new Note;
-		$runs = new Run;
+		$runs = new Runs\Runs;
 		$about = $runs->root($run);
 		$where = Run::where($run);
 		$running = $run->getState() === Run::RUNNING;

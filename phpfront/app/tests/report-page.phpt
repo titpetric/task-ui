@@ -83,7 +83,7 @@ $catalogue = Task\Fixture::folder("fx-doc", array($build));
 
 Task\Host::$folders = array(Task\Fixture::declared($catalogue));
 
-$runs = new Task\Run;
+$runs = new Task\Runs\Runs;
 $reports = new Task\Report;
 $chrome = new Task\Chrome;
 $seen = new Task\Seen($chrome);

@@ -131,7 +131,7 @@ class mod_retention implements Module {
 	 * when it ran, how it ended, and nothing at all where it never has.
 	 */
 	function last() {
-		$runs = new Task\Run;
+		$runs = new Task\Runs\Runs;
 		$found = $runs->find(array(
 			"folder" => Task\Route::INTERNAL,
 			"job" => self::CLEANUP,

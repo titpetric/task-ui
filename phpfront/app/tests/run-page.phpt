@@ -181,7 +181,7 @@ Task\Host::$sessions = array(
 	),
 );
 
-$runs = new Task\Run;
+$runs = new Task\Runs\Runs;
 $chrome = new Task\Chrome;
 $seen = new Task\Seen($chrome);
 

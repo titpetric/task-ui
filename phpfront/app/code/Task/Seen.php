@@ -21,7 +21,7 @@ class Seen {
 	var $asked = array();
 
 	function __construct($chrome) {
-		$this->runs = new Run($chrome->db);
+		$this->runs = new Runs\Runs($chrome->db);
 		$this->user = $chrome->user;
 		$this->prompts = $chrome->allowed("prompt/view");
 		$this->notes = $chrome->allowed("note/view");

@@ -125,7 +125,7 @@ class Chain {
 	 * Step::seen does for the outer one.
 	 */
 	static function frames($links, $db, $names, $workspaces, $deeper, $seen) {
-		$runs = new Run($db);
+		$runs = new Runs\Runs($db);
 		$store = new WorkflowRun($db);
 
 		foreach ($links as $i => $link) {

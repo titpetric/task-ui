@@ -96,7 +96,7 @@ class Control {
 			return array();
 		}
 
-		$runs = new Run($this->db);
+		$runs = new Runs\Runs($this->db);
 
 		return $runs->latest(array_keys($ids));
 	}

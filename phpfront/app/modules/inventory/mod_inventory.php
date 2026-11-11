@@ -208,7 +208,7 @@ class mod_inventory implements Module {
 	 * before a cell of it is read.
 	 */
 	function batch($chrome) {
-		$runs = new Task\Run;
+		$runs = new Task\Runs\Runs;
 		$last = $runs->find(array(
 			"folder" => Task\Route::INTERNAL,
 			"job" => Task\Run::HOST_ALL,
@@ -223,7 +223,7 @@ class mod_inventory implements Module {
 		$found = array();
 
 		if ($last[0]->getBatchId() !== "") {
-			$of = $runs->find(array("batch" => $last[0]->getBatchId(), "limit" => Task\Run::BATCH_LIMIT));
+			$of = $runs->find(array("batch" => $last[0]->getBatchId(), "limit" => Task\Runs\Runs::BATCH_LIMIT));
 			$found = array_reverse($of);
 		}
 

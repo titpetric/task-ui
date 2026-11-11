@@ -48,7 +48,7 @@ class Report {
 			return $this->answerOf($run);
 		}
 
-		$runs = new Run($this->db);
+		$runs = new Runs\Runs($this->db);
 		$about = $runs->root($run);
 		$found = $this->summaries(array($about));
 
@@ -219,9 +219,10 @@ class Report {
 	 * with none. It is a report of its own: a summary with no thread.
 	 */
 	function kept($runID) {
-		$row = $this->db->get("SELECT * FROM run_summary WHERE run_id = ?", $runID);
+		$summaries = new Runs\Summaries($this->db);
+		$row = $summaries->of($runID);
 
-		if (!is_array($row) || Row::text($row, "summary") === "") {
+		if ($row === null || Row::text($row, "summary") === "") {
 			return null;
 		}
 

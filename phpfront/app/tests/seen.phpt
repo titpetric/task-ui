@@ -39,7 +39,7 @@ run("fx-seen-3", "fx-seen");
 Task\Host::$whoami = "fx-seen-bob";
 
 $chrome = new Task\Chrome;
-$runs = new Task\Run;
+$runs = new Task\Runs\Runs;
 $seen = new Task\Seen($chrome);
 
 // ids names the runs of a list, in the order it holds them.

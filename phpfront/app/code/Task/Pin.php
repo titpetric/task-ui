@@ -2,33 +2,13 @@
 
 namespace Task;
 
-// Pin reads the pin table: what a reader asked the sidebar to list besides
-// the folders it lists anyway.
+// Pin draws a pin: what a reader asked the sidebar to list besides the folders
+// it lists anyway.
 //
 // A pin names a folder, a directory inside one, or a job of either with the
-// arguments it runs with. What the sidebar does with one is Task\Folders.
+// arguments it runs with. What the sidebar does with one is Task\Folders, and
+// the rows are the folders module's, in Task\Folders\Pins.
 class Pin {
-	var $db;
-
-	function __construct($db = null) {
-		if ($db === null) {
-			$db = DB::reader();
-		}
-
-		$this->db = $db;
-	}
-
-	/** ofUser is every pin of one reader, in the order they were made. */
-	function ofUser($name) {
-		if ($name === "") {
-			return array();
-		}
-
-		$rows = $this->db->get_all("SELECT * FROM pin WHERE user_name = ? ORDER BY rowid", $name);
-
-		return Model\Pin::rows($rows);
-	}
-
 	/**
 	 * of is the reader's pin of a place, or of a job of it, or null for one
 	 * they have not pinned.

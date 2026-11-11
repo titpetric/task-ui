@@ -108,7 +108,7 @@ $ops = new Task\Model\User(array("id" => "fx-recent-u", "name" => "ops", "role" 
 $access = new Task\Access($ops);
 $roles = array("ops" => "runner");
 $rail = new Task\Recent;
-$table = new Task\Run;
+$table = new Task\Runs\Runs;
 $first = $table->get("fx-recent-1");
 $entry = $rail->ofRun($first, $access, $roles, array());
 

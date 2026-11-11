@@ -66,7 +66,7 @@ foreach ($dispatched as $kid) {
 }
 
 // A page reads through the reader, which refuses a write: a list is a list.
-$runs = new Task\Run;
+$runs = new Task\Runs\Runs;
 
 // ids names what a query answered, in the order it answered.
 function ids($found) {

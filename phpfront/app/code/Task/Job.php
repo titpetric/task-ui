@@ -79,7 +79,7 @@ class Job {
 			"dir" => $jobDir,
 			"job" => $jobID,
 		);
-		$runs = new Run($this->chrome->db);
+		$runs = new Runs\Runs($this->chrome->db);
 		$seen = new Seen($this->chrome);
 		$filter["limit"] = self::HISTORY;
 		$found = $seen->of($runs->find($filter));

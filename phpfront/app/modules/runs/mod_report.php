@@ -34,7 +34,7 @@ class mod_report implements Module {
 	function serve() {
 		$chrome = new Task\Chrome;
 		$view = new Task\View($this, $chrome);
-		$runs = new Task\Run;
+		$runs = new Task\Runs\Runs;
 		$seen = new Task\Seen($chrome);
 		$run = $runs->get(Task\Route::param("id"));
 

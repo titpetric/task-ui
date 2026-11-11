@@ -160,7 +160,7 @@ $db->replace("run", array(
 
 // of() reads the rows a filter listed: when each run started, how long it took
 // and how it ended. A row that never started is on no chart.
-$table = new Task\Run;
+$table = new Task\Runs\Runs;
 $found = $table->find(array("folder" => "fx-activity", "limit" => Task\Activity::LIMIT));
 $read = Task\Activity::of($found);
 

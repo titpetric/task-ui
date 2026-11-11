@@ -282,7 +282,7 @@ class Folders {
 			return $out;
 		}
 
-		$store = new Pin($this->db);
+		$store = new Folders\Pins($this->db);
 
 		$this->held = $store->ofUser($this->access->user->getName());
 
@@ -730,7 +730,7 @@ class Folders {
 	 * sidebar reads through.
 	 */
 	function live() {
-		$runs = new Run($this->db);
+		$runs = new Runs\Runs($this->db);
 		$user = $this->access->user;
 		$prompts = $this->access->allowed("prompt/view");
 		$notes = $this->access->allowed("note/view");

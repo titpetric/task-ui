@@ -96,7 +96,7 @@ echo $chrome->prompt["folder"], " ", $chrome->prompt["dir"], " ", $chrome->promp
 
 // A run's page asks about the run, in the run's place, and names it by the
 // start of its ID.
-$runs = new Task\Run;
+$runs = new Task\Runs\Runs;
 $run = $runs->get("fx-chrome-r1");
 
 $chrome->asksOfRun($run);

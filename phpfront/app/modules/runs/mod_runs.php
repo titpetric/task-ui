@@ -36,7 +36,7 @@ class mod_runs implements Module {
 
 		$chrome->heading("Runs", array(array("text" => "Runs", "href" => "")));
 
-		$runs = new Task\Run;
+		$runs = new Task\Runs\Runs;
 		$size = Task\Pager::size();
 		$form = array(
 			"folder" => Task\Route::input("folder"),

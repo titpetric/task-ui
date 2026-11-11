@@ -79,7 +79,7 @@ $db->replace("run_summary", array(
 
 // A page reads through the reader, which refuses a write.
 $reports = new Task\Report;
-$rows = new Task\Run;
+$rows = new Task\Runs\Runs;
 
 // told is a report as a page reads it.
 function told($report) {

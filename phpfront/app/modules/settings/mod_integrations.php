@@ -409,7 +409,7 @@ class mod_integrations implements Module {
 	 * array is no sync yet.
 	 */
 	function sync($chrome) {
-		$runs = new Task\Run($chrome->db);
+		$runs = new Task\Runs\Runs($chrome->db);
 		$found = $runs->find(array(
 			"folder" => Task\Route::INTERNAL,
 			"job" => self::SYNC,

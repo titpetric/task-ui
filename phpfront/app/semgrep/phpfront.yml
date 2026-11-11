@@ -16,14 +16,13 @@ rules:
     languages: [php]
     severity: ERROR
     message: >-
-      Every statement lives in code/Task, which owns a table of the
-      instance, or in a module's storage/, which owns the module's own.
-      Add the method the page needs there and ask for it.
+      Every statement lives in the storage/ of the module that owns the
+      table. Add the method the page needs there and ask for it.
     paths:
       include:
         - "**"
       exclude:
-        - "code/Task/**"
+        - "code/Task/DB.php"
         - "modules/*/storage/**"
         - "stubs/**"
         - "ext/**"
@@ -49,12 +48,12 @@ rules:
     languages: [generic]
     severity: ERROR
     message: >-
-      A SQL statement in a literal outside code/Task or a module's storage/.
+      A SQL statement in a literal outside the owning module's storage/.
     paths:
       include:
         - "**/*.php"
       exclude:
-        - "code/Task/**"
+        - "code/Task/DB.php"
         - "modules/*/storage/**"
         - "stubs/**"
         - "ext/**"
