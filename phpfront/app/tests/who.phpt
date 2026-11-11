@@ -27,28 +27,20 @@ $granted = new Task\Access($ops, $sees);
 $seer = new Task\Who($granted, $roles);
 
 echo implode(",", $seer->linkable()), "\n";
-echo var_export($seer->edits("dev"), true), " edits needs its own rule\n";
 
-// of draws the user: the avatar, the role and the menu beside them. The
-// profile is there because a reader reads their own; Edit is not, because the
-// edit page is the user's permissions and those are nobody's own to change.
+// of draws the user: the avatar, the role and the link to their profile. A
+// reader reads their own, so the link is there for the name they signed in as.
 $drawn = $runner->of("ops");
 
-echo $drawn["name"], " ", $drawn["role"], " ", $drawn["initials"], "\n";
+echo $drawn["name"], " ", $drawn["role"], " ", $drawn["initials"], " ", $drawn["href"], "\n";
 
-foreach ($drawn["menu"]["groups"] as $group) {
-	foreach ($group as $item) {
-		echo "  ", $item["label"], " ", $item["href"], "\n";
-	}
-}
-
-// A name nobody holds still draws, with the runs link alone.
+// A name nobody holds still draws, and links nowhere.
 $stranger = $runner->of("ghost");
 
-echo $stranger["initials"], " ", count($stranger["menu"]["groups"][0]), "\n";
+echo $stranger["initials"], " [", $stranger["href"], "]\n";
 
 // avatar is the scope the avatar component reads, which of() answers a
-// superset of: the same three keys, and no menu.
+// superset of: the same three keys, and the link.
 $face = Task\Who::avatar("ops", "runner");
 
 echo $face["name"], " ", $face["role"], " ", $face["initials"], " ", count($face), "\n";
@@ -86,11 +78,8 @@ truefalse
 false a name nobody holds
 ops
 ops,root,dev
-false edits needs its own rule
-ops runner OP
-  Profile /users/ops
-  Runs by this user /runs?user=ops
-GH 1
+ops runner OP /users/ops
+GH []
 ops runner OP 3
 ops true true [asked for by hand]
 false false []

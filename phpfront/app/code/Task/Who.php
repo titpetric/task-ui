@@ -18,22 +18,13 @@ class Who {
 	/**
 	 * of is one user as the user component reads them.
 	 *
-	 * The page of a user writes the name as it is and the list of their runs
-	 * escapes it, which is what the `user-menu` define does: the one is a step
-	 * of a path the router reads whole, the other a query field. A name that
-	 * needs escaping in a path is a bug of that route and not of this link, so
-	 * the two front ends spell it the same and it is fixed in one place.
+	 * href is their profile, and "" for a name the reader may not open. Every
+	 * action on a user is on that page, so a name carries no menu of its own.
 	 */
 	function of($name) {
 		$role = isset($this->roles[$name]) ? $this->roles[$name] : "";
-		$menu = new Menu("More on " . $name);
-
-		$menu->when($this->profile($name), "users", "Profile", array("href" => Route::href("/users/" . $name)));
-		$menu->item("list", "Runs by this user", array("href" => Route::href("/runs?user=" . Route::queryEscape($name))));
-		$menu->when($this->edits($name), "edit", "Edit", array("href" => Route::href("/users/" . $name . "/edit")));
-
 		$out = self::avatar($name, $role);
-		$out["menu"] = $menu->data();
+		$out["href"] = $this->profile($name) ? Route::href("/users/" . $name) : "";
 
 		return $out;
 	}
@@ -76,22 +67,6 @@ class Who {
 		}
 
 		return $this->mine($name) || $this->access->allowed("user/view");
-	}
-
-	/**
-	 * edits reports whether the reader may open a user's edit page.
-	 *
-	 * The edit page is the user's permissions, which is not a reader's own to
-	 * change: a name in this menu is a link for a reader holding user/edit and
-	 * for nobody else, their own included. The profile is the other way about,
-	 * because everyone may read theirs.
-	 */
-	function edits($name) {
-		if (!isset($this->roles[$name])) {
-			return false;
-		}
-
-		return $this->access !== null && $this->access->allowed("user/edit");
 	}
 
 	/** mine reports whether a name is the reader's own. */

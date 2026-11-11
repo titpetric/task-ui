@@ -161,21 +161,17 @@
       "</div></div></details>";
   }
 
-  // userHTML draws a user's avatar and name with the [...] menu next to
-  // them, as the user template does: the profile, for yourself or with
-  // user/view; the runs by the user; their edit page, with user/edit.
-  // The body says who is signed in and what they may see of users; a
-  // name no user holds, such as the agent a note names, has no profile.
+  // userHTML draws a user's avatar and name as a link to their profile, as
+  // the user template does. The body says who is signed in and what they may
+  // see of users; a name no user holds, such as the agent a note names, has
+  // no profile and draws without a link.
   function userHTML(name) {
     var me = document.body.dataset.me || "", may = document.body.dataset.userMenu || "";
     var q = encodeURIComponent(name), who = escapeHTML(name);
     var known = Object.prototype.hasOwnProperty.call(roles, name);
-    return '<span class="user-ref">' + avatarHTML(name) + ' <span class="user-name">' + who + "</span>" +
-      menuHTML("More on " + name, [], [
-        known && (name === me || may) && { icon: "users", label: "Profile", href: mount() + "/users/" + q },
-        { icon: "list", label: "Runs by this user", href: mount() + "/runs?user=" + q },
-        known && may === "edit" && { icon: "edit", label: "Edit", href: mount() + "/users/" + q + "/edit" }
-      ]) + "</span>";
+    var body = avatarHTML(name) + ' <span class="user-name">' + who + "</span>";
+    if (!known || (name !== me && !may)) return '<span class="user-ref">' + body + "</span>";
+    return '<span class="user-ref"><a class="user-link" href="' + mount() + "/users/" + q + '">' + body + "</a></span>";
   }
 
   // A button with data-download saves its text as a file named by
