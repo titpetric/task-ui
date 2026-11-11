@@ -256,7 +256,7 @@ class mod_workflows implements Module {
 			return null;
 		}
 
-		$notes = new Task\Note($chrome->db);
+		$notes = new Task\Threads\Notes($chrome->db);
 		$users = new Task\User($chrome->db);
 		$roots = $notes->ofArea(Task\Note::AREA_WORKFLOWS);
 		$replies = $notes->replies(Task\Note::ids($roots));

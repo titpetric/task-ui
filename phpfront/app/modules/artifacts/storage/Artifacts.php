@@ -1,21 +1,21 @@
 <?php
 
-namespace Task;
+namespace Task\Artifacts;
 
-// Artifact reads the artifact table: the files a run left behind, and the
+// Artifacts reads the artifact table: the files a run left behind, and the
 // files of the artifact tree, which are the ones that hold a commit.
 //
-// A run page lists the artifacts of one run, newest first. The bytes of a file
-// are not here: they sit outside the directory this may open, and
-// Task\Host::artifact() reads them.
-class Artifact {
+// The table is this module's. A run page lists the artifacts of one run,
+// newest first. The bytes of a file are not here: they sit outside the
+// directory this may open, and Task\Host::artifact() reads them.
+class Artifacts {
 	/** LIMIT is how many artifacts a run page lists. */
 	const LIMIT = 200;
 
 	var $db;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->db = $db === null ? \Task\DB::reader() : $db;
 	}
 
 	/** get is one artifact by ID, or null. */
@@ -30,7 +30,7 @@ class Artifact {
 			return null;
 		}
 
-		return new Model\Artifact($row);
+		return new \Task\Model\Artifact($row);
 	}
 
 	/**
@@ -74,7 +74,7 @@ class Artifact {
 			$args[] = $limit;
 		}
 
-		return self::rows(DB::all($this->db, $sql, $args));
+		return self::rows(\Task\DB::all($this->db, $sql, $args));
 	}
 
 	/**
@@ -108,7 +108,7 @@ class Artifact {
 		}
 
 		foreach ($found as $row) {
-			$out[] = new Model\Artifact($row);
+			$out[] = new \Task\Model\Artifact($row);
 		}
 
 		return $out;

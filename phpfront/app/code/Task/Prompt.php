@@ -157,7 +157,7 @@ class Prompt {
 	 * carries the place at all.
 	 */
 	static function asked($chrome, $api, $place, $where, $fields, $open, $seen) {
-		$notes = new Note($chrome->db);
+		$notes = new Threads\Notes($chrome->db);
 		$roots = $notes->inPlace($place);
 		$replies = $notes->replies(Note::ids($roots));
 		$threads = array();
@@ -208,7 +208,7 @@ class Prompt {
 			return null;
 		}
 
-		$notes = new Note;
+		$notes = new Threads\Notes;
 		$runs = new Runs\Runs;
 		$about = $runs->root($run);
 		$where = Run::where($run);
@@ -268,7 +268,7 @@ class Prompt {
 			return null;
 		}
 
-		$notes = new Note($chrome->db);
+		$notes = new Threads\Notes($chrome->db);
 		$roots = $notes->ofWorkflowRun($run->getId());
 		$running = $run->getState() === Run::RUNNING;
 

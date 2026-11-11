@@ -44,7 +44,7 @@ class mod_thread implements Module {
 			return;
 		}
 
-		$store = new Task\Note;
+		$store = new Task\Threads\Notes;
 		$note = $store->get(Task\Route::param("id"));
 
 		if ($note === null || $note->getParentId() !== "") {

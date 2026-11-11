@@ -68,7 +68,7 @@ class mod_artifacts implements Module {
 
 		$chrome->heading("Artifacts", self::crumbs($dir));
 
-		$artifacts = new Task\Artifact;
+		$artifacts = new Task\Artifacts\Artifacts;
 		$head = new Task\Head("Artifacts", self::LEAD);
 
 		if ($chrome->allowed("artifact/delete")) {

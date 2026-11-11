@@ -339,7 +339,7 @@ class mod_run implements Module {
 	 * every data- endpoint of a page does.
 	 */
 	function artifacts($chrome, $run) {
-		$artifacts = new Task\Artifact;
+		$artifacts = new Task\Artifacts\Artifacts;
 		$found = $artifacts->find(array("run" => $run->getId()));
 		$deletes = $chrome->allowed("artifact/delete");
 		$rows = array();

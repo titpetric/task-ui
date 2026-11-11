@@ -1,5 +1,5 @@
 name: artifact
-description: Task\Artifact reads the artifact table - the files of one run newest first, and the versions of a path in the tree.
+description: Task\Artifacts\Artifacts reads the artifact table - the files of one run newest first, and the versions of a path in the tree.
 ---
 <?php
 
@@ -41,7 +41,7 @@ foreach ($rows as $row) {
 }
 
 // A page reads through the reader, which refuses a write.
-$artifacts = new Task\Artifact;
+$artifacts = new Task\Artifacts\Artifacts;
 
 // named is what a query answered, in the order it answered.
 function named($found) {

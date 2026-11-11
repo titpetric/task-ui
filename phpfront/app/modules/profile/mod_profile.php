@@ -346,7 +346,7 @@ class mod_profile implements Module {
 		$rows = array();
 
 		if ($chrome->allowed("note/view")) {
-			$store = new Task\Note($chrome->db);
+			$store = new Task\Threads\Notes($chrome->db);
 
 			foreach ($store->byUser(Task\Note::NOTES, $name, self::COUNT) as $note) {
 				$rows[] = $this->note($note, Task\Route::href("/notes"));
@@ -385,7 +385,7 @@ class mod_profile implements Module {
 	 * were asked in a place the reader sees, at most COUNT of them.
 	 */
 	function asked($chrome, $name, $workspaces) {
-		$store = new Task\Note($chrome->db);
+		$store = new Task\Threads\Notes($chrome->db);
 		$folders = $chrome->folders();
 		$rows = array();
 

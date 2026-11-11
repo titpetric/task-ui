@@ -53,7 +53,7 @@ class mod_threads implements Module {
 
 		$chrome->heading("Threads", array(array("text" => "Threads", "href" => "")));
 
-		$store = new Task\Note;
+		$store = new Task\Threads\Notes;
 		$users = new Task\User;
 		$roots = $store->timeline();
 		$replies = $store->replies(Task\Note::ids($roots));

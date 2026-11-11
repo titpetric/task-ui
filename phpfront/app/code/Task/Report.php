@@ -29,7 +29,7 @@ class Report {
 
 	function __construct($db = null) {
 		$this->db = $db === null ? DB::reader() : $db;
-		$this->notes = new Note($this->db);
+		$this->notes = new Threads\Notes($this->db);
 	}
 
 	/**

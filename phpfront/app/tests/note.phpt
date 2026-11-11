@@ -50,7 +50,7 @@ foreach ($rows as $row) {
 }
 
 // A page reads through the reader, which refuses a write.
-$notes = new Task\Note;
+$notes = new Task\Threads\Notes;
 
 // mine is the rows this fixture owns, in the order the query answered.
 function mine($found) {
@@ -101,7 +101,7 @@ echo var_export($notes->byRun(""), true), " ", var_export($notes->byRun("fx-note
 // The writes, through the writer. A reply holds the channel of the thread it
 // sits under: the column takes the board's channel or the chat's, and a thread
 // is told from a reply by the parent.
-$writes = new Task\Note($db);
+$writes = new Task\Threads\Notes($db);
 $posted = $writes->post("admin", "a written note for @admin");
 $reply = $writes->post("admin", "a written reply", $posted->getId());
 
