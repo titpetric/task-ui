@@ -16,7 +16,7 @@
 # matters is the spread, not the floor.
 #
 #   scripts/test-memory.sh                   # every package with a tagged test
-#   scripts/test-memory.sh ./frontend        # one package or pattern
+#   scripts/test-memory.sh ./phpfront        # one package or pattern
 #   TASK_UI_TEST_MEM_MAX=1GiB scripts/test-memory.sh ./app
 #
 # A test over TASK_UI_TEST_MEM_MAX fails the run and is named. The default is

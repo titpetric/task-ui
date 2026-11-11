@@ -11,7 +11,6 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/runner"
 )
 
@@ -228,7 +227,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string,
 	case dir == model.Default && b.isWorkspace(ctx, model.Default):
 		// The root with a default workspace: Claude works at the root, over
 		// every workspace, with the workspace's secrets, keys and HOME.
-		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: layout.SrcDir(b.Root, model.Default)}
+		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: folder.SrcDir(b.Root, model.Default)}
 		req.Workspace = b.Root
 		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case dir == model.Default:
@@ -238,8 +237,8 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string,
 		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case f != nil && rest == "" && b.isWorkspace(ctx, f.ID):
 		// A workspace: Claude works in its home, TASK_UI_HOME.
-		at, place = layout.HomeDir(b.Root, f.ID), f
-		req.Workspace = layout.WorkspaceDir(b.Root, f.ID)
+		at, place = folder.HomeDir(b.Root, f.ID), f
+		req.Workspace = folder.WorkspaceDir(b.Root, f.ID)
 	case f != nil:
 		path, ok := f.Path(rest)
 		if !ok {
@@ -249,9 +248,9 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string,
 		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case dir != "" && !strings.Contains(dir, "/") && !strings.Contains(dir, "..") && b.isWorkspace(ctx, dir):
 		// A workspace with no folder of the catalogue, its src empty.
-		at = layout.HomeDir(b.Root, dir)
-		place = &folder.Folder{ID: dir, Title: dir, Dir: layout.SrcDir(b.Root, dir)}
-		req.Workspace = layout.WorkspaceDir(b.Root, dir)
+		at = folder.HomeDir(b.Root, dir)
+		place = &folder.Folder{ID: dir, Title: dir, Dir: folder.SrcDir(b.Root, dir)}
+		req.Workspace = folder.WorkspaceDir(b.Root, dir)
 	default:
 		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
 	}

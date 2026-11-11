@@ -3,11 +3,10 @@ package app
 import (
 	"io/fs"
 
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/migrate"
-	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/phpfront"
 )
 
 // Migrations returns the schema of the instance: every owner's migrations,
@@ -31,7 +30,7 @@ func Migrations() fs.FS {
 		phpfront.Migrations(),
 		keystore.Migrations(),
 		access.Migrations(),
-		phpscript.Migrations(),
+		phpfront.ModuleMigrations(),
 	)
 	if err != nil {
 		panic(err)

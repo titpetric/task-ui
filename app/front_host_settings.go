@@ -9,8 +9,6 @@ import (
 	"github.com/titpetric/oida"
 
 	"github.com/titpetric/task-ui/app/model"
-	"github.com/titpetric/task-ui/frontend"
-	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/ssh/diskusage"
 	"github.com/titpetric/task-ui/integration/ssh/keystore"
@@ -18,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/internal/retention"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -119,14 +118,13 @@ func (h *FrontHost) Spaces(_ context.Context, dirs []string) map[string]phpfront
 // variables and the Storage table are an admin's: a name reads as a credential
 // and a measure walks the disk, so neither is answered to anybody else.
 func (h *FrontHost) Instance(ctx context.Context, admin bool) phpfront.Instance {
-	out := phpfront.Instance{EnvBase: runner.BaseEnv, EnvSensitive: runner.SensitiveWords}
-	if cfg := h.Config; cfg != nil {
-		out.URL, out.Listen, out.Root = cfg.URL, cfg.Listen, cfg.Root
-		out.DataDir, out.SSHDir, out.Htpasswd, out.HostData = cfg.DataDir, cfg.SSHDir, cfg.Htpasswd, cfg.HostData
-		out.Discover, out.AutoLogin, out.TimeZone = cfg.Discover, cfg.AutoLogin, cfg.TimeZone
-		out.SessionTTL, out.SessionMax, out.Keep, out.Grace = cfg.SessionTTL, cfg.SessionMax, cfg.Keep, cfg.Grace
-		out.ArtifactHistory, out.ComposeProject = cfg.ArtifactHistory, cfg.ComposeProject
+	var out phpfront.Instance
+	if h.Config != nil {
+		// The configuration half is read once at start and copied here; what
+		// follows is the half that moves between one request and the next.
+		out = *h.Config
 	}
+	out.EnvBase, out.EnvSensitive = runner.BaseEnv, runner.SensitiveWords
 	if h.Integrations != nil {
 		values, _ := h.Integrations.Values(ctx, integration.Beszel)
 		out.Beszel = values["url"] != "" && values["token"] != ""
@@ -170,9 +168,7 @@ func frontStorageRow(row diskusage.Row) phpfront.StorageRow {
 // Services is every integration as the Integrations settings draw it, in
 // registry order: each service's description beside its current settings.
 //
-// The settings come through the same view the Go page reads, so the two front
-// ends agree on which service is set up, which secret has a value and which
-// switch is on. No secret value leaves this call.
+// No secret value leaves this call: a secret answers as set or not.
 func (h *FrontHost) Services(ctx context.Context) []phpfront.Integration {
 	kinds := integration.Kinds()
 	out := make([]phpfront.Integration, 0, len(kinds))
@@ -186,14 +182,25 @@ func (h *FrontHost) Services(ctx context.Context) []phpfront.Integration {
 			}
 			values = read
 		}
-		shown := view.NewIntegration(kind, values)
-		out = append(out, phpfront.Integration{
+		shown := phpfront.Integration{
 			ID: kind.ID, Title: kind.Title, Description: kind.Description,
 			Credential: kind.Credential(), Steps: kind.Steps,
 			Fields:     frontFields(kind.Fields),
-			Configured: shown.Configured, Values: shown.Values, Set: shown.Set,
-			Checked: frontChecked(kind, values), Enabled: shown.Enabled, Error: failed,
-		})
+			Configured: integration.Configured(kind, values),
+			Values:     map[string]string{}, Set: map[string]bool{}, Enabled: map[string]bool{},
+			Checked: frontChecked(kind, values), Error: failed,
+		}
+		for _, field := range kind.Fields {
+			if field.Toggle {
+				shown.Enabled[field.Name] = integration.Enabled(field, values)
+			}
+			if field.Secret {
+				shown.Set[field.Name] = values[field.Name] != ""
+				continue
+			}
+			shown.Values[field.Name] = values[field.Name]
+		}
+		out = append(out, shown)
 	}
 	return out
 }

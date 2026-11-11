@@ -10,7 +10,6 @@ import (
 
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 )
 
 // Sync brings the workspaces and projects under the root in line with
@@ -129,7 +128,7 @@ func (s *Sync) users(ctx context.Context) []User {
 func (s *Sync) sync(ctx context.Context, owner Owner, synced map[string]map[string]bool) {
 	ws := strings.ToLower(owner.Name)
 	s.header(owner)
-	if !folder.ValidID(ws) || strings.Contains(ws, "/") || layout.Reserved(ws) {
+	if !folder.ValidID(ws) || strings.Contains(ws, "/") || folder.Reserved(ws) {
 		s.skip(owner.Name, "%q is no folder name", ws)
 		return
 	}
@@ -230,7 +229,7 @@ func (s *Sync) workspace(ctx context.Context, owner Owner, ws string) (*model.Wo
 	if s.DryRun {
 		return nil, true
 	}
-	if err := layout.Ensure(s.Root, ws); err != nil {
+	if err := folder.Ensure(s.Root, ws); err != nil {
 		s.fail("workspace", ws, err)
 		return nil, false
 	}
@@ -246,7 +245,7 @@ func (s *Sync) workspace(ctx context.Context, owner Owner, ws string) (*model.Wo
 // that is its checkout, left alone and reported for any other home/,
 // and the row set to its clone URL and default branch.
 func (s *Sync) home(ctx context.Context, ws string, row *model.Workspace, repo Repo) {
-	url, dir := repo.URL(s.HTTPS), layout.HomeDir(s.Root, ws)
+	url, dir := repo.URL(s.HTTPS), folder.HomeDir(s.Root, ws)
 	switch {
 	case row != nil && row.HomeURL != "" && Key(row.HomeURL) != Key(url):
 		s.alone("home", repo.FullName, "the home is a checkout of %s, left alone: replace it on the workspace's settings page", row.HomeURL)
@@ -293,11 +292,11 @@ func (s *Sync) project(ctx context.Context, ws string, repo Repo) bool {
 		s.skip(repo.FullName, "archived")
 		return false
 	}
-	if !folder.ValidID(repo.Name) || layout.Reserved(repo.Name) {
+	if !folder.ValidID(repo.Name) || folder.Reserved(repo.Name) {
 		s.skip(repo.FullName, "%q is no folder name", repo.Name)
 		return false
 	}
-	id, url, dir := ws+"/"+repo.Name, repo.URL(s.HTTPS), layout.ProjectDir(s.Root, ws, repo.Name)
+	id, url, dir := ws+"/"+repo.Name, repo.URL(s.HTTPS), folder.ProjectDir(s.Root, ws, repo.Name)
 	row := &model.Project{Folder: id, SourceURL: url, Branch: repo.DefaultBranch}
 	switch current, err := s.Projects.GetByFolder(ctx, id); {
 	case err == nil && current.SourceURL == url:

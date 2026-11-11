@@ -26,7 +26,7 @@
 # `go tool cover` and `uncover` read:
 #
 #   go tool cover -func=cover/merged.txt | tail -1
-#   uncover cover/merged.txt frontend
+#   uncover cover/merged.txt phpfront
 #
 # and cover/logs/<suite>.log, each suite's whole output. A failure prints
 # the last thirty lines and the path to the rest, because a suite that

@@ -17,11 +17,10 @@ import (
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/feature/workflow"
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/integration/ssh/diskusage"
 	"github.com/titpetric/task-ui/internal/access"
-	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/internal/folder"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -47,7 +46,7 @@ type App struct {
 	// UsersFile is the password file, nil when there is none.
 	UsersFile *UsersFile
 	// Modules are the plugins written in PHP, served under /m.
-	Modules *phpscript.Manager
+	Modules *phpfront.Manager
 	// Front is the front end being ported, served under FrontBase.
 	Front *phpfront.Front
 	// Telemetry is the tracer and the dashboard at /debug/oida, Services.Telemetry.
@@ -256,7 +255,7 @@ func (a *App) ensureWorkspaces(ctx context.Context) error {
 		return err
 	}
 	for _, row := range rows {
-		if err := layout.Ensure(a.Config.Root, row.Folder); err != nil {
+		if err := folder.Ensure(a.Config.Root, row.Folder); err != nil {
 			return err
 		}
 	}
@@ -278,7 +277,7 @@ func storageItems(cfg *Config, workspaces *storage.WorkspaceStorage, serverHome 
 		}
 		rows, _ := workspaces.List(context.Background())
 		for _, row := range rows {
-			history := filepath.Join(layout.HomeDir(cfg.Root, row.Folder), ".atkins", "atkins.db")
+			history := filepath.Join(folder.HomeDir(cfg.Root, row.Folder), ".atkins", "atkins.db")
 			items = append(items, diskusage.Item{Name: "Tool history · " + row.Folder, Where: history, Paths: []string{history, history + "-wal", history + "-shm"}})
 		}
 		if serverHome != "" {
@@ -286,7 +285,7 @@ func storageItems(cfg *Config, workspaces *storage.WorkspaceStorage, serverHome 
 			items = append(items, diskusage.Item{Name: "Tool history · instance", Where: history, Paths: []string{history, history + "-wal", history + "-shm"}})
 		}
 		for _, row := range rows {
-			src := layout.SrcDir(cfg.Root, row.Folder)
+			src := folder.SrcDir(cfg.Root, row.Folder)
 			items = append(items, diskusage.Item{Name: "Checkouts · " + row.Folder, Where: src, Paths: []string{src}})
 		}
 		return items

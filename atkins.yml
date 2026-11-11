@@ -56,10 +56,9 @@ jobs:
   # and run a binary per package, and the budget rots one test at a time.
   # The gate itself is not here, because every push already ran it.
   ci:daily:
-    desc: "CI on a schedule: the integration suite, the markup tests and the per-test budget"
+    desc: "CI on a schedule: the integration suite and the per-test budget"
     cmds:
       - task: test:budget
-      - task: test:view
       - task: test:integration
 
   # The release image, tagged with the commit as well as latest so a running
@@ -103,14 +102,6 @@ jobs:
     desc: "Run the unit tests"
     steps:
       - go test ./...
-
-  # The tests that read a rendered page, which `test` skips. docs/testing.md
-  # says why a template test asserts no markup, and these are the ones
-  # still doing it.
-  test:view:
-    desc: "Run the view tests that read the rendered markup"
-    steps:
-      - env TASK_UI_VIEW_TESTS=1 go test -count=1 ./frontend/...
 
   # What a change needs: the packages it touched, the packages that import
   # them, and a budget. A test over a second is waiting on something it

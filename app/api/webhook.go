@@ -15,7 +15,7 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/forgejo"
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // The errors the webhook answers with.
@@ -166,7 +166,7 @@ func (h *Webhook) checkouts(ctx context.Context, key string) (map[string]string,
 			named = append(named, workspace.Folder)
 		}
 		if forgejo.Key(workspace.HomeURL) == key {
-			dirs[layout.HomeID(workspace.Folder)] = layout.HomeDir(h.Root, workspace.Folder)
+			dirs[folder.HomeID(workspace.Folder)] = folder.HomeDir(h.Root, workspace.Folder)
 		}
 	}
 	projects, err := h.Projects(ctx)
@@ -175,7 +175,7 @@ func (h *Webhook) checkouts(ctx context.Context, key string) (map[string]string,
 	}
 	for _, project := range projects {
 		if forgejo.Key(project.SourceURL) == key {
-			dirs[project.Folder] = layout.Dir(h.Root, named, project.Folder)
+			dirs[project.Folder] = folder.Dir(h.Root, named, project.Folder)
 		}
 	}
 	return dirs, nil

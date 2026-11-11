@@ -12,7 +12,6 @@ import (
 	"github.com/titpetric/task-ui/feature/orb/recording"
 	"github.com/titpetric/task-ui/feature/orb/stt"
 	"github.com/titpetric/task-ui/feature/secret"
-	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/integration/git"
@@ -23,6 +22,7 @@ import (
 	"github.com/titpetric/task-ui/internal/envfile"
 	"github.com/titpetric/task-ui/internal/retention"
 	"github.com/titpetric/task-ui/internal/tooling"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -46,7 +46,7 @@ type AppServices struct {
 	Cleaner      *retention.Cleaner
 	Spotify      *spotify.Service
 	STT          *stt.Service
-	Instance     *view.Instance
+	Instance     *phpfront.Instance
 
 	// mounts and hostData are the container's bind mounts, read once for the runner and the Instance page.
 	mounts   hostpath.Mounts
@@ -111,11 +111,9 @@ func NewAppServices(cfg *Config, s *AppStorage) (*AppServices, error) {
 		STT: stt.New(func(ctx context.Context) (map[string]string, error) {
 			return integrations.Values(ctx, integration.STT)
 		}),
-		// What the server runs with and what it keeps on disk, both read by the
-		// two front ends: the Instance page of either draws the same
-		// configuration, and the meter is one so a page drawn twice walks the
-		// disk once.
-		Instance: &view.Instance{
+		// What the server runs with, as the Instance page draws it. The meter
+		// behind it is one, so a page drawn twice walks the disk once.
+		Instance: &phpfront.Instance{
 			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
 			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),
 			SessionTTL: cfg.SessionTTL.String(), SessionMax: cfg.SessionMax.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(),

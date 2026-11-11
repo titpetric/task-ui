@@ -8,10 +8,9 @@ import (
 
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/skills"
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/detector"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/phpfront"
 )
 
 // Folders is the catalogue: each folder and the jobs it declares.
@@ -70,7 +69,7 @@ func (h *FrontHost) Projects(_ context.Context, workspace string) []string {
 	if h.Root == "" || workspace == "" {
 		return nil
 	}
-	entries, err := os.ReadDir(layout.SrcDir(h.Root, workspace))
+	entries, err := os.ReadDir(folder.SrcDir(h.Root, workspace))
 	if err != nil {
 		return nil
 	}
@@ -98,7 +97,7 @@ func (h *FrontHost) FolderDir(_ context.Context, id string, workspaces []string)
 	if h.Root == "" {
 		return ""
 	}
-	return layout.Dir(h.Root, workspaces, id)
+	return folder.Dir(h.Root, workspaces, id)
 }
 
 // FolderDirs is FolderDir of every ID a tree draws, in one crossing: the
@@ -140,7 +139,7 @@ func (h *FrontHost) FolderDirs(ctx context.Context, ids []string, workspaces []s
 		if h.Root == "" {
 			continue
 		}
-		if dir := layout.Dir(h.Root, workspaces, id); dir != "" {
+		if dir := folder.Dir(h.Root, workspaces, id); dir != "" {
 			out[id] = dir
 		}
 	}

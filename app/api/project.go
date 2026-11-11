@@ -9,7 +9,6 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/detector"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -123,7 +122,7 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	if req.Workspace == "" {
 		req.Workspace = model.Default
 	}
-	if top, _, _ := strings.Cut(req.ID, "/"); layout.Reserved(top) {
+	if top, _, _ := strings.Cut(req.ID, "/"); folder.Reserved(top) {
 		fail(w, http.StatusBadRequest, reservedRefused)
 		return
 	}
@@ -167,7 +166,7 @@ func (h *Handlers) rootTaken(r *http.Request, id string) string {
 	if _, err := h.opts.Workspaces.GetByFolder(r.Context(), top); err == nil {
 		return "a workspace named " + top + " exists already: clone into it, or name the folder otherwise"
 	}
-	if _, err := os.Stat(layout.ProjectDir(h.opts.Root, model.Default, id)); err == nil {
+	if _, err := os.Stat(folder.ProjectDir(h.opts.Root, model.Default, id)); err == nil {
 		return id + " exists under the root already"
 	}
 	return ""
@@ -197,7 +196,7 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
 	}
-	if model.IsReserved(id) || layout.IsHome(h.workspaceFolders(r.Context()), id) {
+	if model.IsReserved(id) || folder.IsHome(h.workspaceFolders(r.Context()), id) {
 		fail(w, http.StatusBadRequest, reservedRefused)
 		return
 	}
@@ -245,7 +244,7 @@ func (h *Handlers) deleteProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
 	}
-	if layout.IsHome(h.workspaceFolders(r.Context()), id) {
+	if folder.IsHome(h.workspaceFolders(r.Context()), id) {
 		fail(w, http.StatusBadRequest, "a workspace's home is no project: its settings page replaces or removes it")
 		return
 	}

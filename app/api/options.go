@@ -21,7 +21,7 @@ import (
 	"github.com/titpetric/task-ui/internal/envfile"
 	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/internal/retention"
-	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -115,7 +115,7 @@ type Options struct {
 	Sidebar *storage.SidebarStorage
 	// Modules are the plugins written in PHP; nil turns the module
 	// routes off.
-	Modules *phpscript.Manager
+	Modules *phpfront.Manager
 	// Telemetry is the tracer's settings; nil turns that route off.
 	Telemetry Telemetry
 }

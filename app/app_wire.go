@@ -17,7 +17,6 @@ import (
 	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/feature/workflow"
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/claude"
 	"github.com/titpetric/task-ui/integration/mcp"
@@ -25,7 +24,7 @@ import (
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/assets"
 	"github.com/titpetric/task-ui/internal/detector"
-	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/runner"
 )
 
@@ -133,17 +132,17 @@ func (a *App) wire(version string) error {
 	dispatcher := NewDispatcher(a.Board, store.Users, svc.Artifacts)
 	moduleRuns := NewModuleRuns(store.Notes)
 
-	moduleOpts := phpscript.NewOptions(cfg.ModulesDir())
+	moduleOpts := phpfront.NewModuleOptions(cfg.ModulesDir())
 	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
-	moduleOpts.Registry = phpscript.NewStore(store.Modules, store.Sidebar)
+	moduleOpts.Registry = phpfront.NewStore(store.Modules, store.Sidebar)
 	moduleOpts.Dispatcher = dispatcher
 	moduleOpts.Runs = moduleRuns
-	moduleOpts.Database = phpscript.NewDatabase(store.DB)
-	moduleOpts.Artifacts = phpscript.NewTree(svc.Artifacts)
+	moduleOpts.Database = phpfront.NewDatabase(store.DB)
+	moduleOpts.Artifacts = phpfront.NewTree(svc.Artifacts)
 	moduleOpts.Tracer = svc.Telemetry.Tracer()
 	moduleOpts.Version = version
 	moduleOpts.OnError = func(err error) { slog.Warn("a module did not register", "err", err) }
-	a.Modules = phpscript.New(moduleOpts)
+	a.Modules = phpfront.NewManager(moduleOpts)
 	if err := a.Modules.Start(context.Background()); err != nil {
 		return err
 	}
@@ -160,8 +159,8 @@ func (a *App) wire(version string) error {
 	frontOpts.Version = version
 	frontOpts.Login = a.Guard.LoginRequired()
 	frontOpts.Now = cfg.Clock()
-	frontOpts.Database = phpscript.NewDatabase(store.DB)
-	frontOpts.Artifacts = phpscript.NewTree(svc.Artifacts)
+	frontOpts.Database = phpfront.NewDatabase(store.DB)
+	frontOpts.Artifacts = phpfront.NewTree(svc.Artifacts)
 	frontOpts.Tracer = svc.Telemetry.Tracer()
 	frontOpts.Host = &FrontHost{
 		Catalogue: a.Catalogue, Runner: a.Runner, Workflows: a.Workflows, Git: svc.Git, Events: svc.Events,
@@ -202,25 +201,6 @@ func (a *App) wire(version string) error {
 		Cleaner: svc.Cleaner, Pins: store.Pins, Tools: store.Tools,
 		Sidebar: store.Sidebar, Modules: a.Modules, Telemetry: svc.Telemetry,
 	})
-	pages, err := frontend.New(frontend.Options{
-		Guard: a.Guard, Auth: access.NewAuthenticator(store.Users, store.Emails, store.Passwords), Users: store.Users, Projects: store.Projects, Workspaces: store.Workspaces, Runs: store.Runs, Artifacts: store.Artifacts, Schedules: store.Schedules, Secrets: svc.Secrets, SecretReads: store.SecretReads,
-		FolderRefs: store.FolderRefs,
-		Workflows:  store.Workflows, WorkflowRuns: store.WorkflowRuns, Flows: a.Workflows,
-		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: svc.Git, Keys: svc.Keystore, Recordings: svc.Recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
-		ArtifactStore: svc.Artifacts, Disk: svc.Disk, Board: a.Board, ComposeProject: svc.Instance.ComposeProject, Cleaner: svc.Cleaner,
-		Storage:      svc.Measured,
-		Integrations: svc.Integrations, Hosts: svc.Hosts, Pins: store.Pins,
-		Sidebar: store.Sidebar, Modules: a.Modules, Telemetry: svc.Telemetry,
-		Tooling: svc.Tooling,
-		Tools:   store.Tools,
-		SSH:     svc.SSH, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
-		Facts:    svc.Facts,
-		Instance: svc.Instance,
-	})
-	if err != nil {
-		return err
-	}
-
 	routes := apiHandlers.Routes()
 	r := chi.NewRouter()
 	// A page is a quarter of a megabyte of HTML and the JSON behind it is
@@ -253,9 +233,9 @@ func (a *App) wire(version string) error {
 	r.Get(spotify.CallbackPath, api.SpotifyCallback)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
-	// The ported front end, which answers at the root: it is the front end
-	// the instance serves. Its static files sit beside the pages and not under
-	// them, so an asset URL is the same name whatever holds the root.
+	// The front end, which answers at the root. Its static files sit beside the
+	// pages and not under them, so an asset URL is the same name whatever holds
+	// the root.
 	var ported http.Handler
 	if a.Front != nil {
 		front, err := a.Front.Routes(context.Background())
@@ -274,27 +254,17 @@ func (a *App) wire(version string) error {
 	// trace names the slow request; a CPU profile names the function in
 	// it, and only the running instance can produce one.
 	r.Mount(PprofPath, a.Guard.Require(pprofRoutes()))
+	// What answers at the root and is no page of the front end: the session,
+	// the readiness check and a plugin's own pages, then the byte streams a
+	// page links to, each read from outside the PHP root.
+	a.rootRoutes(r, access.NewAuthenticator(store.Users, store.Emails, store.Passwords))
+	r.Mount("/", a.Guard.Require(apiHandlers.Streams()))
 	if ported == nil {
-		// No PHP front end in this build: the Go pages hold the root. A
-		// build that cannot extract the tree still serves.
-		r.Mount("/", pages.Routes())
+		// A build that cannot extract the front end still answers /api and the
+		// routes above it.
 		a.handler = svc.Telemetry.Middleware(r)
 		return nil
 	}
-	// The Go pages, under a prefix and kept to be read against the ported
-	// ones. GoBase says why a link from one of them leaves.
-	//
-	// StripPrefix as well as the mount, because chi's Mount takes the prefix
-	// off the path it routes on and leaves the request's own URL whole, and a
-	// page reads that URL to decide which sidebar row it is: no row would be
-	// marked. The pages see themselves at the root, where the comparison
-	// fetches them.
-	r.Mount(GoBase, http.StripPrefix(GoBase, pages.Routes()))
-	// What stays at the root because it is a page of neither front end: the
-	// session, the readiness check, the theme's files, the byte streams the
-	// ported pages link to, and a plugin's own pages. frontend's Root names
-	// each of them and says why.
-	pages.Root(r)
 	r.Mount("/", ported)
 	// The middleware wraps every route above, so one trace holds a request
 	// and everything it ran: a handler's own spans, and the spans of a

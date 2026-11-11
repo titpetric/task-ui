@@ -12,7 +12,7 @@ import (
 	"github.com/titpetric/task-ui/feature/artifacts"
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/access"
-	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -39,7 +39,7 @@ func NewDispatcher(board *note.Board, users *storage.UserStorage, store *artifac
 // background: the note exists on return, and Claude's reply arrives as a reply to it.
 //
 // The root is the tree the action file sits in, a plugin's module root or the
-// front end's own, and the action is a path below the root. phpscript.Inside
+// front end's own, and the action is a path below the root. phpfront.Inside
 // resolves every path the prompt reads against the root and refuses the rest.
 //
 // A module's run has the permissions of the user whose request reached it: a
@@ -73,7 +73,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, root, comment, action, folder
 // user's permissions, and the agent's context repeats them; the prompt adds none
 // of that.
 func (d *Dispatcher) prompt(root, comment, action, folder string) (string, error) {
-	rel, err := phpscript.Inside(root, action)
+	rel, err := phpfront.Inside(root, action)
 	if err != nil {
 		return "", err
 	}

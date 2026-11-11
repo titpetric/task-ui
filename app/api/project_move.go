@@ -11,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/titpetric/task-ui/app/model"
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/runner"
 )
 
@@ -47,7 +47,7 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 	if ws == from {
 		return id, 0, ""
 	}
-	if (ws != model.Default && layout.Reserved(ws)) || layout.IsHome(h.workspaceFolders(ctx), id) {
+	if (ws != model.Default && folder.Reserved(ws)) || folder.IsHome(h.workspaceFolders(ctx), id) {
 		return "", http.StatusBadRequest, reservedRefused
 	}
 	to := last
@@ -57,7 +57,7 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 		}
 		to = ws + "/" + last
 	}
-	if model.IsReserved(to) || layout.Reserved(last) {
+	if model.IsReserved(to) || folder.Reserved(last) {
 		return "", http.StatusBadRequest, reservedRefused
 	}
 	if _, err := h.opts.Projects.GetByFolder(ctx, to); err == nil {

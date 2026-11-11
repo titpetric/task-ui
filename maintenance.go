@@ -15,7 +15,7 @@ import (
 	"github.com/titpetric/task-ui/integration/forgejo"
 	"github.com/titpetric/task-ui/integration/git"
 	"github.com/titpetric/task-ui/integration/ssh/keystore"
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -98,7 +98,7 @@ func migrateLayout(ctx context.Context, args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	moves, err := layout.Plan(cfg.Root, workspaces, homes)
+	moves, err := folder.Plan(cfg.Root, workspaces, homes)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func migrateLayout(ctx context.Context, args []string, stdout io.Writer) error {
 		_, err := fmt.Fprintln(stdout, "a dry run: nothing moved")
 		return err
 	}
-	return layout.Apply(moves)
+	return folder.Apply(moves)
 }
 
 // layoutRows reads the workspaces, the default one first when the

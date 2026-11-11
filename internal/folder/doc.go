@@ -12,6 +12,15 @@
 // "services/api/deploy" is the job deploy of services/api when that is a
 // folder, and the folder services/api/deploy when that is one.
 //
+// An ID maps to a directory under the root here and nowhere else: discovery,
+// the front end, the API, the runner and the layout migration all call this
+// package, so the shape of the tree is stated once. A workspace is a directory
+// under the root, the root itself for the default workspace _, holding home,
+// its home directory, and src, which holds its projects side by side. An ID
+// leaves the two out: the project dockerfiles of the workspace malta lives at
+// <root>/malta/src/dockerfiles and its ID is malta/dockerfiles. The home is a
+// folder of its own, malta/home, and no project.
+//
 // Every folder has built-in jobs beside the ones its sources declare:
 //
 //   - @shell, `bash -l`, and @claude, Claude Code in a terminal, are for

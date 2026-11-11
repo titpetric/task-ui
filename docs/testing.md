@@ -71,12 +71,6 @@ for _, name := range v.Names() {
 
 Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, rows, 3)` and `assert.Equal(t, 1, strings.Count(body, …))` assert the fixture; `assert.True(t, len(rows) > 0)` is the form. A golden file a tool regenerates is a diff against the last state and not an assertion somebody typed, so the `.phpt` fixtures and `scripts/compare-site.sh` below stay as they are.
 
-`frontend/view` holds the markup assertions, and they are being removed. Until then `shared(t)` skips the tests that hold them, and `atkins test:view` runs them, which is the only job that does:
-
-```bash
-atkins test:view     # TASK_UI_VIEW_TESTS=1, under the caps the file sets
-```
-
 A failure over a page says where to look, not what the page holds: `assert.Brief` returns the haystack's length and the text around the longest prefix of the needle it holds.
 
 Run the suite through atkins, not as a bare `go test ./...`. The `env.vars` block at the top of `atkins.yml` holds `GOFLAGS=-p=1 GOMAXPROCS=2 GOMEMLIMIT=2GiB` for every job, which builds one package at a time; uncapped, `go test ./...` links a hundred of them four at a time, and that is the run the kernel killed.
@@ -129,7 +123,7 @@ Integration tests take longer and need `git`, `sh` and the other tools on the ma
 ```bash
 scripts/test-integration.sh                  # every package
 scripts/test-integration.sh ./storage/...    # one package or pattern
-task test:integration -- ./frontend/...      # the same, through task
+task test:integration -- ./phpfront/...      # the same, through task
 ```
 
 An integration test gets five seconds rather than one, because it starts processes; `TASK_UI_TEST_BUDGET` moves that, and the run names anything over it. What takes longer than five seconds is waiting.
@@ -142,13 +136,13 @@ One `go test` per package, and a package holding more tests than the batch size 
 | `TASK_UI_TEST_MEM`   | `2GiB`  | `GOMEMLIMIT` of each `go test`                   |
 | `TASK_UI_TEST_PROCS` | `2`     | `GOMAXPROCS` of each `go test`                   |
 
-The split is what keeps the suite inside the memory cap. A cap binds a process, not a run: `go test -tags integration ./...` builds one binary per package, and `frontend` holds enough tests that running them together needs more than the cap, which ends the whole suite in an OOM that names no package. One `go test` per batch keeps a failure local and prints which package and which batch it is.
+The split is what keeps the suite inside the memory cap. A cap binds a process, not a run: `go test -tags integration ./...` builds one binary per package, and `phpfront` holds enough tests that running them together needs more than the cap, which ends the whole suite in an OOM that names no package. One `go test` per batch keeps a failure local and prints which package and which batch it is.
 
 Nothing here runs a benchmark: the repository holds none, and `go test` runs one only under `-bench`. Coverage is its own target, `task test:cover`, because `-cover` instruments every package and the correctness run does not read the number.
 
 ## Where integration tests belong
 
-Integration tests belong in the `storage` package, which holds most of them: a file per storage over a throwaway database, testing the real implementation with no mocks. A package that consumes storage, such as `api`, `frontend`, `mcp` or `note`, tests its own code with unit tests over fakes. The ones outside `storage` are what cross a boundary nothing else can: `app` wiring a whole instance, `note` dispatching an agent, `git` over a real checkout, `workflow` running a pipeline, and the clients of a service behind an `httptest` server.
+Integration tests belong in the `storage` package, which holds most of them: a file per storage over a throwaway database, testing the real implementation with no mocks. A package that consumes storage, such as `api`, `phpfront`, `mcp` or `note`, tests its own code with unit tests over fakes. The ones outside `storage` are what cross a boundary nothing else can: `app` wiring a whole instance, `note` dispatching an agent, `git` over a real checkout, `workflow` running a pipeline, and the clients of a service behind an `httptest` server.
 
 A driver — `git`, `runner`, `sshprobe`, `agent`, the packages that wrap a process or a protocol — has none of its own. The instance the shots suite builds is what runs them: real runs through the real runner, over real checkouts, read back through the pages that draw them, with the counters of that server in the coverage the suite reports. A driver whose behaviour no page reaches needs a test of its own, and this is the package it goes in.
 

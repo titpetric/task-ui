@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/feature/inventory/hostinfo"
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/integration/beszel"
+	"github.com/titpetric/task-ui/phpfront"
 )
 
 // frontProbe is how long the inventory waits for an ssh login to answer,

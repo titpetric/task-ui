@@ -7,7 +7,6 @@ import (
 
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 )
 
 // Projects lists the projects of a workspace, the folders a workflow
@@ -32,9 +31,9 @@ func Expand(steps []model.WorkflowStep, workspace string, projects []string) ([]
 		for _, step := range steps {
 			switch name, rest, ok := projectOf(step.Folder, workspace); {
 			case ok && listed[name] && !step.IsWorkflow():
-				step.Folder = layout.Join(workspace, project+rest)
+				step.Folder = folder.Join(workspace, project+rest)
 			case step.IsPrompt() && atRoot(step.Folder, workspace):
-				step.Folder = layout.Join(workspace, project)
+				step.Folder = folder.Join(workspace, project)
 			}
 			expanded = append(expanded, step)
 			groups = append(groups, i)

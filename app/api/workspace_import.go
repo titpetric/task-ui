@@ -18,7 +18,6 @@ import (
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/envfile"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -73,7 +72,7 @@ func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	unknown := h.unknownUsers(ctx, bundle.Manifest.Grants)
-	home := importedProject{Folder: layout.HomeID(target)}
+	home := importedProject{Folder: folder.HomeID(target)}
 	if row.HomeURL != "" {
 		output, err := h.makeHome(ctx, target, row.HomeURL, row.HomeBranch)
 		home.Cloned, home.Output = err == nil, output
@@ -150,7 +149,7 @@ func (u *rollback) run() {
 func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target string, undo *rollback) (*model.Workspace, []model.Project, error) {
 	manifest := bundle.Manifest
 	source := manifest.Workspace
-	dir := layout.WorkspaceDir(h.opts.Root, target)
+	dir := folder.WorkspaceDir(h.opts.Root, target)
 	if err := h.opts.Keys.CheckBundle(ctx, bundle.Keys); err != nil {
 		return nil, nil, err
 	}
@@ -158,7 +157,7 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 		return nil, nil, err
 	}
 	undo.add(func() { os.RemoveAll(dir) })
-	if err := layout.Ensure(h.opts.Root, target); err != nil {
+	if err := folder.Ensure(h.opts.Root, target); err != nil {
 		return nil, nil, err
 	}
 
@@ -201,7 +200,7 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 // that is the workspace's home.
 func importedFolder(target, relative string) (string, error) {
 	id := workspace.Absolute(target, relative)
-	if !folder.ValidID(id) || (id != target && !strings.HasPrefix(id, target+"/")) || layout.IsHome([]string{target}, id) {
+	if !folder.ValidID(id) || (id != target && !strings.HasPrefix(id, target+"/")) || folder.IsHome([]string{target}, id) {
 		return "", fmt.Errorf("%w names the folder %q, which is not one inside %s", errImport, relative, target)
 	}
 	return id, nil

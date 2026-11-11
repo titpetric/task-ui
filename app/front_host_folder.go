@@ -5,18 +5,18 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/titpetric/task-ui/app/model"
-	"github.com/titpetric/task-ui/frontend"
-	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/internal/hours"
+	"github.com/titpetric/task-ui/phpfront"
 )
 
 // frontDetect caps the directories of one Jobs table detected for their job
-// sources, the cap frontend/job_table.go draws the same table under.
+// sources.
 const frontDetect = 200
 
 // frontSubTTL is how long a directory's detected sources hold: long enough
@@ -175,44 +175,17 @@ func (h *FrontHost) Groups(_ context.Context, id, rel string, seen []string, she
 			dirs = append(dirs, sub)
 		}
 	}
-	var actions *view.Actions
+	var at *frontPlace
 	if place != nil {
-		actions = &view.Actions{Place: place, Self: h.Compose, Skills: place.Skills()}
+		at = &frontPlace{place: place, skills: place.Skills()}
 		if shell {
-			actions.Shell = place.ShellJob()
+			at.shell = place.ShellJob()
 			if claude {
-				actions.Claude = place.ClaudeJob()
+				at.claude = place.ClaudeJob()
 			}
 		}
 	}
-	return frontGroups(actions, view.NewJobGroups(f, place, files, actions, dirs))
-}
-
-// frontGroups is the Jobs table's groups as the front host answers them: the
-// folder a row runs as, and the row's jobs with what each asks before it runs.
-func frontGroups(actions *view.Actions, found []view.JobGroup) []phpfront.Group {
-	out := make([]phpfront.Group, 0, len(found))
-	for _, g := range found {
-		group := phpfront.Group{
-			Kind:    g.Kind,
-			Note:    g.Note,
-			Source:  g.Source,
-			Dir:     g.Dir,
-			Empty:   g.Empty,
-			Targets: g.Targets,
-			Jobs:    make([]phpfront.Job, 0, len(g.Jobs)),
-		}
-		if g.Folder != nil {
-			group.Folder = phpfront.Where{ID: g.Folder.ID, Rel: g.Folder.Rel, Allow: g.Folder.Allow, Hours: g.Folder.Hours}
-		}
-		for _, job := range g.Jobs {
-			target := frontFullJob(job)
-			target.Confirm = actions.Confirm(g.Skill, job)
-			group.Jobs = append(group.Jobs, target)
-		}
-		out = append(out, group)
-	}
-	return out
+	return h.frontGroups(f, at, files, dirs)
 }
 
 // Listing is a directory as the Files panel draws it: the folder's own, or the
@@ -275,7 +248,7 @@ func (h *FrontHost) Listing(_ context.Context, id, rel string, seen []string) []
 func (h *FrontHost) RootTree(_ context.Context, named bool, seen []string) []phpfront.Entry {
 	dir := h.Root
 	if named {
-		dir = layout.SrcDir(h.Root, model.Default)
+		dir = folder.SrcDir(h.Root, model.Default)
 	}
 	byDir := h.frontByDir(seen)
 	base := frontAbs(dir)
@@ -404,8 +377,10 @@ func (h *FrontHost) Checkout(_ context.Context, dir string) phpfront.Checkout {
 }
 
 // Hours is an hours rule read: the one line a page prints it as, and whether
-// it is open at the instance's moment, which is the one view.Page.InHours
-// reads it at.
+// it is open at the instance's moment.
+//
+// A rule nothing can parse reads as open, because the folder it belongs to
+// still has jobs somebody has to be able to run.
 func (h *FrontHost) Hours(_ context.Context, text string) phpfront.Hours {
 	if text == "" {
 		return phpfront.Hours{Open: true}
@@ -414,5 +389,9 @@ func (h *FrontHost) Hours(_ context.Context, text string) phpfront.Hours {
 	if h.Now != nil {
 		now = h.Now
 	}
-	return phpfront.Hours{Line: view.HoursLine(text), Open: view.InHours(text, now())}
+	rules, err := hours.Parse(text)
+	if err != nil {
+		return phpfront.Hours{Line: strings.TrimSpace(text), Open: true}
+	}
+	return phpfront.Hours{Line: strings.ReplaceAll(rules.String(), "\n", ", "), Open: rules.Allows(now())}
 }

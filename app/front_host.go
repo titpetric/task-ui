@@ -10,7 +10,6 @@ import (
 	"github.com/titpetric/task-ui/feature/orb/recording"
 	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/feature/workflow"
-	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/integration/git"
@@ -21,7 +20,7 @@ import (
 	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/internal/retention"
 	"github.com/titpetric/task-ui/internal/tooling"
-	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/runner"
 )
 
@@ -87,14 +86,14 @@ type FrontHost struct {
 
 	// Keystore is the key folder, which answers the public half of a key no
 	// row holds, and Config what the server runs with, the one the Instance
-	// page of either front end draws.
+	// page draws.
 	Keystore *keystore.Local
-	Config   *view.Instance
+	Config   *phpfront.Instance
 
 	// Tracing is the tracer's options and Plugins the modules registered at
 	// startup: the Telemetry and the Sidebar settings.
 	Tracing *Telemetry
-	Plugins *phpscript.Manager
+	Plugins *phpfront.Manager
 
 	// Cleaner measures what the retention rules apply to, and Storage what
 	// the instance keeps on disk, both the meters the Go pages read, so a
@@ -105,10 +104,9 @@ type FrontHost struct {
 	// Root is the workspace root, which a checkout's status is relative to.
 	Root string
 
-	// Now is the instance's clock, the one TASK_UI_NOW pins. An hours rule
-	// is read at that moment, because view.Page.InHours reads it at the
-	// page's own, and a binding on the process clock would answer open where
-	// the Go page beside it answers closed. Nil is time.Now.
+	// Now is the instance's clock, the one TASK_UI_NOW pins. An hours rule is
+	// read at that moment, so a pinned clock answers the same open or closed
+	// every time it is asked. Nil is time.Now.
 	Now func() time.Time
 
 	// Dispatcher starts the runs a page requests and Runs answers which run

@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/feature/skills"
 )
 
 // homeKept are the variables a run gets set to the server's HOME, so what
@@ -36,7 +36,7 @@ func HomeEnv(environ []string, home string) []string {
 			}
 		}
 	}
-	return append(env, "HOME="+home, "TASK_UI_HOME="+home, "ATKINS_DB="+layout.AtkinsDB(home, server))
+	return append(env, "HOME="+home, "TASK_UI_HOME="+home, "ATKINS_DB="+skills.AtkinsDB(home, server))
 }
 
 // lookup returns a variable of environ, the last one set winning, as it

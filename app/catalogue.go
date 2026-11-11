@@ -14,7 +14,6 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -123,7 +122,7 @@ func (c *Catalogue) Find(id string) *folder.Folder {
 	d := c.discovery()
 	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root, Hours: d.HoursOf(model.Default)}
 	if slices.ContainsFunc(d.Workspaces, func(cfg folder.Config) bool { return cfg.ID == model.Default }) {
-		root.Dir = layout.SrcDir(c.Root, model.Default)
+		root.Dir = folder.SrcDir(c.Root, model.Default)
 	}
 	return root
 }
@@ -140,11 +139,11 @@ func (c *Catalogue) Home(dir string) string {
 		return ""
 	}
 	named, _ := c.Workspaces.Folders(context.Background())
-	workspace, ok := layout.Workspace(root, named, dir)
+	workspace, ok := folder.Workspace(root, named, dir)
 	if !ok {
 		return ""
 	}
-	return layout.HomeDir(root, workspace)
+	return folder.HomeDir(root, workspace)
 }
 
 // Every returns each folder with a job, hidden ones included, cached for everyTTL.
@@ -161,7 +160,7 @@ func (c *Catalogue) Every() []*folder.Folder {
 // WorkspaceProjects returns the projects of a workspace, the directories of its src in name order:
 // each the folder the catalogue finds, hidden ones too, else a folder of its directory with no jobs but the skills.
 func (c *Catalogue) WorkspaceProjects(_ context.Context, workspace string) []*folder.Folder {
-	entries, err := os.ReadDir(layout.SrcDir(c.Root, workspace))
+	entries, err := os.ReadDir(folder.SrcDir(c.Root, workspace))
 	if err != nil {
 		return nil
 	}
@@ -187,10 +186,10 @@ func (c *Catalogue) WorkspaceProjects(_ context.Context, workspace string) []*fo
 		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
-		id := layout.Join(workspace, entry.Name())
+		id := folder.Join(workspace, entry.Name())
 		f := known[model.Canonical(id)]
 		if f == nil {
-			f = &folder.Folder{ID: id, Title: entry.Name(), Dir: layout.ProjectDir(c.Root, workspace, entry.Name()), Probe: c.Skills}
+			f = &folder.Folder{ID: id, Title: entry.Name(), Dir: folder.ProjectDir(c.Root, workspace, entry.Name()), Probe: c.Skills}
 		}
 		projects = append(projects, f)
 	}

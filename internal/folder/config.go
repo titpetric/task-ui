@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/app/model"
-	"github.com/titpetric/task-ui/layout"
 )
 
 // Config overrides or declares a folder, from its project row.
@@ -39,7 +38,7 @@ type Config struct {
 // workspaces.
 func (c Config) dir(root string, named []string) string {
 	if c.Path == "" {
-		return layout.Dir(root, named, c.ID)
+		return Dir(root, named, c.ID)
 	}
 	if !filepath.IsAbs(c.Path) {
 		return filepath.Join(root, c.Path)

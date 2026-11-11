@@ -11,7 +11,6 @@ import (
 	"github.com/titpetric/task-ui/feature/workspace"
 	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/internal/folder"
-	"github.com/titpetric/task-ui/layout"
 )
 
 // listWorkspaces returns every workspace, the default first, then in
@@ -61,7 +60,7 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, status, problem)
 		return
 	}
-	dir := layout.WorkspaceDir(h.opts.Root, req.Folder)
+	dir := folder.WorkspaceDir(h.opts.Root, req.Folder)
 	if err := os.Mkdir(dir, 0o755); err != nil {
 		failErr(w, err)
 		return
@@ -90,13 +89,13 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 // clones the home repository into the home, on branch when named. It
 // returns git's output; a clone that fails leaves an empty home.
 func (h *Handlers) makeHome(ctx context.Context, name, url, branch string) (string, error) {
-	if err := layout.Ensure(h.opts.Root, name); err != nil {
+	if err := folder.Ensure(h.opts.Root, name); err != nil {
 		return "", err
 	}
 	if url == "" {
 		return "", nil
 	}
-	home := layout.HomeDir(h.opts.Root, name)
+	home := folder.HomeDir(h.opts.Root, name)
 	if err := os.Remove(home); err != nil {
 		return "", err
 	}
@@ -116,7 +115,7 @@ func (h *Handlers) freeWorkspace(ctx context.Context, name string) (int, string)
 	if !folder.ValidID(name) || strings.Contains(name, "/") {
 		return http.StatusBadRequest, "name the workspace's folder: letters, digits, dots, dashes and underscores, no slashes"
 	}
-	if layout.Reserved(name) {
+	if folder.Reserved(name) {
 		return http.StatusBadRequest, reservedRefused
 	}
 	if _, err := h.opts.Workspaces.GetByFolder(ctx, name); err == nil {
@@ -125,7 +124,7 @@ func (h *Handlers) freeWorkspace(ctx context.Context, name string) (int, string)
 	if _, err := h.opts.Projects.GetByFolder(ctx, name); err == nil {
 		return http.StatusConflict, "a project named " + name + " exists already"
 	}
-	if _, err := os.Stat(layout.WorkspaceDir(h.opts.Root, name)); err == nil {
+	if _, err := os.Stat(folder.WorkspaceDir(h.opts.Root, name)); err == nil {
 		return http.StatusConflict, name + " exists under the root already"
 	}
 	return 0, ""
@@ -238,7 +237,7 @@ func (h *Handlers) setHome(w http.ResponseWriter, r *http.Request, url, branch s
 		fail(w, http.StatusConflict, busy+" is running in "+workspace.Folder+": change the home after the run ends")
 		return
 	}
-	if err := os.RemoveAll(layout.HomeDir(h.opts.Root, workspace.Folder)); err != nil {
+	if err := os.RemoveAll(folder.HomeDir(h.opts.Root, workspace.Folder)); err != nil {
 		failErr(w, err)
 		return
 	}
@@ -319,9 +318,9 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	dirs := []string{layout.WorkspaceDir(h.opts.Root, ws.Folder)}
+	dirs := []string{folder.WorkspaceDir(h.opts.Root, ws.Folder)}
 	if ws.Folder == model.Default {
-		dirs = []string{layout.HomeDir(h.opts.Root, ws.Folder), layout.SrcDir(h.opts.Root, ws.Folder)}
+		dirs = []string{folder.HomeDir(h.opts.Root, ws.Folder), folder.SrcDir(h.opts.Root, ws.Folder)}
 	}
 	for _, dir := range dirs {
 		if err := os.RemoveAll(dir); err != nil {
@@ -407,7 +406,7 @@ func (h *Handlers) workspaceRows(ctx context.Context) []model.Workspace {
 // dirOf returns the directory of a folder ID, as the layout places it
 // among the named workspaces.
 func (h *Handlers) dirOf(ctx context.Context, id string) string {
-	return layout.Dir(h.opts.Root, h.workspaceFolders(ctx), id)
+	return folder.Dir(h.opts.Root, h.workspaceFolders(ctx), id)
 }
 
 // forgetEnvFiles deletes the managed env files of a workspace's

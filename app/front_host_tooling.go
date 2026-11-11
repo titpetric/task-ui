@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/tooling"
+	"github.com/titpetric/task-ui/phpfront"
 )
 
 // Tooling is what atkins has recorded for the tree, the scopes of its report with the project's first.

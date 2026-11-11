@@ -9,11 +9,11 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/feature/workflow"
-	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/internal/folder"
+	"github.com/titpetric/task-ui/phpfront"
 )
 
 // catalogue is the folders a test serves.

@@ -9,14 +9,14 @@ import (
 
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // projects writes n projects with a job each in a workspace's src.
 func projects(t *testing.T, root, workspace string, n int) {
 	t.Helper()
 	for i := range n {
-		dir := filepath.Join(layout.SrcDir(root, workspace), "p"+strconv.Itoa(i))
+		dir := filepath.Join(folder.SrcDir(root, workspace), "p"+strconv.Itoa(i))
 		assert.NoError(t, os.MkdirAll(dir, 0o755))
 		body := "tasks:\n  build:\n    desc: Build\n"
 		assert.NoError(t, os.WriteFile(filepath.Join(dir, "Taskfile.yml"), []byte(body), 0o644))

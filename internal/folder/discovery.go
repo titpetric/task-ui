@@ -11,7 +11,6 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/internal/detector"
-	"github.com/titpetric/task-ui/layout"
 )
 
 // maxDepth bounds how far discovery descends below the root.
@@ -99,7 +98,7 @@ func (d *Discovery) List() []*Folder {
 			continue
 		}
 		f.Probe = d.Probe
-		if workspace, ok := layout.Workspace(root, named, f.Dir); ok {
+		if workspace, ok := Workspace(root, named, f.Dir); ok {
 			f.Hours = hours[workspace]
 		}
 		result = append(result, f)
@@ -185,7 +184,7 @@ func (d *Discovery) discover(root string, named []string, c *catalogue) {
 	workspaces := append([]string{model.Default}, named...)
 	for _, cfg := range d.Workspaces {
 		if cfg.Shallow {
-			shallow[layout.SrcDir(root, cfg.ID)] = true
+			shallow[SrcDir(root, cfg.ID)] = true
 		}
 	}
 	for _, cfg := range d.Config {
@@ -211,12 +210,12 @@ func (d *Discovery) discover(root string, named []string, c *catalogue) {
 		}
 	}}
 	for _, workspace := range workspaces {
-		if home := layout.HomeDir(root, workspace); isDir(home) && !c.seen(home) {
-			if f := Load(layout.HomeID(workspace), home); !d.Every || runnable(f) {
+		if home := HomeDir(root, workspace); isDir(home) && !c.seen(home) {
+			if f := Load(HomeID(workspace), home); !d.Every || runnable(f) {
 				c.add(f)
 			}
 		}
-		src := layout.SrcDir(root, workspace)
+		src := SrcDir(root, workspace)
 		roots[src] = true
 		id := ""
 		if workspace != model.Default {
@@ -240,7 +239,7 @@ func sections(root string, named []string, c *catalogue) {
 		if !nested || model.IsReserved(top) {
 			continue
 		}
-		if dir := layout.Dir(root, named, top); !c.seen(dir) {
+		if dir := Dir(root, named, top); !c.seen(dir) {
 			c.add(Load(top, dir))
 		}
 	}

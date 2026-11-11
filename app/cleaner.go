@@ -12,7 +12,6 @@ import (
 	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/internal/retention"
-	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -51,7 +50,7 @@ func toolHistory(cfg *Config, workspaces *storage.WorkspaceStorage, serverHome s
 		var files []string
 		rows, _ := workspaces.List(context.Background())
 		for _, row := range rows {
-			files = append(files, filepath.Join(layout.HomeDir(cfg.Root, row.Folder), ".atkins", "atkins.db"))
+			files = append(files, filepath.Join(folder.HomeDir(cfg.Root, row.Folder), ".atkins", "atkins.db"))
 		}
 		if serverHome != "" {
 			files = append(files, filepath.Join(serverHome, ".atkins", "atkins.db"))

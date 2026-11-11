@@ -8,7 +8,6 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/integration/git"
 	"github.com/titpetric/task-ui/internal/detector"
-	"github.com/titpetric/task-ui/layout"
 )
 
 // Entry is one project directory, under the src of a workspace, as the
@@ -41,17 +40,17 @@ func Entries(root string, g *git.Git, workspaces []model.Workspace) []Entry {
 	for _, row := range workspaces {
 		ws := row.Folder
 		if ws == model.Default {
-			for _, name := range subdirs(layout.SrcDir(root, ws)) {
+			for _, name := range subdirs(SrcDir(root, ws)) {
 				if model.IsReserved(SafeID(name)) {
 					continue
 				}
-				add(SafeID(name), layout.ProjectDir(root, ws, name))
+				add(SafeID(name), ProjectDir(root, ws, name))
 			}
 			continue
 		}
 		d.Workspaces = append(d.Workspaces, Config{ID: ws})
-		for _, name := range subdirs(layout.SrcDir(root, ws)) {
-			dir := layout.ProjectDir(root, ws, name)
+		for _, name := range subdirs(SrcDir(root, ws)) {
+			dir := ProjectDir(root, ws, name)
 			if g.IsRepo(dir) {
 				id := ws + "/" + SafeID(name)
 				add(id, dir)

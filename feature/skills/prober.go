@@ -13,8 +13,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/titpetric/task-ui/layout"
 )
 
 // Prober runs `atkins -l --json --all` in a directory and keeps the
@@ -123,7 +121,7 @@ func (p *Prober) run(dir, file, home string) Listing {
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Dir = dir
 	if home != "" {
-		cmd.Env = append(os.Environ(), "HOME="+home, "ATKINS_DB="+layout.AtkinsDB(home, os.Getenv("HOME")))
+		cmd.Env = append(os.Environ(), "HOME="+home, "ATKINS_DB="+AtkinsDB(home, os.Getenv("HOME")))
 	}
 	cmd.Stdin = nil
 	cmd.WaitDelay = time.Second
