@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/retention"
+	"github.com/titpetric/task-ui/internal/retention"
 )
 
 // A size reads with or without a space, in any case; a kilobyte is 1024

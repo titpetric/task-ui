@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ScopeAll is the scope of a variable that reaches every workspace.

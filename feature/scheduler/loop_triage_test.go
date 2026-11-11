@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
-	"github.com/titpetric/task-ui/scheduler"
 )
 
 // board is the Triager of the tests: it records the triages asked of

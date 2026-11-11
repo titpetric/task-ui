@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // pinUser returns the signed in user of a request, answering 404 with

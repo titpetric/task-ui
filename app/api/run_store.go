@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/storage"
 )
 

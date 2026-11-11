@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // agent loads the SSH keys a run gets into an ssh agent of its own,

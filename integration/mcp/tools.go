@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/titpetric/task-ui/api"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // tools are the server's tools. The set does not grow: a change adds a

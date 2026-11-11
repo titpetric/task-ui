@@ -8,8 +8,8 @@ import (
 
 	"golang.org/x/net/websocket"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/runner"
 )
 

@@ -10,7 +10,7 @@ import (
 
 	gossh "golang.org/x/crypto/ssh"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // agentKeys serve one generated key to a probe, in an agent under dir.

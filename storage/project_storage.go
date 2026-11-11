@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ProjectStorage keeps what the configuration says about folders.

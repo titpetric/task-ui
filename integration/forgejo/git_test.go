@@ -3,8 +3,8 @@ package forgejo_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/forgejo"
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/forgejo"
+	"github.com/titpetric/task-ui/integration/git"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

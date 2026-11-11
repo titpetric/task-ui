@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // RunSummaryStorage keeps Claude's summary of each run, or workflow run,

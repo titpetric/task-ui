@@ -5,7 +5,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // WorkspaceKeyGrantStorage keeps whose runs in a workspace get one of

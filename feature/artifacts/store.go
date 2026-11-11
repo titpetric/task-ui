@@ -25,7 +25,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // ErrNotFound reports a path or a version the store does not hold.

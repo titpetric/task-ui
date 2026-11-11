@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // HostPrefix starts the ID of a job of the root that runs a command on

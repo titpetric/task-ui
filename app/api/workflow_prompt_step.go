@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // promptStep turns a requested prompt or summary step into its row: the

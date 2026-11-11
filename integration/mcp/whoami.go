@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
 )
 
 // whoamiTool says what the token's user may do. An agent can't tell

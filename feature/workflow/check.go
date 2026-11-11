@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Output reads the text a step of a workflow run left: a job step's

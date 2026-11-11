@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/titpetric/task-ui/api"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // stepFixture returns the workflow routes over a folder the listings

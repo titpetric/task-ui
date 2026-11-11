@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
 )
 
 // No run has no report, nor has a run of Claude's still at work.

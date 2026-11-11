@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/runner"
 )
 

@@ -3,8 +3,8 @@ package note_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/note"
 )
 
 // The verdict is the last Result line, in any case, spacing or

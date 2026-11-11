@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/feature/secret"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/integration/ssh/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 

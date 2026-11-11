@@ -4,8 +4,8 @@ import (
 	"context"
 	"path"
 
-	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/phpfront"
+	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/integration/ssh/diskusage"
 )
 
 // Tree is one directory of the artifact tree, as the artifacts page lists it.

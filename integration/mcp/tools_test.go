@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration/mcp"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/mcp"
 )
 
 // list_jobs names each lint finding of a pipeline atkins refuses, which

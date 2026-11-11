@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // UserEmailStorage keeps the email addresses users sign in with. A user

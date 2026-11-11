@@ -11,7 +11,7 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // client calls the API in process, as the user on the context.

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // checkout is a folder with a file, an executable, .git, dot files and

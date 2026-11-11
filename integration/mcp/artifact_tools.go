@@ -11,8 +11,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/titpetric/task-ui/api"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // maxRead bounds the text read_artifact returns.

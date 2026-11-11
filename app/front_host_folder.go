@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/phpfront"
 )
 
 // frontDetect caps the directories of one Jobs table detected for their job

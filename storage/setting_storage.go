@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // SettingStorage keeps the instance settings a page edits, a value by

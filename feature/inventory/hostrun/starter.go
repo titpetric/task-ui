@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/integration/beszel"
+	"github.com/titpetric/task-ui/integration/ssh/sshprobe"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/sshprobe"
 )
 
 // Timeout is how long a command runs on one host when the starter sets

@@ -3,7 +3,7 @@ package note
 import (
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Report is the markdown a run stands for, without its terminal: the

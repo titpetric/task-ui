@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpfront"
 )
 
 // The embedded tree holds the application: the autoloader, the domain, the

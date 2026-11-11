@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ToolStorage keeps the tools the instance found in its PATH at start,

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/titpetric/task-ui/config"
-	"github.com/titpetric/task-ui/phpfront"
+	"github.com/titpetric/task-ui/frontend"
 )
 
 // Rules is `config/permissions.yml`, titles and path lists both.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // EnvFileStorage keeps the managed content of the dotenv files folders

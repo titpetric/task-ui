@@ -3,8 +3,8 @@ package keystore_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/keystore"
 )
 
 // A moved key names its old file, its name and its fingerprint, never

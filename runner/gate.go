@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/hours"
+	"github.com/titpetric/task-ui/internal/hours"
 )
 
 // The errors the hours gate ends a start in.

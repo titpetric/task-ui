@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/integration/spotify"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/spotify"
 )
 
 // The consent address carries PKCE, the state and the least scopes; the

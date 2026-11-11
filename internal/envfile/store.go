@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/dotenv"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/dotenv"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/storage"
 )
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 func TestPolicy_Effect(t *testing.T) {

@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/hostrun"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/inventory/hostrun"
+	"github.com/titpetric/task-ui/feature/workflow"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // Catalogue finds the folder a schedule names: every folder with a job,

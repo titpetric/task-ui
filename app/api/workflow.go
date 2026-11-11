@@ -7,11 +7,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workflow"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // WorkflowRequest creates or changes a workflow: a name, a description

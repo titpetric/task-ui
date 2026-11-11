@@ -3,7 +3,7 @@ package keystore
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // gitName returns the name of the key git uses, "" for none.

@@ -3,8 +3,8 @@ package secret_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/secret"
 )
 
 // A chain encrypts with its first set's key and decrypts with every

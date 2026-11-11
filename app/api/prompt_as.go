@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // promptUser returns the user a prompt in where runs as, the thread's

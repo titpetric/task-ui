@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/spotify"
+	"github.com/titpetric/task-ui/integration/spotify"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // spotifyActor is the user of a request as the Spotify service knows them.

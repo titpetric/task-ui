@@ -4,9 +4,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // Claude replies to a prompt under its own name.

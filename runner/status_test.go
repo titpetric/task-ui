@@ -3,8 +3,8 @@ package runner_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
 

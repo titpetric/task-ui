@@ -6,8 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/titpetric/task-ui/detector"
-	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/feature/skills"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 func TestLoad(t *testing.T) {

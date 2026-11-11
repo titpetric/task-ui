@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // UserSessionStorage keeps the browser sessions, each by the hash of

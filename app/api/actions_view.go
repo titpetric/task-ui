@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/git"
 )
 
 // ActionsView is the actions bar of a folder, or of a directory inside

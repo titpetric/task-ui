@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // UserAuthTokenStorage keeps the tokens clients sign requests with, as

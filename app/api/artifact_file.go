@@ -11,9 +11,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/artifactstore"
-	"github.com/titpetric/task-ui/markdown"
+	"github.com/titpetric/task-ui/feature/artifacts"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/markdown"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )

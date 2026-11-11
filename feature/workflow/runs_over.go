@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 )
 
 // Projects lists the projects of a workspace, the folders a workflow

@@ -3,8 +3,8 @@ package skills_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/skills"
 )
 
 // lintAnswer is what atkins prints for a pipeline its linter refuses.

@@ -3,7 +3,7 @@ package beszel_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // UserView is a user as the API shows one: the row, with MCPAgent, the

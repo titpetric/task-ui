@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/integration/ssh/sshkey"
 )
 
 // DirKeys are the keys of a folder of id_* files, as the instance kept

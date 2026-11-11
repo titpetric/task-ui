@@ -3,9 +3,9 @@ package workflow_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/note"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // The notes board runs a workflow's prompt.

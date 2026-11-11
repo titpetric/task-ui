@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // NoteStorage keeps the notes and the chat: the messages, the replies to

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // StepRequest names one step of a workflow by its kind: a job of a

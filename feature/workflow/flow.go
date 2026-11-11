@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // ErrRunAsGone refuses a run of a workflow whose run-as user nobody holds any more.

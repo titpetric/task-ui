@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 )
 
 // Config overrides or declares a folder, from its project row.

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // Slots counts the runs that do work against the instance's limit, and

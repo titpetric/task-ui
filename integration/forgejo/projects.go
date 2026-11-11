@@ -3,7 +3,7 @@ package forgejo
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Projects are the project rows sync reads and writes, as

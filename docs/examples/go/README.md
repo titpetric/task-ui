@@ -2,9 +2,9 @@
 
 task: Available tasks for this project:
 
-* benchmark:       Run benchmarks for the Go project
-* build:           Build the Go project
-* test:            Run tests for the Go project
+* benchmark: Run benchmarks for the Go project
+* build: Build the Go project
+* test: Run tests for the Go project
 
 ```yaml
 ---

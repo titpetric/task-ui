@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/scheduler"
+	"github.com/titpetric/task-ui/feature/workflow"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // ScheduleRequest creates or changes a schedule: of a job, Folder and

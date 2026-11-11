@@ -10,8 +10,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
 

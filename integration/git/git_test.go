@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // fakeKeys hand git a key in an agent, with key, or none.

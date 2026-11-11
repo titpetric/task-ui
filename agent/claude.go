@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/claude"
+	"github.com/titpetric/task-ui/integration/claude"
 )
 
 // errNoToken refuses a command whose environment has no Claude Code token.

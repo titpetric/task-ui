@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/integration/ssh/sshkey"
 )
 
 // Bundle returns the SSH keys a scope's runs get, as a workspace export bundles them: files by name.

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // ModuleView is a module as the API answers it: what its modinfo.php

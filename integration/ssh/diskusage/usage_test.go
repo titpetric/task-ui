@@ -3,7 +3,7 @@ package diskusage_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/diskusage"
+	"github.com/titpetric/task-ui/integration/ssh/diskusage"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

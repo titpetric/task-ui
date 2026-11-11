@@ -9,8 +9,8 @@ import (
 
 	"github.com/titpetric/oida"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // Telemetry is what the API writes: the options in use, and a save. It

@@ -20,16 +20,16 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/hostrun"
-	"github.com/titpetric/task-ui/hours"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/inventory/hostrun"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/feature/orb/recording"
+	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
-	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/integration/beszel"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/internal/hours"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 

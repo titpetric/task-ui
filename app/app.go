@@ -13,17 +13,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/diskusage"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/feature/scheduler"
+	"github.com/titpetric/task-ui/feature/workflow"
+	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/integration/ssh/diskusage"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
-	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // App is a running instance: its dependencies, the runner, the scheduler

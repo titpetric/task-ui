@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/skills"
+	"github.com/titpetric/task-ui/internal/detector"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/skills"
 )
 
 // maxDepth bounds how far discovery descends below the root.

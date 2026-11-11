@@ -5,7 +5,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // The purposes of a key: it encrypts secrets or it authenticates SSH

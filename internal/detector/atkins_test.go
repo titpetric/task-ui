@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/skills"
 )
 
 // withPipeline returns a folder holding an atkins pipeline file. What

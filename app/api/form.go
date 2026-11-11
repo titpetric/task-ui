@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/titpetric/task-ui/form"
+	"github.com/titpetric/task-ui/frontend/form"
 )
 
 // maxFormBody bounds the markdown one call reads, which is a note's reply.

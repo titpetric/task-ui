@@ -3,9 +3,9 @@ package folder_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // @script is every folder's, for a workflow's script step: it takes the

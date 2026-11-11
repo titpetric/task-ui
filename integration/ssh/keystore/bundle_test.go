@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/keystore"
 )
 
 // An export bundles a workspace's SSH keys alone, the private and the

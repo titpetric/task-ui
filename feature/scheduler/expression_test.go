@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/scheduler"
 )
 
 func at(year int, month time.Month, day, hour, minute int) time.Time {

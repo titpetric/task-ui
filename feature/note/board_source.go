@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // source returns the TASK_UI_PROMPT_SOURCE a prompt's run reads: the thread's

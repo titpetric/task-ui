@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/secret"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/internal/testkey"
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 

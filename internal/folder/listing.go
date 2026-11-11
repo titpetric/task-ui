@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // Listing returns a directory's entries, directories first, then files, by name regardless of case; nil if unreadable.

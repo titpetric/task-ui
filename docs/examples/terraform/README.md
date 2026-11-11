@@ -2,8 +2,8 @@
 
 task: Available tasks for this project:
 
-* apply:       Apply Terraform configuration
-* lint:        Lint Terraform files
+* apply: Apply Terraform configuration
+* lint: Lint Terraform files
 
 ```yaml
 ---

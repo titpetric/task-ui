@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // replyBytes caps the reply file the board reads.

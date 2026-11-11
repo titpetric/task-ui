@@ -2,7 +2,7 @@
 
 task: Available tasks for this project:
 
-* bash:       Drop into a bash shell
+* bash: Drop into a bash shell
 
 ```yaml
 ---

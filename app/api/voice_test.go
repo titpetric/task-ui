@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/orb/stt"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/stt"
 )
 
 // voiceRoutes serves the API over a transcriber that writes one line.

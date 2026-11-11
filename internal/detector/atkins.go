@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/feature/skills"
 )
 
 // AtkinsKind names the atkins convention.

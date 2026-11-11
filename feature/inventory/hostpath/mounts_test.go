@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/hostpath"
+	"github.com/titpetric/task-ui/feature/inventory/hostpath"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

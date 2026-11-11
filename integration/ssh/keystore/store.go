@@ -3,7 +3,7 @@ package keystore
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // Store is where the keys live. Local is the key folder; another store,

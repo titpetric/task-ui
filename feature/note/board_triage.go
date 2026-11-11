@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // TriageQuestion is the question of the thread a schedule's triage asks

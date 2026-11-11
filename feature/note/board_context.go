@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // EarlierAnswers is how many answers of a workflow's earlier runs its

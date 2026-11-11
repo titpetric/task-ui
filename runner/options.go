@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/titpetric/task-ui/artifactstore"
-	"github.com/titpetric/task-ui/git"
-	"github.com/titpetric/task-ui/hostpath"
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/recording"
-	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/feature/artifacts"
+	"github.com/titpetric/task-ui/feature/inventory/hostpath"
+	"github.com/titpetric/task-ui/feature/orb/recording"
+	"github.com/titpetric/task-ui/feature/secret"
+	"github.com/titpetric/task-ui/integration/git"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/storage"
 )
 

@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
-	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/feature/skills"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // Folder is a working directory and the conventions detected in it. Each

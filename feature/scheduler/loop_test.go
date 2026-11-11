@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/feature/scheduler"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/scheduler"
-	"github.com/titpetric/task-ui/workflow"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // catalogue is a fixed set of folders.

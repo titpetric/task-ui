@@ -3,7 +3,7 @@ package workflow
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // promptStep puts a prompt or summary step to Claude through the

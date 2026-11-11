@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/skills"
 )
 
 // Bin is the atkins the probe runs: Command, or atkins.

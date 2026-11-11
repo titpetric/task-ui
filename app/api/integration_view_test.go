@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 )

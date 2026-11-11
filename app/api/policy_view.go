@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // PolicyView is the permission policy of a role or a user: its entries,

@@ -6,7 +6,7 @@ import (
 	"os"
 	"slices"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 	"github.com/titpetric/task-ui/storage"
 )
 

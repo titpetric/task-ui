@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // recordings are the recording files that are there, of every run that

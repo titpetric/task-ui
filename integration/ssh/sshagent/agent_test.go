@@ -3,8 +3,8 @@ package sshagent_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/sshagent"
 )
 
 func TestAgent_Close(t *testing.T) {

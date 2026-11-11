@@ -5,7 +5,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // SSHKeyPolicyStorage keeps whose runs get an instance SSH key: roles,

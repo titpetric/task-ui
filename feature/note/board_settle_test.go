@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 // The last run of a thread to end settles its note. The ones that ended

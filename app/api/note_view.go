@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // NoteView is a note with its replies, oldest first.

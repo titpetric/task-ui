@@ -3,7 +3,7 @@ package note
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // instructs reports whether a note of the user's with the body is an

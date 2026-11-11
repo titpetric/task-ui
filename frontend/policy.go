@@ -3,7 +3,7 @@ package phpfront
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/markdown"
+	"github.com/titpetric/task-ui/internal/markdown"
 )
 
 // Policy sets the content security policy of every page and asset this front

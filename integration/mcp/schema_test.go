@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration/mcp"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/mcp"
 )
 
 // A tool's arguments are an object whose required properties it has.

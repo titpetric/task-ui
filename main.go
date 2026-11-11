@@ -22,12 +22,12 @@ import (
 
 	_ "modernc.org/sqlite" // the driver storage opens
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/app"
-	"github.com/titpetric/task-ui/channel"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/secret"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/channel"
 	"github.com/titpetric/task-ui/storage"
 )
 

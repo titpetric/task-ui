@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/retention"
+	"github.com/titpetric/task-ui/internal/retention"
 )
 
 // items are one a day for ten days, oldest first, each 10 bytes.

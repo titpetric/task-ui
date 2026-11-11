@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/git"
 )
 
 func TestCaseOf(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/config"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // PermissionPolicyStorage keeps the permission policies of the roles and

@@ -3,7 +3,7 @@ package hostinfo
 import (
 	"strconv"
 
-	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/integration/beszel"
 )
 
 // Colors is how many colours the hosts of a cluster take turns at.

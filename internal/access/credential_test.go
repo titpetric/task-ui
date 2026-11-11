@@ -3,7 +3,7 @@ package access_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // Resolve finds what every enabled step runs, or says which one is missing.

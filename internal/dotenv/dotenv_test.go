@@ -3,8 +3,8 @@ package dotenv_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/dotenv"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/dotenv"
 )
 
 func TestFormat(t *testing.T) {

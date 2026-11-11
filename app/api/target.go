@@ -3,10 +3,10 @@ package api
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // every returns the catalogue a target resolves through: Steps, every

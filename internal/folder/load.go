@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // Load reads a directory as a folder, with only the detectors of the kinds given when there are any.

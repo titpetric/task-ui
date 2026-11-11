@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpfront"
 )
 
 // What the host answers crosses into the runtime as JSON-shaped values, so the

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/hours"
 )
 
 // at returns a weekday at a clock time, in the week of 2026-10-12.

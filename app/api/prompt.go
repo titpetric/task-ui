@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/storage"
 )
 

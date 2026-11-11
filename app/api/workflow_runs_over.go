@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // runsOver checks the workspace a workflow runs over: one the user sees,

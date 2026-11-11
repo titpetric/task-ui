@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 
 	"github.com/titpetric/task-ui/app"
-	"github.com/titpetric/task-ui/forgejo"
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/integration/forgejo"
+	"github.com/titpetric/task-ui/integration/git"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 

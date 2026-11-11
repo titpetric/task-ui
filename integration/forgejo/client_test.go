@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/titpetric/task-ui/forgejo"
+	"github.com/titpetric/task-ui/integration/forgejo"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

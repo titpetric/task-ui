@@ -3,9 +3,9 @@ package workflow
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // MayRun returns the first step of the workflow the permissions may not run, "" for none.

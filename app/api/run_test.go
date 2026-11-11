@@ -6,11 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/api"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )

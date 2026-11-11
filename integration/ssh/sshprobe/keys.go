@@ -3,7 +3,7 @@ package sshprobe
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // Keys serve the keys a probe signs in with, in an ssh agent the probe

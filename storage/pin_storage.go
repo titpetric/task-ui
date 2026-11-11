@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // PinStorage keeps what each user pins to the sidebar: folders and jobs,

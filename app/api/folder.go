@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/storage"
 )
 

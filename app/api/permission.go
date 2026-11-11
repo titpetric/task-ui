@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/config"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // getPermissions answers permissions.yml, for the permission matrix.

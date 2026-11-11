@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/tooling"
+	"github.com/titpetric/task-ui/internal/tooling"
 )
 
 // report is a project of three days of two tools, the last of them the

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ErrInUse reports deleting a workflow another one runs.

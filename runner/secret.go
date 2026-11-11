@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ErrRunToken refuses a token no live run holds.

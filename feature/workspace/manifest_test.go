@@ -3,8 +3,8 @@ package workspace_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/workspace"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // A named workspace holds its folder and those inside it; the default

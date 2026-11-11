@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/diskusage"
+	"github.com/titpetric/task-ui/integration/ssh/diskusage"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

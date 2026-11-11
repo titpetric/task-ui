@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // UserAuthPasswordStorage keeps the password hashes users sign in with,

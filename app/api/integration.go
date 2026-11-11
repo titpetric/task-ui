@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/claude"
-	"github.com/titpetric/task-ui/hostrun"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/inventory/hostrun"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/integration/beszel"
+	"github.com/titpetric/task-ui/integration/claude"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/runner"
 )
 

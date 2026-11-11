@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/integration/spotify"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/spotify"
 )
 
 // The callback holds no session and no state: it hands the browser to the

@@ -3,8 +3,8 @@ package permission
 import (
 	"strings"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/config"
-	"github.com/titpetric/task-ui/model"
 )
 
 // Set is what a user may do: the user, the policy of the user's role and

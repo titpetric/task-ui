@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // SidebarStorage keeps the sidebar's top block, one row per item, in the

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/feature/orb/stt"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/stt"
 )
 
 // New holds the whisper.cpp runner, which a Service built by hand does

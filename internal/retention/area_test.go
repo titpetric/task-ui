@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/retention"
+	"github.com/titpetric/task-ui/internal/retention"
 )
 
 // The table has a row per kind in order, then the fixed rows, no key

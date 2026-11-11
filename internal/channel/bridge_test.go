@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/titpetric/task-ui/channel"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/channel"
 )
 
 // The bridge needs an instance and a token.

@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // FolderRefStorage finds the rows that name a folder by its ID: the

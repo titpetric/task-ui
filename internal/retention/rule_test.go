@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/retention"
+	"github.com/titpetric/task-ui/internal/retention"
 )
 
 // Each age keeps for its time, never for ever; a rule says itself, and

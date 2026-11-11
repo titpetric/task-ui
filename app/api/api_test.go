@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // catalogue is a fixed set of folders.

@@ -11,8 +11,8 @@ import (
 
 	"github.com/titpetric/oida"
 
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpfront"
 )
 
 // host answers what the real one answers off the instance.

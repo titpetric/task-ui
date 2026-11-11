@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // catalogue is a fixed set of folders.

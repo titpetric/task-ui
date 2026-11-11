@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
-	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/feature/skills"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // SkillPrefix starts the ID of a skill job: @git:pull is the job pull of

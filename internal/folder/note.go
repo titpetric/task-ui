@@ -1,7 +1,7 @@
 package folder
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // NoteID is the ID of the Notes agent's job: Claude Code on an

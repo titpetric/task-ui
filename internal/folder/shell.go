@@ -3,7 +3,7 @@ package folder
 import (
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ShellID is the ID of a folder's shell job: an interactive login shell

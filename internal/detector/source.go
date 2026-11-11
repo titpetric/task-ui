@@ -1,7 +1,7 @@
 package detector
 
 import (
-	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/feature/skills"
 )
 
 // Source is one convention found in a folder: the file the detector

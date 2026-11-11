@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/git"
 )
 
 // checkout returns the checkout the run's folder belongs to: the folder

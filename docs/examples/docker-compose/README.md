@@ -2,12 +2,12 @@
 
 task: Available tasks for this project:
 
-* build:        Build docker image
-* down:         Shut down env
-* logs:         Tail container logs (live)
-* pull:         Pull docker images
-* status:       Environment status      (aliases: ps)
-* up:           Bring up env
+* build: Build docker image
+* down: Shut down env
+* logs: Tail container logs (live)
+* pull: Pull docker images
+* status: Environment status (aliases: ps)
+* up: Bring up env
 
 ```yaml
 ---

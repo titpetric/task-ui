@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/event"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )

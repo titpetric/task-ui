@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 

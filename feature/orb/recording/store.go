@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ErrExpired reports a run whose recording the Data retention settings

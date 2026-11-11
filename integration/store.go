@@ -15,8 +15,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/secret"
 )
 
 // ScopePrefix starts the scope of an integration's secrets.

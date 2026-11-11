@@ -5,10 +5,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/artifactstore"
-	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/artifacts"
+	"github.com/titpetric/task-ui/integration/ssh/diskusage"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // ArtifactTreeView is a directory of the artifact tree, the latest

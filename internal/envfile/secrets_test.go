@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/envfile"
 )
 
 // secrets returns the same secrets for every folder, as envfile.Secrets.

@@ -2,12 +2,12 @@
 
 task: Available tasks for this project:
 
-* create:         Create a new droplet
-* delete:         Delete a droplet
-* init:           Initialize doctl
-* list:           List all droplets
-* ssh:            SSH into a droplet
-* ssh-keys:       List all ssh keys
+* create: Create a new droplet
+* delete: Delete a droplet
+* init: Initialize doctl
+* list: List all droplets
+* ssh: SSH into a droplet
+* ssh-keys: List all ssh keys
 
 ```yml
 ---

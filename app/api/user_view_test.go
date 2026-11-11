@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 // A user's view is the row with its MCP access beside it, flat: the

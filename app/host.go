@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/hostpath"
-	"github.com/titpetric/task-ui/sshprobe"
+	"github.com/titpetric/task-ui/feature/inventory/hostpath"
+	"github.com/titpetric/task-ui/integration/beszel"
+	"github.com/titpetric/task-ui/integration/ssh/sshprobe"
 )
 
 // hostPaths returns the mounts of the container task-ui runs in and the

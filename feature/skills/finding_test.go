@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/skills"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/skills"
 )
 
 // A finding reads the fields atkins names, and writes the empty ones

@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/claude"
-	"github.com/titpetric/task-ui/markdown"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/orb/recording"
+	"github.com/titpetric/task-ui/integration/claude"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/markdown"
 	"github.com/titpetric/task-ui/runner"
 )
 

@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/skills"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/skills"
 	"github.com/titpetric/task-ui/storage"
 )
 

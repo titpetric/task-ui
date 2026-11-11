@@ -3,9 +3,9 @@ package api_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 // A pin shows its args as a list, none for args it cannot read.

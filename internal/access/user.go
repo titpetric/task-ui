@@ -3,7 +3,7 @@ package access
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 type userKey struct{}

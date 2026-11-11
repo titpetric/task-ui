@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Status is how a run is doing: its state, and the exit code once it

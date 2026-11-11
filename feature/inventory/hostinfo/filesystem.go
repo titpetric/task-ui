@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/integration/beszel"
 )
 
 // Filesystem is a mounted filesystem: where, of which device and type,

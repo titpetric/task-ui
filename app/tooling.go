@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 
+	"github.com/titpetric/task-ui/internal/toolenv"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/toolenv"
 )
 
 // toolSummary returns what the stored tooling reads as TASK_UI_TOOLING:

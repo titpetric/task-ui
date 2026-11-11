@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Freeze holds the folder of an ID under the root still while its project moves: no run or pull until release.

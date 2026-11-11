@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // JobView is a job as the jobs listing shows it: the job, whether the

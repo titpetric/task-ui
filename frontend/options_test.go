@@ -4,8 +4,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpfront"
 )
 
 // The defaults are the ones an instance serving one tree wants, so a field

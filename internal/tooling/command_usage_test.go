@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/tooling"
+	"github.com/titpetric/task-ui/internal/tooling"
 )
 
 // TestCommandUsage reads the per-command series as atkins prints it.

@@ -11,7 +11,7 @@ import (
 
 	"github.com/creack/pty"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Process is a command running on a pseudo terminal, in its own session,

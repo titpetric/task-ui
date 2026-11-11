@@ -3,7 +3,7 @@ package keystore
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Rows are what the store knows of each key, by name: storage's key

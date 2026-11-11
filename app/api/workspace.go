@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workspace"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // listWorkspaces returns every workspace, the default first, then in

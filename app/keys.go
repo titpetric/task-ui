@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 	"github.com/titpetric/task-ui/storage"
 )
 

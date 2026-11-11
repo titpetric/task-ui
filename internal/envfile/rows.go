@@ -3,7 +3,7 @@ package envfile
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Rows keeps the content users fill for env files, one row per folder

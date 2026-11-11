@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // RunStorage keeps the runs.

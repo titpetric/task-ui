@@ -3,7 +3,7 @@ package hostinfo_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/hostinfo"
+	"github.com/titpetric/task-ui/feature/inventory/hostinfo"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

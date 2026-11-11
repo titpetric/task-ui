@@ -3,8 +3,8 @@ package secret_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/secret"
 )
 
 // A folder of id_* files encrypts with the type's own key, ed25519

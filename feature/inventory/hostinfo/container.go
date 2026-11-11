@@ -3,7 +3,7 @@ package hostinfo
 import (
 	"sort"
 
-	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/integration/beszel"
 )
 
 // Container is a row of a host's containers, the two sources put

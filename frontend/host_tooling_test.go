@@ -3,7 +3,7 @@ package phpfront_test
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/phpfront"
+	"github.com/titpetric/task-ui/frontend"
 )
 
 // What the fixture answers of the tooling report: one scope of what atkins

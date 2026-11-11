@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // An item is a name, whether a directory, its size and its time.

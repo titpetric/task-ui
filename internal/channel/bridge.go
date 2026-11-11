@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // protocolVersions are the revisions of the protocol the bridge speaks,

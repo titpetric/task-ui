@@ -3,7 +3,7 @@ package claude_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/claude"
+	"github.com/titpetric/task-ui/integration/claude"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

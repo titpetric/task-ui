@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/retention"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/retention"
 )
 
 // saveRetention sets the Data retention rules, each area's age and, where

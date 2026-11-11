@@ -2,8 +2,8 @@
 
 task: Available tasks for this project:
 
-* copy:       Copy Camera Uploads from Dropbox
-* move:       Move Camera Uploads from Dropbox
+* copy: Copy Camera Uploads from Dropbox
+* move: Move Camera Uploads from Dropbox
 
 ```yaml
 ---

@@ -3,7 +3,7 @@ package folder
 import (
 	"os"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ClaudeID is the ID of a folder's Claude job: Claude Code in a

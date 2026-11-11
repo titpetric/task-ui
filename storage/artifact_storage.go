@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ArtifactStorage keeps the files runs left behind. The artifacts with a commit form the artifact tree,

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/form"
+	"github.com/titpetric/task-ui/frontend/form"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

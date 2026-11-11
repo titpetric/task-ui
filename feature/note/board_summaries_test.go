@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/note"
 )
 
 // No runs ask nothing of the store, and have no summaries.

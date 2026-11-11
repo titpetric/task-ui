@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/secret"
 )
 
 // runSecrets hold one run, of token "run-token", whose folder has DEMO.

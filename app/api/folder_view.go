@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/skills"
+	"github.com/titpetric/task-ui/feature/skills"
 )
 
 // FolderView is a folder as the jobs listing shows it: its title and

@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // ModuleStorage keeps the plugins the instance found, a row per module,

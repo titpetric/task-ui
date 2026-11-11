@@ -3,7 +3,7 @@ package forgejo
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Workspaces are the workspace rows sync reads and writes, as

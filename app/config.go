@@ -14,7 +14,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Config is the instance configuration. Every field comes from a TASK_UI_*

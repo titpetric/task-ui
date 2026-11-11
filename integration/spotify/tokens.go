@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/secret"
 )
 
 // UserScope is the secret scope of a user's own variables, encrypted with

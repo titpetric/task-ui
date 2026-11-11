@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // claude answers every prompt step with a run and no answer of its own,

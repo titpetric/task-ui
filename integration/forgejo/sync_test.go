@@ -12,9 +12,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/titpetric/task-ui/forgejo"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/integration/forgejo"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 // hookURL is where the fake instance posts pushes.

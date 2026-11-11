@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/titpetric/task-ui/argv"
+	"github.com/titpetric/task-ui/internal/argv"
 )
 
 // RunArgs are the arguments a run passes its job after --. They come as

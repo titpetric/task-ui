@@ -8,17 +8,17 @@ import (
 
 	"github.com/titpetric/oida"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/phpfront"
-	"github.com/titpetric/task-ui/retention"
+	"github.com/titpetric/task-ui/integration/ssh/diskusage"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/integration/ssh/sshkey"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/folder"
+	"github.com/titpetric/task-ui/internal/retention"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // dispatches are the runs of one thread the board has going, the state

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/argv"
+	"github.com/titpetric/task-ui/internal/argv"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

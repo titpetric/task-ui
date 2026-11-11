@@ -1,7 +1,7 @@
 package note
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // Question returns the note an answer replies to: the reply before it

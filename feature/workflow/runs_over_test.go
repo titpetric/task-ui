@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/workflow"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // Expand walks the steps once per project: a step in a project of the

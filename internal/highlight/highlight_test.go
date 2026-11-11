@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/highlight"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/highlight"
 )
 
 // YAML marks the keys, comments, strings, numbers, list dashes and

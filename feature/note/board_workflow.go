@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // workflowBytes caps the step output a workflow run's prompt gets, every step together.

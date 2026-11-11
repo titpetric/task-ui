@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
 	"github.com/titpetric/task-ui/storage"
 )
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/titpetric/phpscript/model"
 
-	"github.com/titpetric/task-ui/markdown"
+	"github.com/titpetric/task-ui/internal/markdown"
 )
 
 // mention matches @name where a note names a user, the way model.Mentions

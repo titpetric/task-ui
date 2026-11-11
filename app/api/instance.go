@@ -7,10 +7,10 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/internal/toolenv"
 	"github.com/titpetric/task-ui/runner"
-	"github.com/titpetric/task-ui/toolenv"
 )
 
 // InstanceRequest sets the instance settings the Instance page edits.

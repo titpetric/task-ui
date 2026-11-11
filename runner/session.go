@@ -7,8 +7,8 @@ import (
 
 	"github.com/hinshun/vt10x"
 
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // replaySize is how much of the output a late window gets.

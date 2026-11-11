@@ -2,7 +2,7 @@
 
 task: Available tasks for this project:
 
-* pull:       Update local repository with latest changes
+* pull: Update local repository with latest changes
 
 ```yml
 ---

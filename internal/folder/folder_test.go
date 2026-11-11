@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 func write(t *testing.T, path, body string) {

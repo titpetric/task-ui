@@ -1,7 +1,7 @@
 package folder
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // CleanupID is the ID of the root's cleanup job: task-ui cleanup, which

@@ -12,10 +12,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/titpetric/task-ui/forgejo"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/integration/forgejo"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 )
 
 // The errors the webhook answers with.

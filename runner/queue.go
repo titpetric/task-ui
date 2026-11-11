@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // enqueue puts a run whose job is running in the job's queue, queued,

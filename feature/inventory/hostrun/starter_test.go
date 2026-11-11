@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/hostrun"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/inventory/hostrun"
+	"github.com/titpetric/task-ui/integration/beszel"
+	"github.com/titpetric/task-ui/integration/ssh/sshprobe"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshprobe"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // root is a catalogue of the root folder alone.

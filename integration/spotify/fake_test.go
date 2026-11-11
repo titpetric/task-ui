@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/spotify"
+	"github.com/titpetric/task-ui/integration/spotify"
 )
 
 // A real ID is 22 characters of base62.

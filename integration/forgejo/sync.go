@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 )
 
 // Sync brings the workspaces and projects under the root in line with

@@ -3,8 +3,8 @@ package workflow_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // A refusal names the step, and the run-as user when the refusal is theirs.

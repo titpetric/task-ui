@@ -1,7 +1,7 @@
 package folder
 
 import (
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // PromptID is the ID of a folder's prompt job: Claude Code on a prompt

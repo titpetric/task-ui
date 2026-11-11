@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // FilePrefix starts the ID of a file job: ./bin/deploy is the job that

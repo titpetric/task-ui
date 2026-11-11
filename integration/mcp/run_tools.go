@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/api"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/api"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // maxWait bounds how long a call waits for a run to end.

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 func TestConfig_Apply(t *testing.T) {

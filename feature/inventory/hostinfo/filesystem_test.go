@@ -3,8 +3,8 @@ package hostinfo_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/hostinfo"
+	"github.com/titpetric/task-ui/feature/inventory/hostinfo"
+	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/workspace"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workspace"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // exportWorkspace answers with a workspace as a bundle another instance

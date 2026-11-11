@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/tooling"
+	"github.com/titpetric/task-ui/internal/tooling"
 )
 
 // TestSample reads a command as `atkins --stats --json --all` prints it.

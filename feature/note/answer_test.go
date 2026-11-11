@@ -3,9 +3,9 @@ package note_test
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
 )
 
 // A run's reply is the last one naming it that ended: not the question

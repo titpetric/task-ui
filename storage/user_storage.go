@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/permission"
 )
 
 // UserStorage keeps the users, and the permission policies of the users

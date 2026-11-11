@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/git"
 )
 
 // PullTriage is what the triage of a failed git pull asks Claude: which case the checkout is in, and nothing else.

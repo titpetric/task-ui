@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/config"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // getMe answers what the user of the request may do, a MeView. Anyone

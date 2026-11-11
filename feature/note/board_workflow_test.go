@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
-	"github.com/titpetric/task-ui/workflow"
 )
 
 // A check step reads the step it follows through the board, the runner's Output.

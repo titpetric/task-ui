@@ -10,7 +10,7 @@ import (
 	"github.com/titpetric/phpscript/runner"
 
 	"github.com/titpetric/task-ui/internal/assets"
-	"github.com/titpetric/task-ui/markdown"
+	"github.com/titpetric/task-ui/internal/markdown"
 )
 
 // The calls are functions and not constants: the handler freezes the standard

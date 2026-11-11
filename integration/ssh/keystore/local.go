@@ -17,8 +17,8 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/integration/ssh/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 

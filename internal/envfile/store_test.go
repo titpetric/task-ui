@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/titpetric/task-ui/envfile"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/envfile"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 func newStore() *envfile.Store {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/workflow"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // A script step resolves to the folder's script job with its command,

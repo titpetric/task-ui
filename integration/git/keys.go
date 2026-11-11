@@ -3,7 +3,7 @@ package git
 import (
 	"context"
 
-	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/integration/ssh/sshagent"
 )
 
 // Keys hand git its key for a clone or a pull: an agent holding it and

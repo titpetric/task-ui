@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/titpetric/task-ui/stt"
+	"github.com/titpetric/task-ui/feature/orb/stt"
 )
 
 // voiceTranscribe answers with the words of a dictated clip. The body is

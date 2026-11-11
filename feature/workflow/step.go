@@ -1,8 +1,8 @@
 package workflow
 
 import (
-	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // Step is a workflow step resolved to its folder and job, or to the

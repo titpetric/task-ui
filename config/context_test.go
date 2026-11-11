@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/config"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/integration/mcp"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/mcp"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // context.md keeps in step with task-ui: a heading names every section

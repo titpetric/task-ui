@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/task-ui/spotify"
+	"github.com/titpetric/task-ui/integration/spotify"
 )
 
 // spotifyTools are the tools of the user's own Spotify account: they act
@@ -83,7 +83,7 @@ func spotifyTools() []Tool {
 				"name":        str("What the playlist is called."),
 				"description": str("What the playlist is for, shown under its name."),
 				"public":      {Type: "boolean", Description: "Make it public. Private unless set."},
-				"tracks": {Type: "array", Description: "The tracks to put in it, in the order they go in, at most 500.", Items: &Schema{Type: "string"}},
+				"tracks":      {Type: "array", Description: "The tracks to put in it, in the order they go in, at most 500.", Items: &Schema{Type: "string"}},
 			}, "name"),
 			call: spotifyPlaylistCreate,
 		},

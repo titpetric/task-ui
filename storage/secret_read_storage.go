@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // SecretReadKeep is how many reads of one secret the log keeps: the

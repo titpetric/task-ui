@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/titpetric/task-ui/detector"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // Job is one runnable target of a folder.

@@ -13,8 +13,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/config"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // protocolVersions are the revisions of the protocol this server speaks,

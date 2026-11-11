@@ -3,7 +3,7 @@ package api
 import (
 	"strings"
 
-	"github.com/titpetric/task-ui/hours"
+	"github.com/titpetric/task-ui/internal/hours"
 )
 
 // WorkspaceRequest adds a workspace, a directory under the root, or

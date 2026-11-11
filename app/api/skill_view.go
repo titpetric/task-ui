@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // SkillView is a skill of the bar, each job as the jobs listing shows it.

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/detector"
 )
 
 // A file runs as itself when executable, with its shebang when not,

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/markdown"
+	"github.com/titpetric/task-ui/internal/markdown"
 )
 
 // The policy is on every answer under the mount, whatever the handler under it

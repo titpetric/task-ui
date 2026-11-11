@@ -3,10 +3,10 @@ package app
 import (
 	"io/fs"
 
-	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/integration/ssh/keystore"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/internal/migrate"
-	"github.com/titpetric/task-ui/keystore"
-	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/phpscript"
 )
 

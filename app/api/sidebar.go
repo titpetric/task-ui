@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/access"
 )
 
 // SidebarRequest is the Sidebar settings page's form: the links in the

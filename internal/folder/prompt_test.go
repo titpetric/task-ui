@@ -3,8 +3,8 @@ package folder_test
 import (
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/folder"
 )
 
 // @claude-prompt is every folder's, task-ui agent prompt where the

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration/mcp"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/mcp"
 )
 
 func TestNew(t *testing.T) {

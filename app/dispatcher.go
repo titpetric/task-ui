@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/artifactstore"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/artifacts"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/storage"
 )

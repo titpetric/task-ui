@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/titpetric/task-ui/beszel"
-	"github.com/titpetric/task-ui/hostinfo"
-	"github.com/titpetric/task-ui/phpfront"
+	"github.com/titpetric/task-ui/feature/inventory/hostinfo"
+	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/integration/beszel"
 )
 
 // frontProbe is how long the inventory waits for an ssh login to answer,

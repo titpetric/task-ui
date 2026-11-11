@@ -7,7 +7,7 @@ import (
 
 	"github.com/titpetric/oida"
 
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/app/api"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

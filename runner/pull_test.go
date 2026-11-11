@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/git"
 )
 
 // fakeGit answers a pull with the failures it was given, in order, and a recovery of its own.

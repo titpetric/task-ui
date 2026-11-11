@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 )
 
 // command builds the process: bash -l for the login environment, the

@@ -19,9 +19,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 )
 
 // The errors a start or an attach can end in.
