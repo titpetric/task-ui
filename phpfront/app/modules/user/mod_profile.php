@@ -42,7 +42,7 @@ class mod_profile implements Module {
 	const DROPS = "? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name.";
 
 	function name() {
-		return "profile";
+		return "user";
 	}
 
 	function title() {

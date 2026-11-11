@@ -28,7 +28,7 @@ class mod_user_edit implements Module {
 	const NOBODY = "No user by that name.";
 
 	function name() {
-		return "profile";
+		return "user";
 	}
 
 	function title() {

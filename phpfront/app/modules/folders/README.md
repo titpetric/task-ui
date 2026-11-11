@@ -197,7 +197,13 @@ Workspace
 
 ## Operations
 
-This module owns no data model of its own. It reads the instance's tables through `code/Task`.
+### `Pins`
+
+Pins reads the pin table: what a reader asked the sidebar to list besides the folders it lists anyway. The table is this module's. A pin names a folder, a directory inside one, or a job of either with the arguments it runs with; what the sidebar does with one is Task\Folders, and what a page draws of one is Task\Pin.
+
+| Method          | What it does                                                    |
+|-----------------|-----------------------------------------------------------------|
+| `ofUser($name)` | ofUser is every pin of one reader, in the order they were made. |
 
 ---
 

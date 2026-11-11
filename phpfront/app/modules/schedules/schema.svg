@@ -13,7 +13,7 @@ link workflow to user--><path d="M543.5,577.32 C543.5,577.32 543.5,644.06 543.5,
 link workflow_step to workflow--><path d="M625,268.83 C625,268.83 625,343.26 625,343.26 " fill="none" id="workflow_step-workflow" style="stroke: #A80036; stroke-width: 1.0;"/><line style="stroke: #A80036; stroke-width: 1.0;" x1="629" x2="621" y1="347.26" y2="347.26"/><line style="stroke: #A80036; stroke-width: 1.0;" x1="629" x2="621" y1="344.26" y2="344.26"/><line style="stroke: #A80036; stroke-width: 1.0;" x1="625" x2="625" y1="343.26" y2="351.26"/><line style="stroke: #A80036; stroke-width: 1.0;" x1="625" x2="619" y1="268.83" y2="260.83"/><line style="stroke: #A80036; stroke-width: 1.0;" x1="625" x2="631" y1="268.83" y2="260.83"/><line style="stroke: #A80036; stroke-width: 1.0;" x1="625" x2="625" y1="268.83" y2="260.83"/><ellipse cx="625" cy="274.83" fill="none" rx="4" ry="4" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="72" x="626" y="311.607">workflow_id</text><!--MD5=[cb3f80b16ab1b8f5368d2e7d08127cff]
 link key_info to key_role--><!--MD5=[18636616627cd28572f7f16cbc42be10]
 link key_info to key_user--><!--MD5=[608600f63daf4c81b3cd9d053138f11a]
-link key_user to workspace--><!--MD5=[129ce7e37c3a7409da6c50063e8a7f95]
+link key_user to workspace--><!--MD5=[69300e04251399a20aab12f69598897f]
 @startuml
 hide circle
 hide empty members
@@ -137,7 +137,7 @@ PlantUML version 1.2020.02(Sun Mar 01 11:22:07 CET 2020)
 (GPL source distribution)
 Java Runtime: OpenJDK Runtime Environment
 JVM: OpenJDK 64-Bit Server VM
-Java Version: 25.0.4.1+1-1-26.04.4-Ubuntu
+Java Version: 25.0.5.0.3+1-1-26.04.1-Ubuntu
 Operating System: Linux
 Default Encoding: UTF-8
 Language: en

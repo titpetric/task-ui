@@ -1,13 +1,14 @@
 <?php
 
-namespace Task\Settings;
+namespace Task\User;
 
 // Users reads the user table: one user by ID or by name, every user by name,
 // how many there are, how many are admins, and the agents a reply may be
 // written as.
 //
-// The table is this module's, which draws the Users page. What a user may do -
-// the role, the folders, the permissions - is Task\User.
+// The table is this module's, which draws the sign in page, a user's own page
+// and the form that edits one. What a user may do - the role, the folders, the
+// permissions - is Task\User.
 class Users {
 	var $db;
 

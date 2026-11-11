@@ -43,7 +43,7 @@ class User {
 
 	function __construct($db = null) {
 		$this->db = $db === null ? DB::reader() : $db;
-		$this->store = new Settings\Users($this->db);
+		$this->store = new User\Users($this->db);
 	}
 
 	/** get is one user by ID, or null. */

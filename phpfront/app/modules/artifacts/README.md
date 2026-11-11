@@ -54,7 +54,16 @@ User
 
 ## Operations
 
-This module owns no data model of its own. It reads the instance's tables through `code/Task`.
+### `Artifacts`
+
+Artifacts reads the artifact table: the files a run left behind, and the files of the artifact tree, which are the ones that hold a commit. The table is this module's. A run page lists the artifacts of one run, newest first. The bytes of a file are not here: they sit outside the directory this may open, and Task\Host::artifact() reads them.
+
+| Method                    | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `get($id)`                | get is one artifact by ID, or null.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `find($filter = array())` | find is the artifacts a filter lists, newest first. The filter is an array and a field it leaves out narrows nothing: `run`, `folder`, `job` and `path`, where a path is a file of the artifact tree and the rows under it are its versions.                                                                                                                                                                                                                          |
+| `latest()`                | latest is the newest version of every file of the artifact tree, by path. A file of the tree is one that holds a commit, and its rows are its versions; the newest is the one the tree holds, which is what says whether a reader may see an entry of it at all. The version is counted by rowid and not by created_at: two versions written in the same millisecond read as the same instant, and the order they were inserted in is the order they were written in. |
+| `rows($found)`            | rows turns what the database answered into artifacts.                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ---
 

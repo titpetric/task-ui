@@ -13,7 +13,7 @@ require "ext/autoload.php";
 // posts there. This route answers GET and writes nothing.
 class mod_login implements Module {
 	function name() {
-		return "login";
+		return "user";
 	}
 
 	function title() {
@@ -50,7 +50,7 @@ class mod_login implements Module {
 			$error = "Wrong username or password.";
 		}
 
-		$view->page(array("back" => $back, "error" => $error));
+		$view->page(array("back" => $back, "error" => $error), "login.tpl");
 	}
 }
 

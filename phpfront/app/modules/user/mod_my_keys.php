@@ -30,7 +30,7 @@ class mod_my_keys implements Module {
 	const NEXT = "/keys";
 
 	function name() {
-		return "profile";
+		return "user";
 	}
 
 	function title() {

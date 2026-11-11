@@ -1,19 +1,14 @@
-# Profile
+# Sign in
 
 Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ![The tables this module reads](schema.svg)
 
-mod_profile is one user's page: who they are, and the latest runs, workflow runs, notes and prompts of theirs, as far as the reader sees them.
-
-Your own page is yours to read. Anybody else's takes user/view, and a name no row holds answers Not found rather than saying the name is free.
-
-Nothing here is the whole of what a user did: each block is the latest few of a kind the reader may see, and the Runs block links the list that holds the rest.
-
 ## Pages
 
 | Method | Path                 | Answered by                              |
 |--------|----------------------|------------------------------------------|
+| `GET`  | `/login`             | [`mod_login.php`](mod_login.php)         |
 | `GET`  | `/keys`              | [`mod_my_keys.php`](mod_my_keys.php)     |
 | `GET`  | `/users/{name}`      | [`mod_profile.php`](mod_profile.php)     |
 | `GET`  | `/users/{name}/edit` | [`mod_user_edit.php`](mod_user_edit.php) |
@@ -188,8 +183,19 @@ Workspace
 
 ## Operations
 
-This module owns no data model of its own. It reads the instance's tables through `code/Task`.
+### `Users`
+
+Users reads the user table: one user by ID or by name, every user by name, how many there are, how many are admins, and the agents a reply may be written as. The table is this module's, which draws the sign in page, a user's own page and the form that edits one. What a user may do - the role, the folders, the permissions - is Task\User.
+
+| Method          | What it does                                   |
+|-----------------|------------------------------------------------|
+| `get($id)`      | get is one user by ID, or null.                |
+| `byName($name)` | byName is one user by name, or null.           |
+| `all()`         | all is every user, by name.                    |
+| `count()`       | count is how many users there are.             |
+| `admins()`      | admins is how many users carry the admin flag. |
+| `agents()`      | agents is every user an agent may reply as.    |
 
 ---
 
-The tables come from `tables()` on `mod_my_keys`, `mod_profile`, `mod_user_edit`. The operations are the classes of `storage/`, which hold every statement this module runs.
+The tables come from `tables()` on `mod_login`, `mod_my_keys`, `mod_profile`, `mod_user_edit`. The operations are the classes of `storage/`, which hold every statement this module runs.
