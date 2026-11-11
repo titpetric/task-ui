@@ -11,6 +11,9 @@ class Note {
 	/** NOTES is the channel the board's own notes carry. */
 	const NOTES = "notes";
 
+	/** LIVE is what a listing adds to its WHERE: a deleted thread is read by nothing. */
+	const LIVE = "deleted_at IS NULL";
+
 	/** LIMIT is how many threads the board lists. */
 	const LIMIT = 100;
 
@@ -196,31 +199,43 @@ class Note {
 	}
 
 	function threads($channel, $limit = self::LIMIT) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND workspace_id = ''" . " ORDER BY rowid DESC LIMIT ?", $channel, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND workspace_id = '' AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $channel, $limit));
+	}
+
+	function timeline($limit = self::LIMIT) {
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $limit));
+	}
+
+	function drop($id) {
+		$now = Clock::stamp();
+
+		$this->db->query("UPDATE note SET deleted_at = ?, updated_at = ? WHERE (id = ? OR parent_id = ?) AND " . self::LIVE, $now, $now, $id, $id);
+
+		return true;
 	}
 
 	function byUser($channel, $name, $limit = self::PROFILE) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND user_name = ? AND workspace_id = ''" . " ORDER BY rowid DESC LIMIT ?", $channel, $name, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND user_name = ? AND workspace_id = '' AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $channel, $name, $limit));
 	}
 
 	function promptsByUser($name, $limit = self::PROFILE) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND user_name = ? AND workspace_id != ''" . " ORDER BY rowid DESC LIMIT ?", $name, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND user_name = ? AND workspace_id != '' AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $name, $limit));
 	}
 
 	function prompts($runID, $limit = self::PROMPTS) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND about_run_id = ?" . " ORDER BY rowid DESC LIMIT ?", $runID, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND about_run_id = ? AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $runID, $limit));
 	}
 
 	function inPlace($dir, $limit = self::PROMPTS) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND dir = ?" . " AND about_run_id = '' AND about_workflow_run_id = '' AND area = '' ORDER BY rowid DESC LIMIT ?", $dir, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND dir = ? AND " . self::LIVE . " AND about_run_id = '' AND about_workflow_run_id = '' AND area = '' ORDER BY rowid DESC LIMIT ?", $dir, $limit));
 	}
 
 	function ofArea($area, $limit = self::PROMPTS) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND area = ?" . " ORDER BY rowid DESC LIMIT ?", $area, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND area = ? AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $area, $limit));
 	}
 
 	function ofWorkflowRun($runID, $limit = 5) {
-		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND about_workflow_run_id = ?" . " ORDER BY rowid DESC LIMIT ?", $runID, $limit));
+		return Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND about_workflow_run_id = ? AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", $runID, $limit));
 	}
 
 	function promptsAbout($runIDs) {
@@ -228,13 +243,13 @@ class Note {
 			return array();
 		}
 
-		$sql = "SELECT * FROM note WHERE parent_id = '' AND workspace_id != ''" . " AND about_run_id IN (" . Row::placeholders($runIDs) . ") ORDER BY rowid DESC";
+		$sql = "SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND " . self::LIVE . " AND about_run_id IN (" . Row::placeholders($runIDs) . ") ORDER BY rowid DESC";
 
 		return Model\Note::rows(DB::all($this->db, $sql, $runIDs));
 	}
 
 	function get($id) {
-		$row = $this->db->get("SELECT * FROM note WHERE id = ?", $id);
+		$row = $this->db->get("SELECT * FROM note WHERE id = ? AND " . self::LIVE, $id);
 
 		if (!is_array($row)) {
 			return null;
@@ -248,7 +263,7 @@ class Note {
 			return null;
 		}
 
-		$row = $this->db->get("SELECT * FROM note WHERE run_id = ? ORDER BY rowid LIMIT 1", $runID);
+		$row = $this->db->get("SELECT * FROM note WHERE run_id = ? AND " . self::LIVE . " ORDER BY rowid LIMIT 1", $runID);
 
 		if (!is_array($row)) {
 			return null;
@@ -266,7 +281,7 @@ class Note {
 			return $out;
 		}
 
-		$rows = DB::all($this->db, "SELECT * FROM note WHERE parent_id IN (" . Row::placeholders($ids) . ") ORDER BY rowid", $ids);
+		$rows = DB::all($this->db, "SELECT * FROM note WHERE parent_id IN (" . Row::placeholders($ids) . ") AND " . self::LIVE . " ORDER BY rowid", $ids);
 
 		foreach (Model\Note::rows($rows) as $note) {
 			$parent = $note->getParentId();
@@ -291,8 +306,8 @@ class Note {
 		return $out;
 	}
 
-	static function thread($note, $replies, $chrome, $answerers, $seen = null) {
-		$out = self::card($note, $chrome, $note, $answerers, $seen);
+	static function thread($note, $replies, $chrome, $seen = null) {
+		$out = self::card($note, $chrome, $seen);
 
 		$out["replies"] = array();
 
@@ -303,13 +318,13 @@ class Note {
 		}
 
 		foreach ($replies[$id] as $reply) {
-			$out["replies"][] = self::card($reply, $chrome, $note, $answerers, $seen);
+			$out["replies"][] = self::card($reply, $chrome, $seen);
 		}
 
 		return $out;
 	}
 
-	static function card($note, $chrome, $thread, $answerers, $seen = null) {
+	static function card($note, $chrome, $seen = null) {
 		$id = $note->getId();
 		$author = $note->getUserName();
 		$run = $note->getRunId();
@@ -319,11 +334,9 @@ class Note {
 			$run = "";
 		}
 
-		$edits = self::edits($note, $chrome, $thread, $answerers);
 		$what = $reply ? "reply" : "note";
 		$menu = new Menu("Actions on the " . $what . " of " . $author);
 
-		$menu->when($edits, "edit", "Edit", array("data-edit-open" => $id));
 		$menu->when($run !== "", "terminal", "Open its run", array("href" => Route::href("/runs/" . $run)));
 		$menu->whenDanger(self::deletes($note, $chrome), "trash", "Delete", array(
 			"data-delete" => "/api/notes/" . $id,
@@ -345,7 +358,6 @@ class Note {
 			"stamp" => Clock::read($note->getCreatedAt()),
 			"edited" => $note->getEditedAt() !== "",
 			"editedStamp" => Clock::read($note->getEditedAt()),
-			"edits" => $edits,
 			"menu" => $menu->data(),
 			"editor" => self::field(),
 		);
@@ -365,22 +377,6 @@ class Note {
 			"mentions" => true,
 			"toolbar" => "inline",
 		);
-	}
-
-	static function edits($note, $chrome, $thread, $answerers) {
-		if ($chrome->user === null || !$chrome->allowed("note/edit")) {
-			return false;
-		}
-
-		if ($note->getId() !== $thread->getId() && self::answered($thread, $note, $answerers)) {
-			return false;
-		}
-
-		return $note->getUserName() === $chrome->name() || User::admin($chrome->user);
-	}
-
-	static function answered($thread, $reply, $answerers) {
-		return $thread->getState() !== "" && in_array($reply->getUserName(), $answerers, true);
 	}
 
 	static function deletes($note, $chrome) {
@@ -553,18 +549,8 @@ class Note {
 		return $note;
 	}
 
-	/** edit rewrites a note's body, and the names it mentions with it. */
-	function edit($id, $body) {
-		$now = Clock::stamp();
-		$mentions = self::mentions($body);
-
-		$this->db->query("UPDATE note SET body = ?, mentions = ?, edited_at = ?, updated_at = ? WHERE id = ?", $body, $mentions, $now, $now, $id);
-
-		return true;
-	}
-
-	/** drop removes a note and every reply under it. */
-	function drop($id) {
+	/** purge removes a note and every reply under it, deleted or not. */
+	function purge($id) {
 		$this->db->query("DELETE FROM note WHERE id = ? OR parent_id = ?", $id, $id);
 
 		return true;

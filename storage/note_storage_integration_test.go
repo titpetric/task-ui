@@ -77,6 +77,33 @@ func TestNoteStorage(t *testing.T) {
 	assert.NoError(t, notes.Delete(ctx, task.ID))
 	_, err = notes.Get(ctx, reply.ID)
 	assert.ErrorIs(t, err, storage.ErrNotFound, "the replies go too")
+	_, err = notes.ByRun(ctx, "run1")
+	assert.ErrorIs(t, err, storage.ErrNotFound, "and the run finds nothing")
+	left, _ := notes.List(ctx, storage.NoteFilter{Threads: true})
+	assert.Len(t, left, 2, "the board note and the chat stay; the deleted thread is out")
+	for _, row := range left {
+		assert.NotEqual(t, task.ID, row.ID)
+	}
+}
+
+// Delete keeps the rows for retention, and Purge is what frees them.
+func TestNoteStorage_Purge(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+	task := &model.Note{UserName: "ops", Body: "a thread", WorkspaceID: "ws1", Dir: "malta"}
+	assert.NoError(t, notes.Create(ctx, task))
+	assert.NoError(t, notes.Create(ctx, &model.Note{UserName: "claude", Body: "done", ParentID: task.ID}))
+	assert.NoError(t, notes.Delete(ctx, task.ID))
+
+	threads, err := notes.Threads(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, threads, 1, "a deleted thread still ages out")
+
+	assert.NoError(t, notes.Purge(ctx, task.ID))
+	threads, err = notes.Threads(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, threads, 0)
 }
 
 // A prompt is a note with a workspace: the board's listing leaves it out,
@@ -128,9 +155,9 @@ func TestNoteStorage_Prompts(t *testing.T) {
 	assert.Equal(t, "wr1", wr[0].AboutWorkflowRunID)
 }
 
-// Edit changes a note's body and mentions and marks it edited; Answer
-// rewrites a reply in place, with its state and run, unmarked.
-func TestNoteStorage_Edit(t *testing.T) {
+// Answer rewrites a reply in place, with its state and run, and marks
+// nothing edited.
+func TestNoteStorage_Answer(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	notes := storage.NewNoteStorage(newDB(t))
@@ -138,14 +165,9 @@ func TestNoteStorage_Edit(t *testing.T) {
 	assert.NoError(t, notes.Create(ctx, posted))
 	assert.Nil(t, posted.EditedAt)
 
-	assert.NoError(t, notes.Edit(ctx, posted.ID, "  @alice have a look  "))
 	got, err := notes.Get(ctx, posted.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, "@alice have a look", got.Body)
-	assert.True(t, got.Mentioned("alice"))
-	assert.NotNil(t, got.EditedAt)
-	assert.Error(t, notes.Edit(ctx, posted.ID, " "))
-	assert.ErrorIs(t, notes.Edit(ctx, "missing", "x"), storage.ErrNotFound)
+	assert.Equal(t, "have a look", got.Body)
 
 	reply := &model.Note{UserName: "claude", Body: "first", ParentID: posted.ID, RunID: "r1"}
 	assert.NoError(t, notes.Create(ctx, reply))
@@ -246,9 +268,9 @@ func TestNoteStorage_Closed(t *testing.T) {
 	assert.ErrorContains(t, err, errClosed)
 	assert.ErrorContains(t, notes.SetState(ctx, "n1", model.NoteWorking, "r1"), errClosed)
 	assert.ErrorContains(t, notes.Release(ctx, "n1", model.NoteOpen), errClosed)
-	assert.ErrorContains(t, notes.Edit(ctx, "n1", "hello"), errClosed)
 	assert.ErrorContains(t, notes.Answer(ctx, "n1", "hello", "", "r1"), errClosed)
 	assert.ErrorContains(t, notes.Delete(ctx, "n1"), errClosed)
+	assert.ErrorContains(t, notes.Purge(ctx, "n1"), errClosed)
 }
 
 // A note needs some text, whichever call puts it there. A change to a
@@ -262,7 +284,6 @@ func TestNoteStorage_Refuses(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, limited, 0)
 
-	assert.ErrorContains(t, notes.Edit(ctx, "n1", "  "), "needs some text")
 	assert.ErrorContains(t, notes.Answer(ctx, "n1", "\n", "", ""), "needs some text")
 	assert.ErrorIs(t, notes.Answer(ctx, "nope", "hello", "", ""), storage.ErrNotFound)
 	assert.ErrorIs(t, notes.SetState(ctx, "nope", model.NoteWorking, ""), storage.ErrNotFound)

@@ -102,12 +102,13 @@ CREATE TABLE note (
     run_id CHAR(26) NOT NULL DEFAULT '',
     created_at DATETIME,
     updated_at DATETIME
-, about_run_id CHAR(26) NOT NULL DEFAULT '', about_workflow_run_id CHAR(26) NOT NULL DEFAULT '', area TEXT NOT NULL DEFAULT '', edited_at DATETIME, workspace_id CHAR(26) NOT NULL DEFAULT '', dir TEXT NOT NULL DEFAULT '');
+, about_run_id CHAR(26) NOT NULL DEFAULT '', about_workflow_run_id CHAR(26) NOT NULL DEFAULT '', area TEXT NOT NULL DEFAULT '', edited_at DATETIME, deleted_at DATETIME, audio_path TEXT NOT NULL DEFAULT '', spoken TEXT NOT NULL DEFAULT '', workspace_id CHAR(26) NOT NULL DEFAULT '', dir TEXT NOT NULL DEFAULT '');
 CREATE INDEX idx_note_channel ON note(channel, parent_id);
 CREATE INDEX idx_note_parent ON note(parent_id);
 CREATE INDEX idx_note_state ON note(state);
 CREATE INDEX idx_note_about_run ON note(about_run_id);
 CREATE INDEX idx_note_about_workflow_run ON note(about_workflow_run_id);
+CREATE INDEX idx_note_deleted ON note(deleted_at);
 CREATE INDEX idx_note_workspace ON note(workspace_id, dir);
 CREATE TABLE permission_policy (
     id CHAR(26) PRIMARY KEY NOT NULL,

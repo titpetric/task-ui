@@ -132,7 +132,6 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/notes", h.listNotes)
 	r.Post("/notes", h.postNote)
 	r.Post("/notes/{id}/comments", h.commentNote)
-	r.Put("/notes/{id}", h.editNote)
 	r.Delete("/notes/{id}", h.deleteNote)
 
 	r.Get("/projects", h.listProjects)
@@ -255,7 +254,7 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrBacklogFull):
 		return http.StatusTooManyRequests
-	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAuthor), errors.Is(err, note.ErrNotAssigned):
+	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAssigned):
 		return http.StatusForbidden
 	case errors.Is(err, secret.ErrNoKey), errors.Is(err, keystore.ErrExists):
 		return http.StatusConflict

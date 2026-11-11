@@ -481,11 +481,6 @@ func (p *Page) Deletes(note model.Note) bool {
 	return allowed && p.User != nil && (note.UserName == p.User.Name || p.User.CanAdmin())
 }
 
-// Edits reports whether the signed in user may edit a note of a thread, with note/edit.
-func (p *Page) Edits(note model.Note, t Thread) bool {
-	return p.Can("note/edit") && t.Edits(p.User, note)
-}
-
 // CanRunAny reports whether the signed in user may run a job of a folder.
 func (p *Page) CanRunAny(f *folder.Folder) bool {
 	for _, job := range f.Jobs {

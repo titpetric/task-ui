@@ -53,7 +53,14 @@ type NoteFilter struct {
 	UserName string
 	// Limit keeps the newest; zero keeps them all.
 	Limit int
+	// Threads lists every thread, the board's and the prompts alike, and
+	// ignores Prompts and what narrows a prompt.
+	Threads bool
 }
+
+// Live is what a listing adds to its WHERE: a deleted note and the replies
+// under it are read by nothing.
+const Live = "deleted_at IS NULL"
 
 // Create inserts a note, with the mentions of its body.
 func (s *NoteStorage) Create(ctx context.Context, note *model.Note) error {
@@ -73,9 +80,9 @@ func (s *NoteStorage) Create(ctx context.Context, note *model.Note) error {
 	return client(s.db).Insert(ctx, model.NoteTable, note)
 }
 
-// Get returns a note by ID.
+// Get returns a note by ID, or ErrNotFound once it is deleted.
 func (s *NoteStorage) Get(ctx context.Context, id string) (*model.Note, error) {
-	note, err := client(s.db).Get[model.Note](ctx, "SELECT * FROM note WHERE id = ?", id)
+	note, err := client(s.db).Get[model.Note](ctx, "SELECT * FROM note WHERE id = ? AND "+Live, id)
 	return note, notFound(err)
 }
 
@@ -85,7 +92,7 @@ func (s *NoteStorage) ByRun(ctx context.Context, runID string) (*model.Note, err
 	if runID == "" {
 		return nil, ErrNotFound
 	}
-	note, err := client(s.db).Get[model.Note](ctx, "SELECT * FROM note WHERE run_id = ? ORDER BY rowid LIMIT 1", runID)
+	note, err := client(s.db).Get[model.Note](ctx, "SELECT * FROM note WHERE run_id = ? AND "+Live+" ORDER BY rowid LIMIT 1", runID)
 	if err != nil {
 		return nil, notFound(err)
 	}
@@ -97,7 +104,7 @@ func (s *NoteStorage) ByRun(ctx context.Context, runID string) (*model.Note, err
 
 // List returns the notes that start a thread, newest first.
 func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note, error) {
-	where := []string{"parent_id = ''"}
+	where := []string{"parent_id = ''", Live}
 	var args []any
 	if filter.Channel != "" {
 		where = append(where, "channel = ?")
@@ -115,9 +122,11 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 		where = append(where, "user_name = ?")
 		args = append(args, filter.UserName)
 	}
-	if !filter.Prompts {
+	switch {
+	case filter.Threads:
+	case !filter.Prompts:
 		where = append(where, "workspace_id = ''")
-	} else {
+	default:
 		where = append(where, "workspace_id != ''")
 		if filter.WorkspaceID != "" {
 			where = append(where, "workspace_id = ?")
@@ -164,7 +173,7 @@ func (s *NoteStorage) Replies(ctx context.Context, ids []string) (map[string][]m
 	for i, id := range ids {
 		args[i] = id
 	}
-	rows, err := client(s.db).Select[model.Note](ctx, "SELECT * FROM note WHERE parent_id IN ("+marks+") ORDER BY rowid", args...)
+	rows, err := client(s.db).Select[model.Note](ctx, "SELECT * FROM note WHERE parent_id IN ("+marks+") AND "+Live+" ORDER BY rowid", args...)
 	if err != nil {
 		return nil, err
 	}
@@ -182,18 +191,6 @@ func (s *NoteStorage) SetState(ctx context.Context, id, state, runID string) err
 // Release sets a note's state and lets go of its run, for someone who works on it over MCP.
 func (s *NoteStorage) Release(ctx context.Context, id, state string) error {
 	return s.change(ctx, "UPDATE note SET state = ?, run_id = '', updated_at = ? WHERE id = ?", state, stamp(), id)
-}
-
-// Edit puts a new body in a note, with its mentions, and marks it
-// edited now.
-func (s *NoteStorage) Edit(ctx context.Context, id, body string) error {
-	body = strings.TrimSpace(body)
-	if body == "" {
-		return errors.New("a note needs some text")
-	}
-	now := stamp()
-	return s.change(ctx, "UPDATE note SET body = ?, mentions = ?, edited_at = ?, updated_at = ? WHERE id = ?",
-		body, model.EncodeMentions(model.Mentions(body)), now, now, id)
 }
 
 // Answer replaces the agent's answer in its reply, with the run it comes from.
@@ -219,8 +216,14 @@ func (s *NoteStorage) change(ctx context.Context, query string, args ...any) err
 	return nil
 }
 
-// Delete removes a note and its replies.
+// Delete marks a note and its replies deleted, out of every listing.
 func (s *NoteStorage) Delete(ctx context.Context, id string) error {
+	now := stamp()
+	return client(s.db).Exec(ctx, "UPDATE note SET deleted_at = ?, updated_at = ? WHERE (id = ? OR parent_id = ?) AND "+Live, now, now, id, id)
+}
+
+// Purge removes a note and its replies, deleted or not, for retention.
+func (s *NoteStorage) Purge(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM note WHERE id = ? OR parent_id = ?", id, id)
 }
 

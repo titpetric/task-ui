@@ -4009,10 +4009,6 @@
           var value = form.elements.body.value;
           if (value) drafts[form.dataset.parent] = value;
         });
-        var edits = {};
-        notesList.querySelectorAll("form[data-note-edit]").forEach(function (form) {
-          edits[form.dataset.noteEdit] = form.elements.body.value;
-        });
         destroyEditors(notesList);
         notesList.innerHTML = fresh.innerHTML;
         // A hidden box, a running run's, shows once a thread comes.
@@ -4026,10 +4022,6 @@
         });
         mountEditors(notesList);
         mentionFields(notesList);
-        Object.keys(edits).forEach(function (id) {
-          var body = notesList.querySelector('[data-edit="' + id + '"]');
-          if (body) editNote(body, edits[id]);
-        });
       });
   }
   document.addEventListener("submit", function (event) {
@@ -4054,72 +4046,6 @@
         refreshNotes();
       });
   });
-  // Its author, or an admin, clicks a note's text to edit it in place:
-  // Ctrl+Enter or Save puts it, Esc or Cancel leaves it as it was. A note
-  // to the agent runs again, and its answer follows over the notes topic.
-  function editNote(body, value) {
-    var form = document.createElement("form");
-    form.className = "note-form note-edit";
-    form.dataset.noteEdit = body.dataset.edit;
-    form.innerHTML = '<textarea name="body" rows="3" spellcheck="false" data-markdown data-toolbar="inline" data-mentions aria-label="The note"></textarea>' +
-      '<div class="form-foot note"><span class="faint">Ctrl+Enter saves, Esc cancels.</span>' +
-      '<span><button class="btn" type="button" data-edit-cancel>Cancel</button> <button class="btn btn-primary" type="submit">Save</button></span></div>';
-    form.elements.body.value = value === undefined ? body.dataset.body : value;
-    body.hidden = true;
-    body.after(form);
-    // The field is in the page before the editor is drawn over it, so the
-    // surface opens on the note as it stands.
-    mountEditor(form.elements.body);
-    mentionField(form.elements.body);
-    editorField(form.elements.body).focus();
-  }
-  function closeEdit(form) {
-    var body = form.previousElementSibling;
-    if (body && body.hasAttribute("data-edit")) body.hidden = false;
-    destroyEditors(form);
-    form.remove();
-  }
-  document.addEventListener("click", function (event) {
-    var cancel = event.target.closest("[data-edit-cancel]");
-    if (cancel) {
-      closeEdit(cancel.closest("form[data-note-edit]"));
-      return;
-    }
-    // Edit in a note's [...] menu opens the same field.
-    var open = event.target.closest("[data-edit-open]");
-    if (open) {
-      var note = document.querySelector('.note-body[data-edit="' + open.dataset.editOpen + '"]');
-      if (note && !note.hidden) editNote(note);
-      return;
-    }
-    var body = event.target.closest(".note-body[data-edit]");
-    // A form the body draws is the body's own control, not its text: a
-    // click in one picks a value, it does not open the editor over it.
-    if (!body || event.target.closest("a, button, summary, form[data-run-form]")) return;
-    if (String(window.getSelection && window.getSelection()) !== "") return;
-    editNote(body);
-  });
-  document.addEventListener("submit", function (event) {
-    var form = event.target.closest("form[data-note-edit]");
-    if (!form) return;
-    event.preventDefault();
-    var value = form.elements.body.value.trim();
-    if (!value) return;
-    var button = form.querySelector("button[type=submit]");
-    button.disabled = true;
-    formError(form, "");
-    api("PUT", "/api/notes/" + encodeURIComponent(form.dataset.noteEdit), { body: value })
-      .then(function (res) {
-        button.disabled = false;
-        if (res.status >= 300) {
-          fail(form, res);
-          return;
-        }
-        closeEdit(form);
-        refreshNotes();
-      });
-  });
-
   // ------------------------------------------------------- forms in a note
 
   // A ```form fence of a note's body draws a form whose one button starts
@@ -4296,21 +4222,12 @@
     else runFormAsk(form, button, values);
   });
 
-  // Ctrl+Enter and Esc are read before the editor sees them: Enter in a
-  // drawn surface writes a line, and Esc there releases the Tab key.
+  // Ctrl+Enter is read before the editor sees it: Enter in a drawn
+  // surface writes a line.
   document.addEventListener("keydown", function (event) {
     var area = fieldOf(event.target);
     if (!area) return;
-    var editing = area.closest("form[data-note-edit]");
-    // Esc with the user list open closes the list, which is the list's own
-    // key: the edit stays open and the next Esc leaves it.
-    var listing = mention.area === area && mention.list && !mention.list.hidden;
-    if (editing && event.key === "Escape" && !listing) {
-      event.preventDefault();
-      closeEdit(editing);
-      return;
-    }
-    var posts = editing || area.closest("form[data-note-form]");
+    var posts = area.closest("form[data-note-form]");
     if (!posts || event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
     event.preventDefault();
     posts.requestSubmit();
@@ -4701,11 +4618,16 @@
     };
     // ask posts a prompt, or a reply in parent's thread. A reply runs in the
     // thread's place, with everything said in the thread so far.
-    var ask = function (text, parent, user) {
+    var ask = function (text, parent, user, heard) {
       unfollow();
       frame(here, text, parent || "");
       setOpen(true);
       var body = { prompt: text };
+      // What the orb recorded rides with the prompt: the thread plays the
+      // clip and shows the words, where the prompt itself also carries
+      // where the clip is and the brief the session opens on.
+      if (heard && heard.audio) body.audio = heard.audio;
+      if (heard && heard.spoken) body.spoken = heard.spoken;
       if (parent) body.parent = parent;
       else if (here.run) body.run = here.run;
       else { body.folder = here.folder; body.dir = here.dir; }
@@ -4731,10 +4653,10 @@
     // taskUI.ask posts a prompt the way Enter does, or a reply in parent's
     // thread, and reports what the thread does next, so voice.js can follow
     // a question it sent and keep one session across several of them.
-    window.taskUI.ask = function (text, on, parent, user) {
+    window.taskUI.ask = function (text, on, parent, user, heard) {
       if (!text) return false;
       if (on) watchers.push(on);
-      ask(text, parent, user);
+      ask(text, parent, user, heard);
       return true;
     };
     // taskUI.place is where a prompt from this page goes. Reading a thread

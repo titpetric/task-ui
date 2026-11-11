@@ -104,6 +104,8 @@ return array(
     'Task\\StepSpace' => $baseDir . '/code/Task/StepSpace.php',
     'Task\\Table' => $baseDir . '/code/Task/Table.php',
     'Task\\Text' => $baseDir . '/code/Task/Text.php',
+    'Task\\Threads\\Talk' => $baseDir . '/modules/threads/code/Talk.php',
+    'Task\\Threads\\Timeline' => $baseDir . '/modules/threads/code/Timeline.php',
     'Task\\Tooling' => $baseDir . '/code/Task/Tooling.php',
     'Task\\Toolset' => $baseDir . '/code/Task/Toolset.php',
     'Task\\Upload' => $baseDir . '/code/Task/Upload.php',

@@ -113,9 +113,12 @@ func TestBoard_AskParent(t *testing.T) {
 
 	events, cancel := board.Events.Subscribe(note.Topic)
 	defer cancel()
-	thread, err := board.Ask(ctx, ops, "", "infra", "what does this folder build")
+	heard := note.Spoken{Audio: "voice/2026-11-11T10-00-00.wav", Text: "what does this folder build"}
+	thread, err := board.Ask(ctx, ops, "", "infra", "what does this folder build", heard)
 	assert.NoError(t, err)
 	settles(t, events, thread.ID)
+	assert.Equal(t, heard.Audio, thread.AudioPath, "the recording stays with the message")
+	assert.Equal(t, heard.Text, thread.Spoken)
 
 	roots, err := runs.List(ctx, storage.RunFilter{Roots: true})
 	assert.NoError(t, err)

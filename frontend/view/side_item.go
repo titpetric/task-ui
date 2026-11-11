@@ -40,7 +40,7 @@ func SideItems(rows []model.Sidebar, allowed func(string) bool, settings bool, a
 			Icon:   sideIcon(row.Icon),
 			Active: active(row.Href),
 			Flows:  row.Href == "/workflows",
-			Pulse:  row.Href == "/runs",
+			Pulse:  row.Href == "/threads",
 		})
 	}
 	return items

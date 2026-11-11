@@ -26,6 +26,9 @@ class Note {
 		"about_workflow_run_id",
 		"area",
 		"edited_at",
+		"deleted_at",
+		"audio_path",
+		"spoken",
 		"workspace_id",
 		"dir",
 	);
@@ -34,7 +37,7 @@ class Note {
 	public static $primary = array("id");
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at", "edited_at");
+	public static $stamps = array("created_at", "updated_at", "edited_at", "deleted_at");
 	/** ID */
 	var $id = "";
 	/** Channel */
@@ -65,6 +68,12 @@ class Note {
 	var $area = "";
 	/** Edited At */
 	var $edited_at = "";
+	/** Deleted At */
+	var $deleted_at = "";
+	/** Audio Path */
+	var $audio_path = "";
+	/** Spoken */
+	var $spoken = "";
 	/** Workspace ID */
 	var $workspace_id = "";
 	/** Dir */
@@ -86,6 +95,9 @@ class Note {
 		$this->about_workflow_run_id = \Task\Row::text($row, "about_workflow_run_id");
 		$this->area = \Task\Row::text($row, "area");
 		$this->edited_at = \Task\Row::stamp($row, "edited_at");
+		$this->deleted_at = \Task\Row::stamp($row, "deleted_at");
+		$this->audio_path = \Task\Row::text($row, "audio_path");
+		$this->spoken = \Task\Row::text($row, "spoken");
 		$this->workspace_id = \Task\Row::text($row, "workspace_id");
 		$this->dir = \Task\Row::text($row, "dir");
 	}
@@ -251,6 +263,39 @@ class Note {
 	/** setEditedAt sets Edited At. */
 	function setEditedAt($value) {
 		$this->edited_at = $value;
+
+		return $this;
+	}
+	/** getDeletedAt is Deleted At. */
+	function getDeletedAt() {
+		return $this->deleted_at;
+	}
+
+	/** setDeletedAt sets Deleted At. */
+	function setDeletedAt($value) {
+		$this->deleted_at = $value;
+
+		return $this;
+	}
+	/** getAudioPath is Audio Path. */
+	function getAudioPath() {
+		return $this->audio_path;
+	}
+
+	/** setAudioPath sets Audio Path. */
+	function setAudioPath($value) {
+		$this->audio_path = $value;
+
+		return $this;
+	}
+	/** getSpoken is Spoken. */
+	function getSpoken() {
+		return $this->spoken;
+	}
+
+	/** setSpoken sets Spoken. */
+	function setSpoken($value) {
+		$this->spoken = $value;
 
 		return $this;
 	}

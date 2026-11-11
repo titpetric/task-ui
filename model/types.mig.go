@@ -874,6 +874,15 @@ type Note struct {
 	// Edited At
 	EditedAt *time.Time `db:"edited_at" json:"edited_at"`
 
+	// Deleted At
+	DeletedAt *time.Time `db:"deleted_at" json:"deleted_at"`
+
+	// Audio Path
+	AudioPath string `db:"audio_path" json:"audio_path"`
+
+	// Spoken
+	Spoken string `db:"spoken" json:"spoken"`
+
 	// Workspace ID
 	WorkspaceID string `db:"workspace_id" json:"workspace_id"`
 
@@ -971,6 +980,24 @@ func (n *Note) GetEditedAt() *time.Time { return n.EditedAt }
 // SetEditedAt sets EditedAt to the provided value.
 func (n *Note) SetEditedAt(stamp time.Time) { n.EditedAt = &stamp }
 
+// GetDeletedAt will return the value of DeletedAt.
+func (n *Note) GetDeletedAt() *time.Time { return n.DeletedAt }
+
+// SetDeletedAt sets DeletedAt to the provided value.
+func (n *Note) SetDeletedAt(stamp time.Time) { n.DeletedAt = &stamp }
+
+// GetAudioPath will return the value of AudioPath.
+func (n *Note) GetAudioPath() string { return n.AudioPath }
+
+// SetAudioPath sets AudioPath to the provided value.
+func (n *Note) SetAudioPath(val string) { n.AudioPath = val }
+
+// GetSpoken will return the value of Spoken.
+func (n *Note) GetSpoken() string { return n.Spoken }
+
+// SetSpoken sets Spoken to the provided value.
+func (n *Note) SetSpoken(val string) { n.Spoken = val }
+
 // GetWorkspaceID will return the value of WorkspaceID.
 func (n *Note) GetWorkspaceID() string { return n.WorkspaceID }
 
@@ -987,7 +1014,7 @@ func (n *Note) SetDir(val string) { n.Dir = val }
 const NoteTable = "`note`"
 
 // NoteFields is a list of all columns in the DB table.
-var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "area", "edited_at", "workspace_id", "dir"}
+var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "area", "edited_at", "deleted_at", "audio_path", "spoken", "workspace_id", "dir"}
 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}

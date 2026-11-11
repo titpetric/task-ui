@@ -120,81 +120,6 @@
 /* .note-body styles a note's markdown. */
 .note-body {
   margin-top: 0.4rem;
-  font-size: var(--fs-md);
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-
-  & p {
-    margin: 0 0 0.5rem;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  & code {
-    padding: 0 0.25rem;
-    border-radius: var(--radius);
-    background: var(--ink-3);
-    font-family: var(--font);
-    font-size: var(--fs-sm);
-  }
-
-  & pre {
-    margin: 0.5rem 0;
-    padding: 0.6rem 0.75rem;
-    max-height: 24rem;
-    overflow: auto;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--term-bg);
-    color: var(--term-fg);
-    font-family: var(--font);
-    font-size: var(--fs-xs);
-    line-height: 1.45;
-    white-space: pre;
-
-    & code {
-      padding: 0;
-      border: 0;
-      background: none;
-      color: inherit;
-      font-size: inherit;
-    }
-  }
-
-  & :is(ul, ol) {
-    margin: 0.3rem 0 0.5rem;
-    padding-inline-start: 1.3rem;
-  }
-
-  & li + li {
-    margin-top: 0.15rem;
-  }
-
-  & :is(h1, h2, h3, h4) {
-    margin: 0.7rem 0 0.3rem;
-    font-size: var(--fs-body);
-    font-weight: 600;
-  }
-
-  & blockquote {
-    margin: 0.4rem 0;
-    padding-inline-start: 0.75rem;
-    color: var(--text-dim);
-    border-inline-start: 3px solid var(--line-2);
-  }
-
-  & table {
-    margin: 0.4rem 0;
-    border-collapse: collapse;
-  }
-
-  & :is(th, td) {
-    padding: 0.2rem 0.55rem;
-    border: 1px solid var(--line);
-    text-align: start;
-  }
 }
 
 /* .mention styles a name a note points at. */
@@ -284,15 +209,6 @@ a.mention:hover {
   }
 }
 
-.note-body[data-edit] {
-  cursor: text;
-  border-radius: var(--radius);
-
-  &:hover {
-    background: var(--ink-3);
-  }
-}
-
 /* .run-form styles the form a ```form fence of a note's body draws. */
 .run-form {
   cursor: auto;
@@ -321,11 +237,6 @@ a.mention:hover {
 .form-started {
   margin: 0.6rem 0;
   font-size: var(--fs-sm);
-}
-
-/* .note-edit styles a note while its author is rewriting it. */
-.note-edit {
-  margin: 0.4rem 0 0;
 }
 
 .replies .rerun > .note-body {

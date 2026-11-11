@@ -1,0 +1,95 @@
+/* .timeline is the list of threads: one row each, newest first. */
+.timeline {
+  list-style: none;
+  margin: var(--block-gap) 0 0;
+  padding: 0;
+}
+
+.thread-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.thread-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .thread-said {
+    color: var(--signal);
+  }
+}
+
+.thread-said {
+  display: block;
+  overflow: hidden;
+  font-size: var(--fs-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+  font-size: var(--fs-xs);
+}
+
+.thread-kind {
+  color: var(--text-faint);
+}
+
+.thread-who {
+  flex: 0 0 auto;
+}
+
+/* .talk is one thread read as a conversation: what the reader said on the
+   trailing side, everyone else's on the leading side. */
+.talk {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  margin: var(--block-gap) 0;
+  padding: 0;
+}
+
+.said {
+  max-width: min(42rem, 85%);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+
+  & > header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--fs-xs);
+  }
+
+  &.mine {
+    align-self: flex-end;
+    border-color: var(--line-2);
+    background: var(--ink-3);
+  }
+
+  &.working {
+    border-color: var(--signal);
+  }
+}
+
+.said-audio {
+  width: 100%;
+  height: 2rem;
+  margin: 0.4rem 0 0;
+}
+
+.said-body {
+  margin-top: 0.4rem;
+}

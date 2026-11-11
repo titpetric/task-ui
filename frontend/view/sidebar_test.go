@@ -132,15 +132,15 @@ func sideMenu(t *testing.T, body string) string {
 	return rest[:strings.Index(rest, "</nav>")]
 }
 
-// Settings is in the sidebar, after Notes, for a user who may open any
+// Settings is in the sidebar, after Threads, for a user who may open any
 // settings page; the link is active on every page under Settings.
 func TestSidebar_Settings(t *testing.T) {
 	t.Parallel()
 
 	p := admin(t)
 	menu := sideMenu(t, render(t, "home", p))
-	notes, settings := strings.Index(menu, `href="/notes"`), strings.Index(menu, `<a href="/settings" class="">`)
-	assert.True(t, notes > 0 && settings > notes, "Settings after Notes")
+	threads, settings := strings.Index(menu, `href="/threads"`), strings.Index(menu, `<a href="/settings" class="">`)
+	assert.True(t, threads > 0 && settings > threads, "Settings after Threads")
 
 	p.Path = "/settings/keys"
 	assert.Contains(t, sideMenu(t, render(t, "home", p)), `<a href="/settings" class="active">`)

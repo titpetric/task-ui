@@ -21,4 +21,10 @@ type PromptRequest struct {
 	User string `json:"user"`
 	Cols int    `json:"cols"`
 	Rows int    `json:"rows"`
+	// Audio is the recording the prompt was spoken into, a path of the
+	// artifact tree, and Spoken the transcription of it. A thread shows
+	// Spoken under a player for Audio; the agent reads Prompt, which
+	// carries what the words alone do not say.
+	Audio  string `json:"audio"`
+	Spoken string `json:"spoken"`
 }

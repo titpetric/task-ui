@@ -30,11 +30,3 @@ func (t Thread) Answer(reply model.Note) bool {
 	return false
 }
 
-// Edits reports whether the user edits a note of the thread, the thread's
-// own or a reply: its author or an admin, the agents' answers excepted.
-func (t Thread) Edits(user *model.User, note model.Note) bool {
-	if user == nil || (note.ID != t.ID && t.Answer(note)) {
-		return false
-	}
-	return note.UserName == user.Name || user.CanAdmin()
-}

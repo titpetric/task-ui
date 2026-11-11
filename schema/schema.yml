@@ -510,6 +510,19 @@
       type: timestamp
       comment: Edited At
       datatype: datetime
+    - name: deleted_at
+      type: timestamp
+      key: MUL
+      comment: Deleted At
+      datatype: datetime
+    - name: audio_path
+      type: text
+      comment: Audio Path
+      datatype: varchar
+    - name: spoken
+      type: text
+      comment: Spoken
+      datatype: varchar
     - name: workspace_id
       type: text
       key: MUL
@@ -536,6 +549,9 @@
       columns:
         - channel
         - parent_id
+    - name: idx_note_deleted
+      columns:
+        - deleted_at
     - name: idx_note_parent
       columns:
         - parent_id

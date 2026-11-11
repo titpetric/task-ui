@@ -78,7 +78,7 @@ class Sidebar {
 				"icon" => self::icon($row->getIcon()),
 				"active" => self::active($row->getHref(), $path),
 				"flows" => $row->getHref() === "/workflows",
-				"pulse" => $row->getHref() === "/runs",
+				"pulse" => $row->getHref() === "/threads",
 			);
 		}
 
@@ -117,9 +117,9 @@ class Sidebar {
 				"rule" => "",
 			),
 			array(
-				"title" => "Runs",
-				"href" => "/runs",
-				"icon" => "list",
+				"title" => "Threads",
+				"href" => "/threads",
+				"icon" => "note",
 				"rule" => "",
 			),
 			array(
@@ -132,12 +132,6 @@ class Sidebar {
 				"title" => "Scheduled",
 				"href" => "/schedules",
 				"icon" => "clock",
-				"rule" => "",
-			),
-			array(
-				"title" => "Notes",
-				"href" => "/notes",
-				"icon" => "note",
 				"rule" => "",
 			),
 			array(

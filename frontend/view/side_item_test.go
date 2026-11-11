@@ -26,11 +26,11 @@ func TestSideItems(t *testing.T) {
 	signIn(p, &model.User{Name: "root", Role: model.RoleAdmin}, nil)
 	p.FillSide(model.SidebarDefaults())
 
-	assert.Equal(t, []string{"Dashboard", "Inventory", "Workflows", "Runs", "Artifacts", "Scheduled", "Notes", "Settings"},
+	assert.Equal(t, []string{"Dashboard", "Inventory", "Workflows", "Threads", "Artifacts", "Scheduled", "Settings"},
 		titles(p.SideItems))
 	assert.True(t, p.SideItems[0].Active, "the dashboard is active on its own path")
 	assert.True(t, p.SideItems[2].Flows, "the workflows are listed under their own row")
-	assert.True(t, p.SideItems[3].Pulse, "Runs carries the dot that pulses")
+	assert.True(t, p.SideItems[3].Pulse, "Threads carries the dot that pulses")
 	assert.False(t, p.SideItems[0].Flows)
 	assert.Equal(t, "grid", p.SideItems[0].Icon)
 }
@@ -61,13 +61,13 @@ func TestSideItemsHidden(t *testing.T) {
 	p := &view.Page{Path: "/"}
 	signIn(p, &model.User{Name: "root", Role: model.RoleAdmin}, nil)
 	p.FillSide(rows)
-	assert.Equal(t, []string{"Dashboard", "Workflows", "Runs", "Artifacts", "Scheduled", "Notes", "Settings", "Refinement"},
+	assert.Equal(t, []string{"Dashboard", "Workflows", "Threads", "Artifacts", "Scheduled", "Settings", "Refinement"},
 		titles(p.SideItems), "the hidden row is out and the module is in")
 
 	// A viewer with no rule sees neither the settings nor a module.
 	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
 	p.FillSide(rows)
-	assert.Equal(t, []string{"Dashboard", "Workflows", "Runs", "Artifacts", "Scheduled", "Notes"}, titles(p.SideItems))
+	assert.Equal(t, []string{"Dashboard", "Workflows", "Threads", "Artifacts", "Scheduled"}, titles(p.SideItems))
 
 	// The module rule alone brings the module back.
 	signIn(p, &model.User{Name: "ops", Role: model.RoleViewer}, permission.Policy{"module": permission.Allow})

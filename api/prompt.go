@@ -8,6 +8,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -87,7 +88,7 @@ func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest
 		fail(w, status, problem)
 		return
 	}
-	note, err := h.opts.Board.Ask(r.Context(), user, req.Parent, where, prompt)
+	note, err := h.opts.Board.Ask(r.Context(), user, req.Parent, where, prompt, note.Spoken{Audio: req.Audio, Text: req.Spoken})
 	if err != nil {
 		failErr(w, err)
 		return

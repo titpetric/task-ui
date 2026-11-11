@@ -117,18 +117,20 @@ echo "[", Task\Note::mentions("A note for @admin and @ops"), "]\n";
 echo "[", Task\Note::mentions("@admin @admin twice is once"), "]\n";
 echo "[", Task\Note::mentions("@a.b @c-d @e_f are all names"), "]\n";
 
-// An edit rewrites the column with the body, so a name added by a rewrite is
-// found and one taken out is not.
-$writes->edit($posted->getId(), "rewritten for @ops");
-
-$edited = $writes->get($posted->getId());
-
-echo $edited->getBody(), " [", $edited->getMentions(), "] ", var_export($edited->getEditedAt() !== "", true), "\n";
-
-// Dropping a thread takes the replies under it with it.
+// Dropping a thread takes the replies under it out of every listing, and the
+// rows stay for retention: a purge is what frees them.
 $writes->drop($posted->getId());
 
 echo var_export($writes->get($posted->getId()), true), " ", var_export($writes->get($reply->getId()), true), "\n";
+
+$listed = array();
+
+foreach ($writes->timeline() as $row) {
+	$listed[] = $row->getId();
+}
+
+echo var_export(in_array($posted->getId(), $listed, true), true), "\n";
+$writes->purge($posted->getId());
 
 // The cards the note component draws, which the board and a run's prompt box
 // both read. The reader is an admin, so every note is theirs to rewrite; the
@@ -223,35 +225,32 @@ echo "[", implode(",", Task\Note::agentsIn("fx-note-ann", "@fx-note-bot and @fx-
 
 // One thread as the component reads it: the note on top, its replies oldest
 // first, and the field under it where the reader may write one.
-$thread = Task\Note::thread($notes->get("fx-note-8"), $notes->replies(array("fx-note-8")), $chrome, array("fx-note-bot"), $seen);
+$thread = Task\Note::thread($notes->get("fx-note-8"), $notes->replies(array("fx-note-8")), $chrome, $seen);
 
 echo $thread["id"], " ", var_export($thread["working"], true), " ", count($thread["replies"]), " ", $thread["author"]["name"], " ", var_export($thread["edited"], true), "\n";
 echo labels($thread["menu"]), "\n";
 
-// The agent's answer is no row to rewrite: it changes when its question runs
-// again. The run it worked in links, because the reader sees that run.
+// The run the agent worked in links, because the reader sees that run.
 $answer = $thread["replies"][0];
 
-echo $answer["id"], " ", var_export($answer["edits"], true), " ", $answer["run"], " ", $answer["short"], "\n";
+echo $answer["id"], " ", $answer["run"], " ", $answer["short"], "\n";
 echo labels($answer["menu"]), "\n";
 
-// A reply that is nobody's answer is the reader's to rewrite, and links no run.
-echo $thread["replies"][1]["id"], " ", var_export($thread["replies"][1]["edits"], true), " [", $thread["replies"][1]["run"], "]\n";
+// A reply that is nobody's answer links no run.
+echo $thread["replies"][1]["id"], " [", $thread["replies"][1]["run"], "]\n";
 echo labels($thread["replies"][1]["menu"]), "\n";
 
-// A thread that split one request across two agents holds an answer from each,
-// and neither of them is a row the reader rewrites where it stands.
-$split = Task\Note::thread($notes->get("fx-note-11"), $notes->replies(array("fx-note-11")), $chrome, array("fx-note-bot", "fx-note-maid"), $seen);
+// A thread that split one request across two agents holds an answer from each.
+$split = Task\Note::thread($notes->get("fx-note-11"), $notes->replies(array("fx-note-11")), $chrome, $seen);
 
-echo $split["replies"][0]["id"], " ", var_export($split["replies"][0]["edits"], true), "\n";
-echo $split["replies"][1]["id"], " ", var_export($split["replies"][1]["edits"], true), "\n";
+echo $split["replies"][0]["id"], " ", $split["replies"][1]["id"], "\n";
 echo labels($split["replies"][1]["menu"]), "\n";
 
 // A card links the run its agent worked in only for a reader who sees it: the
 // run of the prompt's answer is gone, so the card with a seen links nowhere
 // and the card without one links it.
-echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $notes->get("fx-note-6"), array(Task\Note::CLAUDE), $seen)["run"], "]\n";
-echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $notes->get("fx-note-6"), array(Task\Note::CLAUDE))["run"], "]\n";
+echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome, $seen)["run"], "]\n";
+echo "[", Task\Note::card($notes->get("fx-note-7"), $chrome)["run"], "]\n";
 
 // A prompt belongs to the page it was asked from, so removing it needs the
 // prompt permission and removing a board note the note one. An admin holds
@@ -263,8 +262,8 @@ Task\Host::$whoami = "";
 
 $nobody = new Task\Chrome;
 
-echo var_export(Task\Note::edits($notes->get("fx-note-8"), $nobody, $notes->get("fx-note-8"), array()), true), " ", var_export(Task\Note::deletes($notes->get("fx-note-8"), $nobody), true), "\n";
-echo "[", labels(Task\Note::card($notes->get("fx-note-8"), $nobody, $notes->get("fx-note-8"), array(), $seen)["menu"]), "]\n";
+echo var_export(Task\Note::deletes($notes->get("fx-note-8"), $nobody), true), "\n";
+echo "[", labels(Task\Note::card($notes->get("fx-note-8"), $nobody, $seen)["menu"]), "]\n";
 ---
 fx-note-3,fx-note-1
 fx-note-5
@@ -284,8 +283,8 @@ notes notes true
 [ admin ops ]
 [ admin ]
 [ a.b c-d e_f ]
-rewritten for @ops [ ops ] true
 NULL NULL
+false
 [admin,ops]
 [fx-note-bot]
 []
@@ -296,17 +295,16 @@ NULL NULL
 []
 [fx-note-bot,fx-note-maid]
 fx-note-8 true 2 fx-note-ann false
-Edit,Delete
-fx-note-9 false fx-note-reply-run fx-note-
+Delete
+fx-note-9 fx-note-reply-run fx-note-
 Open its run,Delete
-fx-note-10 true []
-Edit,Delete
-fx-note-12 false
-fx-note-13 false
+fx-note-10 []
+Delete
+fx-note-12 fx-note-13
 Delete
 []
 [fx-note-answer-run]
 true false
 true true
-false false
+false
 []

@@ -2,12 +2,12 @@
 {include components/page-head.tpl}
 
 <section class="refinement">
-{if $data.visual}	<div class="refinement-output">{data.output|raw}</div>
+{if $data.visual}	<div class="refinement-output prose">{data.output|raw}</div>
 {if $data.thinking}	<details class="refinement-thinking">
 		<summary>show thinking</summary>
-		<div class="refinement-report">{data.thinking|raw}</div>
+		<div class="refinement-report prose">{data.thinking|raw}</div>
 	</details>
-{/if}{elseif $data.thinking}	<div class="block refinement-report">
+{/if}{elseif $data.thinking}	<div class="block refinement-report prose">
 		<h3>The design <small>as the last run left it</small></h3>
 		{data.thinking|raw}
 	</div>
@@ -25,7 +25,7 @@
 							{if $comment.run}<span class="state" data-run-id="{comment.run}"></span>{/if}{if $comment.note_id}<a class="badge" href="{base}/notes#{comment.note_id}">the run</a>{/if}
 							{if $comment.correction}<span class="badge">rule</span>{/if}
 						</div>
-						<div class="refinement-body">{comment.html|raw}</div>
+						<div class="refinement-body prose">{comment.html|raw}</div>
 					</li>
 {/foreach}				</ol>
 			</details>
@@ -42,7 +42,7 @@
 					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
 			</div>
-			<div class="refinement-body">{entry.comment.html|raw}</div>
+			<div class="refinement-body prose">{entry.comment.html|raw}</div>
 		</li>
 {/foreach}	</ol>
 

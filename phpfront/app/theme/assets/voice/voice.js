@@ -1456,7 +1456,7 @@
       }
       if (update.state === "done") return;
       tell(label(update.text || update.state));
-    }, thread, agentName());
+    }, thread, agentName(), { audio: clip ? clip + ".wav" : "", spoken: words });
   }
 
   // follow watches the thread for as long as the window is open, so a reply

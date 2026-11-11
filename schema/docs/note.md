@@ -19,5 +19,8 @@ Note.
 | about_workflow_run_id | char(26) | MUL | About Workflow Run ID |
 | area                  | varchar  |     | Area                  |
 | edited_at             | datetime |     | Edited At             |
+| deleted_at            | datetime | MUL | Deleted At            |
+| audio_path            | varchar  |     | Audio Path            |
+| spoken                | varchar  |     | Spoken                |
 | workspace_id          | char(26) | MUL | Workspace ID          |
 | dir                   | varchar  | MUL | Dir                   |

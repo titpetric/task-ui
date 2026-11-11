@@ -115,10 +115,7 @@
 </details><?php }?>
 
 		</header>
-		<div class="note-body"<?php if($_v['data_note']['edits']){?>
- data-edit="<?php echo htmlspecialchars($_v['data_note']['id'], ENT_QUOTES);?>
-" data-body="<?php echo htmlspecialchars($_v['data_note']['raw'], ENT_QUOTES);?>
-" title="Click to edit"<?php }?>><?php echo $_v['data_note']['body'];?>
+		<div class="note-body prose"><?php echo $_v['data_note']['body'];?>
 </div>
 <?php if($_v['data_note']['replies']){?>
 		<ol class="replies">
@@ -225,10 +222,7 @@
 	</div>
 </details><?php }?>
 </header>
-				<div class="note-body"<?php if($_v['reply']['edits']){?>
- data-edit="<?php echo htmlspecialchars($_v['reply']['id'], ENT_QUOTES);?>
-" data-body="<?php echo htmlspecialchars($_v['reply']['raw'], ENT_QUOTES);?>
-" title="Click to edit"<?php }?>><?php echo $_v['reply']['body'];?>
+				<div class="note-body prose"><?php echo $_v['reply']['body'];?>
 </div>
 			</li>
 <?php }?>		</ol>

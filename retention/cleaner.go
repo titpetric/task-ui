@@ -364,7 +364,7 @@ func (c *Cleaner) remove(ctx context.Context, kind string, items []Item, now tim
 		return c.removeRuns(ctx, items)
 	case Prompts:
 		for _, item := range items {
-			if err := c.Notes.Delete(ctx, item.ID); err != nil {
+			if err := c.Notes.Purge(ctx, item.ID); err != nil {
 				return 0, err
 			}
 		}

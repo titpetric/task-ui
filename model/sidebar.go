@@ -28,10 +28,9 @@ func SidebarDefaults() []Sidebar {
 		{Kind: SidebarView, Title: "Dashboard", Href: "/", Icon: "grid"},
 		{Kind: SidebarView, Title: "Inventory", Href: "/inventory", Icon: "server"},
 		{Kind: SidebarView, Title: "Workflows", Href: "/workflows", Icon: "flow"},
-		{Kind: SidebarView, Title: "Runs", Href: "/runs", Icon: "list"},
+		{Kind: SidebarView, Title: "Threads", Href: "/threads", Icon: "note"},
 		{Kind: SidebarView, Title: "Artifacts", Href: "/artifacts", Icon: "box"},
 		{Kind: SidebarView, Title: "Scheduled", Href: "/schedules", Icon: "clock"},
-		{Kind: SidebarView, Title: "Notes", Href: "/notes", Icon: "note"},
 		{Kind: SidebarView, Title: "Settings", Href: "/settings", Icon: "settings", Rule: RuleSettings},
 	}
 }

@@ -144,16 +144,16 @@
 
 <section class="refinement">
 <?php if($_v['data']['visual']){?>
-	<div class="refinement-output"><?php echo $_v['data']['output'];?>
+	<div class="refinement-output prose"><?php echo $_v['data']['output'];?>
 </div>
 <?php if($_v['data']['thinking']){?>
 	<details class="refinement-thinking">
 		<summary>show thinking</summary>
-		<div class="refinement-report"><?php echo $_v['data']['thinking'];?>
+		<div class="refinement-report prose"><?php echo $_v['data']['thinking'];?>
 </div>
 	</details>
 <?php }?><?php }elseif($_v['data']['thinking']){?>
-	<div class="block refinement-report">
+	<div class="block refinement-report prose">
 		<h3>The design <small>as the last run left it</small></h3>
 		<?php echo $_v['data']['thinking'];?>
 
@@ -183,7 +183,7 @@
 							<?php if($_v['comment']['correction']){?>
 <span class="badge">rule</span><?php }?>
 						</div>
-						<div class="refinement-body"><?php echo $_v['comment']['html'];?>
+						<div class="refinement-body prose"><?php echo $_v['comment']['html'];?>
 </div>
 					</li>
 <?php }?>				</ol>
@@ -216,7 +216,7 @@ data-confirm="Delete this request? The files it produced stay."<?php }?>>
 					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
 			</div>
-			<div class="refinement-body"><?php echo $_v['entry']['comment']['html'];?>
+			<div class="refinement-body prose"><?php echo $_v['entry']['comment']['html'];?>
 </div>
 		</li>
 <?php }?>	</ol>

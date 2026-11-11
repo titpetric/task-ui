@@ -126,7 +126,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		}
 		// A reply in a prompt's thread asks again, Claude's own excepted.
 		if parent.IsPrompt() && user.Name != b.Answerer() {
-			return b.Ask(ctx, user, parent.ID, "", body)
+			return b.Ask(ctx, user, parent.ID, "", body, Spoken{})
 		}
 	}
 	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}

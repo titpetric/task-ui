@@ -41,7 +41,7 @@ func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string
 	if !user.CanSee(run.Folder) || run.IsClaude() {
 		return nil, fmt.Errorf("%w: no such run", ErrNoPrompt)
 	}
-	return b.ask(ctx, user, "", run.Where(), run.ID, "", body)
+	return b.ask(ctx, user, "", run.Where(), run.ID, "", body, Spoken{})
 }
 
 // SummaryQuestion is the question of the thread Run and summarize

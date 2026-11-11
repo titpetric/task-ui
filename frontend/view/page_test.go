@@ -238,19 +238,6 @@ func TestPage_Deletes(t *testing.T) {
 	assert.False(t, p.Deletes(mine))
 }
 
-func TestPage_Edits(t *testing.T) {
-	t.Parallel()
-	p := admin(t)
-	thread := view.Thread{Note: model.Note{ID: "n1", UserName: "ops"}}
-	assert.True(t, p.Edits(thread.Note, thread))
-
-	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, nil)
-	assert.False(t, p.Edits(thread.Note, thread), "without note/edit")
-	signIn(p, p.User, permission.Policy{"note/edit": permission.Allow})
-	assert.True(t, p.Edits(thread.Note, thread))
-	assert.False(t, p.Edits(model.Note{ID: "n2", UserName: "dev"}, thread))
-}
-
 func TestPage_CanProfile(t *testing.T) {
 	t.Parallel()
 	p := admin(t)

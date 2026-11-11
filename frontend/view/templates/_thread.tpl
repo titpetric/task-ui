@@ -1,4 +1,4 @@
-{{- define "thread" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ $t := . }}
+{{- define "thread" }}{{ $p := index . 0 }}{{ with index . 1 }}
 	<article class="note{{ if .State }} instruction {{ .State }}{{ end }}" id="note-{{ .ID }}">
 		<header>
 			<span class="author">{{ template "user" (list $p .UserName) }}</span>
@@ -8,20 +8,18 @@
 			{{- if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run the agent worked in">run {{ slice .RunID 0 8 }}</a>{{ end }}
 			<span class="spacer"></span>
 			{{- template "menu" (menu (print "Actions on the note of " .UserName)
-				(and ($p.Edits .Note $t) (item "edit" "Edit" "data-edit-open" .ID))
 				(and .RunID (item "terminal" "Open its run" "href" (print "/runs/" .RunID)))
 				(and ($p.Deletes .Note) (danger "trash" "Delete" "data-delete" (print "/api/notes/" .ID) "data-confirm" (print "Delete the note of " .UserName " and its replies?") "data-confirm-ok" "Delete" "data-next" "reload"))) }}
 		</header>
-		<div class="note-body"{{ if $p.Edits .Note $t }} data-edit="{{ .ID }}" data-body="{{ .Body }}" title="Click to edit"{{ end }}>{{ $p.Message .Body }}</div>
+		<div class="note-body prose">{{ $p.Message .Body }}</div>
 		{{- if .Replies }}
 		<ol class="replies">
 			{{- range .Replies }}
 			<li{{ if eq .State "working" }} class="rerun"{{ end }}>
 				<header><span class="author">{{ template "user" (list $p .UserName) }}</span> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>{{ if .EditedAt }} <span class="faint edited" title="Edited {{ stamp .EditedAt }}">edited</span>{{ end }}{{ if eq .State "working" }} <span class="badge note-state working">working</span>{{ end }}{{ if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run this reply comes from">run {{ slice .RunID 0 8 }}</a>{{ end }}<span class="spacer"></span>{{ template "menu" (menu (print "Actions on the reply of " .UserName)
-					(and ($p.Edits . $t) (item "edit" "Edit" "data-edit-open" .ID))
 					(and .RunID (item "terminal" "Open its run" "href" (print "/runs/" .RunID)))
 					(and ($p.Deletes .) (danger "trash" "Delete" "data-delete" (print "/api/notes/" .ID) "data-confirm" (print "Delete this reply of " .UserName "?") "data-confirm-ok" "Delete" "data-next" "reload"))) }}</header>
-				<div class="note-body"{{ if $p.Edits . $t }} data-edit="{{ .ID }}" data-body="{{ .Body }}" title="Click to edit"{{ end }}>{{ $p.Message .Body }}</div>
+				<div class="note-body prose">{{ $p.Message .Body }}</div>
 			</li>
 			{{- end }}
 		</ol>
