@@ -34,10 +34,11 @@ class Retention {
 	/** SIGNINS is the one area no rule governs: removed every cleanup. */
 	const SIGNINS = "signins";
 
-	var $db;
+	/** store is the settings module, which owns the table the rules are in. */
+	var $store;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Settings\Settings($db);
 	}
 
 	/**
@@ -212,13 +213,7 @@ class Retention {
 	 * rows are a handful and the names of two of them per kind.
 	 */
 	function values() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT name, value FROM setting") as $row) {
-			$out[Row::text($row, "name")] = Row::text($row, "value");
-		}
-
-		return $out;
+		return $this->store->values();
 	}
 
 	/**

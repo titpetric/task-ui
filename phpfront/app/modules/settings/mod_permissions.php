@@ -77,7 +77,7 @@ class mod_permissions implements Module {
 	 */
 	function matrix($chrome, $role, $members) {
 		$fixed = $role === Task\User::ADMIN;
-		$policies = new Task\PermissionPolicy($chrome->db);
+		$policies = new Task\Settings\Policies($chrome->db);
 		$policy = new Task\Policy;
 
 		if (!$fixed) {

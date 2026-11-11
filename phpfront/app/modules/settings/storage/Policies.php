@@ -1,15 +1,18 @@
 <?php
 
-namespace Task;
+namespace Task\Settings;
 
-// PermissionPolicy reads and writes the permission_policy table: an effect per
-// path, per subject. A subject is a role or a user, by name; the admin role
-// holds no entries.
-class PermissionPolicy {
+// Policies reads and writes the permission_policy table: an effect per path,
+// per subject. A subject is a role or a user, by name; the admin role holds no
+// entries.
+//
+// The table is this module's, which draws the permissions page. What an entry
+// means to a reader is Task\Policy.
+class Policies {
 	var $db;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->db = $db === null ? \Task\DB::reader() : $db;
 	}
 
 	/** policy is a subject's entries. */
@@ -19,11 +22,11 @@ class PermissionPolicy {
 
 		if (is_array($rows)) {
 			foreach ($rows as $row) {
-				$entries[Row::text($row, "path")] = Row::text($row, "effect");
+				$entries[\Task\Row::text($row, "path")] = \Task\Row::text($row, "effect");
 			}
 		}
 
-		return new Policy($entries);
+		return new \Task\Policy($entries);
 	}
 
 	/**
@@ -31,7 +34,7 @@ class PermissionPolicy {
 	 * effect so the path inherits again.
 	 */
 	function put($kind, $subject, $path, $effect) {
-		if ($kind !== Policy::ROLE && $kind !== Policy::USER) {
+		if ($kind !== \Task\Policy::ROLE && $kind !== \Task\Policy::USER) {
 			throw new \Exception("no subject kind " . $kind);
 		}
 
@@ -39,15 +42,15 @@ class PermissionPolicy {
 			throw new \Exception("a policy needs a subject");
 		}
 
-		if ($kind === Policy::ROLE && $subject === User::ADMIN) {
+		if ($kind === \Task\Policy::ROLE && $subject === \Task\User::ADMIN) {
 			throw new \Exception("the admin role can do everything and has no policy to change");
 		}
 
-		if (!Permission::valid($path)) {
+		if (!\Task\Permission::valid($path)) {
 			throw new \Exception("no such permission: " . $path);
 		}
 
-		if ($effect !== "" && $effect !== Policy::ALLOW && $effect !== Policy::DENY) {
+		if ($effect !== "" && $effect !== \Task\Policy::ALLOW && $effect !== \Task\Policy::DENY) {
 			throw new \Exception("no effect " . $effect . ": allow, deny or none");
 		}
 
@@ -57,16 +60,16 @@ class PermissionPolicy {
 			return true;
 		}
 
-		$row = new Model\PermissionPolicy;
+		$row = new \Task\Model\PermissionPolicy;
 
-		$row->setId(Id::make());
+		$row->setId(\Task\Id::make());
 		$row->setSubjectKind($kind);
 		$row->setSubject($subject);
 		$row->setPath($path);
 		$row->setEffect($effect);
-		$row->setCreatedAt(Clock::stamp());
+		$row->setCreatedAt(\Task\Clock::stamp());
 
-		$this->db->insert(Model\PermissionPolicy::TABLE, $row->values());
+		$this->db->insert(\Task\Model\PermissionPolicy::TABLE, $row->values());
 
 		return true;
 	}

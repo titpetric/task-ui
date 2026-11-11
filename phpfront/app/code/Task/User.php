@@ -105,7 +105,7 @@ class User {
 			return new Access($user);
 		}
 
-		$policies = new PermissionPolicy($this->db);
+		$policies = new Settings\Policies($this->db);
 		$role = $policies->policy(Policy::ROLE, $user->getRole());
 		$own = $policies->policy(Policy::USER, $user->getName());
 

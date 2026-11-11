@@ -21,10 +21,11 @@ class Toolset {
 
 	const CUSTOM = "custom";
 
-	var $db;
+	/** store is the settings module, which owns the table. */
+	var $store;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Settings\Tools($db);
 	}
 
 	/**
@@ -69,9 +70,7 @@ class Toolset {
 
 	/** tools is every tool the last check recorded, by category and then by name. */
 	function tools() {
-		$found = $this->db->get_all("SELECT * FROM tool ORDER BY category, name");
-
-		return Model\Tool::rows($found);
+		return $this->store->all();
 	}
 
 	/**
