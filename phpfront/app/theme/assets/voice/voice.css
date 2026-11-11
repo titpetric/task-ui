@@ -1,6 +1,7 @@
-/* .voice-orb is the thing to press: a flat button in the corner holding a
-   microphone, which opens the window where the avatar is full size. It is the
-   page's other buttons in every way but where it sits. */
+/* .voice-orb is the thing to press: a raised round button in the corner
+   holding a microphone, which opens the window where the avatar is full size.
+   The dome is a top-lit gradient between two inset edges and the lift is the
+   drop shadow, which a press takes away. */
 .voice-orb {
   position: fixed;
   inset-inline-end: 1rem;
@@ -9,36 +10,65 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--control);
-  height: var(--control);
+  width: 2.9rem;
+  height: 2.9rem;
   padding: 0;
   border: 1px solid var(--line-2);
-  border-radius: var(--radius);
-  background: var(--ink-2);
+  border-radius: var(--radius-round);
+  background: radial-gradient(120% 120% at 50% 12%, var(--ink-3), var(--ink-2) 58%, var(--ink-1));
   color: var(--signal);
   cursor: pointer;
+  box-shadow:
+    0 0.45rem 1rem rgba(0, 0, 0, 0.45),
+    0 0.1rem 0.2rem rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(213, 222, 231, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
   transition:
     color 0.14s ease-out,
     background 0.14s ease-out,
-    border-color 0.14s ease-out;
+    border-color 0.14s ease-out,
+    box-shadow 0.14s ease-out,
+    transform 0.1s ease-out;
 
   & .ic {
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
   &:hover,
   &:focus-visible {
     color: var(--signal-ink);
-    background: var(--signal);
     border-color: var(--signal);
+    background: radial-gradient(
+      120% 120% at 50% 12%,
+      color-mix(in srgb, white 20%, var(--signal)),
+      var(--signal) 58%,
+      color-mix(in srgb, black 18%, var(--signal))
+    );
+    box-shadow:
+      0 0.6rem 1.25rem rgba(0, 0, 0, 0.5),
+      0 0.1rem 0.2rem rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    box-shadow:
+      0 0.1rem 0.25rem rgba(0, 0, 0, 0.45),
+      inset 0 2px 5px rgba(0, 0, 0, 0.55);
+    transform: translateY(1px);
   }
 
   /* The page is listening for a name, which with the window shut is the
      only sign of it. */
   &.listening {
     border-color: var(--signal);
-    box-shadow: 0 0 0.9rem color-mix(in srgb, var(--signal) 45%, transparent);
+    box-shadow:
+      0 0 0.9rem color-mix(in srgb, var(--signal) 45%, transparent),
+      0 0.45rem 1rem rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(213, 222, 231, 0.14),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5);
   }
 
   &[hidden] {
@@ -48,7 +78,7 @@
 
 /* The toasts share the corner, so they stack above the orb when it is up. */
 body:has(.voice-orb:not([hidden])) .toasts {
-  bottom: 4.3rem;
+  bottom: 4.9rem;
 }
 
 /* The window the orb opens draws over it, and the button stays down while
@@ -494,13 +524,15 @@ body:has(.voice[open]) .voice-orb {
   }
 }
 
-/* Reduced motion stills the corner orb; voice/orbs.js draws one frame of the
-   avatar and runs no loop. */
+/* Reduced motion keeps the corner orb still under a press; voice/orbs.js draws
+   one frame of the avatar and runs no loop. */
 @media (prefers-reduced-motion: reduce) {
-  .voice-orb::after {
-    animation: none;
-    opacity: 0.7;
+  .voice-orb,
+  .voice-orb:hover,
+  .voice-orb:focus-visible,
+  .voice-orb:active {
     transform: none;
+    transition: none;
   }
 
   .voice-rec i {
