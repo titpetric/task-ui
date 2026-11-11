@@ -82,6 +82,9 @@ Note
 | `about_workflow_run_id` | `text`      | indexed |
 | `area`                  | `text`      |         |
 | `edited_at`             | `timestamp` |         |
+| `deleted_at`            | `timestamp` | indexed |
+| `audio_path`            | `text`      |         |
+| `spoken`                | `text`      |         |
 | `workspace_id`          | `text`      | indexed |
 | `dir`                   | `text`      | indexed |
 
@@ -114,6 +117,8 @@ Run
 | `batch_id`    | `text`      | indexed |
 | `message`     | `text`      |         |
 | `title`       | `text`      |         |
+| `parent_id`   | `text`      | indexed |
+| `parent_kind` | `text`      |         |
 
 ### `schedule`
 

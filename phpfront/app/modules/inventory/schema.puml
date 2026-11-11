@@ -31,6 +31,9 @@ entity "note" {
   + about_workflow_run_id : text
   + area : text
   + edited_at : timestamp
+  + deleted_at : timestamp
+  + audio_path : text
+  + spoken : text
   + workspace_id : text
   + dir : text
 }

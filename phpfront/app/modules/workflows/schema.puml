@@ -50,6 +50,9 @@ entity "note" {
   + about_workflow_run_id : text
   + area : text
   + edited_at : timestamp
+  + deleted_at : timestamp
+  + audio_path : text
+  + spoken : text
   + workspace_id : text
   + dir : text
 }
@@ -78,6 +81,8 @@ entity "run" {
   + batch_id : text
   + message : text
   + title : text
+  + parent_id : text
+  + parent_kind : text
 }
 
 entity "schedule" {

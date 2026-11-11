@@ -1,18 +1,22 @@
-# Notes
+# Threads
 
 Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ![The tables this module reads](schema.svg)
 
-mod_notes is the notes board: the notes newest first, each with its replies, and the agent a note names to start work.
+mod_threads is the timeline: every thread the reader may see, newest first, and the box that starts one.
 
-The page reads and does not write. Both forms it draws carry data-note-form, which the script posts to /api/notes and then refreshes the list in place; a POST route here would reload the whole page instead, and the Go page has none either.
+A thread is a note of the board, a prompt asked from a page, or a question put to the orb: one table, one list, one page per thread. The list is rows and not the threads themselves, because a thread is read on its own page, where the messages take sides and a recording plays.
+
+The page reads and does not write. The box holds data-note-form, which the script posts to /api/notes and then refreshes the list in place.
 
 ## Pages
 
-| Method | Path     | Answered by                      |
-|--------|----------|----------------------------------|
-| `GET`  | `/notes` | [`mod_notes.php`](mod_notes.php) |
+| Method | Path            | Answered by                          |
+|--------|-----------------|--------------------------------------|
+| `GET`  | `/notes`        | [`mod_notes.php`](mod_notes.php)     |
+| `GET`  | `/threads/{id}` | [`mod_thread.php`](mod_thread.php)   |
+| `GET`  | `/threads`      | [`mod_threads.php`](mod_threads.php) |
 
 ## The data model
 
@@ -37,6 +41,9 @@ Note
 | `about_workflow_run_id` | `text`      | indexed |
 | `area`                  | `text`      |         |
 | `edited_at`             | `timestamp` |         |
+| `deleted_at`            | `timestamp` | indexed |
+| `audio_path`            | `text`      |         |
+| `spoken`                | `text`      |         |
 | `workspace_id`          | `text`      | indexed |
 | `dir`                   | `text`      | indexed |
 
@@ -69,6 +76,8 @@ Run
 | `batch_id`    | `text`      | indexed |
 | `message`     | `text`      |         |
 | `title`       | `text`      |         |
+| `parent_id`   | `text`      | indexed |
+| `parent_kind` | `text`      |         |
 
 ### `user`
 
@@ -88,8 +97,30 @@ User
 
 ## Operations
 
-This module owns no data model of its own. It reads the instance's tables through `code/Task`.
+### `Talk`
+
+Talk is one thread as a conversation: the messages in the order they were said, each on the side of whoever said it. The reader's own messages take one side and everyone else's the other, which is the shape a spoken thread wants: a question, an answer, a question. A message that was spoken carries the recording it was spoken into, and an answer that was read out carries what it was read out as, so a thread is read and listened to the same way it happened.
+
+| Method                                             | What it does                                                                                                                                                                                                                                                                                                                                                           |
+|----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `messages($note, $replies, $chrome, $seen = null)` | messages is the thread and its replies, oldest first, as the template reads them. An answer the session read out is named by the recording the question was spoken into, `<clip>.<n>.reply.wav`, which is what the brief in docs/guide/voice.md tells the session to write. The row does not hold it, so the folder is listed once and the answers take what is there. |
+| `spokenFor($note, $replies)`                       | spokenFor is the answers of a voice thread that were read out, by their place in the thread: an empty list for a thread nobody spoke.                                                                                                                                                                                                                                  |
+| `message($note, $chrome, $seen = null)`            | message is one thing somebody said, as the thread template reads it.                                                                                                                                                                                                                                                                                                   |
+| `said($note)`                                      | said is what a message shows: the transcription where one was spoken, and the body otherwise. A spoken message's body carries what the agent needs beside the words - where the clip is, and the brief the session opens on - and none of that was said by anyone.                                                                                                     |
+| `audio($note)`                                     | audio is the URL the message plays from, or the empty string where nothing was recorded.                                                                                                                                                                                                                                                                               |
+| `url($path)`                                       | url is a file of the artifact tree as the player reads it, by byte range.                                                                                                                                                                                                                                                                                              |
+
+### `Timeline`
+
+Timeline is the list the Threads page draws: one row per thread, newest first, whatever started it. A row says who said the first thing, when, what it was, how it is going and how many messages came after. What it does not say is the conversation: that is Talk, on the thread's own page.
+
+| Method                                        | What it does                                                                            |
+|-----------------------------------------------|-----------------------------------------------------------------------------------------|
+| `row($note, $replies, $chrome, $seen = null)` | row is one thread as components/thread-row.tpl reads it.                                |
+| `kind($note)`                                 | kind names what started the thread: a recording, a prompt asked from a page, or a note. |
+| `heard($note, $replies)`                      | heard reports whether any message of the thread was spoken or read out.                 |
+| `lastAt($note, $replies)`                     | lastAt is when the thread last moved: its newest reply, or the thread itself.           |
 
 ---
 
-The tables come from `tables()` on `mod_notes`. The operations are the classes of `storage/`, which hold every statement this module runs.
+The tables come from `tables()` on `mod_notes`, `mod_thread`, `mod_threads`. The operations are the classes of `storage/`, which hold every statement this module runs.

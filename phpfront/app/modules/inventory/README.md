@@ -56,6 +56,9 @@ Note
 | `about_workflow_run_id` | `text`      | indexed |
 | `area`                  | `text`      |         |
 | `edited_at`             | `timestamp` |         |
+| `deleted_at`            | `timestamp` | indexed |
+| `audio_path`            | `text`      |         |
+| `spoken`                | `text`      |         |
 | `workspace_id`          | `text`      | indexed |
 | `dir`                   | `text`      | indexed |
 

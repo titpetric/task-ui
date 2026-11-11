@@ -64,6 +64,8 @@ entity "run" {
   + batch_id : text
   + message : text
   + title : text
+  + parent_id : text
+  + parent_kind : text
 }
 
 entity "schedule" {

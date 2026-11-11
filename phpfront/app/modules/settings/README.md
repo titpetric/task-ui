@@ -118,6 +118,8 @@ Run
 | `batch_id`    | `text`      | indexed |
 | `message`     | `text`      |         |
 | `title`       | `text`      |         |
+| `parent_id`   | `text`      | indexed |
+| `parent_kind` | `text`      |         |
 
 ### `schedule`
 
