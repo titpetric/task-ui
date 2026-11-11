@@ -13,11 +13,11 @@ import (
 
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/event"
-	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/note"
-	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/note"
+	"github.com/titpetric/task-ui/feature/orb/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )

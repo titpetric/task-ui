@@ -11,9 +11,9 @@ import (
 
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workflow"
+	"github.com/titpetric/task-ui/feature/workflow"
 )
 
 // A check step reads the step it follows and sends the steps round again

@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/internal/access"
+	"github.com/titpetric/task-ui/app/api"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/spotify"
+	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/integration/spotify"
 )
 
 const playingTrack = "4uLU6hMCjMI75M1A2tKUQC"

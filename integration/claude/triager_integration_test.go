@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration/git"
 )
 
 // fakeClaude writes a script that answers every prompt with one line.

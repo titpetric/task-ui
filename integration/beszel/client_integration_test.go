@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/integration/beszel"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
