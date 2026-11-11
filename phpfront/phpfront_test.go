@@ -153,26 +153,30 @@ func TestExtract(t *testing.T) {
 	}
 }
 
-// What the instance wrote beside the shipped files stays, so a compiled
-// template survives an upgrade.
-func TestExtract_Keeps(t *testing.T) {
+// A file the tree no longer ships is deleted, and the directory it was alone
+// in goes with it: an upgrade that drops a module drops its routes.
+func TestExtract_Prunes(t *testing.T) {
 	t.Setenv(phpfront.Env, "")
 
 	dir := t.TempDir()
 	root, err := phpfront.Extract(dir)
 	assert.NoError(t, err)
 
-	// A path the shipped tree does not hold: the compiled templates it does
-	// ship are replaced on every start, which is how an upgrade applies them.
-	own := filepath.Join(root, "theme", "templates_c", "own.tpl")
-	assert.NoError(t, os.MkdirAll(filepath.Dir(own), 0o755))
-	assert.NoError(t, os.WriteFile(own, []byte("compiled"), 0o644))
+	stale := filepath.Join(root, "modules", "gone", "mod_gone.php")
+	assert.NoError(t, os.MkdirAll(filepath.Dir(stale), 0o755))
+	assert.NoError(t, os.WriteFile(stale, []byte("<?php"), 0o644))
 
 	_, err = phpfront.Extract(dir)
 	assert.NoError(t, err)
-	data, err := os.ReadFile(own)
+	_, err = os.Stat(stale)
+	assert.True(t, os.IsNotExist(err), "the file the tree does not ship")
+	_, err = os.Stat(filepath.Dir(stale))
+	assert.True(t, os.IsNotExist(err), "the directory it was alone in")
+
+	// A shipped file is still there, so the prune reads the tree and not the
+	// disk alone.
+	_, err = os.Stat(filepath.Join(root, "code", "Task", "Row.php"))
 	assert.NoError(t, err)
-	assert.Equal(t, "compiled", string(data))
 }
 
 // The checkout override serves a tree in place, so editing a template takes

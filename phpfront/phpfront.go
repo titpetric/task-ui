@@ -23,6 +23,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 )
 
 //go:embed all:app
@@ -44,15 +45,7 @@ func ThemeAssets() fs.FS {
 	return sub(path.Join("app", "theme", "assets"))
 }
 
-// Migrations returns the module tree, where each module carries the migrations
-// of the tables its pages own under modules/<name>/schema/.
-//
-// It reads the embedded tree and never the checkout Env names: the schema a
-// binary applies is the one it was built with, so a checkout that is ahead
-// does not migrate an instance running an older binary.
-//
-// schema.Migrations merges this with every other owner's, keyed by base name,
-// which is what the migrations table records: see schema/schema.go.
+// Migrations returns the embedded module tree, never the checkout Env names.
 func Migrations() fs.FS {
 	return sub(path.Join("app", "modules"))
 }
@@ -67,13 +60,16 @@ func sub(dir string) fs.FS {
 }
 
 // Extract writes the embedded tree under dir and returns the root to serve.
-// A shipped file is replaced; what the instance wrote beside it stays, so the
-// compiled templates survive. Env short-circuits the whole thing.
+// The tree is the binary's: a file this build does not ship is deleted, and a
+// module dropped from it answers its routes forever otherwise.
+//
+// Env short-circuits the whole thing, so a checkout is never pruned.
 func Extract(dir string) (string, error) {
 	if checkout := os.Getenv(Env); checkout != "" {
 		return filepath.Abs(checkout)
 	}
 	root := filepath.Join(dir, Dir)
+	shipped := map[string]bool{}
 	err := fs.WalkDir(App(), ".", func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -89,10 +85,47 @@ func Extract(dir string) (string, error) {
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 			return err
 		}
+		shipped[name] = true
 		return os.WriteFile(target, data, 0o644)
 	})
 	if err != nil {
 		return "", err
 	}
+	if err := prune(root, shipped); err != nil {
+		return "", err
+	}
 	return root, nil
+}
+
+// prune deletes every file under root that shipped does not name.
+func prune(root string, shipped map[string]bool) error {
+	var dirs []string
+	err := filepath.WalkDir(root, func(target string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		name, err := filepath.Rel(root, target)
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			dirs = append(dirs, target)
+			return nil
+		}
+		if shipped[filepath.ToSlash(name)] {
+			return nil
+		}
+		return os.Remove(target)
+	})
+	if err != nil {
+		return err
+	}
+	// Deepest first, and a directory still holding something refuses.
+	slices.Reverse(dirs)
+	for _, dir := range dirs {
+		if dir != root {
+			os.Remove(dir)
+		}
+	}
+	return nil
 }
