@@ -1,14 +1,8 @@
 /.claude
 /docs/assets
-/task-ui
-/.ssh
 /build
 *.cov
-/cover
-/env
-/history
-.data/
+.live/
 /keys/
 /data/
-.live/
 internal/testkey/testdata/
