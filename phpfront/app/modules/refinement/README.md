@@ -6,7 +6,7 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 
 mod_refinement is the refinement board: the threads newest first, and the paragraph that starts one.
 
-The module came from phpscripts/modules/titpetric/refinement, where it was a plugin of its own under /m. The page is the same page; what it loses is the plugin frame around it, which named the module and timed its render, and what it gains is the theme's own head and table.
+The page is the front end's own and draws in the theme's head and table, where the plugin it came from drew in a frame that named the module and timed its render.
 
 The gate is the one the plugin page answered behind, which is the capability to open a module at all.
 

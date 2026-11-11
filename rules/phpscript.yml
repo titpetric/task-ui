@@ -37,7 +37,6 @@ rules:
     paths:
       include:
         - "phpfront/app/**/*.php"
-        - "phpscripts/modules/**/*.php"
       exclude:
         - "**/ext/**"
         - "**/templates_c/**"
@@ -58,7 +57,6 @@ rules:
     paths:
       include:
         - "phpfront/app/**/*.php"
-        - "phpscripts/modules/**/*.php"
       exclude:
         - "**/ext/**"
         - "**/templates_c/**"

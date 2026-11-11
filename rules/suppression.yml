@@ -5,15 +5,13 @@
 # `file_exists()` before `filemtime()`, `isset()` before a read — which is a
 # decision and not a substitution.
 #
-# mobius's rule carries no paths block. Ours does, because the four findings
-# it had on this tree were all false and all outside our own code:
+# mobius's rule carries no paths block. Ours does, because the findings it
+# had on this tree were all false and all outside our own code:
 #
-#   phpfront/app/ext/composer/InstalledVersions.php:270   @trigger_error(),
-#   phpscripts/modules/titpetric/refinement/ext/...:270   vendored twice
-#   phpfront/app/tests/note.phpt:266                      "rewritten for @ops"
-#   phpfront/app/tests/notes.phpt:27                       "@a&lt;b", a mention
+#   phpfront/app/ext/composer/InstalledVersions.php:270   @trigger_error()
+#   phpfront/app/tests/threads.phpt:27                    "@a&lt;b", a mention
 #
-# The two fixtures only match because everything before `<?php` in a .phpt is
+# The fixture only matches because everything before `<?php` in a .phpt is
 # inline text to a PHP parser, so the expected-output block reads as code.
 # Neither exclude may be widened past those two directories: a suppressed
 # call in a page is the thing this refuses.
@@ -31,7 +29,6 @@ rules:
     paths:
       include:
         - "phpfront/app/**/*.php"
-        - "phpscripts/modules/**/*.php"
       exclude:
         - "**/ext/**"
         - "**/tests/**"

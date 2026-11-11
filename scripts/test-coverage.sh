@@ -157,7 +157,6 @@ suite_php() {
 		echo "phpscript not in PATH"
 		return 1
 	}
-	(cd phpscripts/modules/titpetric/refinement && phpscript test ./tests/...) || return 1
 	(cd phpfront/app && phpscript test ./tests/...)
 }
 

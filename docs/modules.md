@@ -37,7 +37,7 @@ A path in a `require` is read from the module's root, the directory `modinfo.php
 "config": { "vendor-dir": "ext" }
 ```
 
-`index.php` then requires `ext/autoload.php` and the autoloader finds the rest. `TestModulesInstallIntoExt` and `TestModulesRequiresResolve` in `phpscripts/` are the gate: the first refuses a `vendor` path in the embedded tree, the second resolves every `require` a module writes against that tree.
+`index.php` then requires `ext/autoload.php` and the autoloader finds the rest. A `require` that names a file the module did not ship is a 500 on the first request: nothing scans an installed module ahead of a reader.
 
 A module's forms post to the module, which is the one place in the front end that takes a `POST`, so those routes carry the same `access.SameOrigin` check `/api` has. A form that changed something answers with a redirect, `header("Location: ...")` and `http_response_code(303)`, which task-ui sends on rather than wrapping in a layout: without it a reload repeats the work.
 

@@ -245,7 +245,7 @@ For what cannot run, `stubs/` holds PHP declarations of the bindings. They are f
 
 ### What the Go tests cover
 
-The Go side of a module is packaging, not behaviour, and `phpscripts/phpscripts_test.go` is where it is pinned: that the embedded tree extracts, that a module installs its composer tree into `ext/` and not `vendor/`, and that every `require` a module writes names a file that shipped. Behaviour belongs in a `.phpt` fixture. Do not write a Go integration test to cover what a module's PHP does.
+The Go side of a module is the boundary and not the module: `phpscript/` holds the discovery of a `modinfo.php`, the runtime pool and the handler that serves `/m/<vendor>/<name>`, and its tests pin those. A module's own behaviour belongs in a `.phpt` fixture. Do not write a Go integration test to cover what a module's PHP does.
 
 ---
 

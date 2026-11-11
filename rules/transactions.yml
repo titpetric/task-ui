@@ -32,7 +32,6 @@ rules:
     paths:
       include:
         - "phpfront/app/**/*.php"
-        - "phpscripts/modules/**/*.php"
       exclude:
         - "**/ext/**"
         - "**/stubs/**"
@@ -53,7 +52,6 @@ rules:
     paths:
       include:
         - "phpfront/app/**/*.php"
-        - "phpscripts/modules/**/*.php"
       exclude:
         - "**/ext/**"
         - "**/stubs/**"

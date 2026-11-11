@@ -23,7 +23,6 @@ import (
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/phpscript"
-	"github.com/titpetric/task-ui/phpscripts"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/skills"
@@ -126,18 +125,12 @@ func (a *App) wire(version string) error {
 		return err
 	}
 
-	// The modules: the tree in the binary lands in the data folder, then
-	// every root is walked for a modinfo.php and each one is run once.
+	// The modules: the data folder's modules directory is walked for a
+	// modinfo.php and each root is run once. task-ui ships none of its own.
+	// A module that will not register is logged and the instance still serves.
 	//
-	// A module that will not register is a warning and not a failure. The
-	// instance serves its own pages either way, and a plugin that throws
-	// on startup should not be the reason nobody can sign in.
-	if err := phpscripts.Extract(cfg.ModulesDir()); err != nil {
-		return err
-	}
-	// One dispatcher and one lookup on the instance, read by both the
-	// plugins and the front end: a page's run and a module's run are the
-	// same run, differing only in the tree the action file sits in.
+	// One dispatcher serves the plugins and the front end: a page's run and a
+	// module's run are the same run.
 	dispatcher := NewDispatcher(a.Board, store.Users, svc.Artifacts)
 	moduleRuns := NewModuleRuns(store.Notes)
 

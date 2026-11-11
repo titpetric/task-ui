@@ -52,13 +52,13 @@ foreach (glob("templates/*.tpl") as $source) {
 
 ## 3. An embedded tree cannot be served with options
 
-Specified: `phpscripts/modules/` embedded in the binary with `go:embed` and served from there.
+Specified: a module tree embedded in the binary with `go:embed` and served from there.
 
 `server.NewHandler(fs.FS)` serves an `fs.FS` but takes no options: the document root is fixed at `public`, the flat stack is off and `runner.Options` is the zero value. `server.NewModule` takes options but its root is a string and it calls `os.DirFS` itself, so an `embed.FS` cannot reach it. `annotations.NewRoute(fs.FS, ...)` takes both, and it registers `@route` endpoints, which a module does not declare.
 
 Two other parts of a module need a real directory in any case. `stdlib.RegisterFS` reroots the file, image and session bindings at one, and the compile directory has to be writable.
 
-Correction: `phpscripts.Extract` writes the embedded tree to `<data>/modules` on first start, and discovery walks that directory with the working directory. The binary still holds the modules; the filesystem the runtime reads is a real one.
+Correction: a module is installed into `<data>/modules` and discovery walks that directory with the working directory. task-ui ships none of its own, so nothing is embedded: the filesystem the runtime reads is a real one either way.
 
 ## 4. The handler strips no path prefix
 
