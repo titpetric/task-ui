@@ -29,15 +29,6 @@ import (
 // empty FrontBase turns {base}/settings into /settings.
 const FrontBase = ""
 
-// GoBase mounts the Go pages, the front end being replaced.
-// scripts/compare.sh fetches both to diff a ported page against its Go
-// original; the cutover commit drops them along with this line.
-//
-// A Go page draws its links without a prefix, because the Go view layer has no
-// notion of one: a link followed from one leaves for the ported page at the
-// root. These pages serve a page-by-page diff, not browsing the old front end.
-const GoBase = "/legacy"
-
 // FrontHost answers phpfront.Host off the instance: the catalogue, the live
 // runner, the checkouts, the permission file and the event bus. Every row the
 // front end reads it reads itself.
