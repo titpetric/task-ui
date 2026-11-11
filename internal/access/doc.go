@@ -8,10 +8,7 @@
 // as the user who started it, for as long as the run lasts: it needs no
 // MCP agent user flag, and it names the note the run answers.
 //
-// Migrations owns the tables behind that: the passwords, the API tokens,
-// the mail addresses and the sessions. No page queries them. The Guard
-// stands in front of every mount, and minting or reading a session stays
-// in Go, so the data model stays with the code that authenticates.
-// migrate.Migrations merges these files with every other owner's, keyed by
-// base name, the key the migrations table records: see internal/migrate.
+// The tables behind that are the user module's, under
+// phpfront/app/modules/user/schema: every user_ table migrates with the
+// pages that draw a user. This package writes them and owns none.
 package access

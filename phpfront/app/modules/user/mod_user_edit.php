@@ -228,8 +228,8 @@ class mod_user_edit implements Module {
 		$name = $user->getName();
 		$id = $user->getId();
 		$api = "/api/users/" . $id . "/mcp";
-		$store = new Task\Mcp\Tokens($chrome->db);
-		$rows = $store->ofKind($id, Task\Mcp\Tokens::MCP);
+		$store = new Task\User\Tokens($chrome->db);
+		$rows = $store->ofKind($id, Task\User\Tokens::MCP);
 		$agent = $user->getMcp();
 		$enable = $chrome->allowed("user/edit") && $agent;
 
@@ -242,11 +242,11 @@ class mod_user_edit implements Module {
 			"enable" => $enable,
 			"manage" => $enable || ($own && count($rows) > 0),
 			"tokens" => self::rows($rows, $api),
-			"fill" => Task\Mcp\Connect::TOKEN,
-			"until" => Task\Mcp\Connect::UNTIL,
-			"named" => Task\Mcp\Connect::NAMED,
-			"add" => Task\Mcp\Connect::add(Task\Route::site()),
-			"settings" => Task\Mcp\Connect::settings(Task\Route::site()),
+			"fill" => Task\User\Connect::TOKEN,
+			"until" => Task\User\Connect::UNTIL,
+			"named" => Task\User\Connect::NAMED,
+			"add" => Task\User\Connect::add(Task\Route::site()),
+			"settings" => Task\User\Connect::settings(Task\Route::site()),
 		);
 	}
 
@@ -281,8 +281,8 @@ class mod_user_edit implements Module {
 				"createdAt" => Task\Clock::read($created),
 				"expires" => $expires !== "",
 				"expiresAt" => Task\Clock::read($expires),
-				"expired" => Task\Mcp\Tokens::expired($expires),
-				"tone" => Task\Mcp\Tokens::tone($expires),
+				"expired" => Task\User\Tokens::expired($expires),
+				"tone" => Task\User\Tokens::tone($expires),
 				"used" => $used !== "",
 				"usedAgo" => Task\Clock::ago($used),
 				"usedAt" => Task\Clock::read($used),

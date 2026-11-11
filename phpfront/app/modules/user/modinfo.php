@@ -16,10 +16,6 @@ $module->setTitle("User");
 $module->setDescription("Who is signed in and who anyone else is: the sign in page, a user's own page and their keys");
 $module->setIcon("users");
 
-// None yet: the user table's migration is still under the settings module and
-// the password, token, session and email tables under internal/access, which
-// is the Guard that writes them. The statements over the user table are this
-// module's, in Task\User\Users.
-$module->setTables(array());
+$module->setTables(array("user", "user_auth_password", "user_auth_token", "user_email", "user_session"));
 
 Task::register($module);

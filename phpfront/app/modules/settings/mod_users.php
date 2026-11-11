@@ -133,7 +133,7 @@ class mod_users implements Module {
 		$menu->when($chrome->allowed("user/edit") && $user->getMcp(), "copy", "New MCP token", array(
 			"data-api" => "/api/users/" . $id . "/mcp",
 			"data-method" => "POST",
-			"data-copy-fill" => Task\Mcp\Connect::add(Task\Route::site()),
+			"data-copy-fill" => Task\User\Connect::add(Task\Route::site()),
 			"data-notice" => "MCP token for " . $name . " copied as the claude mcp add command",
 		));
 		$menu->whenDanger($drops && $reader !== null && $reader->getId() !== $id, "trash", "Delete", array(

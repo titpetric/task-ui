@@ -69,7 +69,7 @@ for _, name := range v.Names() {
 }
 ```
 
-Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, rows, 3)` and `assert.Equal(t, 1, strings.Count(body, …))` assert the fixture; `assert.True(t, len(rows) > 0)` is the form. A golden file a tool regenerates is a diff against the last state and not an assertion somebody typed, so the `.phpt` fixtures and `scripts/compare-site.sh` below stay as they are.
+Forbidden: `assert.Contains` over markup, and an exact count. `assert.Len(t, rows, 3)` and `assert.Equal(t, 1, strings.Count(body, …))` assert the fixture; `assert.True(t, len(rows) > 0)` is the form. A golden file a tool regenerates is a diff against the last state and not an assertion somebody typed, so the `.phpt` fixtures below stay as they are.
 
 A failure over a page says where to look, not what the page holds: `assert.Brief` returns the haystack's length and the text around the longest prefix of the needle it holds.
 
@@ -148,23 +148,19 @@ A driver — `git`, `runner`, `sshprobe`, `agent`, the packages that wrap a proc
 
 ## The front end
 
-The pages are tested by an instance, not by a handler test: `scripts/demo.sh` builds the server, serves a copy of `testdata/demo` from four instances over one database, sets the instance up through the API, starts real runs, and then reads every page of it twice.
+The pages are tested by an instance, not by a handler test: `scripts/demo.sh` builds the server, serves a copy of `testdata/demo` from four instances over one database, sets the instance up through the API, starts real runs, and then reads every page of it.
 
 ```bash
-scripts/demo.sh                              # the screenshots, the crawl and the comparison
-TASK_UI_SHOT_FILTER='^$' scripts/demo.sh     # the crawl and the comparison alone
+scripts/demo.sh                              # the screenshots and the crawl
+TASK_UI_SHOT_FILTER='^$' scripts/demo.sh     # the crawl alone
 task test:coverage -- shots                  # the same, instrumented, as a suite
 ```
 
-Five things are asserted over that instance:
+Three things are asserted over that instance:
 
 - **Every link answers.** `scripts/crawl.sh` starts at `/` and fetches every `href` that stays on the site, once each, and names what did not answer 200. The page list is the site's own, so a page is crawled the run after it is linked.
-- **Every page it reached is the same page on the front end being replaced.** The ported pages are what the instance serves, at `/`, and the Go pages answer under `app.GoBase`; `scripts/compare-site.sh` hands each crawled path to `scripts/compare.sh`, which fetches `/<path>` and `/legacy/<path>` with one session, normalises both and diffs them; the exit code is the count that differ. [The port](phpfront.md) is what this is for, and the demo data is what makes it worth anything — a page compared on data that reaches none of its branches is compared on nothing. Both front ends are crawled and the page lists are read together, because each crawl is blind to a page only the other links; the prefixed crawl's status is discarded, since a Go page links the root as well as itself and prefixing those paths fabricates a 404.
-- **The same pages again as the viewer**, over the same database. A permission gate one front end has and the other does not is invisible to an admin's sweep, because both draw everything.
-- **The sign in page**, on the instance that has no autologin, because it is the one page a reader with no session is given and nowhere else draws it.
-- **One page of each layout through a browser**, in both palettes. `scripts/compare-shots.sh` shoots `/<path>` and `/legacy/<path>` with `scripts/chromium.sh` and counts the pixels that are not the same colour with `magick compare -metric AE`; the bar is zero. A diff of the markup cannot see a stylesheet rule that matches a class one front end stopped writing, a font that resolves on one path, or an SVG drawn outside its box. The set is the distinct layouts and not the distinct pages, because a shot is a browser. The run page is not in it: its output block is a terminal the browser writes out of the recording it fetches after the load event, so the shot catches the placeholder or the screen depending on the moment, in either front end: two shots of one of them differ as far as a shot of each. A block the browser fills itself is compared as markup and never as pixels.
-
-A page that differs is read a second time with the two fetches the other way round, and only what both readings hold in common is reported. Two kinds of difference are not one: a value that moves while the sweep walks — an mtime a run is rewriting — is in one reading and not the other, and a stamp of 179 seconds ago that the second fetch draws as 181 is `2m ago` against `3m ago` in the same direction on every reload, which the swap puts in the other diff. What survives both is the page.
+- **The same walk as the viewer**, over the same database. A page an admin reaches and a reader does not is a link the viewer's sidebar still writes.
+- **Every page in both palettes**, through a browser. `scripts/chromium.sh` writes the shots under `docs/assets`, and a layout that broke is read there.
 
 The server is built with `go build -cover` when `TASK_UI_COVER_DIR` is set, so what a browser and a crawl reach counts towards the coverage `scripts/test-coverage.sh` reports. That is what the suite is for: the pages are read by the thing that serves them.
 

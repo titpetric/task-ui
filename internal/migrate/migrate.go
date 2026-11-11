@@ -9,8 +9,7 @@
 //
 //	phpfront/app/modules/<name>/schema/   the tables a module's pages own
 //	keystore/schema/                      the keys and who may read them
-//	access/schema/                        the passwords, tokens and sessions
-//	phpscript/schema/                     the module registry
+//	phpfront/schema/                      the module registry
 //
 // Migrations is the merged view of every owner, flat, keyed by base name. Flat
 // is the load-bearing part: the migrations table records the name of a file

@@ -1,20 +1,12 @@
 # The front end
 
-task-ui's pages are being replaced by a [phpscript](https://github.com/titpetric/phpscript) application: a theme of components, a module per view, and the task-ui data model as PHP classes over the instance's database. The tree is `phpfront/app`, the Go that mounts it is `phpfront/`.
+task-ui's pages are a [phpscript](https://github.com/titpetric/phpscript) application: a theme of components, a module per view, and the task-ui data model as PHP classes over the instance's database. The tree is `phpfront/app`, the Go that mounts it is `phpfront/`.
 
-**The ported pages hold the root: they are the front end the instance serves.** `app.FrontBase` is their mount and it is the empty string, so a template writing `{base}/settings` writes `/settings`. The Go pages answer under `app.GoBase`, `/legacy`, and both of those lines are the whole of the arrangement.
+**These pages hold the root: they are the front end the instance serves.** `app.FrontBase` is their mount and it is the empty string, so a template writing `{base}/settings` writes `/settings`. The Go pages they replaced are gone, and `scripts/crawl.sh` over the instance `scripts/demo.sh` builds is what reads them now: every link from `/`, as the admin and again as the viewer.
 
-The Go pages are kept to be read against the ported ones and not to be browsed. The Go view layer has no notion of a mount, so a page under the prefix draws its links without one and a link followed from it leaves for the ported page at the root. Reading one page and diffing it is what they are for, and `scripts/compare.sh` is what fetches them. A view proven equivalent leaves a `TODO: delete, replaced with phpscript, <hash>` on the Go handler, its template and the view helpers only it used; the cutover drops `GoBase` and every marked file in one commit.
+Five things answer at the root because they are pages of no module, and `app.rootRoutes` is where they are registered: the session POSTs, `/healthz`, the theme's files, the four byte streams, and a plugin's pages under `/m`.
 
-Five things answer at the root because they are pages of neither front end, and `frontend.Handlers.Root` is where they are registered: the session POSTs, `/healthz`, the theme's files, the four byte streams, and a plugin's pages under `/m`.
-
-Equivalent means the whole page, chrome included, and the chrome's folder tree is drawn by `theme/templates/components/sidebar-folders.tpl` over the `folders` module. A helper is marked only where no unported page calls it, and a partial only where no unported template includes it, which today leaves `_thread.tpl`, `_tooling.tpl`, `_chart.tpl` and `_schedule.tpl` unmarked whatever their pages do. `scripts/compare.sh` is what proves a page, and it takes several in one run.
-
-**The whole site is the gate, and the crawl is the page list.** `scripts/compare-site.sh` walks every link from `/` with `scripts/crawl.sh` and hands each page it reached to `scripts/compare.sh`, which is 224 pages of the demo data against 46 a list kept by hand named — every job page of every folder, every filter a query writes, every row's own page. A list goes stale the moment a page is added and reads as a clean sweep; the site cannot. `scripts/demo.sh` runs it over the instance it builds, as the admin and again as the viewer, so the comparison is [a suite](testing.md#the-front-end) rather than a ritual: `TASK_UI_SHOT_FILTER='^$' scripts/demo.sh` is the crawl and the comparison with no screenshot taken.
-
-**Both front ends are crawled and the two page lists are read together**, because a page list is one front end's own links and each crawl is blind to a page only the other draws: a sidebar row one of them has and the other does not would never be fetched, and a page never fetched reads as a page compared. The second crawl puts `GoBase` on every path, with `TASK_UI_CRAWL_PREFIX`. Its status is discarded and only its paths are kept: a Go page links the root as well as itself — the telemetry dashboard, the byte streams, a module — so prefixing those fabricates a 404 that is not a break. The broken-link check is the crawl of the root alone, which is the front end a reader meets.
-
-Two kinds of path are not compared, and the run names each one it dropped. A byte stream is not a page, which is `/files/*`, `/artifacts/files/*` and the archives. A page under `/m` belongs to a module and not to this front end: the refinement board is the one that moved here, and the move changed the page — the module chrome around it is gone, its badges and its render footer with it, and the thread page became a page with a heading, a crumb trail and the thread's files in its actions. Its `.phpt` fixtures are what cover it, as for any module's PHP.
+A byte stream is not a page: `/files/*`, `/artifacts/files/*` and the archives answer under their own handler. A page under `/m` belongs to a plugin and not to this front end; its `.phpt` fixtures are what cover it, as for any module's PHP.
 
 [Corrections](todo-correction.md), sections 9 to 26, records every place the runtime lacks what this needs, with the workaround taken.
 
@@ -56,7 +48,7 @@ A module directory holds:
 
 Ownership is a decision and not a read set. `user` and `run` are each read by seven modules; what decides is which pages' writes the table exists for. The 12 tables no page queries sit with the Go package that owns them.
 
-Fourteen modules in, none has a `docs/`. The generated `README.md` already lists the tables and the operations over them, and a module that reads the instance's rows through `code/Task` owns no data model to write up; the directory is for one that owns a model through `storage/` and needs prose the generator cannot write. An empty `docs/` restating its README is worse than no directory.
+Twelve modules in, none has a `docs/`. The generated `README.md` already lists the tables and the operations over them, and a module that reads the instance's rows through `code/Task` owns no data model to write up; the directory is for one that owns a model through `storage/` and needs prose the generator cannot write. An empty `docs/` restating its README is worse than no directory.
 
 ## A module
 
@@ -162,7 +154,7 @@ An `@route` never names a file. The static files are Go's, at `/assets/theme/` a
 
 **The sign in page answers before a sign in, and it is the only one that does.** The Go router puts the Guard on a chi group with `/login`, `/healthz` and the assets outside it (`frontend/frontend.go:43-49`), because a sign in page behind a sign in redirects to the page it is already being asked for. Everything under a mount is one handler, so `phpfront.Public` is that list for this tree — `/login`, and nothing else — and `Front.Guarded` is the shape: `Guard.Attach` for a public path, `Guard.Require` for every other. `Attach` names the reader of a request and keeps nobody out, which the page needs both ways round: it draws the form for a reader with no session and redirects a reader who has one home, the same two answers `frontend/login.go:12` gives. Without it the ported page is unreachable in a browser and only a patched binary compares it.
 
-The redirect is one string on both sides: Go sends a signed in reader to `/`, and `{base}/` is `/` with the base empty. A prefixed mount is what made the two differ, and the page is the only one that has a redirect of its own. `scripts/compare.sh` reads the body and not the headers, so it measures neither.
+The redirect is one string: a signed in reader goes to `{base}/`, which is `/` with the base empty. The page is the only one with a redirect of its own.
 
 **A path no route claimed is a page too.** The Go router draws the shared 404 from `r.NotFound` behind the same guard as everything else (`frontend/frontend.go:115`), so the ported tree needs the same catch-all or an unrouted path answers chi's own plain `404 page not found`, which is no page at all. `modules/notfound/mod_notfound.php` is it: `@route GET /{rest...}` and the same for `POST`, because chi matches a literal and a parameter ahead of a wildcard and a methodless line routes only those two. It is the one module with no sidebar row and no templates of its own — `Task\View::missing()` draws the theme's `notfound.tpl`, and MiniTPL skips a search path that is not there. The reason reads `There is nothing at /` + `Task\Route::path()`, which drops the mount, so the string the reader sees is the one Go writes and the cutover changes nothing.
 
@@ -317,7 +309,7 @@ No `set_compile_location` is called. MiniTPL's default writes beside each search
 
 **A component draws the branch a page reaches, not every branch the Go partial holds.** A Go define is written for the callers it once had, and a caller that went away leaves its branch behind: `_control.tpl`'s `controltable` draws a head row, a cell per repeated job name, an `other` column and `controlmore` for a Control with columns, and the only thing that builds one is `view.NewControl`, which `control_test.go` calls and no page does. Every live table comes from `NewJobControl`, whose rows are all `Named` and whose `Columns` is empty, so the port is the named row and the job button, and `components/control-table.tpl` has no head. The test that keeps the dead branch alive is not a caller; check `grep` for the constructor before transcribing a branch, because a branch no page reaches cannot be compared, and porting it writes code the gate can never exercise.
 
-**A page gates on a permission where Go gates, and nowhere else.** Go draws the post form of the notes board and the Reply field of every thread with no check at all: `note/edit` is the API's, which refuses the write, and the Edit item's, which `page.go:482` builds from it. The port had both forms behind `note/edit`, which is a better interface and the wrong port — the markup differs for any reader without the rule, and an autologin admin makes the difference invisible to `compare.sh`. So read the Go template for the check rather than reasoning about who ought to see a form, and run the round's pages a second time as a reader whose role is not admin, which is what `TASK_UI_AUTOLOGIN=miguel` against the demo data does. A gate Go does not have is a divergence the gate cannot see, so it survives to the cutover and changes what the instance does.
+**A page gates on a permission where Go gates, and nowhere else.** Go draws the post form of the notes board and the Reply field of every thread with no check at all: `note/edit` is the API's, which refuses the write, and the Edit item's, which `page.go:482` builds from it. The port had both forms behind `note/edit`, which is a better interface and the wrong port — the markup differs for any reader without the rule, and an autologin admin draws everything. So walk the pages a second time as a reader whose role is not admin, which is what `TASK_UI_AUTOLOGIN=miguel` against the demo data does: a gate nothing else has is a page nobody reaches.
 
 **A branch no demo row reaches is compared by nobody, so write the row.** The demo data held runs of `@cleanup` and `@claude-prompt` and nothing else, both built-in jobs of the root, whose page draws no Jobs table: so `jobSummaries` answered nothing on either side and no run page was ever about a job of the sidebar. One run of `tools/lint` and two summary threads about it, written into `.live/data`, drew both branches for the first time and both diverged at once — `frontend/job_table.go` ranged a map to pick one of two threads about one run where PHP walks the list newest first and lets the oldest stand, and the run page marked the sidebar's project and job in Go and nothing in PHP. A page that compares clean on the data at hand is compared on the data at hand, so before a round closes, read what each page draws only when a row exists, and make the row.
 
@@ -325,7 +317,7 @@ No `set_compile_location` is called. MiniTPL's default writes beside each search
 
 **A `time.Duration` is nanoseconds and the ported row is milliseconds, so Go's integer division truncates where ours cannot.** The activity sparkline summed durations and divided by the count on both sides; Go's remainder is sub-nanosecond and invisible, `intdiv()` over milliseconds threw away up to a whole one, and `Activity::level()` scaled it into the SVG path — 19.52 against 19.60 on one point of three charts, with the min and max lines byte-identical because neither divides. The hover title agreed throughout, since `Run::duration()` rounds to a tenth of a second. So wherever Go divides a `Duration`, the port divides as a float: the unit cancels in a ratio and the truncation does not. This is the one place the held `intdiv` sweep must not reach.
 
-A tag adds no whitespace of its own. The compiler closes every tag as `?>` and a newline, and PHP eats the newline after `?>`, so `A{data.x}B{if $data.x}C{/if}D` renders `AXBCD`: what a template writes between its tags is what the page gets, byte for byte. A component transcribed from a Go partial keeps that partial's spacing, and `scripts/compare.sh` only forgives the whitespace between two tags, never the whitespace inside an attribute.
+A tag adds no whitespace of its own. The compiler closes every tag as `?>` and a newline, and PHP eats the newline after `?>`, so `A{data.x}B{if $data.x}C{/if}D` renders `AXBCD`: what a template writes between its tags is what the page gets, byte for byte. Whitespace inside an attribute is the page's: a template that writes `class=" row"` writes the space.
 
 ## Running it
 
@@ -340,14 +332,11 @@ TASK_UI_WORKSPACE=$PWD/testdata/demo TASK_UI_DATA=.live/data \
 # the pipeline
 cd phpfront/app && atkins
 
-# one page, both ways
-scripts/compare.sh /notes
+# every link of the instance answers: the crawl is the page list
+scripts/crawl.sh
 
-# every page of the instance, both ways: the crawl is the page list
-scripts/compare-site.sh
-
-# the same pages as a reader who is not an admin, which is what finds a
-# permission gate one front end has and the other does not
+# the same walk as a reader who is not an admin, which is what finds a page
+# the sidebar offers and the permission refuses
 TASK_UI_AUTOLOGIN=miguel …
 
 # both of those over the demo data, with the instances built for it

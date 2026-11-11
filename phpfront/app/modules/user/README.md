@@ -183,6 +183,16 @@ Workspace
 
 ## Operations
 
+### `Tokens`
+
+Tokens reads the user_auth_token table: the tokens that sign a client in without a session. A row's kind says what issued it: mcp for the ones a user's MCP access issues, which expire and which their page lists and deletes, and empty for the ones `task-ui token` writes, which never expire and which no page shows. A name is unique per user and kind, so a user holds as many MCP tokens as they care to name. Nothing here answers with the hash and nothing answers with the token. A token is shown once, by whoever made it, and a page that lists one says when it was made, when it runs out and when it was last used.
+
+| Method                 | What it does                                                                                                                                                    |
+|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ofKind($user, $kind)` | ofKind is a user's tokens of one kind, newest first: the order their page lists them in, because the one they just issued is the one they came for.             |
+| `expired($expires)`    | expired reports whether an expiry has passed. A token from `task-ui token` has none and never expires, which reads as not expired.                              |
+| `tone($expires)`       | tone is the colour of the expiry badge: bad once it has passed, signal within a week of it, and the plain badge before that and for a token that never expires. |
+
 ### `Users`
 
 Users reads the user table: one user by ID or by name, every user by name, how many there are, how many are admins, and the agents a reply may be written as. The table is this module's, which draws the sign in page, a user's own page and the form that edits one. What a user may do - the role, the folders, the permissions - is Task\User.
@@ -195,6 +205,15 @@ Users reads the user table: one user by ID or by name, every user by name, how m
 | `count()`       | count is how many users there are.             |
 | `admins()`      | admins is how many users carry the admin flag. |
 | `agents()`      | agents is every user an agent may reply as.    |
+
+### `Connect`
+
+Connect is how a client is told to connect with a token it has just been given: the command for Claude Code, the same connection as a settings file, and the placeholders task-ui.js replaces in either of them. A placeholder is a constant here and not markup of a template, because MiniTPL compiles any {word} into an echo: a template cannot write the literal, so it arrives as a field of the scope. The same strings are read by the user edit page, which reveals them, and by the one-click buttons of the profile and the users list, which copy them.
+
+| Method            | What it does                                                      |
+|-------------------|-------------------------------------------------------------------|
+| `add($site)`      | add is ADD against a site, which is the instance's own base link. |
+| `settings($site)` | settings is SETTINGS against a site.                              |
 
 ---
 

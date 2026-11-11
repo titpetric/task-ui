@@ -1,6 +1,6 @@
 <?php
 
-namespace Task\Mcp;
+namespace Task\User;
 
 // Connect is how a client is told to connect with a token it has just been
 // given: the command for Claude Code, the same connection as a settings file,

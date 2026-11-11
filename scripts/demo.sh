@@ -9,9 +9,8 @@
 # scripts/chromium.sh in both themes. Writes docs/assets/*.png.
 #
 # It is also what tests the front end: the instance it builds is the only one
-# with the data every page needs, so it crawls every link and compares every
-# page it reached against the front end being ported, as the admin and as the
-# viewer. scripts/test-coverage.sh runs it as the shots suite.
+# with the data every page needs, so it crawls every link from it, as the admin
+# and as the viewer. scripts/test-coverage.sh runs it as the shots suite.
 #
 # Needs chromium, curl, atkins, task and git in PATH.
 #
@@ -452,50 +451,23 @@ if [ -z "${TASK_UI_SHOT_SKIP_INVENTORY:-}" ]; then
   scripts/inventory-shots.sh
 fi
 
-# Every link on every page answers, the workspace's included, and every page
-# the crawl reached is the same page on the front end being ported. The
-# instance this script built is what makes that comparison worth anything: the
-# demo data reaches the branches a page draws only when a row exists, and a
-# page compared on data it has none of is compared on nothing.
+# Every link on every page answers, the workspace's included. The instance this
+# script built is what makes the crawl worth anything: the demo data reaches
+# the branches a page draws only when a row exists, and a page crawled on data
+# it has none of is a page half drawn.
 #
-# Then the same pages again as the viewer, over the same database: a permission
-# gate one front end has and the other does not is invisible to an admin's
-# sweep, since both draw everything.
+# Then the same walk as the viewer, over the same database: a page an admin
+# reaches and a reader does not is a link the viewer's sidebar still offers.
 #
 # Last of everything, and every pass runs whatever the one before it found: a
-# page that differs is a finding of the run and not the end of it, so the
-# screenshots are written before the comparison reads anything and the
-# viewer's sweep is never skipped by the admin's.
+# broken link is a finding of the run and not the end of it, so the screenshots
+# are written first and the viewer's walk is never skipped by the admin's.
 differ=0
-scripts/compare-site.sh || differ=$((differ + $?))
-TASK_UI_BASE="http://127.0.0.1:${viewer}" scripts/compare-site.sh || differ=$((differ + $?))
-# The sign in page is the one page a reader with no session is given, so it
-# compares on the instance that has no autologin and nowhere else.
-TASK_UI_BASE="http://127.0.0.1:${login}" scripts/compare.sh /login || differ=$((differ + $?))
+scripts/crawl.sh || differ=$((differ + $?))
+TASK_UI_BASE="http://127.0.0.1:${viewer}" scripts/crawl.sh || differ=$((differ + $?))
 
-# The same pages through a browser, in both palettes. The markup comparison
-# above cannot see a stylesheet rule that matches a class only one front end
-# writes, a font that resolves on one path, or an SVG drawn outside its box, so
-# one page of each layout the theme has is rendered and the pixels counted. The
-# set is small because a shot is a browser: these are the distinct layouts and
-# not the distinct pages.
-#
-# It runs under the shot filter, since it is a screenshot pass: a sweep asking
-# for the comparison alone skips it with the rest of them.
-if [ -z "${TASK_UI_SHOT_FILTER:-}" ]; then
-  # The run page is not in the set, ended run or live one: its output block is
-  # a terminal the browser writes out of the recording it fetches after the
-  # load event, so a shot catches the placeholder or the screen depending on
-  # the moment, in either front end. Two shots of one of them differ as far as
-  # a shot of each, which is a capture and not a layout. The page is compared
-  # as markup by the sweep above, with every other page the crawl reached.
-  scripts/compare-shots.sh / /runs /notes /artifacts /inventory /workflows \
-    /schedules /settings /settings/users /f/internal/backups ||
-    differ=$((differ + $?))
-fi
-
-# The count of pages that differ is the exit code. A status wraps past 255 and
-# 0 is among what it wraps to, so a sweep that differed everywhere caps there
+# The count of broken links is the exit code. A status wraps past 255 and
+# 0 is among what it wraps to, so a sweep that broke everywhere caps there
 # and still fails.
 if [ "${differ}" -gt 255 ]; then
   differ=255

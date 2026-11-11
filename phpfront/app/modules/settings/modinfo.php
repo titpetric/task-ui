@@ -24,7 +24,6 @@ $module->setTables(array(
 	"setting",
 	"sidebar",
 	"tool",
-	"user",
 	"workspace",
 ));
 

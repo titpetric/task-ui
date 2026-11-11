@@ -103,8 +103,8 @@ class View {
 	 *
 	 * Asked of the filesystem rather than declared, because declaring it is a
 	 * method on the Module interface and an interface here inherits nothing:
-	 * every one of the forty mod_ files would write out a list it has no use
-	 * for. Two stats of the module that is serving, and none of the rest.
+	 * every one of the fifty eight mod_ files would write out a list it has no
+	 * use for. Two stats of the module that is serving, and none of the rest.
 	 */
 	function assets($chrome) {
 		$name = $this->module->name();

@@ -17,6 +17,6 @@ It also reads `chrome.can['project/edit']` for the empty line, which is the
 one place this component reaches outside its own scope: the line it draws is a
 link to a page, and whether to offer it is a permission.
 
-The empty line is one line of markup, text and tags together, because
-`scripts/compare.sh` compares a tag and the text beside it: a sentence split
-across lines is a changed line even where the rendered page reads the same.
+The empty line is one line of markup, text and tags together: a tag closes as
+`?>` and a newline, and PHP eats that newline, so a sentence split across lines
+is one the page runs together.

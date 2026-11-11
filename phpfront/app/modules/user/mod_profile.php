@@ -147,7 +147,7 @@ class mod_profile implements Module {
 			$buttons->item("copy", "New MCP token", array(
 				"data-api" => "/api/users/" . $user->getId() . "/mcp",
 				"data-method" => "POST",
-				"data-copy-fill" => Task\Mcp\Connect::add(Task\Route::site()),
+				"data-copy-fill" => Task\User\Connect::add(Task\Route::site()),
 				"data-notice" => "MCP token copied as the claude mcp add command",
 				"title" => "Make an MCP token for " . $name . " and copy the claude mcp add command",
 			));
@@ -178,9 +178,9 @@ class mod_profile implements Module {
 			return false;
 		}
 
-		$store = new Task\Mcp\Tokens($chrome->db);
+		$store = new Task\User\Tokens($chrome->db);
 
-		return count($store->ofKind($user->getId(), Task\Mcp\Tokens::MCP)) > 0;
+		return count($store->ofKind($user->getId(), Task\User\Tokens::MCP)) > 0;
 	}
 
 	/**

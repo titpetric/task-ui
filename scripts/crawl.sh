@@ -10,17 +10,10 @@
 #
 # TASK_UI_CRAWL_OUT writes the pages it walked, one path per line: the ones
 # that answered 200 with HTML, which is the site's own page list rather than a
-# list kept by hand. scripts/compare-site.sh reads it.
-#
-# TASK_UI_CRAWL_PREFIX walks a front end mounted under a prefix. It goes on
-# every fetch and on nothing else: the path queued, the path recorded and the
-# path reported are all without it. The Go pages answer under app.GoBase and
-# write their links with no prefix on them, so a crawl of them is this and
-# nothing more.
+# list kept by hand.
 set -euo pipefail
 
 BASE="${TASK_UI_BASE:-http://localhost:3000}"
-PREFIX="${TASK_UI_CRAWL_PREFIX:-}"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -44,7 +37,7 @@ while [ -s "$queue" ]; do
   grep -qxF "$path" "$seen" && continue
   echo "$path" >>"$seen"
 
-  status="$(curl -sS -o "$work/page" -w '%{http_code}' "${BASE}${PREFIX}${path}")"
+  status="$(curl -sS -o "$work/page" -w '%{http_code}' "${BASE}${path}")"
   if [ "$status" != "200" ]; then
     echo "$status $path, linked from ${from}" >>"$broken"
     continue

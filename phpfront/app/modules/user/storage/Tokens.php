@@ -1,11 +1,11 @@
 <?php
 
-namespace Task\Mcp;
+namespace Task\User;
 
 // Tokens reads the user_auth_token table: the tokens that sign a client in
 // without a session.
 //
-// A row's kind says what issued it, which is this module's column: mcp for the
+// A row's kind says what issued it: mcp for the
 // ones a user's MCP access issues, which expire and which their page lists and
 // deletes, and empty for the ones `task-ui token` writes, which never expire
 // and which no page shows. A name is unique per user and kind, so a user holds

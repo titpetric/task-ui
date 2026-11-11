@@ -37,11 +37,9 @@ reader who may not run it why, in the place the Run button would stand, so the
 row keeps its order and Edit stays to the right of it.
 
 The size comes before the colour, `btn btn-sm btn-primary`, which is the order
-the Go partial builds the class in and so the order `scripts/compare.sh`
-demands: it forgives whitespace between tags and nothing inside an attribute.
-A site that writes the class by hand rather than through the partial writes
-`btn btn-primary btn-sm`, and the component that reproduces it writes the same
-by hand: the Run button of a job.
+the stylesheet is written against. A button written by hand rather than through
+the component writes `btn btn-primary btn-sm`, and the component that
+reproduces one writes the same by hand: the Run button of a job.
 
 A bare button is the icon with no label and none of the button's own chrome,
 the one beside the `.tgz` link that copies it. It carries neither `small` nor a
