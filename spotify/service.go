@@ -543,6 +543,106 @@ type PlaylistRequest struct {
 	Remove   bool   `json:"remove,omitempty"`
 }
 
+// NewPlaylistRequest makes a playlist and fills it: Tracks are the ones
+// to put in it, each an ID, a spotify:track: URI, an open.spotify.com
+// link, or words to search for, in the order they go in.
+type NewPlaylistRequest struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Public      bool     `json:"public,omitempty"`
+	Tracks      []string `json:"tracks,omitempty"`
+}
+
+// PlaylistView is a playlist that was made: what went into it, and what
+// nothing was found for.
+type PlaylistView struct {
+	Playlist string   `json:"playlist"`
+	ID       string   `json:"id"`
+	URI      string   `json:"uri"`
+	Added    []string `json:"added"`
+	Missed   []string `json:"missed,omitempty"`
+	Message  string   `json:"message"`
+}
+
+// maxNewTracks is how many tracks one playlist is made with, and addBatch
+// how many go in one call, which is the API's own limit.
+const (
+	maxNewTracks = 500
+	addBatch     = 100
+)
+
+// CreatePlaylist makes a playlist of the caller's own and puts the tracks
+// in it, in the order given; it refuses an unnamed one and more than
+// maxNewTracks. A playlist of a name there is one of is made all the same.
+func (s *Service) CreatePlaylist(ctx context.Context, a Actor, req NewPlaylistRequest) (PlaylistView, error) {
+	var out PlaylistView
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		return out, errors.New("name the playlist")
+	}
+	if len(req.Tracks) > maxNewTracks {
+		return out, fmt.Errorf("a playlist is made with %d tracks at most, not %d", maxNewTracks, len(req.Tracks))
+	}
+	err := s.call(ctx, a, true, func(token string) error {
+		c := s.client()
+		me, err := c.Me(ctx, token)
+		if err != nil {
+			return err
+		}
+		uris, added, missed := s.resolve(ctx, token, req.Tracks)
+		list, err := c.CreatePlaylist(ctx, token, me.ID, NewPlaylist{Name: name, Description: req.Description, Public: req.Public})
+		if err != nil {
+			return err
+		}
+		for at := 0; at < len(uris); at += addBatch {
+			end := min(at+addBatch, len(uris))
+			if err := c.AddItems(ctx, token, list.ID, uris[at:end]); err != nil {
+				return err
+			}
+		}
+		out = PlaylistView{
+			Playlist: list.Name,
+			ID:       list.ID,
+			URI:      list.URI,
+			Added:    added,
+			Missed:   missed,
+			Message:  fmt.Sprintf("Made %s with %d of %d tracks.", list.Name, len(added), len(req.Tracks)),
+		}
+		return nil
+	})
+	return out, err
+}
+
+// resolve turns each reference into a track URI, by its ID where it names
+// one and by a search for the first hit otherwise, keeping the order and
+// dropping a track named twice. The refs nothing answers are the third
+// result.
+func (s *Service) resolve(ctx context.Context, token string, refs []string) (uris, added, missed []string) {
+	seen := map[string]bool{}
+	for _, ref := range refs {
+		ref = strings.TrimSpace(ref)
+		if ref == "" {
+			continue
+		}
+		id, label := "", ref
+		if found, err := trackID(ref); err == nil {
+			id = found
+		} else if hits, err := s.client().Search(ctx, token, ref, 1); err == nil && len(hits) > 0 {
+			id, label = hits[0].ID, hits[0].Label()
+		}
+		if id == "" || seen[id] {
+			if id == "" {
+				missed = append(missed, ref)
+			}
+			continue
+		}
+		seen[id] = true
+		uris = append(uris, "spotify:track:"+id)
+		added = append(added, label)
+	}
+	return uris, added, missed
+}
+
 // ChangePlaylist adds the track to a playlist, or removes it. The
 // playlist is picked among the user's own, never created: an unknown name
 // is an error and an ambiguous one a list to ask about. A track already

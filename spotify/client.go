@@ -359,6 +359,20 @@ func (c *Client) Playlists(ctx context.Context, token string) ([]Playlist, error
 	}
 }
 
+// NewPlaylist is a playlist to make: its name, what it says it is, and
+// whether anyone may see it.
+type NewPlaylist struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Public      bool   `json:"public"`
+}
+
+// CreatePlaylist makes a playlist under the user and returns it.
+func (c *Client) CreatePlaylist(ctx context.Context, token, userID string, p NewPlaylist) (*Playlist, error) {
+	var out Playlist
+	return &out, c.do(ctx, token, http.MethodPost, "/users/"+url.PathEscape(userID)+"/playlists", nil, p, &out)
+}
+
 // PlaylistItems lists the tracks of a playlist, following the pages.
 func (c *Client) PlaylistItems(ctx context.Context, token, id string) ([]Track, error) {
 	var all []Track

@@ -75,6 +75,19 @@ func spotifyTools() []Tool {
 			call: spotifyPlaylistAdd,
 		},
 		{
+			Name: "spotify_playlist_create",
+			Description: "Make a Spotify playlist of your own and fill it with the tracks you collected: each one an ID, a spotify:track: URI, an " +
+				"open.spotify.com link, or words to search for, which take the first hit. The answer lists what went in and what nothing was found " +
+				"for. Needs spotify_control.",
+			InputSchema: object(map[string]Property{
+				"name":        str("What the playlist is called."),
+				"description": str("What the playlist is for, shown under its name."),
+				"public":      {Type: "boolean", Description: "Make it public. Private unless set."},
+				"tracks": {Type: "array", Description: "The tracks to put in it, in the order they go in, at most 500.", Items: &Schema{Type: "string"}},
+			}, "name"),
+			call: spotifyPlaylistCreate,
+		},
+		{
 			Name:        "spotify_playlist_remove",
 			Description: "Remove a track from one of your Spotify playlists, picked by name or ID; a track that is not in it changes nothing. Needs spotify_control.",
 			InputSchema: object(map[string]Property{
@@ -196,6 +209,29 @@ func spotifyPlaylistAdd(ctx context.Context, c *client, args json.RawMessage) (s
 	}
 	in.Remove = false
 	return spotifyMessage(ctx, c, "/spotify/playlist", in)
+}
+
+func spotifyPlaylistCreate(ctx context.Context, c *client, args json.RawMessage) (string, error) {
+	var in spotify.NewPlaylistRequest
+	if err := decode(args, &in); err != nil {
+		return "", err
+	}
+	data, err := c.call(ctx, http.MethodPost, "/spotify/playlists", in)
+	if err != nil {
+		return "", err
+	}
+	var out spotify.PlaylistView
+	if err := json.Unmarshal(data, &out); err != nil {
+		return "", err
+	}
+	lines := []string{out.Message, "ID " + out.ID + ", URI " + out.URI}
+	for _, track := range out.Added {
+		lines = append(lines, "+ "+track)
+	}
+	for _, miss := range out.Missed {
+		lines = append(lines, "? nothing found for "+miss)
+	}
+	return strings.Join(lines, "\n"), nil
 }
 
 func spotifyPlaylistRemove(ctx context.Context, c *client, args json.RawMessage) (string, error) {

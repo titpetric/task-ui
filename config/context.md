@@ -263,7 +263,10 @@ secrets, never shown and never in a run's environment. A user
 disconnects with `DELETE /api/integrations/spotify/link`. API:
 `/api/spotify`; MCP: `spotify_now_playing`, `spotify_search`,
 `spotify_playlists`, `spotify_playback`, `spotify_like`,
-`spotify_playlist_add` and `spotify_playlist_remove`.
+`spotify_playlist_add`, `spotify_playlist_create` and
+`spotify_playlist_remove`. A playlist of tracks a prompt collected is
+one `spotify_playlist_create` call: each track an ID, a URI, a link or
+words to search for.
 
 ## Inventory (`inventory`, `hosts`)
 

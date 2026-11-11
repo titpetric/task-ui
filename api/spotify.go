@@ -314,6 +314,25 @@ func (h *Handlers) spotifyLike(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
+// spotifyPlaylistCreate makes a playlist and puts the named tracks in it.
+// Takes spotify_control.
+func (h *Handlers) spotifyPlaylistCreate(w http.ResponseWriter, r *http.Request) {
+	if !h.spotifyWrite(w, r) {
+		return
+	}
+	var req spotify.NewPlaylistRequest
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	out, err := h.opts.Spotify.CreatePlaylist(r.Context(), spotifyActor(r), req)
+	if err != nil {
+		spotifyFail(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, out)
+}
+
 // spotifyPlaylistChange adds a track to a playlist, or with remove takes it
 // out. Takes spotify_control.
 func (h *Handlers) spotifyPlaylistChange(w http.ResponseWriter, r *http.Request) {
