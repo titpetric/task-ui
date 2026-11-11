@@ -172,7 +172,7 @@ class mod_schedules implements Module {
 		$found = $lookup->workflows();
 		$workflows = $this->visible($chrome, $found);
 		$workspaces = $chrome->workspaces();
-		$schedules = new Task\Schedule;
+		$schedules = new Task\Schedules\Schedules;
 
 		$out = array();
 

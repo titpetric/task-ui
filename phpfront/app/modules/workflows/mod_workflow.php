@@ -84,7 +84,7 @@ class mod_workflow implements Module {
 		));
 
 		$workspaces = $chrome->workspaces();
-		$runs = new Task\WorkflowRun($chrome->db);
+		$runs = new Task\Workflows\Runs($chrome->db);
 		$size = Task\Pager::size();
 		$before = Task\Route::input("before");
 		$after = Task\Route::input("after");

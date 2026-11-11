@@ -122,7 +122,7 @@ class mod_workflow_edit implements Module {
 		$menu = $this->menu($space, $flow);
 		$flows = $this->steppable($store, $chrome, $id);
 		$editor = new Task\Editor($chrome, $space, $flows);
-		$clock = new Task\Schedule($chrome->db);
+		$clock = new Task\Schedules\Schedules($chrome->db);
 		$rows = $clock->byWorkflow($id);
 		$buttons = new Task\Buttons(true);
 		$can = $flow["canRun"] || Task\User::admin($chrome->user);

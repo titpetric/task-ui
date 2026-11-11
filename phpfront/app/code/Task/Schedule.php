@@ -2,58 +2,16 @@
 
 namespace Task;
 
-// Schedule reads the schedule table and answers what a row of it means: what
-// it starts, whether it is on, the arguments its runs pass the job, and what a
-// table of them draws.
+// Schedule answers what a row of the schedule table means: what it starts,
+// whether it is on, the arguments its runs pass the job, and what a table of
+// them draws.
 //
 // The row behaviour sits here rather than on Task\Model\Schedule because the
 // runtime merges no methods into a generated class: one class owns the table
-// and its rows.
-//
-// Nothing here writes. The schedules page is read only and its forms call
-// /api/schedules from the browser, so Create, Update, Delete and Due stay in
-// storage/schedule_storage.go.
+// and its rows. The rows are the schedules module's, in Task\Schedules\Schedules.
 class Schedule {
 	/** HOST starts the job of a schedule that runs a command on a host. */
 	const HOST = "@host:";
-
-	var $db;
-
-	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
-	}
-
-	/** all is every schedule, by folder and job. */
-	function all() {
-		return Model\Schedule::rows($this->db->get_all("SELECT * FROM schedule ORDER BY folder, job, id"));
-	}
-
-	/**
-	 * byFolder is the schedules of one folder, by job: the page of a folder
-	 * counts them and the page of a job lists its own.
-	 *
-	 * A schedule of a workflow names no folder, so this is the schedules of
-	 * jobs and of hosts and nothing else.
-	 */
-	function byFolder($folder) {
-		return Model\Schedule::rows($this->db->get_all("SELECT * FROM schedule WHERE folder = ? ORDER BY job, id", $folder));
-	}
-
-	/** byWorkflow is the schedules of one workflow, by ID. */
-	function byWorkflow($id) {
-		return Model\Schedule::rows($this->db->get_all("SELECT * FROM schedule WHERE workflow_id = ? ORDER BY id", $id));
-	}
-
-	/** get is one schedule by ID, or null. */
-	function get($id) {
-		$row = $this->db->get("SELECT * FROM schedule WHERE id = ?", $id);
-
-		if (!is_array($row)) {
-			return null;
-		}
-
-		return new Model\Schedule($row);
-	}
 
 	/** enabled reports whether a row is on. */
 	static function enabled($schedule) {

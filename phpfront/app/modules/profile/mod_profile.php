@@ -312,7 +312,7 @@ class mod_profile implements Module {
 	 * and the span carries no run to follow.
 	 */
 	function flows($chrome, $name) {
-		$store = new Task\WorkflowRun($chrome->db);
+		$store = new Task\Workflows\Runs($chrome->db);
 		$rows = array();
 
 		foreach ($store->byUser($chrome->user, $name, self::COUNT) as $run) {

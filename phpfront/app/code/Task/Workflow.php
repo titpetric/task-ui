@@ -2,9 +2,9 @@
 
 namespace Task;
 
-// Workflow reads the workflow table and its steps, and answers what a page
-// asks of one: who its runs run as, whether the reader may start it, which
-// step stops them, and which run of it is going.
+// Workflow answers what a page asks of a workflow: who its runs run as,
+// whether the reader may start it, which step stops them, and which run of it
+// is going. The rows are the workflows module's, in Task\Workflows\Workflows.
 //
 // Nothing here writes. Every form of the workflow pages calls /api/workflows
 // from the browser, so Create, Update and Delete stay in
@@ -12,32 +12,26 @@ namespace Task;
 class Workflow {
 	var $db;
 
+	/** store is the module that owns the table. */
+	var $store;
+
 	/** flows is the runner's runs in progress by workflow ID, read once. */
 	var $flows;
 
 	function __construct($db = null) {
 		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Workflows\Workflows($this->db);
 		$this->flows = null;
 	}
 
 	/** all is every workflow, by name. */
 	function all() {
-		return Model\Workflow::rows($this->db->get_all("SELECT * FROM workflow ORDER BY name COLLATE NOCASE, id"));
+		return $this->store->all();
 	}
 
 	/** get is one workflow by ID, or null. */
 	function get($id) {
-		if ($id === "") {
-			return null;
-		}
-
-		$row = $this->db->get("SELECT * FROM workflow WHERE id = ?", $id);
-
-		if (!is_array($row)) {
-			return null;
-		}
-
-		return new Model\Workflow($row);
+		return $this->store->get($id);
 	}
 
 	/** names is the name of every workflow, by ID, which names a step that runs one. */
@@ -53,11 +47,7 @@ class Workflow {
 
 	/** steps is a workflow's step rows, in order. */
 	function steps($id) {
-		if ($id === "") {
-			return array();
-		}
-
-		return Model\WorkflowStep::rows($this->db->get_all("SELECT * FROM workflow_step WHERE workflow_id = ? ORDER BY position", $id));
+		return $this->store->steps($id);
 	}
 
 	/** stepsOf is a workflow's steps as a page draws them. */
@@ -125,14 +115,9 @@ class Workflow {
 		}
 
 		$seen[$from] = true;
-		$refs = $this->db->get_all("SELECT workflow_ref FROM workflow_step WHERE workflow_id = ? AND workflow_ref != '' ORDER BY position", $from);
 
-		if (!is_array($refs)) {
-			return false;
-		}
-
-		foreach ($refs as $row) {
-			if ($this->follows(Row::text($row, "workflow_ref"), $target, $seen)) {
+		foreach ($this->store->refs($from) as $ref) {
+			if ($this->follows($ref, $target, $seen)) {
 				return true;
 			}
 		}
@@ -272,7 +257,7 @@ class Workflow {
 			$denied = "Run needs " . $refusal["step"];
 		}
 
-		$runs = new WorkflowRun($this->db);
+		$runs = new Workflows\Runs($this->db);
 		$last = $runs->listByWorkflow($id, array("limit" => 1));
 
 		return array(

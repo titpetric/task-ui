@@ -19,7 +19,7 @@ class Recent {
 	function __construct($db = null) {
 		$this->db = $db === null ? DB::reader() : $db;
 		$this->runs = new Runs\Runs($this->db);
-		$this->flows = new WorkflowRun($this->db);
+		$this->flows = new Workflows\Runs($this->db);
 	}
 
 	/**

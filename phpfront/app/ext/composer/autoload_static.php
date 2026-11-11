@@ -121,6 +121,7 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         'Task\\Runs\\Summaries' => __DIR__ . '/../..' . '/modules/runs/storage/Summaries.php',
         'Task\\Schedule' => __DIR__ . '/../..' . '/code/Task/Schedule.php',
         'Task\\Schedules\\Lookup' => __DIR__ . '/../..' . '/modules/schedules/storage/Lookup.php',
+        'Task\\Schedules\\Schedules' => __DIR__ . '/../..' . '/modules/schedules/storage/Schedules.php',
         'Task\\Secret' => __DIR__ . '/../..' . '/code/Task/Secret.php',
         'Task\\Seen' => __DIR__ . '/../..' . '/code/Task/Seen.php',
         'Task\\Setup' => __DIR__ . '/../..' . '/code/Task/Setup.php',
@@ -141,7 +142,8 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         'Task\\Who' => __DIR__ . '/../..' . '/code/Task/Who.php',
         'Task\\WhoField' => __DIR__ . '/../..' . '/code/Task/WhoField.php',
         'Task\\Workflow' => __DIR__ . '/../..' . '/code/Task/Workflow.php',
-        'Task\\WorkflowRun' => __DIR__ . '/../..' . '/code/Task/WorkflowRun.php',
+        'Task\\Workflows\\Runs' => __DIR__ . '/../..' . '/modules/workflows/storage/Runs.php',
+        'Task\\Workflows\\Workflows' => __DIR__ . '/../..' . '/modules/workflows/storage/Workflows.php',
         'Task\\Workspace' => __DIR__ . '/../..' . '/code/Task/Workspace.php',
     );
 

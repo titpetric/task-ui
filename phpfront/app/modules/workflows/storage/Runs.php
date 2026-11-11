@@ -1,17 +1,17 @@
 <?php
 
-namespace Task;
+namespace Task\Workflows;
 
-// WorkflowRun reads the workflow_run table and its steps: the runs of every
-// workflow, newest first, one workflow's own a page at a time, and which
-// folders a run touched.
+// Runs reads the workflow_run table and its steps: the runs of every workflow,
+// newest first, one workflow's own a page at a time, and which folders a run
+// touched.
 //
-// Task\Workflow owns the workflow table and its steps; this owns the runs of
-// them.
-class WorkflowRun {
+// The table is this module's, as are the workflow and its steps, which
+// Task\Workflows\Workflows reads.
+class Runs {
 	/**
 	 * COLUMNS is every column, with the timestamps as the text the column
-	 * holds. Task\Run::COLUMNS says why.
+	 * holds. Task\Runs\Runs::COLUMNS says why.
 	 */
 	const COLUMNS = "*, started_at || '' AS started_text, finished_at || '' AS finished_text";
 
@@ -27,7 +27,7 @@ class WorkflowRun {
 	var $db;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->db = $db === null ? \Task\DB::reader() : $db;
 	}
 
 	/** get is one workflow run by ID, or null. */
@@ -72,8 +72,8 @@ class WorkflowRun {
 			$limit = 20;
 		}
 
-		$before = Run::pick($filter, "before");
-		$after = Run::pick($filter, "after");
+		$before = \Task\Run::pick($filter, "before");
+		$after = \Task\Run::pick($filter, "after");
 		$sql = "SELECT " . self::COLUMNS . " FROM workflow_run WHERE workflow_id = ?";
 		$args = array($id);
 		$order = "started_at DESC, id DESC";
@@ -88,7 +88,7 @@ class WorkflowRun {
 		}
 
 		$args[] = $limit;
-		$out = self::rows(DB::all($this->db, $sql . " ORDER BY " . $order . " LIMIT ?", $args));
+		$out = self::rows(\Task\DB::all($this->db, $sql . " ORDER BY " . $order . " LIMIT ?", $args));
 
 		return $before === "" && $after !== "" ? array_reverse($out) : $out;
 	}
@@ -99,7 +99,7 @@ class WorkflowRun {
 			return array();
 		}
 
-		return Model\WorkflowRunStep::rows($this->db->get_all("SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", $id));
+		return \Task\Model\WorkflowRunStep::rows($this->db->get_all("SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", $id));
 	}
 
 	/**
@@ -110,8 +110,8 @@ class WorkflowRun {
 	 * reads a few hundred runs and the recursion is one statement per run.
 	 */
 	function sees($user, $id, $depth = 0) {
-		if (count(User::folders($user)) === 0) {
-			return User::sees($user, "");
+		if (count(\Task\User::folders($user)) === 0) {
+			return \Task\User::sees($user, "");
 		}
 
 		if ($depth > self::DEPTH) {
@@ -119,7 +119,7 @@ class WorkflowRun {
 		}
 
 		foreach ($this->steps($id) as $step) {
-			if ($step->getFolder() !== "" && !User::sees($user, $step->getFolder())) {
+			if ($step->getFolder() !== "" && !\Task\User::sees($user, $step->getFolder())) {
 				return false;
 			}
 
@@ -186,10 +186,10 @@ class WorkflowRun {
 
 	/** hydrate is one row as a workflow run, its timestamps the text the column holds. */
 	static function hydrate($row) {
-		$run = new Model\WorkflowRun($row);
+		$run = new \Task\Model\WorkflowRun($row);
 
-		$run->setStartedAt(Row::stamp($row, "started_text"));
-		$run->setFinishedAt(Row::stamp($row, "finished_text"));
+		$run->setStartedAt(\Task\Row::stamp($row, "started_text"));
+		$run->setFinishedAt(\Task\Row::stamp($row, "finished_text"));
 
 		return $run;
 	}

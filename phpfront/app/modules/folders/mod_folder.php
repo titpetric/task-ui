@@ -593,7 +593,7 @@ class mod_folder implements Module {
 	 * a path, a command in code, a Show button and a bar.
 	 */
 	function detail($id, $place, $checkout) {
-		$schedules = new Task\Schedule($this->chrome->db);
+		$schedules = new Task\Schedules\Schedules($this->chrome->db);
 		$count = count($schedules->byFolder($id));
 		$sources = array();
 

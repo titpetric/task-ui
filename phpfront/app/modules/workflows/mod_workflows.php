@@ -66,7 +66,7 @@ class mod_workflows implements Module {
 
 		$store = new Task\Workflow($chrome->db);
 		$flows = $store->visible($chrome);
-		$clock = new Task\Schedule($chrome->db);
+		$clock = new Task\Schedules\Schedules($chrome->db);
 		$schedules = $clock->all();
 		$rows = array();
 
@@ -191,7 +191,7 @@ class mod_workflows implements Module {
 			$names[$flow["id"]] = $flow["name"];
 		}
 
-		$store = new Task\WorkflowRun($chrome->db);
+		$store = new Task\Workflows\Runs($chrome->db);
 		$out = array();
 
 		foreach ($store->latest(4 * self::RECENT) as $run) {

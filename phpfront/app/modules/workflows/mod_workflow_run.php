@@ -76,7 +76,7 @@ class mod_workflow_run implements Module {
 			return;
 		}
 
-		$runs = new Task\WorkflowRun($chrome->db);
+		$runs = new Task\Workflows\Runs($chrome->db);
 		$run = $runs->get(Task\Route::input("run"));
 
 		if ($run === null || $run->getWorkflowId() !== $id) {

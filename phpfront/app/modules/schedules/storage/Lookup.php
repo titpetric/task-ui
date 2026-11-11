@@ -6,13 +6,8 @@ namespace Task\Schedules;
 // the workflows a schedule may start, with the user they run as and the
 // folders their steps name.
 //
-// It belongs on Task\Workflow and moves there with the workflows module, whose
-// page owns it. It sits here because this is the first page to read it, and
-// every statement has to live in code/Task or in a module's storage.
-//
-// Two readers have already left: the chrome reads the named workspaces and the
-// keys a user's runs get on every page, so they are Task\Workspace's and
-// Task\Key's. That is where the pattern ends up.
+// The rows are the workflows module's and this asks that module for them;
+// which workflow a schedule may start is the schedules page's question.
 class Lookup {
 	/** STEPS are the kinds of a workflow step, as model/workflow.go names them. */
 	const STEP_JOB = "job";
@@ -21,10 +16,11 @@ class Lookup {
 
 	const STEP_PROMPT = "prompt";
 
-	var $db;
+	/** store is the workflows module, which owns the rows this reads. */
+	var $store;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? \Task\DB::reader() : $db;
+		$this->store = new \Task\Workflows\Workflows($db);
 	}
 
 	/**
@@ -38,7 +34,7 @@ class Lookup {
 		$steps = $this->steps();
 		$out = array();
 
-		foreach ($this->db->get_all("SELECT w.id AS id, w.name AS name, u.name AS run_as FROM workflow w LEFT JOIN user u ON u.id = w.run_as_user_id ORDER BY w.name, w.id") as $row) {
+		foreach ($this->store->named() as $row) {
 			$id = \Task\Row::text($row, "id");
 
 			$out[$id] = array(
@@ -53,19 +49,7 @@ class Lookup {
 
 	/** steps is every workflow's steps, in position order, by workflow ID. */
 	function steps() {
-		$out = array();
-
-		foreach (\Task\Model\WorkflowStep::rows($this->db->get_all("SELECT * FROM workflow_step ORDER BY workflow_id, position")) as $step) {
-			$id = $step->getWorkflowId();
-
-			if (!isset($out[$id])) {
-				$out[$id] = array();
-			}
-
-			$out[$id][] = $step;
-		}
-
-		return $out;
+		return $this->store->allSteps();
 	}
 
 	/**

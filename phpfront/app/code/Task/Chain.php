@@ -126,7 +126,7 @@ class Chain {
 	 */
 	static function frames($links, $db, $names, $workspaces, $deeper, $seen) {
 		$runs = new Runs\Runs($db);
-		$store = new WorkflowRun($db);
+		$store = new Workflows\Runs($db);
 
 		foreach ($links as $i => $link) {
 			if ($link["run_id"] !== "") {

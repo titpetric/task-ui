@@ -98,6 +98,7 @@ return array(
     'Task\\Runs\\Summaries' => $baseDir . '/modules/runs/storage/Summaries.php',
     'Task\\Schedule' => $baseDir . '/code/Task/Schedule.php',
     'Task\\Schedules\\Lookup' => $baseDir . '/modules/schedules/storage/Lookup.php',
+    'Task\\Schedules\\Schedules' => $baseDir . '/modules/schedules/storage/Schedules.php',
     'Task\\Secret' => $baseDir . '/code/Task/Secret.php',
     'Task\\Seen' => $baseDir . '/code/Task/Seen.php',
     'Task\\Setup' => $baseDir . '/code/Task/Setup.php',
@@ -118,6 +119,7 @@ return array(
     'Task\\Who' => $baseDir . '/code/Task/Who.php',
     'Task\\WhoField' => $baseDir . '/code/Task/WhoField.php',
     'Task\\Workflow' => $baseDir . '/code/Task/Workflow.php',
-    'Task\\WorkflowRun' => $baseDir . '/code/Task/WorkflowRun.php',
+    'Task\\Workflows\\Runs' => $baseDir . '/modules/workflows/storage/Runs.php',
+    'Task\\Workflows\\Workflows' => $baseDir . '/modules/workflows/storage/Workflows.php',
     'Task\\Workspace' => $baseDir . '/code/Task/Workspace.php',
 );

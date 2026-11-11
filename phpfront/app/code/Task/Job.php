@@ -420,7 +420,7 @@ class Job {
 	 * the one query the folder's page makes as well.
 	 */
 	function schedules($id, $job, $can, $users) {
-		$store = new Schedule($this->chrome->db);
+		$store = new Schedules\Schedules($this->chrome->db);
 		$jobID = Row::text($job, "id");
 		$rows = array();
 
