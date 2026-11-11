@@ -258,7 +258,10 @@ func (a *App) wire(version string) error {
 	// the readiness check and a plugin's own pages, then the byte streams a
 	// page links to, each read from outside the PHP root.
 	a.rootRoutes(r, access.NewAuthenticator(store.Users, store.Emails, store.Passwords))
-	r.Mount("/", a.Guard.Require(apiHandlers.Streams()))
+	r.Group(func(r chi.Router) {
+		r.Use(a.Guard.Require)
+		apiHandlers.Streams(r)
+	})
 	if ported == nil {
 		// A build that cannot extract the front end still answers /api and the
 		// routes above it.

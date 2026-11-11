@@ -22,14 +22,12 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Streams are the byte streams the front end links to at the root: a file of a checkout, a file of the artifact tree and a directory of it as a tar.
-func (h *Handlers) Streams() http.Handler {
-	r := chi.NewRouter()
+// Streams registers the byte streams the front end links to at the root, on r itself: the front end is mounted at "/" and chi refuses a second Mount of one pattern.
+func (h *Handlers) Streams(r chi.Router) {
 	r.Get("/files/*", h.streamCheckoutFile)
 	r.Get("/artifacts/files/*", h.streamArtifactFile)
 	r.Get("/artifacts.tgz", h.streamArtifactArchive)
 	r.Get("/artifacts/*", h.streamArtifactArchive)
-	return r
 }
 
 // streamCheckoutFile writes a file of a folder's checkout for whoever sees the folder; a path out of it is not found.
