@@ -46,7 +46,8 @@ echo implode(",", mine($keys->ssh())), "\n";
 
 // A link table is the values of each key name, and a key no row names has no
 // entry.
-$links = $keys->links("SELECT key_name, role AS value FROM key_role");
+$grants = new Task\Settings\Keys;
+$links = $grants->roles();
 
 echo implode(",", $links["fx-key-deploy"]), "\n";
 echo var_export(isset($links["fx-key-scoped"]), true), "\n";

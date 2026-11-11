@@ -2,17 +2,18 @@
 
 namespace Task;
 
-// Key reads the keys a run is given: the instance SSH keys, and the two tables
-// that say who gets one, by the role a user acts with and by their name.
+// Key draws the keys a run is given: which user gets which, what a key name
+// may be, and the rows the keys pages list.
 //
 // No private material is here. The keystore holds it and it does not enter
-// PHP, so nothing on this class answers more than a key's name.
+// PHP, so nothing on this class answers more than a key's name. The rows are
+// the settings module's, in Task\Settings\Keys.
 class Key {
 	/** SSH is the purpose of a key a run gets, as keystore writes the column. */
-	const SSH = "ssh";
+	const SSH = Settings\Keys::SSH;
 
 	/** WORKSPACE starts the scope of a key of one workspace, which no run of another gets. */
-	const WORKSPACE = "workspace:%";
+	const WORKSPACE = Settings\Keys::WORKSPACE;
 
 	/**
 	 * NAME is what a key name may be, as the Name field's pattern, which the
@@ -24,10 +25,11 @@ class Key {
 	 */
 	const NAME = "[a-z0-9][a-z0-9_\\-]{0,63}";
 
-	var $db;
+	/** store is the settings module, which owns the statements over the key tables. */
+	var $store;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Settings\Keys($db);
 	}
 
 	/**
@@ -36,8 +38,8 @@ class Key {
 	 */
 	function ofUsers($users) {
 		$keys = $this->ssh();
-		$roles = $this->links("SELECT key_name, role AS value FROM key_role");
-		$holders = $this->links("SELECT key_name, user_name AS value FROM key_user");
+		$roles = $this->store->roles();
+		$holders = $this->store->holders();
 		$out = array();
 
 		foreach ($users as $user) {
@@ -63,30 +65,7 @@ class Key {
 
 	/** ssh is the name of every instance SSH key, by name; a workspace's own is no run's. */
 	function ssh() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT name FROM key_info WHERE purpose = ? AND scope NOT LIKE ? ORDER BY name", self::SSH, self::WORKSPACE) as $row) {
-			$out[] = Row::text($row, "name");
-		}
-
-		return $out;
-	}
-
-	/** links is a key to value table as the values of each key name. */
-	function links($statement) {
-		$out = array();
-
-		foreach ($this->db->get_all($statement) as $row) {
-			$key = Row::text($row, "key_name");
-
-			if (!isset($out[$key])) {
-				$out[$key] = array();
-			}
-
-			$out[$key][] = Row::text($row, "value");
-		}
-
-		return $out;
+		return $this->store->ssh();
 	}
 
 	/** grants reports whether a link table names a value for a key. */

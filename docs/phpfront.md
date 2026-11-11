@@ -25,7 +25,7 @@ Two kinds of path are not compared, and the run names each one it dropped. A byt
 | `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/`  |
 | `ext/`                        | what `composer install` wrote, the autoloader among it                             |
 | `code/Module.php`             | the interface every `mod_` class declares                                          |
-| `code/Task/`                  | the task-ui domain: a DAO per table, and the helpers every page shares             |
+| `code/Task/`                  | the task-ui domain: what a row means, and the helpers every page shares           |
 | `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                    |
 | `theme/templates/index.tpl`   | the page shell, which places the components                                        |
 | `theme/templates/components/` | a component and its `.md` per piece of shared markup                               |
@@ -182,7 +182,7 @@ A write publishes. `Task\Host::publish($topic, $payload)` sends the event every 
 
 ## The domain
 
-`code/Task` holds a class per table and the helpers every page shares. A page reads rows itself: no binding answers a workspace, a run or a user.
+`code/Task` holds what a row means and the helpers every page shares; the statements are each module's, under its `storage/`. A page reads rows itself: no binding answers a workspace, a run or a user.
 
 | Class             | What it is                                                                             |
 |-------------------|----------------------------------------------------------------------------------------|
@@ -201,9 +201,11 @@ A write publishes. `Task\Host::publish($topic, $payload)` sends the event every 
 | `Task\Id`         | the 26 character identifier of a row                                                   |
 | `Task\Text`       | the JSON a column holds where it holds a list or a map                                 |
 
-A class owns a table and the behaviour of its rows both, because the runtime merges no methods into a generated class: `Task\User` holds the statements and `Task\User::admin($row)` answers what a row means.
+A class of `code/Task` answers what a row means and reads the rows through the owning module: `Task\User::admin($row)` is the rule, `Task\Settings\Users` holds the statements. The runtime merges no methods into a generated class, so the behaviour is a class of its own and never a method on `Task\Model\User`.
 
-**Every SQL statement lives in `code/Task/*.php` or `modules/*/storage/*.php`.** `phpfront/app/semgrep/` refuses one anywhere else. A read page takes `Task\DB::reader()`, which refuses a statement that does not start with a read-only keyword, so a view that only lists cannot write.
+**Every SQL statement lives in the `storage/` of the module that owns the table.** `phpfront/app/semgrep/` refuses one anywhere else, `code/Task/DB.php` excepted, which is the reader and the writer themselves. A read page takes `Task\DB::reader()`, which refuses a statement that does not start with a read-only keyword, so a view that only lists cannot write.
+
+A page that reads another module's rows asks that module: `Task\Project::refs` is four questions of three modules and not one statement over four tables. An allocation is a statement bound to a name, so `(new Task\Settings\Keys)->roles()` is refused and the name is written first.
 
 A nullable timestamp column holds null and not `""`. The generated model names its timestamp columns and `Task\Row::values()` writes null for an empty one; writing `""` makes the Go scanner fail and the Go page lists nothing, silently.
 

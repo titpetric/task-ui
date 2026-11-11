@@ -43,17 +43,16 @@ class Secret {
 	 */
 	const MISSING = "No secret with that ID.";
 
-	var $db;
+	/** store is the settings module, which owns the two tables. */
+	var $store;
 
 	function __construct($db = null) {
-		$this->db = $db === null ? DB::reader() : $db;
+		$this->store = new Settings\Secrets($db);
 	}
 
 	/** count is how many variables the settings list, the integrations' apart. */
 	function count() {
-		$row = $this->db->get("SELECT COUNT(*) AS found FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ?", self::OWNED, self::PERSONAL);
-
-		return Row::number($row, "found");
+		return $this->store->count();
 	}
 
 	/**
@@ -61,13 +60,7 @@ class Secret {
 	 * variable, which the keys page counts by workspace.
 	 */
 	function scopes() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT scope FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ?", self::OWNED, self::PERSONAL) as $row) {
-			$out[] = Row::text($row, "scope");
-		}
-
-		return $out;
+		return $this->store->scopes();
 	}
 
 	/**
@@ -79,20 +72,12 @@ class Secret {
 	 * which Task::variables() answers by row ID, and a secret has none to draw.
 	 */
 	function all() {
-		$sql = "SELECT * FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ? ORDER BY CASE WHEN scope = ? THEN 0 WHEN scope LIKE ? THEN 1 ELSE 2 END, scope, name";
-
-		return Model\Secret::rows($this->db->get_all($sql, self::OWNED, self::PERSONAL, Workspace::EVERY, Workspace::SCOPE . "%"));
+		return $this->store->all();
 	}
 
 	/** counts is how many runs got each variable, by its ID. */
 	function counts() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT secret_id, COUNT(*) AS found FROM secret_read GROUP BY secret_id") as $row) {
-			$out[Row::text($row, "secret_id")] = Row::number($row, "found");
-		}
-
-		return $out;
+		return $this->store->counts();
 	}
 
 	/**
@@ -102,14 +87,7 @@ class Secret {
 	 * reason reads() gives: the reads of one run share a millisecond.
 	 */
 	function last() {
-		$sql = "SELECT * FROM secret_read WHERE rowid IN (SELECT MAX(rowid) FROM secret_read GROUP BY secret_id)";
-		$out = array();
-
-		foreach (Model\SecretRead::rows($this->db->get_all($sql)) as $read) {
-			$out[$read->getSecretId()] = $read;
-		}
-
-		return $out;
+		return $this->store->last();
 	}
 
 	/**
@@ -167,13 +145,7 @@ class Secret {
 	 * frontend/secret.go does with the list it filtered.
 	 */
 	function byId($id) {
-		$row = $this->db->get("SELECT * FROM secret WHERE id = ? AND scope NOT LIKE ? AND scope NOT LIKE ?", $id, self::OWNED, self::PERSONAL);
-
-		if (!is_array($row)) {
-			return null;
-		}
-
-		return new Model\Secret($row);
+		return $this->store->byId($id);
 	}
 
 	/**
@@ -186,17 +158,7 @@ class Secret {
 	 * has a form like any other variable.
 	 */
 	function edited($id, $scope, $name) {
-		if ($id !== "") {
-			$row = $this->db->get("SELECT * FROM secret WHERE id = ?", $id);
-		} else {
-			$row = $this->db->get("SELECT * FROM secret WHERE scope = ? AND name = ?", $scope, $name);
-		}
-
-		if (!is_array($row)) {
-			return null;
-		}
-
-		return new Model\Secret($row);
+		return $this->store->edited($id, $scope, $name);
 	}
 
 	/**
@@ -221,33 +183,7 @@ class Secret {
 	 * ID, and a cursor whose row is gone keeps nothing.
 	 */
 	function reads($id, $before, $after, $limit) {
-		$sql = "SELECT * FROM secret_read WHERE secret_id = ?";
-		$args = array($id);
-		$order = " ORDER BY rowid DESC";
-
-		if ($before !== "") {
-			$sql .= " AND rowid < (SELECT rowid FROM secret_read WHERE id = ?)";
-			$args[] = $before;
-		} elseif ($after !== "") {
-			$sql .= " AND rowid > (SELECT rowid FROM secret_read WHERE id = ?)";
-			$args[] = $after;
-			$order = " ORDER BY rowid ASC";
-		}
-
-		$sql .= $order;
-
-		if ($limit > 0) {
-			$sql .= " LIMIT ?";
-			$args[] = $limit;
-		}
-
-		$out = Model\SecretRead::rows(DB::all($this->db, $sql, $args));
-
-		if ($before === "" && $after !== "") {
-			$out = array_reverse($out);
-		}
-
-		return $out;
+		return $this->store->reads($id, $before, $after, $limit);
 	}
 
 	/**

@@ -19,6 +19,10 @@ class Project {
 	 */
 	const PULL = "@git:pull";
 
+	/** store is the settings module, which owns the project table. */
+	var $store;
+
+	/** db is what the other modules' stores are asked on. */
 	var $db;
 
 	function __construct($db = null) {
@@ -27,6 +31,7 @@ class Project {
 		}
 
 		$this->db = $db;
+		$this->store = new Settings\Projects($db);
 	}
 
 	/**
@@ -59,13 +64,7 @@ class Project {
 	 * what the sidebar lists, not what the reader may see.
 	 */
 	function hidden() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT folder FROM project WHERE sidebar_hidden = 1") as $row) {
-			$out[] = Row::text($row, "folder");
-		}
-
-		return $out;
+		return $this->store->hidden();
 	}
 
 	/**
@@ -76,13 +75,7 @@ class Project {
 	 * the same: the clone failed and the page lists it with git's output.
 	 */
 	function folders() {
-		$out = array();
-
-		foreach ($this->db->get_all("SELECT folder FROM project ORDER BY folder") as $row) {
-			$out[] = Row::text($row, "folder");
-		}
-
-		return $out;
+		return $this->store->folders();
 	}
 
 	/**
@@ -92,9 +85,7 @@ class Project {
 	 * the settings of a project the instance keeps nothing about.
 	 */
 	function row($folder) {
-		$row = $this->db->get("SELECT * FROM project WHERE folder = ?", $folder);
-
-		return is_array($row) ? $row : null;
+		return $this->store->row($folder);
 	}
 
 	/**
@@ -107,32 +98,22 @@ class Project {
 	 * and a workflow's step each name a folder by its ID and none of them
 	 * follows the checkout.
 	 *
-	 * An ID may hold the underscore LIKE matches any character with, so each
-	 * table matches the ID itself or the ID and a slash as a prefix.
-	 * storage/folder_ref_storage.go.
+	 * Each module answers for the tables it owns, so this is four questions
+	 * and not one statement over four tables. storage/folder_ref_storage.go.
 	 */
 	function refs($id) {
-		$prefix = $id . "/";
-		$length = strlen($prefix);
-		$sql = "SELECT 'schedule' AS kind, folder, job AS name FROM schedule
-	WHERE folder = ? OR substr(folder, 1, ?) = ?
-UNION ALL
-SELECT 'secret', scope, name FROM secret
-	WHERE scope = ? OR substr(scope, 1, ?) = ?
-UNION ALL
-SELECT 'env_file', folder, path FROM env_file
-	WHERE folder = ? OR substr(folder, 1, ?) = ?
-UNION ALL
-SELECT 'workflow_step', s.folder, w.name || ': ' || s.job FROM workflow_step s JOIN workflow w ON w.id = s.workflow_id
-	WHERE s.folder = ? OR substr(s.folder, 1, ?) = ?
-ORDER BY kind, folder, name";
-		$rows = $this->db->get_all($sql, $id, $length, $prefix, $id, $length, $prefix, $id, $length, $prefix, $id, $length, $prefix);
+		$schedules = new Schedules\Schedules($this->db);
+		$workflows = new Workflows\Workflows($this->db);
+		$mine = new Settings\Refs($this->db);
+		$found = array_merge($schedules->refs($id), $mine->of($id), $workflows->stepsIn($id));
 		$out = array();
 
-		foreach ($rows as $row) {
+		foreach ($found as $row) {
 			$kind = str_replace("_", " ", Row::text($row, "kind"));
 			$out[] = $kind . " " . Row::text($row, "folder") . " · " . Row::text($row, "name");
 		}
+
+		sort($out);
 
 		return $out;
 	}

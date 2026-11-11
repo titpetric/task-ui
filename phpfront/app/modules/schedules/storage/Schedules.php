@@ -39,6 +39,20 @@ class Schedules {
 		return \Task\Model\Schedule::rows($this->db->get_all("SELECT * FROM schedule WHERE workflow_id = ? ORDER BY id", $id));
 	}
 
+	/**
+	 * refs is the schedules a folder and the folders inside it name, each said
+	 * as its kind, its folder and its name: what a move of the project leaves
+	 * where it was.
+	 *
+	 * An ID may hold the underscore LIKE matches any character with, so the
+	 * match is on the ID itself or on the ID and a slash as a prefix.
+	 */
+	function refs($id) {
+		$prefix = $id . "/";
+
+		return $this->db->get_all("SELECT 'schedule' AS kind, folder, job AS name FROM schedule WHERE folder = ? OR substr(folder, 1, ?) = ? ORDER BY folder, job", $id, strlen($prefix), $prefix);
+	}
+
 	/** get is one schedule by ID, or null. */
 	function get($id) {
 		$row = $this->db->get("SELECT * FROM schedule WHERE id = ?", $id);

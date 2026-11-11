@@ -64,6 +64,21 @@ class Workflows {
 		return $out;
 	}
 
+	/**
+	 * stepsIn is the workflow steps a folder and the folders inside it name,
+	 * each said as its kind, its folder and the workflow it belongs to: what a
+	 * move of the project leaves where it was.
+	 *
+	 * An ID may hold the underscore LIKE matches any character with, so the
+	 * match is on the ID itself or on the ID and a slash as a prefix.
+	 */
+	function stepsIn($id) {
+		$prefix = $id . "/";
+		$sql = "SELECT 'workflow_step' AS kind, s.folder AS folder, w.name || ': ' || s.job AS name FROM workflow_step s JOIN workflow w ON w.id = s.workflow_id WHERE s.folder = ? OR substr(s.folder, 1, ?) = ? ORDER BY s.folder, name";
+
+		return $this->db->get_all($sql, $id, strlen($prefix), $prefix);
+	}
+
 	/** allSteps is every workflow's steps, in position order, by workflow ID. */
 	function allSteps() {
 		$out = array();

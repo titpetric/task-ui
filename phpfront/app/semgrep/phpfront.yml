@@ -138,7 +138,9 @@ rules:
     severity: ERROR
     message: >-
       An allocation is a statement of its own, bound to a name: $view = new
-      Task\View(...); then $view->page(...). See docs/phpfront.md, Statements.
+      Task\View(...); then $view->page(...). A call on a fresh object,
+      (new X)->f() or new X()->f(), is the same thing without the name. See
+      docs/phpfront.md, Statements.
     paths:
       include:
         - "**/*.php"
@@ -154,3 +156,6 @@ rules:
       - pattern-regex: '\?\s*new\s+\\?[A-Z]'
       - pattern-regex: '=>\s*new\s+\\?[A-Z]'
       - pattern-regex: '[^:\s]\s:\s*new\s+\\?[A-Z]'
+      # A call on the object the expression just made, which the parenthesised
+      # form above catches only while PHP needs the parentheses. 8.4 does not.
+      - pattern-regex: 'new\s+\\?[A-Z][A-Za-z0-9_\\]*(\s*\([^()]*\))?\s*->'
