@@ -145,11 +145,17 @@
 <section class="refinement">
 	<form class="form refinement-start" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /refinement/threads">
-		<label for="refinement-want">Start a new thread: what to design</label>
-		<p class="faint" id="refinement-want-help"><?php echo $_v['data']['help'];?>
+		<p class="faint">Start a new thread: what to design. <?php echo $_v['data']['help'];?>
 </p>
-		<textarea id="refinement-want" name="want" rows="5" aria-describedby="refinement-want-help" placeholder="<?php echo htmlspecialchars($_v['data']['want'], ENT_QUOTES);?>
-" required></textarea>
+		<?php $_v['data_markdown'] = $_v['data']['editor'];?>
+<textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
+" rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
+" spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
+"<?php if($_v['data_markdown']['mentions']){?>
+ data-mentions<?php }?><?php if($_v['data_markdown']['placeholder']){?>
+ placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
+"<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
+"></textarea>
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Start a thread</button>
 		</div>

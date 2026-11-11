@@ -61,8 +61,25 @@ class mod_refinement implements Module {
 			"head" => $head->data(),
 			"table" => $table->data(),
 			"help" => self::HELP,
-			"want" => self::WANT,
+			"editor" => self::field(),
 		));
+	}
+
+	/**
+	 * field is the box that opens a thread, as components/editor.tpl reads it:
+	 * a design is a document and takes every tool.
+	 *
+	 * A thread names nobody, so there is no list of users on an `@`.
+	 */
+	static function field() {
+		return array(
+			"name" => "want",
+			"rows" => 5,
+			"label" => "What to design",
+			"placeholder" => self::WANT,
+			"mentions" => false,
+			"toolbar" => "full",
+		);
 	}
 
 	/** table is the threads: the title, how many comments it holds, when it started, and the way in. */

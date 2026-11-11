@@ -94,6 +94,25 @@ class mod_refinement_thread implements Module {
 			"output" => Task\Refinement\Thread::report($report["images"], $folder),
 			"thinking" => Task\Refinement\Thread::report($report["prose"], $folder),
 			"visual" => $report["images"] !== "",
+			"comment" => self::field("comment", 3, "A change to make", "use ULID as primary keys"),
+			"fork" => self::field("want", 2, "What to design in the fork", "A deployment topology diagram: the hosts, what runs on each and the links between them."),
+		);
+	}
+
+	/**
+	 * field is one of the page's two boxes, as components/editor.tpl reads it:
+	 * a request is markdown and takes the five tools of a short field.
+	 *
+	 * Neither box names anyone, so there is no list of users on an `@`.
+	 */
+	static function field($name, $rows, $label, $placeholder) {
+		return array(
+			"name" => $name,
+			"rows" => $rows,
+			"label" => $label,
+			"placeholder" => $placeholder,
+			"mentions" => false,
+			"toolbar" => "inline",
 		);
 	}
 

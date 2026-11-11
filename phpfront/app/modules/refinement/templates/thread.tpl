@@ -51,17 +51,16 @@
 	</form>
 
 	<form class="form refinement-fork" method="post" action="{base}/refinement/threads/{data.thread.id}/fork">
-		<label for="refinement-fork">Fork</label>
-		<textarea id="refinement-fork" name="want" rows="2" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
+		<p class="faint">Fork: a thread of its own, from this design.</p>
+		{eval $data_markdown = $data.fork}{include components/editor.tpl}
 		<div class="form-foot">
 			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
 		</div>
 	</form>
 
 	<form class="form refinement-comment-form" method="post" action="{base}/refinement/threads/{data.thread.id}/comments">
-		<label for="refinement-comment">Refine it</label>
-		<p class="faint" id="refinement-comment-help">One change per comment. Each one starts a run over the artifacts as they stand now.</p>
-		<textarea id="refinement-comment" name="comment" rows="3" aria-describedby="refinement-comment-help" placeholder="use ULID as primary keys" required></textarea>
+		<p class="faint">Refine it. One change per comment, and each one starts a run over the artifacts as they stand now.</p>
+		{eval $data_markdown = $data.comment}{include components/editor.tpl}
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Send</button>
 		</div>

@@ -230,8 +230,16 @@ data-confirm="Delete this request? The files it produced stay."<?php }?>>
 	<form class="form refinement-fork" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /refinement/threads/<?php echo htmlspecialchars($_v['data']['thread']['id'], ENT_QUOTES);?>
 /fork">
-		<label for="refinement-fork">Fork</label>
-		<textarea id="refinement-fork" name="want" rows="2" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
+		<p class="faint">Fork: a thread of its own, from this design.</p>
+		<?php $_v['data_markdown'] = $_v['data']['fork'];?>
+<textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
+" rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
+" spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
+"<?php if($_v['data_markdown']['mentions']){?>
+ data-mentions<?php }?><?php if($_v['data_markdown']['placeholder']){?>
+ placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
+"<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
+"></textarea>
 		<div class="form-foot">
 			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
 		</div>
@@ -240,9 +248,16 @@ data-confirm="Delete this request? The files it produced stay."<?php }?>>
 	<form class="form refinement-comment-form" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /refinement/threads/<?php echo htmlspecialchars($_v['data']['thread']['id'], ENT_QUOTES);?>
 /comments">
-		<label for="refinement-comment">Refine it</label>
-		<p class="faint" id="refinement-comment-help">One change per comment. Each one starts a run over the artifacts as they stand now.</p>
-		<textarea id="refinement-comment" name="comment" rows="3" aria-describedby="refinement-comment-help" placeholder="use ULID as primary keys" required></textarea>
+		<p class="faint">Refine it. One change per comment, and each one starts a run over the artifacts as they stand now.</p>
+		<?php $_v['data_markdown'] = $_v['data']['comment'];?>
+<textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
+" rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
+" spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
+"<?php if($_v['data_markdown']['mentions']){?>
+ data-mentions<?php }?><?php if($_v['data_markdown']['placeholder']){?>
+ placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
+"<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
+"></textarea>
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Send</button>
 		</div>

@@ -3,9 +3,8 @@
 
 <section class="refinement">
 	<form class="form refinement-start" method="post" action="{base}/refinement/threads">
-		<label for="refinement-want">Start a new thread: what to design</label>
-		<p class="faint" id="refinement-want-help">{data.help|raw}</p>
-		<textarea id="refinement-want" name="want" rows="5" aria-describedby="refinement-want-help" placeholder="{data.want}" required></textarea>
+		<p class="faint">Start a new thread: what to design. {data.help|raw}</p>
+		{eval $data_markdown = $data.editor}{include components/editor.tpl}
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Start a thread</button>
 		</div>
