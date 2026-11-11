@@ -72,6 +72,7 @@ var migrations = []string{
 	"setting.up.sql",
 	"setting_parent_env.up.sql",
 	"sidebar.up.sql",
+	"sidebar_refinement.up.sql",
 	"sidebar_threads.up.sql",
 	"ssh_key_policy.up.sql",
 	"ssh_key_user.up.sql",

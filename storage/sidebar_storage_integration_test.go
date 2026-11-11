@@ -34,11 +34,11 @@ func TestSidebarStorage_EnsureDefaults(t *testing.T) {
 	assert.NoError(t, s.EnsureDefaults(ctx, model.SidebarDefaults()))
 	rows, err = s.List(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"/", "/inventory", "/workflows", "/threads", "/artifacts", "/schedules", "/settings"},
+	assert.Equal(t, []string{"/", "/inventory", "/workflows", "/threads", "/refinement", "/artifacts", "/schedules", "/settings"},
 		hrefs(rows), "the defaults are the sidebar as it stood before the table held it")
 	assert.Equal(t, int64(0), rows[0].Position)
-	assert.Equal(t, int64(6), rows[6].Position)
-	assert.Equal(t, model.RuleSettings, rows[6].Rule)
+	assert.Equal(t, int64(7), rows[7].Position)
+	assert.Equal(t, model.RuleSettings, rows[7].Rule)
 	assert.Equal(t, model.SidebarView, rows[0].Kind)
 	assert.False(t, rows[0].IsModule())
 
@@ -89,12 +89,12 @@ func TestSidebarStorage_Order(t *testing.T) {
 	assert.NoError(t, s.EnsureDefaults(ctx, model.SidebarDefaults()))
 
 	assert.NoError(t, s.Order(ctx,
-		[]string{"/threads", "/", "/inventory", "/workflows", "/artifacts", "/schedules", "/settings"},
+		[]string{"/threads", "/", "/inventory", "/workflows", "/artifacts", "/refinement", "/schedules", "/settings"},
 		map[string]bool{"/inventory": true, "/schedules": true}))
 
 	rows, err := s.List(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"/threads", "/", "/inventory", "/workflows", "/artifacts", "/schedules", "/settings"},
+	assert.Equal(t, []string{"/threads", "/", "/inventory", "/workflows", "/artifacts", "/refinement", "/schedules", "/settings"},
 		hrefs(rows))
 
 	hidden := map[string]bool{}
@@ -109,7 +109,7 @@ func TestSidebarStorage_Order(t *testing.T) {
 	assert.NoError(t, s.Order(ctx, []string{"/gone"}, nil))
 	rows, err = s.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, rows, 7)
+	assert.Len(t, rows, 8)
 }
 
 // Keep drops the module rows a scan did not find and never a view's: the
@@ -130,7 +130,7 @@ func TestSidebarStorage_Keep(t *testing.T) {
 
 	rows, err := s.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, rows, 8, "the seven views stay and one module went")
+	assert.Len(t, rows, 9, "the eight views stay and one module went")
 
 	// A scan with no module at all drops every module row and no view.
 	dropped, err = s.Keep(ctx, nil)
@@ -139,7 +139,7 @@ func TestSidebarStorage_Keep(t *testing.T) {
 
 	rows, err = s.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, rows, 7)
+	assert.Len(t, rows, 8)
 
 	_, err = s.Get(ctx, "/settings")
 	assert.NoError(t, err)

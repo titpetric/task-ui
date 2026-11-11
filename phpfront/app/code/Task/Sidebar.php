@@ -13,6 +13,9 @@ class Sidebar {
 	/** SETTINGS is the one rule that is not a permission path. */
 	const SETTINGS = "settings";
 
+	/** MODULE_RULE is the rule of a row that opens a module, model/sidebar.go's RuleModule. */
+	const MODULE_RULE = "module";
+
 	var $db;
 
 	function __construct($db = null) {
@@ -121,6 +124,12 @@ class Sidebar {
 				"href" => "/threads",
 				"icon" => "note",
 				"rule" => "",
+			),
+			array(
+				"title" => "Refinement",
+				"href" => "/refinement",
+				"icon" => "flow",
+				"rule" => self::MODULE_RULE,
 			),
 			array(
 				"title" => "Artifacts",
