@@ -11,15 +11,18 @@ import (
 
 	"github.com/titpetric/phpscript/annotations"
 	"github.com/titpetric/phpscript/runner"
+	psruntime "github.com/titpetric/phpscript/stdlib/ps/runtime"
 
 	"github.com/titpetric/task-ui/internal/assets"
 )
 
 // Front serves the application tree.
 type Front struct {
-	opts   Options
-	routes *annotations.Route
-	static *assets.Tree
+	opts     Options
+	routes   *annotations.Route
+	startup  *annotations.Startup
+	bindings *annotations.Bindings
+	static   *assets.Tree
 }
 
 // New returns the front end over opts, its routes discovered once here.
@@ -34,7 +37,19 @@ func New(opts Options) (*Front, error) {
 		opts.PoolSize = 2
 	}
 	static := assets.New(assets.Dirs(opts.Root))
-	return &Front{opts: opts, routes: route(static, opts), static: static}, nil
+	router := psruntime.NewRouter()
+	tree := os.DirFS(opts.Root)
+	return &Front{
+		opts:   opts,
+		routes: annotations.NewRoute(tree, scan(static, opts, router)...),
+		// The module symbols after the shared list, which ends in the page's
+		// own: a @startup job calls both and the two register in one order.
+		startup: annotations.NewStartup(tree, append(scan(static, opts, router),
+			annotations.WithRuntimeFunc(registerModule))...),
+		bindings: annotations.NewBindings(annotations.WithRouter(router),
+			annotations.WithModuleSuffix("taskui")),
+		static: static,
+	}, nil
 }
 
 // Assets returns the static tree, mounted at the root beside the pages, so an
@@ -46,9 +61,9 @@ func (f *Front) Assets() *assets.Tree {
 	return f.static
 }
 
-// route builds the annotation scanner over the tree.
-func route(static *assets.Tree, opts Options) *annotations.Route {
-	return annotations.NewRoute(os.DirFS(opts.Root),
+// scan is the option list of the tree: one runtime surface, one service router.
+func scan(static *assets.Tree, opts Options, router *psruntime.Router) []annotations.Option {
+	return []annotations.Option{
 		// A real directory, which composer's autoloader and MiniTPL both need.
 		annotations.WithRootDir(opts.Root),
 		annotations.WithRunnerOptions(runner.Options{
@@ -73,13 +88,23 @@ func route(static *assets.Tree, opts Options) *annotations.Route {
 		// The scanner excludes vendor; composer's install directory is ext.
 		annotations.WithExcludedDirectory("ext"),
 		annotations.WithModuleSuffix("taskui"),
-	)
+		// The router a routes.php binds on, shared with the Bindings module
+		// that mounts what it took.
+		annotations.WithRouter(router),
+	}
 }
 
-// Mount registers every discovered route on the router.
+// Mount runs the tree's @startup jobs and registers every route on the router:
+// the paths a routes.php bound, then the annotated endpoints.
 func (f *Front) Mount(ctx context.Context, router chi.Router) error {
 	if f == nil {
 		return nil
+	}
+	if err := f.startup.Start(ctx); err != nil {
+		return err
+	}
+	if err := f.bindings.Mount(ctx, router); err != nil {
+		return err
 	}
 	return f.routes.Mount(ctx, router)
 }
