@@ -6,14 +6,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/titpetric/phpscript/model"
+	"github.com/titpetric/phpscript/modelutil"
 
 	"github.com/titpetric/task-ui/internal/markdown"
 )
 
-// mention matches @name where a note names a user, the way model.Mentions
-// reads it. The third group, a colon and a character other than a space,
-// makes it a job ID such as @host:dev1, which is no mention.
+// mention matches @name where a note names a user; a colon right after the name makes it a job ID such as @host:dev1 and no mention.
 var mention = regexp.MustCompile(`(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9_]|[A-Za-z0-9])((?::\S)?)`)
 
 // Message renders the text of a note: markdown with a line break kept as one
@@ -45,23 +43,11 @@ func Message(text, prefix string, link []string) string {
 	}, []byte(text))
 }
 
-// names reads a PHP array of strings, whatever the script made it with.
-//
-// The parameter is any and not *model.Array because the runtime has two
-// spellings of a list: an array a script wrote is a *model.Array, and what
-// array_keys, array_values or explode answer is a Go slice. A binding that
-// declares *model.Array refuses the slice with a TypeError that reads
-// "Argument #1 must be of type array, array given", and a list built by one
-// of those functions is the ordinary way a page asks about many rows at
-// once - Task\Folders::warm asks with array_keys, and the tree it draws is
-// on every page.
-//
-// model.RangeValues is the runtime's own reader of both, so this takes
-// whatever it takes and a value that is no list reads as no names.
+// names reads a PHP array of strings, whatever spelling of a list it holds.
 func names(list any) []string {
-	size, _ := model.LenValues(list)
+	size, _ := modelutil.LenValues(list)
 	out := make([]string, 0, size)
-	model.RangeValues(list, func(_, value any) bool {
+	modelutil.RangeValues(list, func(_, value any) bool {
 		if name, ok := value.(string); ok && strings.TrimSpace(name) != "" {
 			out = append(out, name)
 		}
@@ -70,13 +56,11 @@ func names(list any) []string {
 	return out
 }
 
-// fields reads a PHP array as the map a Go caller takes, keyed the way PHP
-// keys it: a string key as itself and a list index as its decimal. It takes
-// any for the same reason names does.
+// fields reads a PHP array as a map, a list index keyed as its decimal.
 func fields(array any) map[string]any {
-	size, _ := model.LenValues(array)
+	size, _ := modelutil.LenValues(array)
 	out := make(map[string]any, size)
-	model.RangeValues(array, func(key, value any) bool {
+	modelutil.RangeValues(array, func(key, value any) bool {
 		switch k := key.(type) {
 		case string:
 			out[k] = value
@@ -90,8 +74,7 @@ func fields(array any) map[string]any {
 	return out
 }
 
-// pairs reads a PHP array as a map of strings, the keys and the values each
-// as they come; anything that is not a string is left out.
+// pairs reads a PHP array as a map of strings, dropping a value of any other type.
 func pairs(array any) map[string]string {
 	out := make(map[string]string)
 	for key, value := range fields(array) {
