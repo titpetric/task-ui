@@ -7,13 +7,13 @@ require "ext/autoload.php";
 
 // mod_notfound is the catch-all: the page for a path no other route claimed.
 //
-// chi matches a literal and a parameter ahead of a wildcard, so this answers
-// only what nothing else did. The Go router draws the same page from
-// r.NotFound, behind the same guard, and the reason reads the same because
-// Task\Route::path() drops the mount prefix: the cutover changes no string.
+// It belongs to the theme and to no module. It owns no table, writes nothing
+// and draws notfound.tpl out of theme/templates/, which is the whole of it:
+// a directory under modules/ would hold this file and nothing else.
 //
-// Without it an unrouted path under the prefix answers chi's own plain text,
-// which is no page at all.
+// chi matches a literal and a parameter ahead of a wildcard, so this answers
+// only what nothing else did. Without it an unrouted path answers chi's own
+// plain text, which is no page at all.
 class mod_notfound implements Module {
 	function name() {
 		return "notfound";

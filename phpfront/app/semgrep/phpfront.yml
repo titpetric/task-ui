@@ -98,6 +98,8 @@ rules:
 
   # The theme draws; it answers nothing. A route under theme/ is a view that
   # belongs to a module.
+  # mod_notfound.php is the exception: the catch-all answers for every module
+  # and belongs to none, and it draws the theme's own notfound.tpl.
   - id: task-ui.front.route-in-the-theme
     languages: [generic]
     severity: ERROR
@@ -109,6 +111,7 @@ rules:
         - "theme/**"
       exclude:
         - "**/templates_c/**"
+        - "theme/mod_notfound.php"
     pattern-regex: '@route\s'
 
   # A generated model is written by tools/models.php from schema/schema.yml,
