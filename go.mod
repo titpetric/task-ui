@@ -11,7 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/pflag v1.1.0
-	github.com/titpetric/oida v0.4.6-0.20261104145046-c3a30ce0c8be
+	github.com/titpetric/oida v0.5.0
 	github.com/titpetric/pdo v0.2.5
 	github.com/titpetric/phpscript v0.6.1-0.20261111130301-fc26e38a9690
 	golang.org/x/crypto v0.59.0
@@ -38,7 +38,7 @@ require (
 	golang.org/x/image v0.48.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	modernc.org/libc v1.81.0 // indirect
+	modernc.org/libc v1.81.2 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.12.1 // indirect
+	modernc.org/memory v1.13.0 // indirect
 )
