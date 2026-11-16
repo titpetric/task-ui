@@ -4,5 +4,6 @@
 *.cov
 .live/
 /keys/
+/task-ui
 /data/
 internal/testkey/testdata/
