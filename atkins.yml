@@ -211,9 +211,9 @@ jobs:
     vars:
       mdedit: ../mdedit
     steps:
-      - cp ${{mdedit}}/dist/mdedit.global.js phpfront/app/theme/assets/vendor/mdedit.js
-      - cp ${{mdedit}}/dist/mdedit.min.css phpfront/app/theme/assets/vendor/mdedit.css
-      - cp ${{mdedit}}/LICENSE phpfront/app/theme/assets/vendor/mdedit.LICENSE
+      - cp ${{mdedit}}/dist/mdedit.global.js phpfront/app/theme/assets/ext/mdedit.js
+      - cp ${{mdedit}}/dist/mdedit.min.css phpfront/app/theme/assets/ext/mdedit.css
+      - cp ${{mdedit}}/LICENSE phpfront/app/theme/assets/ext/mdedit.LICENSE
 
   deploy:
     desc: "Deploy docs to cdn.si"

@@ -9,13 +9,13 @@
 		</span>
 	</footer>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/xterm.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/xterm.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/mdedit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/mdedit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>

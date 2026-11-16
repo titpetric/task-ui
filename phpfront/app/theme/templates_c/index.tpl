@@ -15,10 +15,10 @@
 	<link rel="icon" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/xterm.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/xterm.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/mdedit.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/mdedit.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
@@ -552,13 +552,13 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 		</span>
 	</footer>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/xterm.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/xterm.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/vendor/mdedit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/theme/ext/mdedit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>

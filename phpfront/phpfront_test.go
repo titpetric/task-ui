@@ -23,6 +23,7 @@ func TestApp(t *testing.T) {
 		"stubs/autoload.php", "stubs/host.php",
 		"tools/models.php", "tools/templates/model.tpl",
 		"theme/assets/task-ui.css", "theme/assets/task-ui.js",
+		"theme/assets/ext/mdedit.js",
 	} {
 		data, err := fs.ReadFile(phpfront.App(), name)
 		assert.NoError(t, err, name)
@@ -42,20 +43,24 @@ func TestApp_InstallsIntoExt(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// The same rule holds for the browser libraries under theme/assets/vendor:
-// one level survives the zip and a subdirectory does not.
-func TestApp_VendorIsOneLevelDeep(t *testing.T) {
+// TestApp_ThemeBundlesInExt holds the theme's browser bundles in ext and no vendor directory.
+func TestApp_ThemeBundlesInExt(t *testing.T) {
 	t.Parallel()
 
-	assert.NoError(t, fs.WalkDir(phpfront.App(), ".", func(name string, entry fs.DirEntry, err error) error {
+	for _, name := range []string{
+		"theme/assets/ext/addon-fit.js",
+		"theme/assets/ext/mdedit.LICENSE",
+		"theme/assets/ext/mdedit.css",
+		"theme/assets/ext/mdedit.js",
+		"theme/assets/ext/xterm.LICENSE",
+		"theme/assets/ext/xterm.css",
+		"theme/assets/ext/xterm.js",
+	} {
+		_, err := fs.Stat(phpfront.App(), name)
 		assert.NoError(t, err, name)
-		if entry.IsDir() || !strings.Contains(name, "vendor/") {
-			return nil
-		}
-		_, under, _ := strings.Cut(name, "vendor/")
-		assert.NotContains(t, under, "/", name+": x/mod/zip drops this from a release")
-		return nil
-	}))
+	}
+	_, err := fs.Stat(phpfront.App(), "theme/assets/vendor")
+	assert.Error(t, err)
 }
 
 // The theme's assets come out of the embed, so /static/ serves one copy of the
@@ -104,7 +109,7 @@ func TestStylesheetImports(t *testing.T) {
 	}
 }
 
-// The head links four files outside the @import graph, the vendor sheets and
+// The head links four files outside the @import graph, the ext sheets and
 // the voice window's among them, and a rename of one of those 404s with no
 // log either. The href of every link and script of the chrome is read off the
 // templates and stat-ed in the theme.

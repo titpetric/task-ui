@@ -55,7 +55,7 @@ The look follows [oida](https://github.com/titpetric/oida): hairlines,
 one amber accent, dark and light from `prefers-color-scheme`. The type is
 a dashboard pair, [Inter](https://rsms.me/inter/) for the words and
 [JetBrains Mono](https://www.jetbrains.com/lp/mono/) for the data, both
-vendored under `frontend/view/assets/fonts/` with their licenses. The
+vendored under `phpfront/app/theme/assets/fonts/` with their licenses. The
 binary embeds all assets, and the front end makes no external requests.
 
 ## Documents

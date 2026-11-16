@@ -12,7 +12,7 @@ The [usage guide](docs/README.md) shows how to use it, a chapter per section of 
 
 A module is a plugin written in PHP, run inside the binary by [phpscript](https://github.com/titpetric/phpscript) and served at `/m/<vendor>/<name>` as an ordinary page: the layout is the instance's, the body is the module's, and nothing loads in an iframe. A directory with a `modinfo.php` in it is a module. `titpetric/refinement` ships with it: a thread of comments, each one a Claude run that writes artifacts and the `README.md` that indexes them.
 
-The look follows [oida](https://github.com/titpetric/oida): hairlines, one amber accent, dark and light from `prefers-color-scheme`. The type is a dashboard pair, [Inter](https://rsms.me/inter/) for the words and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) for the data, both vendored under `frontend/view/assets/fonts/` with their licenses. The binary embeds all assets, and the front end makes no external requests.
+The look follows [oida](https://github.com/titpetric/oida): hairlines, one amber accent, dark and light from `prefers-color-scheme`. The type is a dashboard pair, [Inter](https://rsms.me/inter/) for the words and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) for the data, both vendored under `phpfront/app/theme/assets/fonts/` with their licenses. The binary embeds all assets, and the front end makes no external requests.
 
 ## Documents
 
