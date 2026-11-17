@@ -107,11 +107,21 @@ class mod_workflow implements Module {
 			$rows[] = $this->row($chrome, $flow, $run, $runs, $names, $workspaces, $summarize, $seen);
 		}
 
+		// The thread of a prompted run is shown while it runs: the question
+		// it answers, and the answer when it ends.
+		$thread = null;
+
+		if ($flow["prompted"] && $flow["last"] !== null && $flow["last"]->getState() === Task\Run::RUNNING) {
+			$ran = Task\Step::ofRun($runs->steps($flow["last"]->getId()), $names);
+			$thread = Task\Pipeline::thread($chrome, $flow["last"], Task\Step::seen($seen, $ran));
+		}
+
 		$view->page(array(
 			"head" => $this->head($flow),
 			"id" => $flow["id"],
 			"user" => $chrome->name(),
 			"latest" => self::latest($flow["last"]),
+			"thread" => $thread,
 			"pipeline" => $this->pipeline($chrome, $flow, $runs, $names, $workspaces, $seen),
 			"activity" => $this->activity($id, $runs),
 			"form" => array("n" => (string)$size),
@@ -151,16 +161,14 @@ class mod_workflow implements Module {
 		$head->live();
 		$head->always();
 
+		// The prompt rides on Stop too: the script turns it back into Run
+		// when the run ends, and a Run without it asks nothing.
+		$asked = $flow["prompted"] ? array("data-workflow-prompt" => $flow["name"]) : array();
+
 		if ($flow["canRun"] && $flow["running"] !== "") {
-			$buttons->item("stop", "Stop", array("data-workflow-stop" => $flow["running"]));
+			$buttons->item("stop", "Stop", array("data-workflow-stop" => $flow["running"]) + $asked);
 		} elseif ($flow["canRun"]) {
-			$attrs = array("data-workflow-run" => $flow["id"]);
-
-			if ($flow["prompted"]) {
-				$attrs["data-workflow-prompt"] = $flow["name"];
-			}
-
-			$buttons->primary("play", "Run", $attrs);
+			$buttons->primary("play", "Run", array("data-workflow-run" => $flow["id"]) + $asked);
 		} elseif ($flow["runDenied"] !== "") {
 			$buttons->faint($flow["runDenied"]);
 		}

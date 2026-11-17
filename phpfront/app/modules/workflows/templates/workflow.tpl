@@ -6,6 +6,7 @@
 {else}	<p class="faint" data-latest>Not run yet.</p>
 {/if}	<ol class="pipeline" data-pipeline>
 {foreach $data.pipeline as $data_node}{include components/pipenode.tpl}{/foreach}	</ol>
+{if $data.thread}{eval $data_thread = $data.thread}{include components/wfthread.tpl}{/if}
 </section>
 
 <section class="block">
