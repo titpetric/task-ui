@@ -233,6 +233,11 @@ body:has(.voice[open]) .voice-orb {
     outline: 1px solid color-mix(in srgb, var(--voice-warm) 60%, transparent);
     outline-offset: -0.6rem;
   }
+
+  /* Saving owns the stage until the note lands; the press does nothing. */
+  &:disabled {
+    cursor: default;
+  }
 }
 
 /* The orbs show the state in their own colour, so only paused takes a rule:
@@ -443,6 +448,13 @@ body:has(.voice[open]) .voice-orb {
     content: "Tap the orb to record";
   }
 
+  /* The line under the words is the status here: a second one would compete. */
+  .voice[data-state="saving"] &:empty::before,
+  .voice[data-state="failed"] &:empty::before,
+  .voice[data-state="question"] &:empty::before {
+    content: "";
+  }
+
   & .voice-partial {
     color: var(--text-dim);
   }
@@ -460,8 +472,8 @@ body:has(.voice[open]) .voice-orb {
   text-shadow: 0 0 0.5rem #04070b, 0 0 1.2rem #04070b;
 }
 
-/* .voice-acts are the two phone buttons: discard on the left, send on the
-   right, far enough apart that a thumb cannot hit both. */
+/* .voice-acts holds the one button the stage leaves: back, or trash while a
+   recording is on screen. */
 .voice-acts {
   display: flex;
   gap: 3rem;
@@ -492,20 +504,6 @@ body:has(.voice[open]) .voice-orb {
   &:disabled {
     opacity: 0.35;
     cursor: default;
-  }
-
-  &.send {
-    border-color: color-mix(in srgb, var(--ok) 70%, transparent);
-    background: color-mix(in srgb, var(--ok) 22%, transparent);
-    color: var(--ok);
-    box-shadow: 0 0 1.4rem color-mix(in srgb, var(--ok) 30%, transparent);
-  }
-
-  &.replay {
-    border-color: color-mix(in srgb, var(--voice-cool) 70%, transparent);
-    background: color-mix(in srgb, var(--voice-cool) 20%, transparent);
-    color: var(--voice-cool);
-    box-shadow: 0 0 1.4rem color-mix(in srgb, var(--voice-cool) 28%, transparent);
   }
 
   &[hidden] {

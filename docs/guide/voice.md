@@ -1,6 +1,8 @@
 # Dictation
 
-An orb sits in the bottom right of every page. Press it and a window opens over the page with the orb at full size, the words under it and three buttons. Press the orb in the middle to record and press it again to end the recording and send it; **Send** during a recording does the same thing. The left button steps back: it throws a recording away, then dismisses an answer that came back, then closes the window, and its icon says which. [Wake](#wake) starts the recording on a name you say.
+An orb sits in the bottom right of every page. Press it and a window opens over the page with the orb at full size, the words under it and two actions. The orb in the middle is the stage: press it to record and press it again to stop and save. The button under it is back, which closes the window, or trashes the recording while one is on screen, and its icon says which. [Wake](#wake) starts the recording on a name you say.
+
+`theme/assets/voice/orb.json` maps every state to its two actions, their titles, icons and classes, and `assets/voice/voice.js` applies them. No state shows more than two actions. A question card takes the stage's place and holds its own two, **Cancel** and **Submit**.
 
 The orb shows wherever the browser can open a microphone: a secure page, so `https://` or `localhost`. It does not show over `http://` on a LAN address.
 
@@ -10,7 +12,7 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 
 - **A run is attached and takes input.** The words go to the terminal as if typed, with no newline: punctuation is spelled out as `[dot]`, `[slash]` and the rest, so a dictated sentence cannot run a command.
 - **A coding harness is set up.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
-- **No coding harness is set up.** The words go to a board note, in the session below, with the recording linked beside them and no Claude run started. The window says `Your note has been recorded and transcribed.`, or `Your note has been recorded.` when nothing was transcribed. The note is written directly. A transcript that names `@claude` starts nothing.
+- **No coding harness is set up.** The words go to a board note, in the session below, with the recording linked beside them and no Claude run started. The window shows the transcript and `Transcript saved · thread created`, or `Recording saved · thread created` when nothing was transcribed. It does not play the recording back. The note is written directly. A transcript that names `@claude` starts nothing.
 
 ## Wake
 
@@ -65,7 +67,7 @@ The thread opens with an instruction the orb writes: reply in two or three spoke
 
 Nothing is fed forward while the microphone is open. The recording is read when the dead air or the press ends it, the words go to `<clip>.txt` beside the `<clip>.wav` they came out of, and the prompt is written from the same words. A reply that lands mid sentence waits there: its audio does not play into the recording and its question does not take the window. Sending answers it, and the thread keeps the reply the window moved past; discarding the recording plays it.
 
-The window follows the thread over `/api/sse/notes` for as long as it is open. Nothing is polled: a reply pushes itself, and that holds for the second reply as much as the first, so work that finishes ten minutes later arrives and plays on its own. The replay button plays the last one again.
+The window follows the thread over `/api/sse/notes` for as long as it is open. Nothing is polled: a reply pushes itself, and that holds for the second reply as much as the first, so work that finishes ten minutes later arrives and plays on its own.
 
 A clip nothing transcribed is sent with no words, and the thread is asked to run the `transcribe-audio` workflow over it first. A transcribed clip goes with its words and the path of the recording: no second pass over the same audio.
 

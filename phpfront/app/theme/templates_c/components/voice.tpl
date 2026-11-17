@@ -50,8 +50,6 @@
 			</div>
 		</div>
 		<div class="voice-acts">
-			<button type="button" class="voice-act discard" id="voice-discard" title="Discard" aria-label="Discard"><svg class="ic"><use href="#i-trash"/></svg></button>
-			<button type="button" class="voice-act replay" id="voice-replay" title="Play again" aria-label="Play again" hidden><svg class="ic"><use href="#i-play"/></svg></button>
-			<button type="button" class="voice-act send" id="voice-send" title="Send" aria-label="Send" disabled><svg class="ic"><use href="#i-send"/></svg></button>
+			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
 		</div>
 	</dialog>

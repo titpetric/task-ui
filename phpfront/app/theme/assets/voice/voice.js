@@ -1,10 +1,10 @@
 // voice: dictation, transcribed on this instance or on the device.
 //
 // The orb in the corner opens the window: the avatar at full size, the words
-// under it, and two buttons. The microphone opens once and the stream feeds
-// two things, an analyser whose level drives the avatar and a worklet that
-// collects the samples, so the recording can be kept beside the words it came
-// out as.
+// under it, and two actions, the stage and back. The microphone opens once and
+// the stream feeds two things, an analyser whose level drives the avatar and a
+// worklet that collects the samples, so the recording can be kept beside the
+// words it came out as.
 //
 // Where the stt integration is set up the server is the transcriber: the
 // recording goes to /api/voice/transcribe once, whole, when it ends. A
@@ -13,8 +13,8 @@
 // the next sentence is still being said. The device's own recogniser then
 // stays shut for a recording, so one transcript is built and not two.
 //
-// A press ends the recording and sends it: the orb and the send button are the
-// same act, and pause is for a fault and a page sent to the background.
+// A press ends the recording and sends it: the stage is the one act, and pause
+// is for a fault and a page sent to the background.
 //
 // Wake starts a recording on a name the reader says, with the window open or
 // shut. The page keeps the microphone open, reads what it hears a piece at a
@@ -67,15 +67,12 @@
   var stage = document.getElementById("voice-stage");
   var said = document.getElementById("voice-said");
   var where = document.getElementById("voice-where");
-  var sendBtn = document.getElementById("voice-send");
   var discardBtn = document.getElementById("voice-discard");
-  var replayBtn = document.getElementById("voice-replay");
   var avatar = document.getElementById("voice-avatar");
   var agent = document.getElementById("voice-agent");
   var chat = document.getElementById("voice-chat");
   var wakeBtn = document.getElementById("voice-wake");
-  if (!stage || !replayBtn || !discardBtn) return;
-  var discardIcon = discardBtn.querySelector("use");
+  if (!stage || !discardBtn) return;
   var acts = discardBtn.parentNode;
   var quiz = document.getElementById("voice-quiz");
   var quizCount = document.getElementById("voice-quiz-count");
@@ -178,9 +175,13 @@
   var buffer = null;    // { frames, length, rate, cap } across every pause
   var raf = 0;
   var text = "";        // every final result since the last send
-  var answer = "";      // the last reply, as spoken, kept for replay
+  var answer = "";      // the words the window shows: a transcript, a reply or a status
   var pending = false;  // a question is out and the window is following it
-  var reply = "";       // the reply as audio the instance made, for replay
+  var reply = "";       // the reply as audio the instance made, played when it lands
+  var saved = false;    // a note or a message was saved, so the window shows its status
+  var status = "";      // the line under the transcript, when the state has one of its own
+  var ORB = null;       // theme/assets/voice/orb.json, once read
+  var ORB_URL = TAP ? new URL("orb.json" + TAP.replace(/^[^?]*/, ""), TAP).href : "";
   var player = null;    // the element playing that audio
   var thread = "";      // the session, one thread for as long as the window is open
   var chatThread = false; // the session is a private chat, not a board note or a prompt
@@ -211,6 +212,7 @@
   var base = "";        // where this recording's files go, taken at its start
   var holding = "";     // a reply that landed while recording, played after
   var holdingAt = 0;    // which answer of the thread that reply is
+  var holdingChat = null; // a chat message that landed while recording
   var tending = 0;      // the interval that opens and shuts the listener
   var dragging = 0;     // pieces in a row the instance read slowly
 
@@ -224,8 +226,17 @@
   // because a modal run window puts the orb behind its backdrop.
   function paint() {
     orb.hidden = !canRecord;
-    orb.title = orbTitle();
-    orb.setAttribute("aria-label", orb.title);
+    if (ORB && ORB.orb) {
+      orb.className = ORB.orb.class || "voice-orb";
+      orb.title = waking ? (ORB.orb.listeningTitle || ORB.orb.title) : ORB.orb.title;
+      orb.setAttribute("aria-label", orb.title);
+      var use = orb.querySelector("use");
+      if (use) use.setAttribute("href", "#i-" + (ORB.orb.icon || "mic"));
+      orb.classList.toggle(ORB.orb.listeningClass || "listening", waking);
+    } else {
+      orb.title = orbTitle();
+      orb.setAttribute("aria-label", orb.title);
+    }
     if (mic) mic.hidden = !(canRecord && mic.dataset.allowed);
     if (!wakeBtn) return;
     // The switch shows where a name can be heard at all, which takes a
@@ -891,6 +902,7 @@
     acts.hidden = true;
     stage.disabled = true;
     held(field);
+    dress();
   }
 
   // pick is one option as a button that selects it. A multi keeps every
@@ -997,6 +1009,7 @@
     quizPicks.textContent = "";
     acts.hidden = false;
     stage.disabled = false;
+    dress();
   }
 
   // ------------------------------------------------------------------ flow
@@ -1133,9 +1146,10 @@
     var now = state();
     if (now === "recording") return "recording";
     if (now === "listening") return "listening";
+    if (transcribing) return "transcribing";
+    if (pending) return FLIGHT[doing] || "thinking";
     if (answer || reply) return "answered";
     if (failed) return "failed";
-    if (pending) return FLIGHT[doing] || "thinking";
     if (now === "paused" || buffer) return "paused";
     return "idle";
   }
@@ -1149,34 +1163,119 @@
     if (worn && worn.mood) worn.mood(name);
   }
 
+  // uiState is the state the action map is looked up by, which is not the
+  // avatar's mood: a saved note and an answer are both idle to the microphone.
+  function uiState() {
+    if (quizzing) return "question";
+    var now = state();
+    if (now === "recording") return "recording";
+    if (now === "listening") return "listening";
+    if (transcribing || pending) return "saving";
+    if (saved) return "saved";
+    if (failed) return "failed";
+    if (answer || reply) return "answered";
+    if (now === "paused" || buffer) return "paused";
+    return "idle";
+  }
+
+  /** viewOf is one state's entry in orb.json, or null before the file lands. */
+  function viewOf(name) {
+    return ORB && ORB.states && ORB.states[name] ? ORB.states[name] : null;
+  }
+
+  /** applyAction puts one orb.json action's title, icon, class and state on its button. */
+  function applyAction(el, action) {
+    if (!el) return;
+    if (!action) {
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    if (action.title) {
+      el.title = action.title;
+      el.setAttribute("aria-label", action.aria || action.title);
+    }
+    if (action.icon) {
+      var use = el.querySelector("use");
+      if (use) use.setAttribute("href", "#i-" + action.icon);
+    }
+    if (action.class) el.className = action.class;
+    el.disabled = !!action.disabled;
+    if (action.pressed !== undefined) el.setAttribute("aria-pressed", action.pressed ? "true" : "false");
+  }
+
+  /** applyView puts the two actions of a state on the stage and the back button. */
+  function applyView(view) {
+    if (!view) return;
+    var actions = view.actions || [];
+    applyAction(stage, actions[0]);
+    applyAction(discardBtn, actions[1]);
+  }
+
+  /** act runs the action orb.json names for a button. */
+  function act(name) {
+    if (name === "record") record();
+    else if (name === "begin") begin();
+    else if (name === "stop") stop();
+    else if (name === "send") send();
+    else if (name === "back") back();
+  }
+
+  // loadOrb reads the action map; a failed read leaves the template's buttons.
+  function loadOrb() {
+    if (!ORB_URL) return;
+    fetch(ORB_URL, { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (config) {
+        if (!config || !config.states) return;
+        ORB = config;
+        paint();
+        dress();
+      })
+      .catch(function () {});
+  }
+
   // dress writes the state onto the window and says what the orb will do.
   function dress(note) {
     var now = state();
-    overlay.dataset.state = now;
+    var view = uiState();
+    overlay.dataset.state = view;
     // The corner orb says the page is listening, which is the only sign of
     // it while the window is shut.
-    orb.classList.toggle("listening", waking);
-    orb.title = orbTitle();
+    orb.classList.toggle(ORB && ORB.orb ? (ORB.orb.listeningClass || "listening") : "listening", waking);
+    orb.title = ORB && ORB.orb
+      ? (waking ? (ORB.orb.listeningTitle || ORB.orb.title) : ORB.orb.title)
+      : orbTitle();
     orb.setAttribute("aria-label", orb.title);
-    stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
-    stage.title = now === "recording" ? "Stop and send" : (now === "paused" ? "Send" : "Record");
-    stage.setAttribute("aria-label", stage.title);
-    sendBtn.disabled = now === "idle" || now === "listening";
-    // The left button is whatever there is to undo: the recording, then the
-    // answer it brought back, then the window. A listener holds nothing, so
-    // the button closes while one is open.
-    var empty = now === "idle" || now === "listening";
-    var told = empty && !!(answer || reply);
-    discardIcon.setAttribute("href", !empty ? "#i-trash" : (told ? "#i-back" : "#i-x"));
-    discardBtn.title = !empty ? "Discard" : (told ? "Back" : "Close");
-    discardBtn.setAttribute("aria-label", discardBtn.title);
-    discardBtn.classList.toggle("shut", empty);
+    applyView(viewOf(view));
+    if (!viewOf(view)) {
+      // The template's own buttons hold the window until orb.json lands. A
+      // question card takes the stage's place there too.
+      var open = view !== "question";
+      stage.hidden = !open;
+      discardBtn.hidden = !open;
+      if (open) {
+        stage.title = now === "recording" ? "Stop and save" : (now === "paused" ? "Send" : "Record");
+        stage.setAttribute("aria-label", stage.title);
+        stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
+        stage.disabled = false;
+        var discarding = now === "recording" || now === "paused";
+        var use = discardBtn.querySelector("use");
+        if (use) use.setAttribute("href", discarding ? "#i-trash" : "#i-back");
+        discardBtn.title = discarding ? "Discard recording" : "Back";
+        discardBtn.setAttribute("aria-label", discardBtn.title);
+        discardBtn.classList.toggle("shut", !discarding);
+      }
+    }
     shape();
     // A question in flight owns the line; the state does not take it back.
     if (!pending) {
-      where.textContent = now === "listening"
-        ? "Say a name to start"
-        : (now === "idle" ? "" : target().say);
+      if (view === "question") where.textContent = "Answer the question";
+      else if (now === "listening") where.textContent = "Say a name to start";
+      else if (status) where.textContent = status;
+      else if (viewOf(view) && viewOf(view).status) where.textContent = viewOf(view).status;
+      else if (now === "idle") where.textContent = "";
+      else where.textContent = target().say;
     }
     if (note !== undefined) {
       said.textContent = note;
@@ -1197,6 +1296,7 @@
 
   // endSession ends the last conversation: the next window is a new one.
   function endSession() {
+    if (quizzing) shut();
     clear();
     hush();
     deaf();
@@ -1209,6 +1309,7 @@
     played = 0;
     holding = "";
     holdingAt = 0;
+    holdingChat = null;
     said.textContent = "";
     where.textContent = "";
     if (chat) chat.value = "";
@@ -1233,7 +1334,12 @@
   // first call it makes, because fetching a downloadable language is refused
   // unless it is handling the user's gesture.
   function record() {
-    if (starting || media) return;
+    if (starting || media || transcribing) return;
+    saved = false;
+    status = "";
+    failed = false;
+    answer = "";
+    reply = "";
     starting = true;
     freely = false;
     heardAt = Date.now();
@@ -1473,15 +1579,17 @@
     var mine = ++gen;
     answer = "";
     reply = "";
+    saved = false;
+    status = "";
     // A reply held back by a recording is answered by this one: the thread
     // keeps it, and the window moves on with what was just said.
     holding = "";
     holdingAt = 0;
     pending = true;
     failed = false;
-    replayBtn.hidden = true;
     said.textContent = "";
     ticking(clip && !words ? STAGES[0] : "Asking");
+    dress();
     var body = words;
     if (clip && !words) body = HEARD.replace("<clip>", clip);
     else if (clip) body = words + "\n\n" + KEPT.replace("<clip>", clip);
@@ -1509,18 +1617,22 @@
     }, thread, agentName(), { audio: clip ? clip + ".wav" : "", spoken: words });
   }
 
-  // noted leaves a spoken note on the board when no agent answers, and says so in the window.
+  // noted leaves a spoken note on the board when no agent answers, and shows
+  // the transcript with the status that it was saved.
   function noted(words, clip) {
     var mine = ++gen;
+    var opened = !thread;
     pending = true;
     failed = false;
+    saved = false;
     answer = "";
     reply = "";
+    status = "";
     holding = "";
     holdingAt = 0;
-    replayBtn.hidden = true;
-    said.textContent = "";
+    said.textContent = words;
     ticking("Saving");
+    dress();
     fetch("/api/voice/note", {
       method: "POST",
       credentials: "same-origin",
@@ -1546,16 +1658,15 @@
       var audio = note.audio_path || (clip ? clip + ".wav" : "");
       thread = note.parent_id || note.id || thread;
       stamp = audio.replace(/\.wav$/, "");
-      answer = words || "";
-      reply = audio ? file(audio) + "?raw" : "";
       pending = false;
       failed = false;
-      replayBtn.hidden = !reply;
-      ended("Note recorded");
-      dress(words ? "Your note has been recorded and transcribed." : "Your note has been recorded.");
-      where.textContent = "Note recorded";
-      say("Note recorded", "ok");
-      shape();
+      saved = true;
+      answer = words || "Recording saved";
+      reply = "";
+      status = (words ? "Transcript saved" : "Recording saved") + (opened && thread ? " · thread created" : "");
+      said.textContent = answer;
+      ended("Saved");
+      dress();
     }).catch(function (err) {
       if (mine !== gen) return;
       fell(err, "The note was not saved");
@@ -1565,18 +1676,21 @@
   // chatted sends a private message to a user, or replies in the chat thread on screen.
   function chatted(words, clip) {
     var mine = ++gen;
+    var opened = !thread;
     var parent = replyTo || (chatThread ? thread : "");
     var to = parent ? "" : chatWith;
     var audio = clip ? clip + ".wav" : "";
     pending = true;
     failed = false;
+    saved = false;
     answer = "";
     reply = "";
+    status = "";
     holding = "";
     holdingAt = 0;
-    replayBtn.hidden = true;
-    said.textContent = "";
+    said.textContent = words;
     ticking("Sending");
+    dress();
     var body = { parent_id: parent, body: words, spoken: words, audio: audio };
     if (to) body.to = to;
     fetch("/api/threads", {
@@ -1602,16 +1716,17 @@
       thread = note.parent_id || note.id || thread;
       if (to) chatWith = to;
       stamp = (note.audio_path || audio).replace(/\.wav$/, "");
-      answer = words || "";
-      reply = note.audio_path ? chatAudio(note.id) : "";
       pending = false;
-      replayBtn.hidden = !reply;
-      ended("Message sent");
-      dress(words ? words.slice(0, 400) : "Message sent");
-      say("Message sent", "ok");
+      failed = false;
+      saved = true;
+      answer = words || "Message sent";
+      reply = "";
+      status = "Message sent" + (opened && thread ? " · thread created" : "");
+      said.textContent = answer;
+      ended("Sent");
+      dress();
       markRead(thread);
       follow();
-      shape();
     }).catch(function (err) {
       if (mine !== gen) return;
       fell(err, "The message was not sent");
@@ -1637,17 +1752,23 @@
 
   // landedChat shows a chat message the window has not heard, and plays its recording.
   function landedChat(note) {
+    // A message that lands while the microphone is open waits, as a reply
+    // does: it does not play over the recording.
+    if ((media || starting) && !waking) {
+      holdingChat = note;
+      return;
+    }
+    deaf();
     var words = note.spoken || note.body || "";
     answer = words;
     reply = note.audio_path ? chatAudio(note.id) : "";
-    replayBtn.hidden = !reply;
+    saved = false;
+    status = "Message with " + (chatWith || "someone");
     pending = false;
     failed = false;
     said.textContent = words.slice(0, 400);
     ended("Message");
-    where.textContent = "Message with " + (chatWith || "someone");
-    dress(words || "A message");
-    shape();
+    dress();
     if (reply) play();
   }
 
@@ -1756,7 +1877,10 @@
   function landed(body, n) {
     var mine = gen;
     var words = plain(body);
-    if (!words || words === answer) return;
+    if (!words || words === answer) {
+      if (n > 0) played = Math.max(played, n);
+      return;
+    }
     // Nothing is fed forward while the microphone is open: a reply that
     // lands mid sentence waits, so it neither plays into the recording nor
     // takes the window with a question. The newest is the one kept, and
@@ -1770,9 +1894,12 @@
     // user does not wake the window on it.
     deaf();
     pending = false;
+    saved = false;
+    status = "";
     answer = words;
     said.textContent = answer.slice(0, 400);
     played = n > 0 ? n : Math.max(played, 1);
+    dress();
     tell(STAGES[2]);
     audio(mine, stamp + "." + played, 0);
     if (body.indexOf("```form") < 0) return;
@@ -1786,12 +1913,18 @@
   // and nothing newer is out. A reply talked over goes to the thread and
   // the conversation moves on.
   function flush() {
-    if (!holding || media || starting) return;
+    if (media || starting) return;
+    if (holdingChat) {
+      var note = holdingChat;
+      holdingChat = null;
+      if (!pending) landedChat(note);
+      return;
+    }
+    if (!holding || pending) return;
     var body = holding;
     var at = holdingAt;
     holding = "";
     holdingAt = 0;
-    if (pending) return;
     landed(body, at);
   }
 
@@ -1803,7 +1936,6 @@
     if (tries > TRIES) {
       ended("Answered");
       speak(answer);
-      replayBtn.hidden = !answer;
       return;
     }
     read(at + ".reply.wav").then(function (data) {
@@ -1814,7 +1946,6 @@
       }
       reply = file(at + ".reply.wav") + "?raw";
       ended("Answered");
-      replayBtn.hidden = false;
       shape();
       play();
     });
@@ -1825,13 +1956,13 @@
     var why = (err && err.message) || String(err);
     pending = false;
     failed = true;
+    saved = false;
     answer = "";
     reply = "";
-    replayBtn.hidden = true;
+    status = why;
     said.textContent = "";
     stopped();
-    shape();
-    where.textContent = why;
+    dress();
     say((what || "The recording was kept but not answered") + ": " + why, "bad");
   }
 
@@ -1859,10 +1990,11 @@
     marks = [];
     answer = "";
     reply = "";
+    saved = false;
+    status = "";
     pending = false;
     failed = false;
     doing = "";
-    replayBtn.hidden = true;
     if (player) player.pause();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
   }
@@ -1889,29 +2021,29 @@
     show(false);
   }
 
-  // back steps back through what the window holds: a recording, then a reply,
-  // then the window itself. Only the last step closes, so discarding a
-  // recording leaves the window open for the next one.
+  // back discards the recording on screen and closes the window otherwise.
   function back() {
-    if (state() !== "idle" && state() !== "listening") {
+    if (quizzing) {
+      quit();
+      return;
+    }
+    var now = state();
+    if (now === "recording" || now === "paused") {
       clear();
       dress();
       flush();
       return;
     }
-    if (!answer && !reply) {
-      trash();
-      return;
-    }
-    drop();
-    said.textContent = "";
-    where.textContent = "";
-    dress();
+    trash();
   }
 
   // send delivers the words, writes the file and leaves the window open on an empty buffer, so the next sentence is one press away.
   function send() {
     if (transcribing || state() === "idle" || waking) return;
+    saved = false;
+    status = "";
+    answer = "";
+    reply = "";
     var words = spoken(text);
     var to = target();
     var at = keep(words);
@@ -1985,10 +2117,9 @@
       .trim();
   }
 
-  // speak reads a reply aloud and keeps it for replay.
+  // speak reads a reply aloud.
   function speak(body) {
     answer = plain(body);
-    replayBtn.hidden = !answer;
     if (!answer || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
     var pick = localVoice();
     if (!pick) {
@@ -2030,8 +2161,9 @@
       played = 0;
       answer = "";
       reply = "";
+      saved = false;
+      status = "";
       pending = false;
-      replayBtn.hidden = true;
       said.textContent = "";
       where.textContent = "";
     }
@@ -2046,20 +2178,21 @@
   };
   stage.addEventListener("click", function () {
     if (worn && worn.tap) worn.tap();
-    if (waking) begin();
+    var view = viewOf(uiState());
+    var action = view && view.actions ? view.actions[0] : null;
+    if (action) act(action.action || "record");
+    else if (waking) begin();
     else if (media || starting) stop();
     else record();
-  });
-  sendBtn.addEventListener("click", function () {
-    if (waking) return;
-    if (media || starting) stop();
-    else send();
   });
   if (wakeBtn) wakeBtn.addEventListener("click", function () { switched(!wakeOn); });
   quizSubmit.addEventListener("click", step);
   quizCancel.addEventListener("click", quit);
-  discardBtn.addEventListener("click", back);
-  replayBtn.addEventListener("click", function () { if (answer || reply) play(); });
+  discardBtn.addEventListener("click", function () {
+    var view = viewOf(uiState());
+    var action = view && view.actions ? view.actions[1] : null;
+    act(action ? action.action : "back");
+  });
 
   overlay.addEventListener("cancel", function (event) {
     event.preventDefault();
@@ -2078,6 +2211,7 @@
     else if (media) pause();
   });
   try { wakeOn = canAgent && !!window.localStorage.getItem(WAKEKEY); } catch (e) { wakeOn = false; }
+  loadOrb();
   probe();
   // The page listens for a name with the window shut as well: the switch
   // is the reader's standing answer, and this is what acts on it.

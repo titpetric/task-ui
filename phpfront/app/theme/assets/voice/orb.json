@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "orb": {
+    "id": "voice-orb",
+    "class": "voice-orb",
+    "icon": "mic",
+    "title": "Dictate",
+    "listeningTitle": "Listening for a name",
+    "listeningClass": "listening"
+  },
+  "elements": {
+    "stage": { "id": "voice-stage", "class": "voice-stage" },
+    "back": { "id": "voice-discard", "class": "voice-act discard" },
+    "transcript": { "id": "voice-said", "class": "voice-said" },
+    "status": { "id": "voice-where", "class": "voice-where" },
+    "quizCancel": { "id": "voice-quiz-cancel", "class": "btn" },
+    "quizSubmit": { "id": "voice-quiz-submit", "class": "btn btn-primary" }
+  },
+  "states": {
+    "idle": {
+      "status": "",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "record",
+          "title": "Record",
+          "aria": "Record",
+          "class": "voice-stage",
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Back",
+          "aria": "Back",
+          "icon": "back",
+          "class": "voice-act discard shut"
+        }
+      ]
+    },
+    "listening": {
+      "status": "Say a name to start",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "begin",
+          "title": "Record",
+          "aria": "Record",
+          "class": "voice-stage",
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Back",
+          "aria": "Back",
+          "icon": "back",
+          "class": "voice-act discard shut"
+        }
+      ]
+    },
+    "recording": {
+      "status": "Recording",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "stop",
+          "title": "Stop and save",
+          "aria": "Stop and save",
+          "class": "voice-stage",
+          "pressed": true
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Discard recording",
+          "aria": "Discard recording",
+          "icon": "trash",
+          "class": "voice-act discard"
+        }
+      ]
+    },
+    "paused": {
+      "status": "Tap to send",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "send",
+          "title": "Send",
+          "aria": "Send",
+          "class": "voice-stage",
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Discard recording",
+          "aria": "Discard recording",
+          "icon": "trash",
+          "class": "voice-act discard"
+        }
+      ]
+    },
+    "saving": {
+      "status": "Saving transcript",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "none",
+          "title": "Saving",
+          "aria": "Saving",
+          "class": "voice-stage",
+          "disabled": true,
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Back",
+          "aria": "Back",
+          "icon": "back",
+          "class": "voice-act discard shut"
+        }
+      ]
+    },
+    "saved": {
+      "status": "Transcript saved",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "record",
+          "title": "Record again",
+          "aria": "Record again",
+          "class": "voice-stage",
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Back",
+          "aria": "Back",
+          "icon": "back",
+          "class": "voice-act discard shut"
+        }
+      ]
+    },
+    "answered": {
+      "status": "Answered",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "record",
+          "title": "Record again",
+          "aria": "Record again",
+          "class": "voice-stage",
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Back",
+          "aria": "Back",
+          "icon": "back",
+          "class": "voice-act discard shut"
+        }
+      ]
+    },
+    "failed": {
+      "status": "Failed",
+      "actions": [
+        {
+          "id": "stage",
+          "action": "record",
+          "title": "Record again",
+          "aria": "Record again",
+          "class": "voice-stage",
+          "pressed": false
+        },
+        {
+          "id": "back",
+          "action": "back",
+          "title": "Back",
+          "aria": "Back",
+          "icon": "back",
+          "class": "voice-act discard shut"
+        }
+      ]
+    },
+    "question": {
+      "status": "Answer the question",
+      "actions": [],
+      "card": [
+        { "id": "quizCancel", "title": "Cancel", "class": "btn" },
+        { "id": "quizSubmit", "title": "Submit", "class": "btn btn-primary" }
+      ]
+    }
+  }
+}
