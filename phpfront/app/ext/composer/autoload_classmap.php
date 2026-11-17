@@ -95,6 +95,7 @@ return array(
     'Task\\Runs\\Runs' => $baseDir . '/modules/runs/storage/Runs.php',
     'Task\\Runs\\Summaries' => $baseDir . '/modules/runs/storage/Summaries.php',
     'Task\\Schedule' => $baseDir . '/code/Task/Schedule.php',
+    'Task\\Schedules\\Catalogue' => $baseDir . '/modules/schedules/storage/Catalogue.php',
     'Task\\Schedules\\Lookup' => $baseDir . '/modules/schedules/storage/Lookup.php',
     'Task\\Schedules\\Schedules' => $baseDir . '/modules/schedules/storage/Schedules.php',
     'Task\\Secret' => $baseDir . '/code/Task/Secret.php',

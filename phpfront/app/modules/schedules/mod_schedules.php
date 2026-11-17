@@ -9,20 +9,19 @@ require "ext/autoload.php";
 // would leave.
 
 // mod_schedules lists what runs on a cron expression, the jobs and the
-// workflows, and takes a new one of a job; a workflow's comes from its edit
-// page.
+// workflows; adding one and changing one are the add and edit pages.
 //
 // The page is read only. Every form on it calls /api/schedules from the
 // browser, so the markup carries the data-* attributes task-ui.js drives and
 // nothing here writes.
 class mod_schedules implements Module {
 	/** LEAD is the paragraph under the heading. */
-	const LEAD = "Jobs and workflows that run in the background on a cron expression. Each schedule runs as its user: whoever created it, or the user an admin picks under Run as. The scheduler skips a job if it's still running when its time comes, or if its user can't run it at that time. Schedule a workflow from its edit page.";
+	const LEAD = "Jobs and workflows that run in the background on a cron expression. Each schedule runs as its user: whoever created it, or the user an admin picks under Run as. The scheduler skips a job if it's still running when its time comes, or if its user can't run it at that time.";
 
 	/** NONE is what the block says with no schedules, and MORE what it adds where one can be added. */
 	const NONE = "No schedules yet.";
 
-	const MORE = " Pick a job and a cron expression above.";
+	const MORE = " Add one to run a job or a workflow on a schedule.";
 
 	function name() {
 		return "schedules";
@@ -63,26 +62,23 @@ class mod_schedules implements Module {
 
 		$lookup = new Task\Schedules\Lookup;
 		$catalogue = $this->catalogue($chrome);
+		$workflows = $this->visible($chrome, $lookup->workflows());
 		$users = $chrome->runAsUsers();
-		$any = count($catalogue["jobs"]) > 0 || count($catalogue["hosts"]) > 0;
-		$rows = $this->rows($chrome, $lookup, $users, $any);
+		$edits = $chrome->allowed("schedule/edit");
+		$any = $edits && (count($catalogue["jobs"]) > 0 || count($catalogue["hosts"]) > 0 || count($workflows) > 0);
+		$rows = $this->rows($chrome, $lookup, $users, $edits, $workflows);
 		$buttons = new Task\Buttons(true);
 		$head = new Task\Head("Scheduled", self::LEAD);
+		$add = new Task\Buttons;
+
+		if ($edits && $any) {
+			$add->primary("plus", "Add schedule", array("href" => Task\Route::href("/schedules/add")));
+		}
+
+		$head->buttons($add->data());
 
 		$view->page(array(
 			"head" => $head->data(),
-			"any" => $any,
-			"folders" => $catalogue["folders"],
-			"jobs" => $catalogue["jobs"],
-			"hosts" => $catalogue["hosts"],
-			"runAs" => array(
-				"id" => "sch-user",
-				"options" => array(
-					"users" => $users,
-					"selected" => $chrome->name(),
-					"short" => false,
-				),
-			),
 			"schedules" => $rows,
 			"block" => array(
 				"title" => "Schedules",
@@ -102,61 +98,9 @@ class mod_schedules implements Module {
 		return $any ? self::NONE . self::MORE : self::NONE;
 	}
 
-	/**
-	 * catalogue is the folders and the jobs the Add schedule form offers: the
-	 * jobs the reader may run, each with the folder it belongs to, and the
-	 * folders that hold one, with the folder a query named selected.
-	 *
-	 * A job is offered where the reader may run it, which takes the allow list
-	 * of the job and of its folder together, and a folder where it holds one
-	 * such job. A schedule is written with the job's ID and the picker shows
-	 * its name, which differ on a folder that follows more than one
-	 * convention.
-	 *
-	 * The jobs that run a command on a host belong to no catalogue, so they
-	 * come last and in a group of their own, and the root comes with them: a
-	 * reader with the hosts permission is offered it even where it holds no
-	 * other job.
-	 */
+	/** catalogue is what the add page offers, with the folder a query named selected. */
 	function catalogue($chrome) {
-		$folders = array();
-		$jobs = array();
-		$pick = Task\Route::input("folder");
-		$hosts = Task\HostJobs::of($chrome);
-
-		foreach ($chrome->folders() as $folder) {
-			$id = Task\Row::text($folder, "id");
-			$allow = Task\Row::items($folder, "allow");
-			$runnable = array();
-
-			foreach (Task\Row::items($folder, "jobs") as $job) {
-				if ($chrome->access->run($id, $allow, Task\Row::items($job, "allow"))) {
-					$runnable[] = array(
-						"id" => Task\Row::text($job, "id"),
-						"name" => Task\Row::text($job, "name"),
-						"folder" => $id,
-					);
-				}
-			}
-
-			if (count($runnable) === 0) {
-				continue;
-			}
-
-			$folders[] = array("id" => $id, "selected" => $id === $pick);
-			$jobs = array_merge($jobs, $runnable);
-		}
-
-		if (count($hosts) > 0) {
-			$internal = Task\Route::INTERNAL;
-			$folders[] = array("id" => $internal, "selected" => $internal === $pick);
-		}
-
-		return array(
-			"folders" => $folders,
-			"jobs" => $jobs,
-			"hosts" => $hosts,
-		);
+		return Task\Schedules\Catalogue::of($chrome, Task\Route::input("folder"));
 	}
 
 	/**
@@ -164,13 +108,15 @@ class mod_schedules implements Module {
 	 * workflow's where the reader sees the workflow, a job's where they see
 	 * its folder.
 	 *
-	 * edits is whether the page drew the form that saves a schedule, which is
-	 * where a row's Edit sends the reader; a reader with no job to schedule
-	 * gets no form and no Edit.
+	 * edits is whether a row's Edit is offered, which is the permission to
+	 * change a schedule. workflows is the visible workflows where the caller
+	 * already read them.
 	 */
-	function rows($chrome, $lookup, $users, $edits = true) {
-		$found = $lookup->workflows();
-		$workflows = $this->visible($chrome, $found);
+	function rows($chrome, $lookup, $users, $edits = true, $workflows = null) {
+		if ($workflows === null) {
+			$workflows = $this->visible($chrome, $lookup->workflows());
+		}
+
 		$workspaces = $chrome->workspaces();
 		$schedules = new Task\Schedules\Schedules;
 
@@ -193,28 +139,9 @@ class mod_schedules implements Module {
 		return $out;
 	}
 
-	/**
-	 * visible is the workflows the reader may see: those every folder of whose
-	 * steps they see, the steps of a workflow a step runs included.
-	 */
+	/** visible is the workflows the reader may see, out of every one the lookup read. */
 	function visible($chrome, $workflows) {
-		$out = array();
-
-		foreach ($workflows as $id => $workflow) {
-			$seen = true;
-
-			foreach ($workflow["folders"] as $folder) {
-				if (!Task\User::sees($chrome->user, $folder)) {
-					$seen = false;
-				}
-			}
-
-			if ($seen) {
-				$out[$id] = $workflow;
-			}
-		}
-
-		return $out;
+		return Task\Schedules\Catalogue::visible($chrome, $workflows);
 	}
 
 	/**
@@ -272,7 +199,7 @@ class mod_schedules implements Module {
 	}
 
 	/**
-	 * menu is a row's [...]: Edit, where the page drew the form that saves one,
+	 * menu is a row's [...]: Edit, where the reader may change a schedule,
 	 * then Enable or Disable, by whether it runs, and Delete.
 	 *
 	 * It is the same [...] a job's page draws over its own schedules, so the

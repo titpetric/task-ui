@@ -60,13 +60,5 @@
 {if $data.schedules}<section class="block">
 {eval $data_block = $data.schedules.block}{include components/block-head.tpl}
 {eval $data_sched = $data.schedules.table}{include components/sched-table.tpl}
-{if $data.can}	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added" data-sched>
-		<input type="hidden" name="folder" value="{data.schedules.folder}">
-		<input type="hidden" name="job" value="{data.schedules.job}">
-		<div class="field whole">
-			<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude</label>
-		<small class="faint">When the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note.</small>
-		</div>
-{eval $data_runas = $data.schedules.runAs}{include components/run-as-field.tpl}{include components/sched-builder.tpl}	</form>
-{/if}</section>
+</section>
 {/if}

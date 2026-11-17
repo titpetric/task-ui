@@ -88,14 +88,13 @@ class Schedule {
 	}
 
 	/**
-	 * menu is a row's [...]: Edit, where edits says the page holds the form
-	 * that saves one, then Enable or Disable, by on, whether the schedule
-	 * runs, and Delete, whose confirm names what the schedule is for.
+	 * menu is a row's [...]: Edit, where edits says the reader may change a
+	 * schedule, then Enable or Disable, by on, whether the schedule runs, and
+	 * Delete, whose confirm names what the schedule is for.
 	 *
-	 * Edit carries the expression rather than a page of its own: the form is
-	 * already on the page and task-ui.js turns it into a save of this row.
-	 * The schedules page draws that form only for a reader with a job to
-	 * schedule, which is what edits answers.
+	 * Edit is a page of its own, /schedules/edit/{id}, so the expression is
+	 * changed where the target is named and a form on the page is not reused
+	 * for a row.
 	 *
 	 * The endpoints are the API's at the root and carry no mount, as every
 	 * data-* endpoint of a page does.
@@ -105,7 +104,7 @@ class Schedule {
 		$expression = $schedule->getExpression();
 		$menu = new Menu("Actions on the schedule " . $expression);
 
-		$menu->when($edits, "edit", "Edit", array("data-sched-edit" => "/api/schedules/" . $id, "data-sched-expression" => $expression));
+		$menu->when($edits, "edit", "Edit", array("href" => Route::href("/schedules/edit/" . Route::pathEscape($id))));
 		$menu->item($on ? "stop" : "play", $on ? "Disable" : "Enable", array(
 			"data-api" => "/api/schedules/" . $id,
 			"data-method" => "PUT",

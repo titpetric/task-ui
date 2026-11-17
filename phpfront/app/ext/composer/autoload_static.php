@@ -118,6 +118,7 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         'Task\\Runs\\Runs' => __DIR__ . '/../..' . '/modules/runs/storage/Runs.php',
         'Task\\Runs\\Summaries' => __DIR__ . '/../..' . '/modules/runs/storage/Summaries.php',
         'Task\\Schedule' => __DIR__ . '/../..' . '/code/Task/Schedule.php',
+        'Task\\Schedules\\Catalogue' => __DIR__ . '/../..' . '/modules/schedules/storage/Catalogue.php',
         'Task\\Schedules\\Lookup' => __DIR__ . '/../..' . '/modules/schedules/storage/Lookup.php',
         'Task\\Schedules\\Schedules' => __DIR__ . '/../..' . '/modules/schedules/storage/Schedules.php',
         'Task\\Secret' => __DIR__ . '/../..' . '/code/Task/Secret.php',

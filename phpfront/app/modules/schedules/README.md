@@ -4,15 +4,17 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ![The tables this module reads](schema.svg)
 
-mod_schedules lists what runs on a cron expression, the jobs and the workflows, and takes a new one of a job; a workflow's comes from its edit page.
+mod_schedules lists what runs on a cron expression, the jobs and the workflows; adding one and changing one are the add and edit pages.
 
 The page is read only. Every form on it calls /api/schedules from the browser, so the markup carries the data-* attributes task-ui.js drives and nothing here writes.
 
 ## Pages
 
-| Method | Path         | Answered by                              |
-|--------|--------------|------------------------------------------|
-| `GET`  | `/schedules` | [`mod_schedules.php`](mod_schedules.php) |
+| Method | Path                   | Answered by                                      |
+|--------|------------------------|--------------------------------------------------|
+| `GET`  | `/schedules/add`       | [`mod_schedule_add.php`](mod_schedule_add.php)   |
+| `GET`  | `/schedules/edit/{id}` | [`mod_schedule_edit.php`](mod_schedule_edit.php) |
+| `GET`  | `/schedules`           | [`mod_schedules.php`](mod_schedules.php)         |
 
 ## The data model
 
@@ -157,6 +159,17 @@ Workspace
 
 ## Operations
 
+### `Catalogue`
+
+Catalogue is what a schedule's form offers: the folders and jobs the reader may run, and the workflows every folder of whose steps the reader sees. A job is offered where the reader may run it, which takes the allow list of the job and of its folder together, and a folder where it holds one such job. A schedule is written with the job's ID and the picker shows its name, which differ on a folder that follows more than one convention. The jobs that run a command on a host belong to no catalogue, so they come last and in a group of their own, and the root comes with them: a reader with the hosts permission is offered it even where it holds no other job.
+
+| Method                                         | What it does                                                                                                                                                                                                                                                                             |
+|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `of($chrome, $pickFolder = "", $pickJob = "")` | of is the folders, the jobs and the hosts a schedule may name, with the folder and the job a query named selected. A job query with no folder names a folder by being in it, so the two are read together: the folder is the one the job was found in, and the host jobs are the root's. |
+| `picked($folder, $job, $jobs)`                 | picked is the folder a job names: the folder the query named, or the one the job was found in where the query named only the job.                                                                                                                                                        |
+| `workflows($chrome)`                           | workflows is the workflows the reader may schedule, each named as its own name or its ID where it has none.                                                                                                                                                                              |
+| `visible($chrome, $workflows)`                 | visible is the workflows the reader may see: those every folder of whose steps they see, the steps of a workflow a step runs included.                                                                                                                                                   |
+
 ### `Lookup`
 
 Lookup is what the schedules page reads of the one table it does not own: the workflows a schedule may start, with the user they run as and the folders their steps name. The rows are the workflows module's and this asks that module for them; which workflow a schedule may start is the schedules page's question.
@@ -182,4 +195,4 @@ Schedules reads the schedule table: every schedule, the ones of a folder and the
 
 ---
 
-The tables come from `tables()` on `mod_schedules`. The operations are the classes of `storage/`, which hold every statement this module runs.
+The tables come from `tables()` on `mod_schedule_add`, `mod_schedule_edit`, `mod_schedules`. The operations are the classes of `storage/`, which hold every statement this module runs.

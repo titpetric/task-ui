@@ -47,7 +47,8 @@
 	</div>
 	<div class="field whole">
 		<label for="sch-expr">Expression</label>
-		<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required data-sched-expr>
+		<input type="text" id="sch-expr" name="expression" value="<?php echo htmlspecialchars($_v['data']['expression'], ENT_QUOTES);?>
+" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required data-sched-expr>
 		<small class="faint" data-sched-says></small>
 	</div>
 	<div class="field whole">
@@ -64,8 +65,4 @@
 		</table>
 		</div>
 		<small class="faint"><code>*</code> is every, <code>*/5</code> every fifth, <code>1-5</code> a range and <code>1,15</code> a list. A day of the month and a day of the week both named must both hold, so <code>0 3 1 * mon</code> is the 1st when the 1st is a Monday. The whole-period names are <code>@hourly</code>, <code>@daily</code>, <code>@weekly</code>, <code>@monthly</code> and <code>@yearly</code>; <code>@midnight</code> is <code>@daily</code>.</small>
-	</div>
-	<div class="form-foot">
-		<button class="btn" type="button" data-sched-cancel hidden>Cancel</button>
-		<button class="btn btn-primary" type="submit"><svg class="ic" data-sched-icon><use href="#i-plus"/></svg><span data-sched-label>Add schedule</span></button>
 	</div>

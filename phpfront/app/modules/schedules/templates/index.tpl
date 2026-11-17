@@ -1,33 +1,6 @@
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 
-{if $data.any}<section class="block" id="add-schedule">
-<h3>Add schedule</h3>
-<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added" data-sched>
-	<div class="field">
-		<label for="sch-folder">Folder</label>
-		<select id="sch-folder" name="folder" data-narrows="sch-job" required>
-{foreach $data.folders as $folder}			<option value="{folder.id}"{if $folder.selected} selected{/if}>{folder.id}</option>
-{/foreach}		</select>
-	</div>
-	<div class="field">
-		<label for="sch-job">Job</label>
-		<select id="sch-job" name="job" required>
-{foreach $data.jobs as $job}			<option value="{job.id}" data-folder="{job.folder}">{job.name}</option>
-{/foreach}{eval $data_hostjobs = $data.hosts}{include components/host-jobs.tpl}		</select>
-	</div>
-	<div class="field">
-		<label for="sch-args">Args</label>
-		<input type="text" id="sch-args" name="args" data-type="args" placeholder="df -h /" spellcheck="false" autocomplete="off">
-		<small class="faint">For a job that takes them; the command of a host.</small>
-	</div>
-	<div class="field whole">
-		<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude</label>
-		<small class="faint">When the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note.</small>
-	</div>
-{eval $data_runas = $data.runAs}{include components/run-as-field.tpl}{include components/sched-builder.tpl}</form>
-</section>
-{/if}
 <section class="block">
 {eval $data_block = $data.block}{include components/block-head.tpl}
 {if $data.schedules}	<div class="table-wrap fit">

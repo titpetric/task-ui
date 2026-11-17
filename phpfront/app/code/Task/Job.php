@@ -24,7 +24,7 @@ class Job {
 	/** NONE is what the Schedules block says with none, and MORE what it says to a reader who may add one. */
 	const NONE = "Not scheduled.";
 
-	const MORE = "Not scheduled. Add a cron expression below to run it on a schedule.";
+	const MORE = "Not scheduled. Add one to run it on a schedule.";
 
 	/** SUMMARIZE is the hover of Summarize, in a run's [...] and in the head of its page. */
 	const SUMMARIZE = "Claude summarizes the run's output, in this window";
@@ -409,7 +409,7 @@ class Job {
 
 	/**
 	 * schedules is the Schedules block: what runs the job on a cron
-	 * expression, and the form that adds one.
+	 * expression, and the link that adds one on the schedules page.
 	 *
 	 * A schedule names a folder and a job and no directory, so a job that runs
 	 * in a directory inside a folder has no block at all: one of it could not
@@ -423,6 +423,7 @@ class Job {
 		$store = new Schedules\Schedules($this->chrome->db);
 		$jobID = Row::text($job, "id");
 		$rows = array();
+		$canSchedule = $can && $this->chrome->allowed("schedule/edit");
 
 		foreach ($store->byFolder($id) as $schedule) {
 			if ($schedule->getJob() === $jobID) {
@@ -431,7 +432,13 @@ class Job {
 		}
 
 		$buttons = new Buttons(true);
-		$said = $can ? self::MORE : self::NONE;
+		$said = $canSchedule ? self::MORE : self::NONE;
+
+		if ($canSchedule) {
+			$buttons->primary("plus", "Add schedule", array(
+				"href" => Route::href("/schedules/add") . "?folder=" . Route::queryEscape($id) . "&job=" . Route::queryEscape($jobID),
+			));
+		}
 
 		return array(
 			"block" => array(
@@ -440,17 +447,7 @@ class Job {
 				"empty" => count($rows) === 0 ? $said : "",
 				"buttons" => $buttons->data(),
 			),
-			"table" => Schedule::table($this->chrome, $rows, $users, $can, Row::text($job, "name")),
-			"folder" => $id,
-			"job" => $jobID,
-			"runAs" => array(
-				"id" => "sch-user",
-				"options" => array(
-					"users" => $users,
-					"selected" => $this->chrome->name(),
-					"short" => false,
-				),
-			),
+			"table" => Schedule::table($this->chrome, $rows, $users, $canSchedule, Row::text($job, "name")),
 		);
 	}
 }

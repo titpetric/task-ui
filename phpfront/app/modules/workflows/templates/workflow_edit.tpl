@@ -22,7 +22,4 @@
 {/foreach}		</tbody>
 	</table>
 	</div>
-{/if}	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added" data-sched>
-		<input type="hidden" name="workflow" value="{data.id}">
-{include components/sched-builder.tpl}	</form>
-</section>
+{/if}</section>

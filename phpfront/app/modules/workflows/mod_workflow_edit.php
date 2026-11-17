@@ -9,7 +9,7 @@ require "ext/autoload.php";
 // would leave.
 
 // mod_workflow_edit is the form that changes a workflow, for its owner or an
-// admin, and under it the schedules that start it with the form that adds one.
+// admin, and under it the schedules that start it.
 //
 // ?workspace= opens the editor with the steps taken to that workspace. Nothing
 // here writes, so the move is a draft the reader reads before Save keeps it,
@@ -126,6 +126,13 @@ class mod_workflow_edit implements Module {
 		$rows = $clock->byWorkflow($id);
 		$buttons = new Task\Buttons(true);
 		$can = $flow["canRun"] || Task\User::admin($chrome->user);
+		$canSchedule = $can && $chrome->allowed("schedule/edit");
+
+		if ($canSchedule) {
+			$buttons->primary("plus", "Add schedule", array(
+				"href" => Task\Route::href("/schedules/add") . "?workflow=" . Task\Route::queryEscape($id),
+			));
+		}
 
 		$head->menu($menu);
 		$flow = $this->moved($chrome, $space, $flow);
@@ -140,7 +147,7 @@ class mod_workflow_edit implements Module {
 				"empty" => count($rows) === 0 ? self::NONE : "",
 				"buttons" => $buttons->data(),
 			),
-			"schedules" => $this->rows($chrome, $rows, $flow, $can),
+			"schedules" => $this->rows($chrome, $rows, $flow, $canSchedule),
 		), "workflow_edit.tpl");
 	}
 
@@ -262,43 +269,16 @@ class mod_workflow_edit implements Module {
 				"api" => "/api/schedules/" . $schedule->getId(),
 				"triage" => Task\Schedule::triages($schedule),
 				"can" => $can,
-				"menu" => $this->menuOf($schedule, $on, $flow["name"]),
+				"menu" => $this->menuOf($schedule, $on, $flow["name"], $can),
 			);
 		}
 
 		return $out;
 	}
 
-	/**
-	 * menuOf is a schedule's [...]: Edit, then Enable or Disable, by whether
-	 * it runs, and Delete.
-	 *
-	 * Edit is always offered, because the form that saves a schedule is on
-	 * this page whenever the table is: both are drawn for the reader who may
-	 * change the workflow.
-	 */
-	function menuOf($schedule, $on, $what) {
-		$id = $schedule->getId();
-		$expression = $schedule->getExpression();
-		$menu = new Task\Menu("Actions on the schedule " . $expression);
-
-		$menu->item("edit", "Edit", array("data-sched-edit" => "/api/schedules/" . $id, "data-sched-expression" => $expression));
-		$menu->item($on ? "stop" : "play", $on ? "Disable" : "Enable", array(
-			"data-api" => "/api/schedules/" . $id,
-			"data-method" => "PUT",
-			"data-body" => $on ? '{"enabled":false}' : '{"enabled":true}',
-			"data-next" => "reload",
-			"data-notice" => $on ? "Schedule disabled" : "Schedule enabled",
-		));
-		$menu->danger("trash", "Delete", array(
-			"data-delete" => "/api/schedules/" . $id,
-			"data-confirm" => "Delete the schedule " . $expression . " for " . $what . "?",
-			"data-confirm-ok" => "Delete",
-			"data-next" => "reload",
-			"data-notice" => "Schedule deleted",
-		));
-
-		return $menu->data();
+	/** menuOf is a schedule's [...]: Edit, then Enable or Disable, by whether it runs, and Delete. */
+	function menuOf($schedule, $on, $what, $edits = true) {
+		return Task\Schedule::menu($schedule, $on, $what, $edits);
 	}
 }
 

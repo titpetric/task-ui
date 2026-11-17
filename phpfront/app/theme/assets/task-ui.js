@@ -1995,10 +1995,9 @@
   // control can draw: the field is read back into the controls whenever
   // its shape is one of theirs.
   //
-  // A row's Edit turns the form into a save of that row: the endpoint and
-  // the method become the row's, the expression comes out of the menu
-  // item, every other field of the form goes off so the save carries the
-  // expression alone, and Cancel puts the add form back.
+  // The add form schedules a job or a workflow: the workflow select turns
+  // the job's fields off, because a schedule of a workflow takes none of
+  // them.
   var SCHED_ALIAS = {
     "@yearly": "0 0 1 1 *",
     "@annually": "0 0 1 1 *",
@@ -2193,77 +2192,26 @@
     schedShow(root);
   }
 
-  // schedOther turns every field but the expression off, or on again: a
-  // save of one row carries the expression alone, and the API leaves what
-  // a field left out would have said as it is.
-  function schedOther(form, off) {
-    Array.prototype.forEach.call(form.elements, function (el) {
-      if (!el.name || el.name === "expression") return;
-      el.disabled = off;
+  // schedTarget follows the workflow picker: a workflow is scheduled in
+  // place of a job, so the job's fields go off and the form sends the
+  // workflow and the expression alone.
+  function schedTarget(form) {
+    var select = form.querySelector("[data-sched-workflow]");
+    if (!select) return;
+    var flow = select.value !== "";
+    form.querySelectorAll("[data-sched-job]").forEach(function (field) {
+      field.hidden = flow;
+      field.querySelectorAll("input, select, textarea").forEach(function (el) {
+        el.disabled = flow;
+      });
     });
-  }
-
-  // schedLabel says what the button does: Add schedule, with the plus, or
-  // Save schedule with Cancel beside it. A save button in this interface
-  // carries no icon, so the icon goes rather than changes.
-  function schedLabel(form, editing) {
-    var label = form.querySelector("[data-sched-label]");
-    var icon = form.querySelector("[data-sched-icon]");
-    var cancel = form.querySelector("[data-sched-cancel]");
-    if (label) label.textContent = editing ? "Save schedule" : "Add schedule";
-    if (icon) icon.hidden = editing;
-    if (cancel) cancel.hidden = !editing;
-  }
-
-  // schedExpr writes the expression field and reads it into the controls.
-  function schedExpr(form, expr) {
-    var field = form.querySelector("[data-sched-expr]");
-    if (field) {
-      field.value = expr;
-      unmark(field);
-    }
-    schedApply(form, expr);
-    return field;
-  }
-
-  // schedEdit turns the add form into a save of one row; where the add
-  // form sends and what it held are kept for Cancel.
-  function schedEdit(form, api, expr) {
-    if (!form.dataset.schedAdd) {
-      form.dataset.schedAdd = form.dataset.api;
-      form.dataset.schedAddNotice = form.dataset.notice || "";
-      form.dataset.schedAddExpr = schedValue(form, "[data-sched-expr]");
-    }
-    form.dataset.api = api;
-    form.dataset.method = "PUT";
-    form.dataset.notice = "Schedule saved";
-    formError(form, "");
-    schedOther(form, true);
-    schedLabel(form, true);
-    var field = schedExpr(form, expr);
-    form.scrollIntoView({ block: "center" });
-    if (field) field.focus({ preventScroll: true });
-  }
-
-  // schedCancel puts the add form back, as it was before an Edit.
-  function schedCancel(form) {
-    if (!form.dataset.schedAdd) return;
-    form.dataset.api = form.dataset.schedAdd;
-    form.dataset.method = "POST";
-    form.dataset.notice = form.dataset.schedAddNotice;
-    formError(form, "");
-    schedOther(form, false);
-    schedLabel(form, false);
-    schedExpr(form, form.dataset.schedAddExpr);
-    delete form.dataset.schedAdd;
-    delete form.dataset.schedAddNotice;
-    delete form.dataset.schedAddExpr;
   }
 
   document.addEventListener("change", function (event) {
     var form = event.target.closest("form[data-sched]");
     if (!form) return;
-    if (event.target.matches(SCHED_CONTROLS)) schedWrite(form);
+    if (event.target.matches("[data-sched-workflow]")) schedTarget(form);
+    else if (event.target.matches(SCHED_CONTROLS)) schedWrite(form);
     // An expression typed by hand goes into the controls once the typing
     // stops: the mode it draws, and the fields of that mode.
     else if (event.target.matches("[data-sched-expr]")) schedApply(form, event.target.value);
@@ -2295,18 +2243,7 @@
         schedWrite(form);
         return;
       }
-      if (event.target.closest("[data-sched-cancel]")) {
-        schedCancel(form);
-        return;
-      }
     }
-    // A row's Edit is in its [...] menu, away from the form it edits: the
-    // page holds one, and the item carries the row's endpoint and what it
-    // runs on now.
-    var edit = event.target.closest("[data-sched-edit]");
-    if (!edit) return;
-    var target = document.querySelector("form[data-sched]");
-    if (target) schedEdit(target, edit.dataset.schedEdit, edit.dataset.schedExpression);
   });
 
   // On load a form takes the expression it holds, or, holding none, the
@@ -2316,6 +2253,7 @@
     var field = form.querySelector("[data-sched-expr]");
     if (field && field.value.trim()) schedApply(form, field.value);
     else schedWrite(form);
+    schedTarget(form);
   });
 
   // ------------------------------------------------------------- workflows

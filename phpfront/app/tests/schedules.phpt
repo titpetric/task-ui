@@ -98,6 +98,15 @@ $deploy = new Task\Model\Schedule(array("folder" => "malta/deploy", "job" => "pl
 echo $mod->jobHref($deploy, $workspaces), "\n";
 echo "[", $mod->jobHref($own, $workspaces), "]\n";
 
+// The folder a job names: the one the query named, the one the job was found
+// in, or the root for a job of a host, which belongs to no folder's catalogue.
+$offered = array(array("id" => "dump", "folder" => "fx-sched/hidden"));
+
+echo Task\Schedules\Catalogue::picked("", "dump", $offered), "\n";
+echo Task\Schedules\Catalogue::picked("", "@host:web1", array()), "\n";
+echo Task\Schedules\Catalogue::picked("fx-sched/seen", "", array()), "\n";
+echo "[", Task\Schedules\Catalogue::picked("", "", array()), "]\n";
+
 // A row's menu: Edit, where the page drew the form that saves a schedule,
 // Disable where it runs and Enable where it does not, then Delete, which asks
 // about what the schedule is for.
@@ -292,11 +301,15 @@ job workflow prompt
 infra,tools,backups
 backups,infra,tools
 
-[No schedules yet. Pick a job and a cron expression above.]
+[No schedules yet. Add one to run a job or a workflow on a schedule.]
 [No schedules yet.]
 []
 /workflows/w1
 /f/malta/deploy/plan
+[]
+fx-sched/hidden
+internal
+fx-sched/seen
 []
 Edit,Disable,Delete
 Edit,Enable,Delete
