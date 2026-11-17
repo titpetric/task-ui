@@ -8,20 +8,21 @@ require "ext/autoload.php";
 // an alias and leaves the import behind, so a file writes what the formatter
 // would leave.
 
-// mod_sidebar is the sidebar as a table: a row per item, in the order the
-// sidebar lists them, with a grip to drag it, the link it opens and a switch
-// that leaves it out.
+// mod_sidebar is the sidebar as a table: a row per module that enabled a row
+// in its modinfo.php, in the order the sidebar lists them, with a grip to drag
+// it, the link it opens and a switch that leaves it out.
 //
-// Every row is here, the hidden ones too, because this is the page that
-// unhides one. The sidebar beside the table shows the same rows less the
+// Every enabled module is here, the hidden ones too, because this is the page
+// that unhides one. The sidebar beside the table shows the same rows less the
 // hidden, so the two disagree until Save, which is the point: the table is
 // what the sidebar would be.
 //
-// The page reads and does not write. The form carries data-sidebar, which the
-// script puts to /api/sidebar and then reloads.
+// The page seeds the rows the table does not hold and reads them back. The
+// form carries data-sidebar, which the script puts to /api/sidebar and then
+// reloads.
 class mod_sidebar implements Module {
 	/** LEAD is the sentence under the heading, as HTML: it emphasises a column. */
-	const LEAD = "The sidebar's top block, in the order it lists them. Drag a row by its grip, or focus the grip and press the up and down arrows. <strong>Shown</strong> leaves an item out of the sidebar without deleting it: the page behind it still answers, and its permission still decides who may open it.";
+	const LEAD = "The sidebar's modules, in the order it lists them. A module calls <code>enableSideBar</code> in its modinfo.php to appear here. Drag a row by its grip, or focus the grip and press the up and down arrows. <strong>Show in sidebar</strong> leaves a module out without deleting it: its page still answers, and its permission still decides who may open it.";
 
 	/** SAVES is what the sentence says further to a reader who may not save. */
 	const SAVES = " An admin saves the order.";
@@ -59,13 +60,14 @@ class mod_sidebar implements Module {
 
 		$admin = Task\User::admin($chrome->user);
 		$store = new Task\Sidebar;
-		$stored = $store->all();
-		$items = count($stored) > 0 ? $stored : Task\Sidebar::defaults();
+
+		$store->seed();
+		$items = $store->all();
 		$head = new Task\Head(Task\Setup::SIDEBAR, self::lead($admin));
 		$steps = Task\Setup::steps($chrome, Task\Setup::SIDEBAR);
 		$rows = array();
 
-		foreach (Task\Sidebar::rows($items, Task\Host::modules()) as $row) {
+		foreach ($store->rows($items) as $row) {
 			$row["number"] = count($rows) + 1;
 			$row["menu"] = array();
 
@@ -81,6 +83,7 @@ class mod_sidebar implements Module {
 			"head" => $head->data(),
 			"admin" => $admin,
 			"rows" => $rows,
+			"cancel" => Task\Route::href("/settings"),
 			"trail" => Task\Setup::trail($steps),
 		), "sidebar.tpl");
 	}

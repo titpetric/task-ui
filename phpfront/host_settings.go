@@ -306,16 +306,6 @@ type EnvVar struct {
 	Redacted bool   `json:"redacted"`
 }
 
-// Plugin is one module the instance serves under /m, as the Sidebar settings
-// list it beside the pages: its name in the path, the row's title, the line
-// under its heading and the sprite symbol of its icon.
-type Plugin struct {
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
-}
-
 // Project is one project directory under the src of a workspace, as the
 // Projects settings list it: the ID a page of it answers under, the directory
 // itself, the pipeline files its conventions were detected in, how many jobs

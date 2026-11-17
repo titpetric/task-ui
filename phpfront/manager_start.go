@@ -28,7 +28,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	var names []string
+	var modules []*Module
 	for _, entry := range found {
 		if !entry.Startup {
 			m.opts.report(fmt.Errorf("%s: no @startup annotation, so the module is not registered", entry.File))
@@ -40,7 +40,7 @@ func (m *Manager) Start(ctx context.Context) error {
 			continue
 		}
 		m.put(module)
-		names = append(names, module.Name())
+		modules = append(modules, module)
 		if m.opts.Registry != nil {
 			if err := m.opts.Registry.Register(ctx, module); err != nil {
 				m.opts.report(fmt.Errorf("%s: %w", module.Name(), err))
@@ -48,14 +48,14 @@ func (m *Manager) Start(ctx context.Context) error {
 		}
 	}
 	if m.opts.Registry != nil {
-		if _, err := m.opts.Registry.Forget(ctx, names); err != nil {
+		if _, err := m.opts.Registry.Forget(ctx, modules); err != nil {
 			m.opts.report(err)
 		}
 	}
 	return nil
 }
 
-// startModule runs one modinfo.php on an unpooled runtime and returns what Task::register recorded.
+// startModule runs one modinfo.php on an unpooled runtime and returns the module it describes.
 func startModule(ctx context.Context, opts ModuleOptions, entry Found) (*Module, error) {
 	own := &Module{Root: entry.Root}
 
@@ -66,23 +66,28 @@ func startModule(ctx context.Context, opts ModuleOptions, entry Found) (*Module,
 	BindModule(rt, opts, func(module *Module) { registered = module })
 	rt.SetContext(WithModule(ctx, own))
 
-	prog, err := rt.LoadFile(ModInfo)
+	returned, err := rt.IncludeFile(ModInfo)
 	if err != nil {
-		return nil, err
-	}
-	if err := rt.Run(prog); err != nil {
 		if _, exited := runner.IsExit(err); !exited {
 			return nil, err
 		}
 	}
-	if registered == nil {
-		return nil, errors.New("the script called no Task::register")
+	module, ok := returned.(*Module)
+	if !ok {
+		if registered == nil {
+			return nil, errors.New("modinfo.php returns no Task\\Module")
+		}
+		module = registered
+	}
+	module.Root = entry.Root
+	if err := module.Validate(); err != nil {
+		return nil, err
 	}
 
 	// The module's other startup files, on the same runtime and with the
-	// module it just registered on the context, so migrate.php migrates
+	// module it just described on the context, so migrate.php migrates
 	// the module that registered and not the directory it was found in.
-	rt.SetContext(WithModule(ctx, registered))
+	rt.SetContext(WithModule(ctx, module))
 	files, err := Startups(entry.Root)
 	if err != nil {
 		return nil, err
@@ -96,7 +101,7 @@ func startModule(ctx context.Context, opts ModuleOptions, entry Found) (*Module,
 			return nil, fmt.Errorf("%s: %w", rel, err)
 		}
 	}
-	return registered, nil
+	return module, nil
 }
 
 // runStartup loads and runs one of a module's startup files, counting exit as an end and not a failure.

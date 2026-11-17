@@ -15,6 +15,9 @@ class Module {
 	public $icon = "";
 	public $version = "";
 	public $tables = array();
+	public $sidebar = false;
+	public $sidebarHref = "";
+	public $sidebarRule = "module";
 
 	function setName($name) {
 		$half = explode("/", $name);
@@ -40,6 +43,46 @@ class Module {
 
 	function setTables($tables) {
 		$this->tables = $tables;
+	}
+
+	function enableSideBar() {
+		$this->sidebar = true;
+	}
+
+	function setSideBarHref($href) {
+		$this->sidebarHref = trim($href);
+	}
+
+	function setSideBarRule($rule) {
+		$this->sidebarRule = trim($rule);
+	}
+
+	function getSidebar() {
+		return $this->sidebar;
+	}
+
+	function getSideBarHref() {
+		return $this->sidebarHref !== "" ? $this->sidebarHref : $this->href();
+	}
+
+	function getSideBarRule() {
+		return $this->sidebarRule;
+	}
+
+	function getTitle() {
+		return $this->label();
+	}
+
+	function getDescription() {
+		return $this->description;
+	}
+
+	function getIcon() {
+		return $this->icon;
+	}
+
+	function href() {
+		return "/m/" . $this->name();
 	}
 
 	function name() {

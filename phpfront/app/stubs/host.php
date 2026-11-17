@@ -67,7 +67,6 @@ class Host {
 	public static $usage = array();
 	public static $telemetry = array();
 	public static $integrations = array();
-	public static $modules = array();
 	public static $entries = array();
 	public static $variables = array();
 	public static $variable = array();
@@ -839,15 +838,6 @@ class Host {
 	 */
 	static function integrations() {
 		return self::$integrations;
-	}
-
-	/**
-	 * The plugins the instance serves under /m, which the Sidebar settings
-	 * list beside the pages: the `name` in the path, the row's `title`, the
-	 * `description` under its heading and its `icon` symbol.
-	 */
-	static function modules() {
-		return self::$modules;
 	}
 
 	/**

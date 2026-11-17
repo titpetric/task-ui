@@ -359,21 +359,6 @@ func (h *FrontHost) Telemetry(ctx context.Context) phpfront.Telemetry {
 	return out
 }
 
-// Modules are the plugins the instance serves under /m, which the Sidebar
-// settings list beside the pages: a module is a tree on disk that registered
-// itself at startup and is in no table.
-func (h *FrontHost) Modules(_ context.Context) []phpfront.Plugin {
-	if h.Plugins == nil {
-		return nil
-	}
-	found := h.Plugins.Modules()
-	out := make([]phpfront.Plugin, 0, len(found))
-	for _, module := range found {
-		out = append(out, phpfront.Plugin{Name: module.Name(), Title: module.Label(), Description: module.Description, Icon: module.Icon})
-	}
-	return out
-}
-
 // Entries are the project directories under the src of each workspace, as the
 // Projects settings list them.
 //

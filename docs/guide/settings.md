@@ -469,15 +469,15 @@ The API sets two more on a project: `commands`, the program a kind of job runs w
 
 ## Sidebar
 
-`/settings/sidebar` is the sidebar itself, as a table: a row per item, in the order the sidebar lists them, with the columns **Order**, **Item**, **Link** and **Shown**. Every item of the sidebar's top block has a row, Dashboard through Settings, and so does every [module](modules.md) the instance found.
+`/settings/sidebar` is the sidebar's menu, as a table: a row per module that enabled one, in the order the sidebar lists them, with the columns **Order**, **Module**, **Link** and **Show in sidebar**. The list is the module list and nothing else: a module calls `enableSideBar()` in its `modinfo.php` to appear, and a page that is not a module has no row.
 
-Drag a row by its grip to move it, or focus the grip and press the up and down arrows; **Move up** and **Move down** in the row's **⋯** menu do the same with the keyboard alone. The **Shown** switch leaves an item out of the sidebar without deleting it. Nothing is saved until **Save** at the bottom of the table, which writes the whole table at once with `PUT /api/sidebar`, so a change that goes wrong is one reload away from the state before it.
+Drag a row by its grip to move it, or focus the grip and press the up and down arrows; **Move up** and **Move down** in the row's **⋯** menu do the same with the keyboard alone. The **Show in sidebar** switch leaves a module out without deleting it. **Save** writes the order and the visibility together with `PUT /api/sidebar`, and **Cancel** returns to Settings without writing, so a change that goes wrong is one reload away from the state before it.
 
-An item the sidebar hides is still reachable by its link, and the permission of the page behind it still decides: hiding Settings takes the row out of the sidebar and leaves `/settings` open to whoever may read it. A row names the rule of its page, and a user without that rule never sees the row at all.
+A module the sidebar hides is still reachable by its link, and the permission of the page behind it still decides: hiding Settings takes the row out of the sidebar and leaves `/settings` open to whoever may read it. A row names the rule its module set, and a user without that rule never sees the row at all.
 
-A module that registers gets a row at the end, shown. A module that is gone loses its row, and the order of the rest stays.
+A module that calls `enableSideBar()` gets a row at the end, shown. A module that stops calling it, or is gone, loses its row, and the order of the rest stays.
 
-The order lives in the `sidebar` table as a position per row, written from the order of the rows the form posts. An instance with no rows seeds them from the fixed list the sidebar had before the table existed.
+The order lives in the `sidebar` table as a position per saved row, written from the order of the rows the form posts. An instance with no rows starts from the fixed order the sidebar had before the table existed, which the modules take over by their links.
 
 ---
 

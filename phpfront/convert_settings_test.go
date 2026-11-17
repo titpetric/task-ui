@@ -292,16 +292,9 @@ func TestEnvVars(t *testing.T) {
 	assert.Equal(t, 0, envVars(nil).Len())
 }
 
-// The modules the instance serves, and the project directories of the
-// workspaces: both are lists the sidebar and the Projects table walk.
-func TestPluginsAndProjects(t *testing.T) {
+// The project directories of the workspaces, which the Projects table walks.
+func TestProjects(t *testing.T) {
 	t.Parallel()
-
-	module := at(t, plugins([]Plugin{{
-		Name: "refinement", Title: "Refinement", Description: "The threads a run opened.", Icon: "note",
-	}}), 0)
-	assert.Equal(t, "refinement", text(t, module, "name"))
-	assert.Equal(t, "note", text(t, module, "icon"))
 
 	project := at(t, projects([]Project{{
 		ID: "malta/infra", Dir: "/src/infra", Sources: []string{"Taskfile.yml"}, Jobs: 12,
@@ -318,6 +311,5 @@ func TestPluginsAndProjects(t *testing.T) {
 	// draws in place of the job count.
 	assert.Equal(t, "not a checkout", text(t, at(t, projects([]Project{{Error: "not a checkout"}}), 0), "error"))
 
-	assert.Equal(t, 0, plugins(nil).Len())
 	assert.Equal(t, 0, projects(nil).Len())
 }

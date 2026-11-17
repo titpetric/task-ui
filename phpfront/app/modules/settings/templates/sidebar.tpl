@@ -2,10 +2,10 @@
 {include components/page-head.tpl}
 <form class="form sidebar-form" {if $data.admin}data-api="/api/sidebar" data-method="PUT" data-next="reload" data-notice="Sidebar saved" data-sidebar{/if} novalidate>
 <section class="block">
-	<h3>The items <small>a row per link, the order the sidebar reads</small></h3>
+	<h3>The modules <small>a row per module, the order the sidebar reads</small></h3>
 	<div class="table-wrap">
 	<table class="table sidebar-rows"{if $data.admin} data-sort-rows{/if}>
-		<thead><tr><th class="num">Order</th><th>Item</th><th>Link</th><th class="num">Shown</th><th></th></tr></thead>
+		<thead><tr><th class="num">Order</th><th>Module</th><th>Link</th><th class="num">Show in sidebar</th><th></th></tr></thead>
 		<tbody>
 {foreach $data.rows as $row}			<tr data-row data-href="{row.href}">
 				<td class="num">
@@ -34,6 +34,7 @@
 	</div>
 {if $data.admin}	<div class="form-foot">
 		<span class="faint" data-sidebar-changed>No changes yet.</span>
+		<a class="btn" href="{data.cancel}">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 	<p class="wf-live" aria-live="polite" data-rows-live></p>

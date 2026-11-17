@@ -30,6 +30,15 @@ class Sidebars {
 		return new \Task\Model\Sidebar($row);
 	}
 
+	/** ensure writes a row for each link the table does not hold. */
+	function ensure($rows) {
+		$now = \Task\Clock::stamp();
+
+		foreach ($rows as $row) {
+			$this->db->query("INSERT OR IGNORE INTO sidebar (id, kind, href, title, icon, position, hidden, rule, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ulid(), $row["kind"], $row["href"], $row["title"], $row["icon"], $row["position"], $row["hidden"] ? 1 : 0, $row["rule"], $now, $now);
+		}
+	}
+
 	/** order writes the position and the hidden flag of each link, in one transaction. */
 	function order($hrefs, $hidden) {
 		$now = \Task\Clock::stamp();

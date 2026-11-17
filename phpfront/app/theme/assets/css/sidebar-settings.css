@@ -77,6 +77,17 @@
   }
 }
 
+/* The table is the page's one block, so it takes the width and keeps no fade on its right edge. */
+.sidebar-form {
+  max-width: none;
+
+  & .table-wrap {
+    animation: none;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
 /* .sidebar-form styles the foot of the form the sidebar's order is saved from. */
 .sidebar-form .form-foot {
   display: flex;

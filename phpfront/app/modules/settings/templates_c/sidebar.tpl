@@ -144,11 +144,11 @@
 <form class="form sidebar-form" <?php if($_v['data']['admin']){?>
 data-api="/api/sidebar" data-method="PUT" data-next="reload" data-notice="Sidebar saved" data-sidebar<?php }?> novalidate>
 <section class="block">
-	<h3>The items <small>a row per link, the order the sidebar reads</small></h3>
+	<h3>The modules <small>a row per module, the order the sidebar reads</small></h3>
 	<div class="table-wrap">
 	<table class="table sidebar-rows"<?php if($_v['data']['admin']){?>
  data-sort-rows<?php }?>>
-		<thead><tr><th class="num">Order</th><th>Item</th><th>Link</th><th class="num">Shown</th><th></th></tr></thead>
+		<thead><tr><th class="num">Order</th><th>Module</th><th>Link</th><th class="num">Show in sidebar</th><th></th></tr></thead>
 		<tbody>
 <?php if(!empty($_v['data']['rows']))foreach($_v['data']['rows'] as $_v['row']){?>			<tr data-row data-href="<?php echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
 ">
@@ -238,6 +238,8 @@ true<?php }?>"<?php if(!$_v['row']['hidden']){?>
 <?php if($_v['data']['admin']){?>
 	<div class="form-foot">
 		<span class="faint" data-sidebar-changed>No changes yet.</span>
+		<a class="btn" href="<?php echo htmlspecialchars($_v['data']['cancel'], ENT_QUOTES);?>
+">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 	<p class="wf-live" aria-live="polite" data-rows-live></p>

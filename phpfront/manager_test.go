@@ -10,11 +10,11 @@ import (
 	"github.com/titpetric/task-ui/phpfront"
 )
 
-// fakeRegistry records what Start registered and what it forgot.
+// fakeRegistry records what Start registered and what the last scan found.
 type fakeRegistry struct {
-	names  []string
-	forgot []string
-	err    error
+	names []string
+	found []string
+	err   error
 }
 
 func (f *fakeRegistry) Register(_ context.Context, m *phpfront.Module) error {
@@ -22,8 +22,11 @@ func (f *fakeRegistry) Register(_ context.Context, m *phpfront.Module) error {
 	return f.err
 }
 
-func (f *fakeRegistry) Forget(_ context.Context, found []string) (int, error) {
-	f.forgot = found
+func (f *fakeRegistry) Forget(_ context.Context, found []*phpfront.Module) (int, error) {
+	f.found = f.found[:0]
+	for _, module := range found {
+		f.found = append(f.found, module.Name())
+	}
 	return 0, f.err
 }
 

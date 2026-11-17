@@ -245,15 +245,6 @@ func flags(fields []IntegrationField, found map[string]bool) *model.Array {
 	return out
 }
 
-// plugins is the modules the instance serves as a PHP array.
-func plugins(found []Plugin) *model.Array {
-	out := model.NewArraySize(len(found))
-	for _, module := range found {
-		out.Append(phpMap("name", module.Name, "title", module.Title, "description", module.Description, "icon", module.Icon))
-	}
-	return out
-}
-
 // projects is the project directories of the workspaces as a PHP array.
 func projects(found []Project) *model.Array {
 	out := model.NewArraySize(len(found))

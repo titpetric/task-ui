@@ -24,7 +24,7 @@ func TestStart(t *testing.T) {
 	assert.NoError(t, m.Start(context.Background()))
 
 	assert.Equal(t, []string{"titpetric/refinement"}, registry.names)
-	assert.Equal(t, []string{"titpetric/refinement"}, registry.forgot, "Forget takes every name a scan found")
+	assert.Equal(t, []string{"titpetric/refinement"}, registry.found, "Forget takes every name a scan found")
 }
 
 func TestStartReports(t *testing.T) {
@@ -49,7 +49,7 @@ func TestStartReports(t *testing.T) {
 
 	assert.Len(t, m.Modules(), 1, "the module that registered serves, the four that did not are reported")
 	assert.Len(t, reported, 4)
-	for _, want := range []string{"no @startup annotation", "called no Task::register", "quiet", "silent", "broken", "unnamed"} {
+	for _, want := range []string{"no @startup annotation", "returns no Task\\Module", "quiet", "silent", "broken", "unnamed"} {
 		assert.True(t, said(reported, want), want)
 	}
 }
@@ -116,7 +116,7 @@ func TestReload(t *testing.T) {
 	assert.NoError(t, os.RemoveAll(filepath.Join(root, "titpetric", "one")))
 	assert.NoError(t, m.Reload(context.Background()))
 	assert.Len(t, m.Modules(), 1, "a module whose directory is gone goes with it")
-	assert.Equal(t, []string{"titpetric/two"}, registry.forgot)
+	assert.Equal(t, []string{"titpetric/two"}, registry.found)
 }
 
 // A module's templates compile into its own templates_c, which it ships and

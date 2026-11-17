@@ -45,25 +45,25 @@ A module's forms post to the module, which is the one place in the front end tha
 
 ## Registration
 
-`modinfo.php` is annotated `@startup`. It builds a module and registers it. A file without the annotation is refused and the reason is logged:
+`modinfo.php` is annotated `@startup`. It builds a module and returns it. A file without the annotation is refused and the reason is logged:
 
 ```php
 <?php
 // @startup
-//
-// The refinement module: a thread of comments that Claude turns into
-// artifacts, and a report on what they are.
 
 $module = new Task\Module;
 $module->setName("titpetric/refinement");
 $module->setTitle("Refinement");
 $module->setDescription("Refine a design through a thread of comments");
 $module->setIcon("flow");
+$module->enableSideBar();
 
-Task::register($module);
+return $module;
 ```
 
 The name is `<vendor>/<plugin>`. It decides the link, `/m/titpetric/refinement`, and it is the unique key of the `module` table. The title and the icon are what the sidebar row shows; the icon names a symbol of the sprite in `_layout.tpl`, without the `i-` prefix.
+
+A module is served whether or not it enables a row. `enableSideBar()` puts it in the sidebar, and `setSideBarHref($href)` names the page the row opens when that is not the module's own page, such as `/runs` for a module that draws the instance's runs. `setSideBarRule($rule)` names the permission the row needs and defaults to `module`, the rule a module page carries. [Settings, Sidebar](guide/settings.md#sidebar) orders the rows and hides them.
 
 task-ui runs `modinfo.php` once per module, in path order, before it serves a request. A module that throws does not register and does not serve; the rest start.
 
@@ -77,8 +77,8 @@ These reach the PHP of every module.
 
 | Symbol                                       | What it does                                                                                     |
 |----------------------------------------------|--------------------------------------------------------------------------------------------------|
-| `new Task\Module`                            | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion`           |
-| `Task::register($module)`                    | records the module and its root in the `module` table, and adds its sidebar row                  |
+| `new Task\Module`                            | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion` and the sidebar setters |
+| `return $module;`                            | what a `modinfo.php` ends with: the module the runtime records                                   |
 | `Task::dispatch($comment, $action, $folder)` | starts a Claude run in that folder of the tree, returns the identifier of the note that holds it |
 | `Task::artifacts($folder)`                   | the files under one folder of the artifact tree, by path relative to it                          |
 | `Task::artifact($path)`                      | the text of one artifact, from the top of the tree, or `""`                                      |
@@ -197,7 +197,7 @@ The rules are the instance's:
 - an index is `idx_<table>_<columns>`, a unique one `uidx_<table>_<columns>`;
 - the table name is prefixed with the module, so `refinement_thread` cannot collide with a core table.
 
-task-ui records the modules themselves in `module`, and the sidebar in `sidebar`. A module gets a sidebar row when it registers, hidden or shown from [Settings, Sidebar](guide/settings.md#sidebar).
+task-ui records the modules themselves in `module`, and the sidebar in `sidebar`. A module gets a sidebar row when it calls `enableSideBar()`, hidden or shown from [Settings, Sidebar](guide/settings.md#sidebar).
 
 ## Telemetry
 

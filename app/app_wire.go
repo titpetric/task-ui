@@ -134,7 +134,7 @@ func (a *App) wire(version string) error {
 
 	moduleOpts := phpfront.NewModuleOptions(cfg.ModulesDir())
 	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
-	moduleOpts.Registry = phpfront.NewStore(store.Modules, store.Sidebar)
+	moduleOpts.Registry = phpfront.NewStore(store.Modules)
 	moduleOpts.Dispatcher = dispatcher
 	moduleOpts.Runs = moduleRuns
 	moduleOpts.Database = phpfront.NewDatabase(store.DB)
@@ -169,7 +169,7 @@ func (a *App) wire(version string) error {
 		Hosts: svc.Hosts, SSH: svc.SSH, Facts: svc.Facts,
 		Tools: svc.Tooling, Compose: cfg.ComposeProject,
 		Keystore: svc.Keystore, Config: svc.Instance,
-		Tracing: svc.Telemetry, Plugins: a.Modules,
+		Tracing: svc.Telemetry,
 		Cleaner: svc.Cleaner, Storage: svc.Measured,
 		Dispatcher: dispatcher, Runs: moduleRuns, FrontRoot: frontRoot,
 	}

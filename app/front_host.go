@@ -81,10 +81,8 @@ type FrontHost struct {
 	Keystore *keystore.Local
 	Config   *phpfront.Instance
 
-	// Tracing is the tracer's options and Plugins the modules registered at
-	// startup: the Telemetry and the Sidebar settings.
+	// Tracing is the tracer's options, which the Telemetry page reads.
 	Tracing *Telemetry
-	Plugins *phpfront.Manager
 
 	// Cleaner measures what the retention rules apply to, and Storage what
 	// the instance keeps on disk, both the meters the Go pages read, so a

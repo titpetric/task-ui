@@ -12,7 +12,7 @@ type Registry interface {
 	// takes the rest from the modinfo.php just read.
 	Register(ctx context.Context, m *Module) error
 
-	// Forget takes the names of every module a scan found and drops the rows
-	// of the others, whose directories are gone. It returns how many.
-	Forget(ctx context.Context, found []string) (int, error)
+	// Forget takes every module a scan found and drops the rows of the
+	// others, whose directories are gone. It returns how many.
+	Forget(ctx context.Context, found []*Module) (int, error)
 }

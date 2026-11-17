@@ -2,11 +2,14 @@
 
 namespace Task;
 
-// Sidebar draws the top block of the sidebar: the rows one reader sees, in the
-// order the table holds, and what each one links. The rows are the settings
-// module's, in Task\Settings\Sidebars.
+// Sidebar draws the top block of the sidebar: the modules whose modinfo.php
+// enabled a row, in the order the table holds, and what each one links.
+//
+// The modules are the front's own, read from their modinfo.php. The table
+// holds their order and their hidden flag and nothing else about them: a
+// row's title, icon and rule are the module's own.
 class Sidebar {
-	/** VIEW and MODULE are the kinds a row may be. */
+	/** VIEW and MODULE are the two places a link opens. */
 	const VIEW = "view";
 
 	const MODULE = "module";
@@ -20,8 +23,14 @@ class Sidebar {
 	/** store is the settings module, which owns the table. */
 	var $store;
 
-	function __construct($db = null) {
+	/** modules is the front's own modules, read once when the block is drawn. */
+	var $modules;
+
+	function __construct($db = null, $modules = null) {
+		require_once dirname(__DIR__) . "/modules.php";
+
 		$this->store = new Settings\Sidebars($db);
+		$this->modules = $modules === null ? task_modules() : $modules;
 	}
 
 	/** all is every row, hidden ones included, in the order the table holds. */
@@ -40,117 +49,66 @@ class Sidebar {
 	}
 
 	/**
-	 * items is the top block as one user sees it: the table's order, less
-	 * the hidden rows and the rows whose rule the user lacks.
-	 *
-	 * A module row is left out where a view row the reader sees carries its
-	 * title: the module is the same page under its plugin link, and both rows
-	 * in the block would read as two pages.
-	 *
-	 * Two rows carry more than a link, and the template keys on the flag and
-	 * not on the href, so renaming a page does not quietly empty either.
+	 * items is the top block as one user sees it: the modules that enabled a
+	 * row, in the table's order, less the hidden rows and the rows whose rule
+	 * the user lacks. A module that enabled none is served and not listed.
 	 */
 	function items($access, $path) {
 		$settings = self::settings($access);
-		$rows = $this->all();
-		$views = array();
 		$out = array();
 
-		foreach ($rows as $row) {
-			if ($row->getKind() === self::VIEW && $row->getTitle() !== "" && !$row->getHidden() && self::sees($row, $access, $settings)) {
-				$views[$row->getTitle()] = true;
-			}
-		}
-
-		foreach ($rows as $row) {
-			if ($row->getHidden() || !self::sees($row, $access, $settings)) {
-				continue;
-			}
-
-			if ($row->getKind() === self::MODULE && isset($views[$row->getTitle()])) {
+		foreach (self::listing($this->modules, $this->all()) as $row) {
+			if ($row["hidden"] || !self::sees($row["rule"], $access, $settings)) {
 				continue;
 			}
 
 			$out[] = array(
-				"title" => $row->getTitle(),
-				"href" => self::link($row),
-				"icon" => self::icon($row->getIcon()),
-				"active" => self::active($row->getHref(), $path),
-				"flows" => $row->getHref() === "/workflows",
-				"pulse" => $row->getHref() === "/threads",
+				"title" => $row["title"],
+				"href" => $row["link"],
+				"icon" => $row["icon"],
+				"active" => self::active($row["href"], $path),
+				"flows" => $row["href"] === "/workflows",
+				"pulse" => $row["href"] === "/threads",
 			);
 		}
 
 		return $out;
 	}
 
+	/** seed writes the module rows the table does not hold yet. */
+	function seed() {
+		$items = $this->all();
+		$known = array();
+
+		foreach ($items as $item) {
+			$known[$item->getHref()] = true;
+		}
+
+		$rows = array();
+
+		foreach (self::listing($this->modules, $items) as $row) {
+			if (isset($known[$row["href"]])) {
+				continue;
+			}
+
+			$row["kind"] = self::kind($row["href"]);
+			$rows[] = $row;
+		}
+
+		$this->store->ensure($rows);
+	}
+
 	/**
-	 * defaults is the top block as it stood before the table held it: the
-	 * views across all folders, in this order, which is the order a fresh
-	 * instance starts with and what the settings page draws while the table is
-	 * empty.
-	 *
-	 * The rows, their links and their symbols are model/sidebar.go's
-	 * SidebarDefaults, a constant table no binding carries; keep them in step
-	 * with it. The positions are the order of this list, which the instance
-	 * writes when it fills the table.
+	 * rows are the rows of the Sidebar settings table: every module that
+	 * enabled a row, the hidden ones too, because this is the page that
+	 * unhides one, in the order the table holds.
 	 */
-	static function defaults() {
-		$views = array(
-			array(
-				"title" => "Dashboard",
-				"href" => "/",
-				"icon" => "grid",
-				"rule" => "",
-			),
-			array(
-				"title" => "Inventory",
-				"href" => "/inventory",
-				"icon" => "server",
-				"rule" => "",
-			),
-			array(
-				"title" => "Workflows",
-				"href" => "/workflows",
-				"icon" => "flow",
-				"rule" => "",
-			),
-			array(
-				"title" => "Threads",
-				"href" => "/threads",
-				"icon" => "note",
-				"rule" => "",
-			),
-			array(
-				"title" => "Refinement",
-				"href" => "/refinement",
-				"icon" => "flow",
-				"rule" => self::MODULE_RULE,
-			),
-			array(
-				"title" => "Artifacts",
-				"href" => "/artifacts",
-				"icon" => "box",
-				"rule" => "",
-			),
-			array(
-				"title" => "Scheduled",
-				"href" => "/schedules",
-				"icon" => "clock",
-				"rule" => "",
-			),
-			array(
-				"title" => "Settings",
-				"href" => "/settings",
-				"icon" => "settings",
-				"rule" => self::SETTINGS,
-			),
-		);
+	function rows($items) {
 		$out = array();
 
-		foreach ($views as $view) {
-			$view["kind"] = self::VIEW;
-			$row = new Model\Sidebar($view);
+		foreach (self::listing($this->modules, $items) as $row) {
+			$row["kind"] = self::kind($row["href"]);
+			unset($row["position"], $row["order"]);
 			$out[] = $row;
 		}
 
@@ -158,64 +116,60 @@ class Sidebar {
 	}
 
 	/**
-	 * rows are the rows of the Sidebar settings table: every row the table
-	 * holds in its order, the hidden ones too, because this is the page that
-	 * unhides one.
-	 *
-	 * $modules is Task\Host::modules(), which a row of a module is paired with
-	 * by its link: the description under the title is the module's own. A
-	 * module whose row outlived its directory is paired with nothing, and the
-	 * row says what kind it is instead.
+	 * listing pairs the modules that enabled a row with the saved row of
+	 * their link: the order and the hidden flag are the table's, the title,
+	 * icon, rule and description are the module's own. A module that enabled
+	 * no row, and a second module of a link already listed, are left out.
 	 */
-	static function rows($items, $modules) {
-		$found = array();
-
-		foreach ($modules as $module) {
-			$found["/m/" . Row::text($module, "name")] = $module;
-		}
-
-		$out = array();
+	static function listing($modules, $items) {
+		$saved = array();
 
 		foreach ($items as $item) {
-			$href = $item->getHref();
-			$module = isset($found[$href]) ? $found[$href] : array();
+			$saved[$item->getHref()] = $item;
+		}
 
+		$seen = array();
+		$out = array();
+
+		foreach ($modules as $index => $module) {
+			$href = $module->getSideBarHref();
+
+			if (!$module->getSidebar() || $href === "" || isset($seen[$href])) {
+				continue;
+			}
+
+			$seen[$href] = true;
+			$row = isset($saved[$href]) ? $saved[$href] : null;
 			$out[] = array(
 				"href" => $href,
-				"link" => self::link($item),
-				"icon" => self::icon($item->getIcon()),
-				"title" => self::title($item),
-				"kind" => $item->getKind(),
-				"hidden" => $item->getHidden(),
-				"note" => self::note($item, $module),
+				"link" => self::link($href),
+				"title" => $module->getTitle(),
+				"icon" => self::icon($module->getIcon()),
+				"rule" => $module->getSideBarRule(),
+				"note" => $module->getDescription(),
+				"hidden" => $row !== null && $row->getHidden(),
+				"position" => $row === null ? 1000 + $index : $row->getPosition(),
+				"order" => $index,
 			);
 		}
+
+		usort($out, function($a, $b) {
+			if ($a["position"] === $b["position"]) {
+				return $a["order"] - $b["order"];
+			}
+
+			return $a["position"] - $b["position"];
+		});
 
 		return $out;
 	}
 
 	/**
-	 * title is what a row of the settings table shows, falling back to the
-	 * link so a row with no title is still something to drag.
+	 * kind says where a link opens: a module's own page under /m is another
+	 * application, and any other link is a page of this one.
 	 */
-	static function title($item) {
-		$title = $item->getTitle();
-
-		return $title === "" ? $item->getHref() : $title;
-	}
-
-	/**
-	 * note is the line under the title: a module's description, or what the
-	 * instance calls the row's kind where the module is gone.
-	 */
-	static function note($item, $module) {
-		$said = Row::text($module, "description");
-
-		if ($said !== "") {
-			return $said;
-		}
-
-		return $item->getKind() === self::MODULE ? "a module" : "";
+	static function kind($href) {
+		return strpos($href, "/m/") === 0 ? self::MODULE : self::VIEW;
 	}
 
 	/**
@@ -226,12 +180,12 @@ class Sidebar {
 	 * application's own rows alone. Every other link a template writes is
 	 * {base} and a path, because every other link is a page of this one.
 	 */
-	static function link($row) {
-		if ($row->getKind() === self::MODULE) {
-			return $row->getHref();
+	static function link($href) {
+		if (self::kind($href) === self::MODULE) {
+			return $href;
 		}
 
-		return Route::href($row->getHref());
+		return Route::href($href);
 	}
 
 	/**
@@ -252,9 +206,7 @@ class Sidebar {
 	 * everyone signed in sees, and SETTINGS is the one value that is not a
 	 * permission path.
 	 */
-	static function sees($row, $access, $settings) {
-		$rule = $row->getRule();
-
+	static function sees($rule, $access, $settings) {
 		if ($rule === "") {
 			return true;
 		}

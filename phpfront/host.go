@@ -302,11 +302,6 @@ type Host interface {
 	// redacted, which runner.Sensitive decides.
 	IntegrationEnv(ctx context.Context) []EnvVar
 
-	// Modules are the plugins the instance serves under /m, which the
-	// Sidebar settings list beside the pages: a module is a tree on disk
-	// that registered itself at startup and is in no table.
-	Modules(ctx context.Context) []Plugin
-
 	// Entries are the project directories under the src of each workspace,
 	// as the Projects settings list them: with or without something to run,
 	// with or without a remote. Which directories are inside a workspace,

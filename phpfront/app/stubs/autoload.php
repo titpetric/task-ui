@@ -8,6 +8,7 @@
 // own and the host calls are already on the runtime.
 
 require "ext/autoload.php";
+require "code/modules.php";
 require "stubs/host.php";
 require "stubs/task.php";
 require "stubs/module.php";

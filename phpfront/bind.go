@@ -40,6 +40,9 @@ const clockLayout = time.RFC3339Nano
 
 // Bind registers the host calls on a runtime serving one request.
 func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
+	// A modinfo.php returns the Task\Module it built, which the front reads.
+	rt.RegisterConstructor("Task\\Module", NewModule)
+
 	// A call, not a constant, so dropping the prefix is one Go line.
 	rt.RegisterFunc(HostClass+"::base", func() (string, error) {
 		return opts.Base, nil
@@ -480,12 +483,6 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 			return phpList(), nil
 		}
 		return envVars(opts.Host.IntegrationEnv(ctx)), nil
-	})
-	rt.RegisterFunc(HostClass+"::modules", func(ctx context.Context) (*model.Array, error) {
-		if opts.Host == nil {
-			return phpList(), nil
-		}
-		return plugins(opts.Host.Modules(ctx)), nil
 	})
 	rt.RegisterFunc(HostClass+"::entries", func(ctx context.Context, workspaces any) (*model.Array, error) {
 		if opts.Host == nil {

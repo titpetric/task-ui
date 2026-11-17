@@ -72,10 +72,6 @@ func (h *host) IntegrationEnv(context.Context) []phpfront.EnvVar {
 	}
 }
 
-func (h *host) Modules(context.Context) []phpfront.Plugin {
-	return nil
-}
-
 func (h *host) Entries(context.Context, []string) []phpfront.Project {
 	return nil
 }

@@ -2,6 +2,7 @@ package phpfront_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -40,6 +41,30 @@ func TestModule(t *testing.T) {
 	assert.Equal(t, "titpetric/refinement", m.Name(), "a name it refused leaves the one it had")
 }
 
+func TestModuleSidebar(t *testing.T) {
+	t.Parallel()
+	m := &phpfront.Module{Vendor: "titpetric", Plugin: "runs", Root: "/x"}
+	m.SetTitle(" Runs ")
+	m.SetDescription(" Every run ")
+	m.SetIcon(" list ")
+
+	assert.False(t, m.GetSidebar())
+	assert.Equal(t, "/m/titpetric/runs", m.GetSideBarHref(), "a row with no link of its own opens the module")
+	m.EnableSideBar()
+	m.SetSideBarHref(" /runs ")
+	m.SetSideBarRule(" run ")
+	assert.True(t, m.GetSidebar())
+	assert.Equal(t, "/runs", m.GetSideBarHref())
+	assert.Equal(t, "run", m.GetSideBarRule())
+	assert.Equal(t, "Runs", m.GetTitle())
+	assert.Equal(t, "Every run", m.GetDescription())
+	assert.Equal(t, "list", m.GetIcon())
+
+	fresh, err := phpfront.NewModule(t.Context())
+	assert.NoError(t, err)
+	assert.Equal(t, phpfront.ModuleRule, fresh.GetSideBarRule(), "a module that set no rule takes the module rule")
+}
+
 func TestModule_SetTables(t *testing.T) {
 	t.Parallel()
 	m := &phpfront.Module{}
@@ -54,4 +79,12 @@ func TestModuleLabel(t *testing.T) {
 	assert.Equal(t, "mysql", m.Label(), "a module with no title reads as its plugin")
 	m.SetTitle("MySQL")
 	assert.Equal(t, "MySQL", m.Label())
+}
+
+func TestModule_Project(t *testing.T) {
+	t.Parallel()
+	m := &phpfront.Module{Vendor: "titpetric", Plugin: "refinement"}
+	assert.Equal(t, 16, len(m.Project()))
+	assert.True(t, strings.HasPrefix(m.Project(), "refinem_"), "the project keeps the plugin prefix")
+	assert.Equal(t, "", (&phpfront.Module{}).Project(), "a module that named itself nothing has no project")
 }

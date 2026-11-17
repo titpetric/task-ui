@@ -13,6 +13,9 @@ import (
 // ErrName is returned when a module's name is not <vendor>/<plugin>.
 var ErrName = errors.New("a module name is vendor/plugin")
 
+// ModuleRule is the permission a module's sidebar row needs unless it sets one.
+const ModuleRule = "module"
+
 // Module is what a modinfo.php registers: the name that decides its link and
 // its row in the module table, the directory holding it, and what the sidebar
 // shows. A PHP script builds one with `new Task\Module` and fills it through
@@ -41,17 +44,22 @@ type Module struct {
 	// creates, which nothing else may create. A table it reads and does not
 	// own is not one of these.
 	Tables []string
+
+	// Sidebar is whether the module's row belongs in the sidebar, and
+	// SidebarHref the link it opens. SidebarRule is the permission the row
+	// needs. A module that never enables one is served but not listed.
+	Sidebar     bool
+	SidebarHref string
+	SidebarRule string
 }
 
 // NewModule returns the empty module `new Task\Module` builds, which names
 // itself through the setters. The context is the interpreter's.
 func NewModule(_ context.Context) (*Module, error) {
-	return &Module{}, nil
+	return &Module{SidebarRule: ModuleRule}, nil
 }
 
-// SetName splits <vendor>/<plugin> into the two halves and refuses anything
-// else. It is the one setter that can fail, so a modinfo.php that names itself
-// wrongly throws where it wrote the name.
+// SetName splits <vendor>/<plugin> into the two halves and refuses anything else.
 func (m *Module) SetName(name string) error {
 	vendor, plugin, err := ParseName(name)
 	if err != nil {
@@ -81,6 +89,38 @@ func (m *Module) SetTables(tables any) {
 	sort.Strings(m.Tables)
 }
 
+// EnableSideBar puts the module's row in the sidebar.
+func (m *Module) EnableSideBar() { m.Sidebar = true }
+
+// SetSideBarHref sets the link the sidebar row opens.
+func (m *Module) SetSideBarHref(href string) { m.SidebarHref = strings.TrimSpace(href) }
+
+// SetSideBarRule sets the permission the sidebar row needs.
+func (m *Module) SetSideBarRule(rule string) { m.SidebarRule = strings.TrimSpace(rule) }
+
+// GetSidebar reports whether the module enabled a sidebar row.
+func (m *Module) GetSidebar() bool { return m.Sidebar }
+
+// GetSideBarHref returns the link the sidebar row opens.
+func (m *Module) GetSideBarHref() string {
+	if m.SidebarHref != "" {
+		return m.SidebarHref
+	}
+	return m.Href()
+}
+
+// GetSideBarRule returns the permission the sidebar row needs.
+func (m *Module) GetSideBarRule() string { return m.SidebarRule }
+
+// GetTitle returns the title of the sidebar row.
+func (m *Module) GetTitle() string { return m.Label() }
+
+// GetDescription returns the line under the sidebar row.
+func (m *Module) GetDescription() string { return m.Description }
+
+// GetIcon returns the sprite symbol of the sidebar row.
+func (m *Module) GetIcon() string { return m.Icon }
+
 // Name is the module's name, <vendor>/<plugin>, and the unique key of its row.
 func (m *Module) Name() string {
 	if m.Vendor == "" || m.Plugin == "" {
@@ -101,17 +141,7 @@ func (m *Module) Href() string {
 // mig records one in holds sixteen characters.
 const ProjectLimit = 16
 
-// Project is the module's name as mig records an applied migration
-// under. Each module migrates under its own, so two modules cannot claim
-// one applied row and a module added later starts from its own first
-// migration rather than from wherever the instance stands.
-//
-// A full name does not fit: `titpetric/refinement` is twenty characters
-// and the column holds sixteen. The name is the plugin cut to seven
-// characters, then eight hex of the sha256 of the whole name, so
-// `titpetric/refinement` reads as `refinem_` and its digest. The prefix
-// says which module a row belongs to at a glance; the digest is what
-// keeps two vendors' modules of one name apart.
+// Project is the migration project name the module's schema is applied under.
 func (m *Module) Project() string {
 	name := m.Name()
 	if name == "" {

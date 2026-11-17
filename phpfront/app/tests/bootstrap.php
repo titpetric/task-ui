@@ -9,5 +9,7 @@
 // the keys its assertions turn on and no more.
 
 require "ext/autoload.php";
+require "code/modules.php";
 require "stubs/host.php";
+require "stubs/module.php";
 require "stubs/fixture.php";
