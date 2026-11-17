@@ -6,6 +6,24 @@
 	<div class="form-foot note"><span class="faint">Ctrl+Enter posts. Markdown: <code>**bold**</code>, <code>- lists</code>, <code>`code`</code> and <code>```</code> blocks.</span><button class="btn btn-primary" type="submit">Post note</button></div>
 </form>
 
+{if $data.chats}
+<h3 class="section-title">Chats</h3>
+<ol class="timeline" data-chats>
+{foreach $data.chats as $row}	<li class="thread-row{if $row.unread} unread{/if}">
+		<a class="thread-open" href="{row.href}">
+			<span class="thread-said">{row.said}</span>
+			<span class="thread-meta">
+				<svg class="ic thread-kind" aria-label="chat"><use href="#i-note"/></svg>
+				<span class="faint" title="{row.stamp}">{row.ago}</span>
+{if $row.unread}				<span class="badge unread">{row.unread}</span>
+{/if}{if $row.heard}				<svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg>
+{/if}			</span>
+		</a>
+		<span class="thread-who">{eval $data_user = $row.peer}{include components/user.tpl}</span>
+	</li>
+{/foreach}</ol>
+{/if}
+
 <ol class="timeline" data-notes>
 {foreach $data.rows as $row}	<li class="thread-row{if $row.state} {row.state}{/if}">
 		<a class="thread-open" href="{row.href}">

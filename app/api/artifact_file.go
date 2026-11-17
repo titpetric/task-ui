@@ -24,14 +24,10 @@ const maxPreview = 1 << 20
 // imageTypes are the extensions the artifact window shows as an image.
 var imageTypes = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true, ".svg": true}
 
-// pageTypes are the extensions the artifact window opens as a page, in a
-// frame of its own: a refinement job writes an HTML report and reading it
-// as source is reading the markup instead of the report.
+// pageTypes are the extensions the artifact window opens as a page.
 var pageTypes = map[string]bool{".html": true, ".htm": true}
 
-// viewArtifactFile returns a file of the artifact tree for the artifact
-// window: the version ?version= names, the latest without, and the
-// versions the user may see.
+// viewArtifactFile returns a file of the artifact tree for the artifact window.
 func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "artifact/view") {
 		return
@@ -39,6 +35,10 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 	store := h.opts.ArtifactStore
 	rel := folderParam(r)
 	if store == nil || rel == "" {
+		fail(w, http.StatusNotFound, artifactstore.ErrNotFound.Error())
+		return
+	}
+	if strings.HasPrefix(rel, "voice/") && !h.chatArtifactAllowed(r, rel) {
 		fail(w, http.StatusNotFound, artifactstore.ErrNotFound.Error())
 		return
 	}
@@ -126,9 +126,7 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 // maxArtifactWrite bounds a file written into the artifact tree.
 const maxArtifactWrite = 16 << 20
 
-// writeArtifactFile puts the request's body into the artifact tree at
-// the path, as the user with no run, over the version there; the history
-// keeps that one. Takes artifact/edit.
+// writeArtifactFile puts the request's body into the artifact tree at the path.
 func (h *Handlers) writeArtifactFile(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "artifact/edit") {
 		return
@@ -160,8 +158,7 @@ func (h *Handlers) writeArtifactFile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// deleteArtifactFile takes a file or a directory out of the artifact
-// tree; the history keeps its versions. Takes artifact/edit.
+// deleteArtifactFile takes a file or a directory out of the artifact tree.
 func (h *Handlers) deleteArtifactFile(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "artifact/edit") {
 		return
@@ -182,8 +179,7 @@ func (h *Handlers) deleteArtifactFile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// hasVersion reports whether the versions hold the commit, named in
-// full or by its first seven characters or more.
+// hasVersion reports whether the versions hold the commit.
 func hasVersion(versions []ArtifactVersion, commit string) bool {
 	for _, version := range versions {
 		if version.Commit == commit || len(commit) >= 7 && strings.HasPrefix(version.Commit, commit) {

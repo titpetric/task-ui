@@ -56,6 +56,7 @@ view<?php }?>">
 	<symbol id="i-server" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="9" width="11" height="4.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="4.75" r=".8" fill="currentColor"/><circle cx="5" cy="11.25" r=".8" fill="currentColor"/></symbol>
 	<symbol id="i-plug" viewBox="0 0 16 16"><path d="M6 1.5v3M10 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0zM8 11.5v3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-note" viewBox="0 0 16 16"><path d="M3 2.5h10v7.5l-3.5 3.5H3zM13 10H9.5v3.5M5.5 5.5h5M5.5 8h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+	<symbol id="i-bell" viewBox="0 0 16 16"><path d="M8 2a4 4 0 0 0-4 4v2.5L2.5 11h11L12 8.5V6a4 4 0 0 0-4-4zM6.5 12.5a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
 	<symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 4.5V8l2.5 1.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
 	<symbol id="i-pulse" viewBox="0 0 16 16"><path d="M1.5 8h3L6 4.5 8.5 11.5 10.5 8h4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-users" viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4M11 3.5a2.5 2.5 0 0 1 0 4.5M12 9.5c1.5.4 2.5 1.8 2.5 4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
@@ -120,7 +121,17 @@ view<?php }?>">
 /"><span>TaskUI</span><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
 </a></h1>
 		<span class="spacer"></span>
-<?php }?>		<details class="user" id="user-menu">
+<?php }?>		<?php if($_v['chrome']['can']['note/view']){?>
+<details class="notes-bell" id="notes-bell" data-notes-bell>
+	<summary class="btn-icon bell-icon" aria-label="Chats" aria-haspopup="menu" title="Chats"><svg class="ic"><use href="#i-bell"/></svg><span class="bell-count" id="notes-bell-count" hidden></span></summary>
+	<div class="notes-bell-menu" role="menu">
+		<p class="notes-bell-empty faint">No chat yet. Pick someone in the orb to start one.</p>
+		<div class="notes-bell-items" id="notes-bell-items"></div>
+	</div>
+</details>
+<?php }?>
+
+		<details class="user" id="user-menu">
 			<summary aria-label="<?php echo htmlspecialchars($_v['data']['user']['name'], ENT_QUOTES);?>
 , <?php echo htmlspecialchars($_v['data']['user']['role'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['data']['user']['name'], ENT_QUOTES);?>
@@ -488,7 +499,8 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"<?php if($_v['chrome']['claude']){?>
  data-claude<?php }?><?php if($_v['chrome']['can']['note/edit']){?>
- data-note-edit<?php }?>>
+ data-note-edit<?php }?><?php if($_v['chrome']['contacts']){?>
+ data-chat<?php }?>>
 		<div class="voice-who">
 <?php if($_v['chrome']['agents'] && $_v['chrome']['claude']){?>
 			<label for="voice-agent">Talking to</label>
@@ -497,6 +509,14 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
  (you)</option>
 <?php if(!empty($_v['chrome']['agents']))foreach($_v['chrome']['agents'] as $_v['agent']){?>				<option value="<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
 ">@<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
+</option>
+<?php }?>			</select>
+<?php }?><?php if($_v['chrome']['contacts']){?>
+			<label for="voice-chat">Chat</label>
+			<select id="voice-chat" class="voice-chat" aria-label="Chat with">
+				<option value="">No one</option>
+<?php if(!empty($_v['chrome']['contacts']))foreach($_v['chrome']['contacts'] as $_v['contact']){?>				<option value="<?php echo htmlspecialchars($_v['contact']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['contact']['name'], ENT_QUOTES);?>
 </option>
 <?php }?>			</select>
 <?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>

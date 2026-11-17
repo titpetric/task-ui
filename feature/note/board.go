@@ -59,6 +59,7 @@ const tail = 30
 // Board posts notes and replies, and starts the agent on its notes.
 type Board struct {
 	Notes *storage.NoteStorage
+	Chats *storage.ChatStorage
 	Users *storage.UserStorage
 	// Runs reads the run a prompt asks about; nil turns those off.
 	Runs *storage.RunStorage
@@ -121,6 +122,9 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		if parent, err = b.Notes.Get(ctx, parentID); err != nil {
 			return nil, err
 		}
+		if err := chatParent(parent); err != nil {
+			return nil, err
+		}
 		if parent.ParentID != "" {
 			return nil, fmt.Errorf("%w: a reply goes to a note, not to a reply", ErrInvalid)
 		}
@@ -163,8 +167,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 	return note, nil
 }
 
-// permissions returns what a user may do; without the users, an admin
-// may do everything and anyone else nothing.
+// permissions returns what a user may do, an admin everything without users.
 func (b *Board) permissions(ctx context.Context, user *model.User) permission.Set {
 	if b.Users == nil {
 		return permission.Set{User: user}
@@ -179,6 +182,9 @@ func (b *Board) permissions(ctx context.Context, user *model.User) permission.Se
 func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state string) (*model.Note, error) {
 	note, err := b.Notes.Get(ctx, id)
 	if err != nil {
+		return nil, err
+	}
+	if err := chatParent(note); err != nil {
 		return nil, err
 	}
 	switch state {
@@ -210,8 +216,7 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 	return reply, nil
 }
 
-// working returns the reply of a thread a rerun rewrites, the one in
-// the working state, or nil.
+// working returns the reply of a thread a rerun rewrites, or nil.
 func (b *Board) working(ctx context.Context, note *model.Note) *model.Note {
 	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
 	for _, reply := range replies[note.ID] {
@@ -222,12 +227,7 @@ func (b *Board) working(ctx context.Context, note *model.Note) *model.Note {
 	return nil
 }
 
-// dispatch starts the Notes agent for an instruction as the agent user,
-// in the background, and replies when the run ends: with a new reply of
-// the agent's, or in again, the agent's answer to run again, on the
-// thread before it. The run works on a copy of the thread, whose state
-// and run are this agent's. No root, and a run that does not start,
-// fails the note.
+// dispatch starts the Notes agent for an instruction and replies when the run ends.
 func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 	ctx := context.Background()
 	own := *note
@@ -257,23 +257,12 @@ func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 	}()
 }
 
-// run starts a request for a note and replies when the run ends: with
-// what the job wrote to the reply file, or else with how the run ended
-// and the end of its output, which stays in the run; a prompt's run
-// that replied with RunReply gets no second reply. The Claude jobs run
-// side by side, each its own run; another job waits for the run in the
-// way, then starts its own. An answer run again, again, takes the ID of
-// its run when that run is of the same job and place, else a new one,
-// and shows working until the new answer takes its place. A stop ends
-// the run, and the note fails with how it ended. It reports whether the
-// reply is what the job wrote; false for the report of how its run ended.
+// run starts a request for a note and replies when the run ends.
 func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, answer, what string, again *model.Note) bool {
 	return b.runAs(stop, note, req, answer, what, "", again)
 }
 
-// runAs is run, with as, the user a new reply is from: an agent of the
-// thread. The thread's note holds the run claims hands it, the first of
-// its runs to start; every reply holds the run that wrote it.
+// runAs is run, with the user a new reply is from.
 func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request, answer, what, as string, again *model.Note) bool {
 	ctx := context.Background()
 	defer os.Remove(answer)
@@ -340,10 +329,7 @@ func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request
 	return false
 }
 
-// start starts a request, after the run in the way of its job ends, or
-// a moment later while that run is still starting and has no session;
-// a run ID the request may not take turns into a new one. A stop while
-// it waits starts nothing.
+// start starts a request after the run in the way of its job ends.
 func (b *Board) start(stop context.Context, req runner.Request) (*runner.Session, error) {
 	ctx := context.Background()
 	session, err := b.Runner.Start(ctx, req)
@@ -369,9 +355,7 @@ func (b *Board) start(stop context.Context, req runner.Request) (*runner.Session
 	}
 }
 
-// thread is the text of a note and its replies, oldest first, every message
-// below the name of whoever wrote it: the conversation the agent works from.
-// With an answer to run again, the thread stops before that answer.
+// thread returns the text of a note and its replies, oldest first.
 func (b *Board) thread(ctx context.Context, note, again *model.Note) string {
 	all, _ := b.Notes.Replies(ctx, []string{note.ID})
 	replies := all[note.ID]
@@ -394,8 +378,7 @@ func (b *Board) thread(ctx context.Context, note, again *model.Note) string {
 	return text.String()
 }
 
-// finish replies to an instruction as the agent and records its state:
-// in again, the reply a rerun rewrites, or else in a new reply.
+// finish replies to an instruction as the agent and records its state.
 func (b *Board) finish(ctx context.Context, note *model.Note, state, body string, again *model.Note) {
 	b.finishAs(ctx, note, state, body, "", again)
 }
@@ -422,14 +405,12 @@ func (b *Board) answer(ctx context.Context, note, again *model.Note, body string
 	b.publish(again)
 }
 
-// reply replies to a note as the agent, with the note's run, and
-// returns the reply, nil on a failed save.
+// reply replies to a note as the agent and returns the reply.
 func (b *Board) reply(ctx context.Context, note *model.Note, body string) *model.Note {
 	return b.replyAs(ctx, note, body, "")
 }
 
-// replyAs is reply as an agent the thread names; an empty name replies
-// as the thread's answerer.
+// replyAs is reply as an agent the thread names, or its answerer.
 func (b *Board) replyAs(ctx context.Context, note *model.Note, body, as string) *model.Note {
 	name := as
 	if name == "" {
@@ -467,8 +448,7 @@ func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
 	return root, b.agentCommand(root.NoteJob(), "note")
 }
 
-// agentCommand returns a Claude job with AgentCommand and the subcommand
-// for its command, when the board has one.
+// agentCommand returns a Claude job with AgentCommand and its subcommand.
 func (b *Board) agentCommand(job *folder.Job, subcommand string) *folder.Job {
 	if b.AgentCommand != nil {
 		job.Command = append(append([]string{}, b.AgentCommand...), subcommand)
@@ -507,8 +487,7 @@ func (b *Board) publish(note *model.Note) {
 	}
 }
 
-// report is the agent's reply when its run produced no answer: the run's outcome, and the end
-// of the output in a code block.
+// report is the agent's reply when its run produced no answer.
 func report(run *model.Run, status runner.Status, output string) string {
 	took := run.Elapsed().Round(time.Second)
 	text := fmt.Sprintf("Run %s ended %s (exit %d) in %s.", run.ID, status.State, status.ExitCode, took)

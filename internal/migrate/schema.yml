@@ -562,6 +562,41 @@
       columns:
         - workspace_id
         - dir
+- name: note_participant
+  comment: Note Participant
+  columns:
+    - name: note_id
+      type: text
+      key: PRI
+      comment: Note ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: PRI
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: last_read_at
+      type: timestamp
+      comment: Last Read At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_note_participant_1
+      columns:
+        - note_id
+        - user_id
+      primary: true
+      unique: true
+    - name: idx_note_participant_user
+      columns:
+        - user_id
 - name: permission_policy
   comment: Permission Policy
   columns:

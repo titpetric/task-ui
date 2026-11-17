@@ -108,6 +108,15 @@ CREATE INDEX idx_note_parent ON note(parent_id);
 CREATE INDEX idx_note_state ON note(state);
 CREATE INDEX idx_note_about_run ON note(about_run_id);
 CREATE INDEX idx_note_about_workflow_run ON note(about_workflow_run_id);
+CREATE TABLE note_participant (
+    note_id CHAR(26) NOT NULL,
+    user_id CHAR(26) NOT NULL,
+    user_name TEXT NOT NULL DEFAULT '',
+    last_read_at DATETIME,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (note_id, user_id)
+);
+CREATE INDEX idx_note_participant_user ON note_participant(user_id);
 CREATE INDEX idx_note_deleted ON note(deleted_at);
 CREATE INDEX idx_note_workspace ON note(workspace_id, dir);
 CREATE TABLE permission_policy (

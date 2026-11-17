@@ -4018,6 +4018,7 @@
         });
         mountEditors(notesList);
         mentionFields(notesList);
+        chatRead();
       });
   }
   document.addEventListener("submit", function (event) {
@@ -4029,7 +4030,8 @@
     var button = form.querySelector("button[type=submit]");
     button.disabled = true;
     formError(form, "");
-    api("POST", "/api/notes", { parent_id: form.dataset.parent || "", body: body })
+    var url = form.dataset.channel === "chat" ? "/api/threads" : "/api/notes";
+    api("POST", url, { parent_id: form.dataset.parent || "", body: body })
       .then(function (res) {
         button.disabled = false;
         if (res.status >= 300) {
@@ -4041,6 +4043,23 @@
         if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
         refreshNotes();
       });
+  });
+  // A chat thread is read when its page opens or a message lands on it.
+  var chatThread = document.querySelector("[data-chat-thread]");
+  function chatRead() {
+    if (!chatThread) return;
+    api("POST", "/api/threads/" + encodeURIComponent(chatThread.dataset.chatThread) + "/read").then(function () {
+      if (window.taskUI.bell) window.taskUI.bell.refresh();
+    });
+  }
+  chatRead();
+  // The reply box's microphone opens the voice window on a reply to the
+  // thread; voice.js owns the recording from there.
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-voice-reply]");
+    if (!button) return;
+    event.preventDefault();
+    if (window.taskUI.voice) window.taskUI.voice.reply(button.dataset.parent || "", button.dataset.channel || "");
   });
   // ------------------------------------------------------- forms in a note
 
@@ -4455,6 +4474,9 @@
     new EventSource("/api/sse/notes").addEventListener("note", function (event) {
       var changed = {};
       try { changed = JSON.parse(event.data); } catch (e) { /* refresh anyway */ }
+      bellNote(changed);
+      // A chat is read on its own page; the board leaves its list to the bell.
+      if (changed.channel === "chat" && !document.querySelector("[data-chat-thread]")) return;
       // An area's box, the Workflows page's, follows the area's notes.
       if (changed.id && area && (changed.area || "") !== area) return;
       if (changed.id && !area && ((changed.dir || "") !== place || changed.area)) return;
@@ -4462,6 +4484,91 @@
       pending = setTimeout(refreshNotes, 150);
     });
   }
+
+  // The bell lists the chats with a count of what is unread; a message from
+  // a thread the page is not reading raises a toast. The list is redrawn from
+  // /api/threads, and a chat item opens in the orb where the window has one.
+  var bell = document.querySelector("[data-notes-bell]");
+  var bellCount = document.getElementById("notes-bell-count");
+  var bellItems = document.getElementById("notes-bell-items");
+  var bellEmpty = bell ? bell.querySelector(".notes-bell-empty") : null;
+  function bellRefresh() {
+    if (!bell) return Promise.resolve();
+    return api("GET", "/api/threads").then(function (res) {
+      if (res.status >= 300) return;
+      var chats = res.data.chats || [];
+      var unread = res.data.unread || 0;
+      bellCount.textContent = unread > 99 ? "99+" : String(unread);
+      bellCount.hidden = unread === 0;
+      bell.classList.toggle("has-unread", unread > 0);
+      bellItems.textContent = "";
+      chats.forEach(function (chat) {
+        var row = document.createElement("div");
+        row.className = "notes-bell-item" + (chat.unread ? " unread" : "");
+        var link = document.createElement("a");
+        link.href = "/threads/" + encodeURIComponent(chat.id);
+        link.dataset.chat = chat.id;
+        var who = document.createElement("b");
+        who.textContent = chat.peer || "Chat";
+        var said = document.createElement("span");
+        said.textContent = chat.last_spoken || chat.last_body || "";
+        link.append(who, said);
+        row.appendChild(link);
+        if (chat.last_audio_path) {
+          var play = document.createElement("button");
+          play.type = "button";
+          play.className = "btn-icon";
+          play.dataset.play = chat.last_id;
+          play.title = "Play";
+          play.setAttribute("aria-label", "Play");
+          play.innerHTML = '<svg class="ic"><use href="#i-play"/></svg>';
+          row.appendChild(play);
+        }
+        if (chat.unread) {
+          var count = document.createElement("span");
+          count.className = "badge unread";
+          count.textContent = String(chat.unread);
+          row.appendChild(count);
+        }
+        bellItems.appendChild(row);
+      });
+      if (bellEmpty) bellEmpty.hidden = chats.length > 0;
+    });
+  }
+  function bellNote(note) {
+    if (!bell || !note || note.channel !== "chat" || !note.id) return;
+    if (note.user_id === document.body.dataset.me) return;
+    var open = document.querySelector("[data-chat-thread]");
+    var parent = note.parent_id || note.id;
+    if (open && open.dataset.chatThread === parent) return;
+    if (window.taskUI.toast) window.taskUI.toast((note.user_name || "Someone") + " sent a message", "ok");
+    bellRefresh();
+  }
+  if (bell) {
+    bellRefresh();
+    bell.addEventListener("click", function (event) {
+      var play = event.target.closest("[data-play]");
+      if (play) {
+        event.preventDefault();
+        var clip = new Audio("/api/threads/messages/" + encodeURIComponent(play.dataset.play) + "/audio");
+        clip.play().catch(function () {});
+        return;
+      }
+      var link = event.target.closest("a[data-chat]");
+      if (!link || !window.taskUI.voice || !window.taskUI.voice.openThread) return;
+      event.preventDefault();
+      bell.open = false;
+      window.taskUI.voice.openThread(link.dataset.chat);
+    });
+    if (!notesList && window.EventSource) {
+      new EventSource("/api/sse/notes").addEventListener("note", function (event) {
+        var note = {};
+        try { note = JSON.parse(event.data); } catch (e) { return; }
+        bellNote(note);
+      });
+    }
+  }
+  window.taskUI.bell = { refresh: bellRefresh };
 
   // The header's prompt asks Claude where the page is, as the header's
   // data-prompt-* name it: a folder or a directory in it, a run, or the

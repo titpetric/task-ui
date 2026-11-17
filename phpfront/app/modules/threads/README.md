@@ -4,11 +4,11 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ![The tables this module reads](schema.svg)
 
-mod_threads is the timeline: every thread the reader may see, newest first, and the box that starts one.
+mod_threads is the timeline: every board thread the reader may see, newest first, the chats the reader is in, and the box that starts a note.
 
-A thread is a note of the board, a prompt asked from a page, or a question put to the orb: one table, one list, one page per thread. The list is rows and not the threads themselves, because a thread is read on its own page, where the messages take sides and a recording plays.
+A thread is a note of the board, a prompt asked from a page, a question put to the orb, or a chat with another user: one table, one list, one page per thread. The list is rows and not the threads themselves, because a thread is read on its own page, where the messages take sides and a recording plays.
 
-The page reads and does not write. The box holds data-note-form, which the script posts to /api/notes and then refreshes the list in place.
+The page reads and does not write. The box holds data-note-form, which the script posts to /api/notes, and a chat's reply form posts to /api/threads; either refreshes the list in place.
 
 ## Pages
 
@@ -46,6 +46,18 @@ Note
 | `spoken`                | `text`      |         |
 | `workspace_id`          | `text`      | indexed |
 | `dir`                   | `text`      | indexed |
+
+### `note_participant`
+
+Note Participant
+
+| Column         | Type        | Key     |
+|----------------|-------------|---------|
+| `note_id`      | `text`      | primary |
+| `user_id`      | `text`      | primary |
+| `user_name`    | `text`      |         |
+| `last_read_at` | `timestamp` |         |
+| `created_at`   | `timestamp` |         |
 
 ### `run`
 
@@ -104,7 +116,11 @@ Notes reads and writes the note table: the notes that start a thread, newest fir
 | Method                                            | What it does                                                                                                                                                                                                                                             |
 |---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `threads($channel, $limit = self::LIMIT)`         | threads is the notes that start a thread of a channel, newest first.                                                                                                                                                                                     |
-| `timeline($limit = self::LIMIT)`                  | timeline is every thread of every channel, newest first.                                                                                                                                                                                                 |
+| `timeline($limit = self::LIMIT)`                  | timeline is every board thread, newest first; a chat is listed by chats().                                                                                                                                                                               |
+| `chats($userID, $limit = self::LIMIT)`            | chats is the chat threads a user is in, newest message first, each with its peer, its last message and how much of it the user has not read.                                                                                                             |
+| `participant($id, $userID)`                       | participant reports whether a user is in a chat thread.                                                                                                                                                                                                  |
+| `peer($id, $userID)`                              | peer is the other user of a chat thread, or its first user for a reader who is not in it.                                                                                                                                                                |
+| `unread($id, $userID)`                            | unread is how many messages in a chat thread a user has not read.                                                                                                                                                                                        |
 | `drop($id)`                                       | drop marks a thread and its replies deleted, which hides them from every listing.                                                                                                                                                                        |
 | `byUser($channel, $name, $limit = self::PROFILE)` | byUser is the board notes one user wrote, newest first, which a profile lists under Notes. The replies they wrote under someone else's note are not theirs to list: a profile lists threads, as the board does.                                          |
 | `promptsByUser($name, $limit = self::PROFILE)`    | promptsByUser is the prompts one user asked, newest first.                                                                                                                                                                                               |
@@ -139,6 +155,7 @@ Timeline is the list the Threads page draws: one row per thread, newest first, w
 | Method                                        | What it does                                                                            |
 |-----------------------------------------------|-----------------------------------------------------------------------------------------|
 | `row($note, $replies, $chrome, $seen = null)` | row is one thread as components/thread-row.tpl reads it.                                |
+| `chat($row, $chrome)`                         | chat is one chat thread as the Chats section reads it.                                  |
 | `kind($note)`                                 | kind names what started the thread: a recording, a prompt asked from a page, or a note. |
 | `heard($note, $replies)`                      | heard reports whether any message of the thread was spoken or read out.                 |
 | `lastAt($note, $replies)`                     | lastAt is when the thread last moved: its newest reply, or the thread itself.           |

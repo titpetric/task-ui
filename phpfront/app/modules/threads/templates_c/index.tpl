@@ -155,6 +155,47 @@
 	<div class="form-foot note"><span class="faint">Ctrl+Enter posts. Markdown: <code>**bold**</code>, <code>- lists</code>, <code>`code`</code> and <code>```</code> blocks.</span><button class="btn btn-primary" type="submit">Post note</button></div>
 </form>
 
+<?php if($_v['data']['chats']){?>
+
+<h3 class="section-title">Chats</h3>
+<ol class="timeline" data-chats>
+<?php if(!empty($_v['data']['chats']))foreach($_v['data']['chats'] as $_v['row']){?>	<li class="thread-row<?php if($_v['row']['unread']){?>
+ unread<?php }?>">
+		<a class="thread-open" href="<?php echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
+">
+			<span class="thread-said"><?php echo htmlspecialchars($_v['row']['said'], ENT_QUOTES);?>
+</span>
+			<span class="thread-meta">
+				<svg class="ic thread-kind" aria-label="chat"><use href="#i-note"/></svg>
+				<span class="faint" title="<?php echo htmlspecialchars($_v['row']['stamp'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
+</span>
+<?php if($_v['row']['unread']){?>
+				<span class="badge unread"><?php echo htmlspecialchars($_v['row']['unread'], ENT_QUOTES);?>
+</span>
+<?php }?><?php if($_v['row']['heard']){?>
+				<svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg>
+<?php }?>			</span>
+		</a>
+		<span class="thread-who"><?php $_v['data_user'] = $_v['row']['peer'];?>
+<span class="user-ref"><?php if($_v['data_user']['href']){?>
+<a class="user-link" href="<?php echo htmlspecialchars($_v['data_user']['href'], ENT_QUOTES);?>
+"><?php $_v['data_avatar'] = $_v['data_user'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
+</span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
+</span></a><?php }else{ $_v['data_avatar'] = $_v['data_user'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
+</span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
+</span><?php }?></span>
+</span>
+	</li>
+<?php }?></ol>
+<?php }?>
+
 <ol class="timeline" data-notes>
 <?php if(!empty($_v['data']['rows']))foreach($_v['data']['rows'] as $_v['row']){?>	<li class="thread-row<?php if($_v['row']['state']){?>
  <?php echo htmlspecialchars($_v['row']['state'], ENT_QUOTES); }?>">

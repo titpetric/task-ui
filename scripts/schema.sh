@@ -4,7 +4,7 @@
 #   scripts/schema.sh
 #
 # Applies every migration to a throwaway SQLite file, lints the schema, then
-# writes schema/docs, schema/schema.yml, the Go types under model/ and the
+# writes schema/docs, schema/schema.yml, the Go types under app/model/ and the
 # front end's test schema.
 #
 # The migrations live with the code that owns each table - a module's pages, the
@@ -26,7 +26,7 @@ mig migrate --project task-ui --path schema --recursive --exclude data --apply
 mig lint
 mig docs --output=./schema/docs
 mig docs --output=./schema --yaml --output-file schema.yml
-mig gen --go.fill-json --output=./model
+mig gen --go.fill-json --output=./app/model
 
 # The front end's fixtures open a database and cannot reach this directory:
 # a test tree resolves every path inside its own root. They get the schema

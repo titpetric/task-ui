@@ -8,6 +8,10 @@ A colon right after the name, with no space after it, makes a job ID and no ment
 
 ![Notes](https://cdn.si/titpetric/task-ui/docs/assets/notes-dark.png)
 
+## Chats
+
+A chat is a private thread with one other person: a note of the `chat` channel, its two participants in `note_participant`, and each reader's marker in the same table. It is off every board listing and the timeline, no agent starts on it, and a note posted on the board cannot join one. Only the two participants read and post; an admin may open a thread by ID and posts nothing. The bell in the header lists the chats of the reader, and `/threads` lists them under **Chats** with their unread counts.
+
 ## Instructions
 
 A note naming another user of the instance, from someone who may run jobs, is an instruction to whoever it names, and so is a reply that names one: the reply opens its note again. A name of no user stays a plain mention, and a note from a viewer stays a message. The note shows the state on its left edge: **open**, **working**, then **done** or **failed**.

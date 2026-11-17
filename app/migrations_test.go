@@ -38,6 +38,7 @@ var migrations = []string{
 	"note_about_workflow_run.up.sql",
 	"note_area.up.sql",
 	"note_edited.up.sql",
+	"note_participant.up.sql",
 	"note_thread.up.sql",
 	"note_workspace.up.sql",
 	"permission_policy.up.sql",

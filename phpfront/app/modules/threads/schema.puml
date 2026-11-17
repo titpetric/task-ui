@@ -28,6 +28,14 @@ entity "note" {
   + dir : text
 }
 
+entity "note_participant" {
+  * note_id : text
+  * user_id : text
+  + user_name : text
+  + last_read_at : timestamp
+  + created_at : timestamp
+}
+
 entity "run" {
   * id : text
   + folder : text
@@ -70,5 +78,7 @@ entity "user" {
 
 note }o--|| user : user_id
 note }o--|| run : run_id
+note_participant }o--|| note : note_id
+note_participant }o--|| user : user_id
 run }o--|| user : user_id
 @enduml

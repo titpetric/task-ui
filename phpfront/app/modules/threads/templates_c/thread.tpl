@@ -142,7 +142,9 @@
 <?php }?></div>
 
 
-<ol class="talk" data-notes>
+<ol class="talk" data-notes<?php if($_v['data']['chat_thread']){?>
+ data-chat-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+"<?php }?>>
 <?php if(!empty($_v['data']['messages']))foreach($_v['data']['messages'] as $_v['message']){?>	<li class="said<?php if($_v['message']['mine']){?>
  mine<?php }?><?php if($_v['message']['working']){?>
  working<?php }?>" id="note-<?php echo htmlspecialchars($_v['message']['id'], ENT_QUOTES);?>
@@ -184,6 +186,7 @@
 
 <?php if($_v['data']['replies']){?>
 <form class="note-form" data-note-form data-parent="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+" data-channel="<?php echo htmlspecialchars($_v['data']['channel'], ENT_QUOTES);?>
 ">
 	<?php $_v['data_markdown'] = $_v['data']['editor'];?>
 <textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
@@ -194,5 +197,8 @@
  placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
 "<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
 "></textarea>
-	<div class="form-foot note"><span class="faint">Ctrl+Enter posts.</span><button class="btn btn-primary" type="submit">Reply</button></div>
+	<div class="form-foot note"><span class="faint">Ctrl+Enter posts.</span><?php if($_v['data']['mic']){?>
+<button class="btn btn-ghost" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+" data-channel="<?php echo htmlspecialchars($_v['data']['channel'], ENT_QUOTES);?>
+" title="Record a reply" aria-label="Record a reply"><svg class="ic"><use href="#i-mic"/></svg></button><?php }?><button class="btn btn-primary" type="submit">Reply</button></div>
 </form><?php }?>

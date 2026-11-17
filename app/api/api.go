@@ -136,6 +136,12 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/notes/{id}/comments", h.commentNote)
 	r.Delete("/notes/{id}", h.deleteNote)
 
+	r.Post("/threads", h.postThread)
+	r.Get("/threads", h.listThreads)
+	r.Get("/threads/{id}", h.getThread)
+	r.Post("/threads/{id}/read", h.readThread)
+	r.Get("/threads/messages/{id}/audio", h.threadAudio)
+
 	r.Get("/projects", h.listProjects)
 	r.Post("/projects", h.cloneProject)
 	r.Get("/projects/*", h.getProject)
@@ -250,7 +256,7 @@ func statusOf(err error) int {
 	switch {
 	case errors.Is(err, recording.ErrExpired):
 		return http.StatusGone
-	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist), errors.Is(err, note.ErrNoPrompt):
+	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist), errors.Is(err, note.ErrNoPrompt), errors.Is(err, note.ErrChatOff):
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving), errors.Is(err, runner.ErrQueueFull):
 		return http.StatusConflict

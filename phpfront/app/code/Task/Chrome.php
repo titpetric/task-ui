@@ -393,6 +393,23 @@ class Chrome {
 		return $out;
 	}
 
+	/** contacts is who the orb may chat with: every user but the reader, by name. */
+	function contacts() {
+		if (!$this->allowed("note/edit") || !$this->allowed("note/view")) {
+			return array();
+		}
+
+		$out = array();
+
+		foreach ($this->users->all() as $user) {
+			if ($user->getName() !== $this->name()) {
+				$out[] = array("name" => $user->getName(), "role" => User::role($user));
+			}
+		}
+
+		return $out;
+	}
+
 	/**
 	 * runAs is the select that picks who the header's prompt runs as: the
 	 * users, the reader picked, in the short form the header draws.
@@ -455,6 +472,7 @@ class Chrome {
 			"upload" => $this->upload(),
 			"runAs" => $this->runAs(),
 			"agents" => $this->agents(),
+			"contacts" => $this->contacts(),
 			"recents" => $this->recents(),
 			"running" => count($this->live()) > 0,
 		);

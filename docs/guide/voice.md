@@ -71,6 +71,14 @@ A clip nothing transcribed is sent with no words, and the thread is asked to run
 
 Closing the window ends the session. The thread stays on the board under the page it belongs to, and the next time the orb opens it starts a new one.
 
+## Chat with a person
+
+The **Chat** picker picks a second person on the instance. Pick one and the next thing you send opens a private thread with them; the window then shows that thread, with no Claude, no run and no reply awaited. Every later message in the window replies in it, and a message that lands while the window is open is shown and played as it arrives. **A new window is a new session**: opening the window, or closing it, ends the last conversation, and picking someone else ends the one on screen. The thread is also on `/threads/<id>`, where the reply box has a microphone.
+
+A chat message is a note of the `chat` channel: the sender and the recipient read it, an admin reads it by ID, and nobody else reads it at all. It never appears on the board or in a note listing, and `@name` in it is text. The audio plays from the chat's own route, which checks the thread's participants before it reads the file.
+
+The bell beside the header shows the count of unread chat threads, each person's last message, and a play button for the last recording. A message from a thread the page is not reading raises a toast. Opening a chat from the bell marks it read and opens the orb on the thread, with its last message and recording; the thread page clears the read marker when it opens.
+
 ## Questions back
 
 A reply that ends with a [form block](forms.md) is a question. The card opens over the window with one field on it, the options as buttons you press to select, and **Submit** and **Cancel**. What you answered goes back into the thread as the next thing said, so Claude reads it before asking anything else.

@@ -15,21 +15,10 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// heartbeat is how often an idle stream sends a comment, so proxies and
-// browsers keep it open.
+// heartbeat is how often an idle stream sends a comment.
 const heartbeat = 15 * time.Second
 
-// sse streams the events of a topic as server-sent events: `event:` is
-// the name, `data:` the JSON payload. The topics:
-//
-//	workflow:{id}  a workflow's runs: run, step and done, for a user who
-//	               sees every step of it
-//	runs           every run as it starts and ends: run, with the run row,
-//	               of the folders the user sees; a prompt's with prompt/view
-//	notes          every note and reply as someone leaves or changes it:
-//	               note, with note/view; a prompt's notes with prompt/view
-//
-// The stream ends when the client goes.
+// sse streams the events of a topic as server-sent events.
 func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 	topic := param(r, "topic")
 	kind, id, _ := strings.Cut(topic, ":")
@@ -55,10 +44,24 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 		notes, prompts := h.can(r, "note/view"), h.can(r, "prompt/view")
 		visible = func(e event.Event) bool {
 			n, ok := e.Data.(model.Note)
-			if n.IsPrompt() {
-				return ok && prompts
+			if !ok {
+				return false
 			}
-			return ok && notes
+			if n.IsPrompt() {
+				return prompts
+			}
+			if n.Channel == model.ChannelChat {
+				if h.opts.Board.Chats == nil {
+					return false
+				}
+				root := n.ID
+				if n.ParentID != "" {
+					root = n.ParentID
+				}
+				member, err := h.opts.Board.Chats.IsParticipant(r.Context(), root, user.ID)
+				return notes && err == nil && (member || user.CanAdmin())
+			}
+			return notes
 		}
 	case "workflow":
 		wf, err := h.opts.Workflows.Get(r.Context(), id)

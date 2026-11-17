@@ -5,15 +5,16 @@ import (
 	"strings"
 )
 
-// ChannelNotes is the channel of the notes board, where a note can be an
-// instruction to the agent.
+// ChannelNotes is the channel of the notes board, where a note can instruct the agent.
 const ChannelNotes = "notes"
 
-// AreaWorkflows marks a prompt from the Workflows page, which builds
-// and changes workflows.
+// ChannelChat is the channel of a private chat between two users.
+const ChannelChat = "chat"
+
+// AreaWorkflows marks a prompt from the Workflows page, which builds and changes workflows.
 const AreaWorkflows = "workflows"
 
-// The states of a note to the agent.
+// The states of a note for the agent.
 const (
 	NoteOpen    = "open"
 	NoteWorking = "working"
@@ -21,11 +22,7 @@ const (
 	NoteFailed  = "failed"
 )
 
-// mention matches @name at the start of the text or after a space or an
-// opening mark: a user name of letters, digits, dot, dash or underscore.
-// The second group is a colon right after the name with no space after
-// it, which makes it a job ID such as @host:dev1 or @git:status, no
-// mention; "@claude: check" stays one.
+// mention matches an @name, excluding a colon job ID such as @host:dev1.
 var mention = regexp.MustCompile(`(?:^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)((?::\S)?)`)
 
 // Mentions returns the user names a text names with @, once each in order, a trailing dot or dash dropped.

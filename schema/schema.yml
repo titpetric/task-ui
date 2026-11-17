@@ -1,0 +1,2173 @@
+- name: artifact
+  comment: Artifact
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: byte_size
+      type: integer
+      comment: Byte Size
+      datatype: bigint
+      size: 8
+    - name: content_type
+      type: text
+      comment: Content Type
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: commit_id
+      type: text
+      key: MUL
+      comment: Commit ID
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_artifact_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_artifact_folder_job
+      columns:
+        - folder
+        - job
+    - name: idx_artifact_path
+      columns:
+        - path
+    - name: idx_artifact_run_id
+      columns:
+        - run_id
+- name: env_file
+  comment: Env File
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: content
+      type: text
+      comment: Content
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_env_file_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_env_file_folder_path
+      columns:
+        - folder
+        - path
+      unique: true
+- name: host
+  comment: Host
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: address
+      type: text
+      key: MUL
+      comment: Address
+      datatype: varchar
+    - name: source
+      type: TEXT
+      comment: Source
+      datatype: varchar
+      values:
+        - beszel
+        - manual
+    - name: login
+      type: text
+      comment: Login
+      datatype: varchar
+    - name: added_by
+      type: text
+      comment: Added By
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_host_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_host_address
+      columns:
+        - address
+      unique: true
+- name: key_info
+  comment: Key Info
+  columns:
+    - name: name
+      type: text
+      key: PRI
+      comment: Name
+      datatype: varchar
+    - name: purpose
+      type: TEXT
+      key: MUL
+      comment: Purpose
+      datatype: varchar
+      values:
+        - encrypt
+        - ssh
+    - name: algo
+      type: text
+      comment: Algo
+      datatype: varchar
+    - name: bits
+      type: integer
+      comment: Bits
+      datatype: bigint
+      size: 8
+    - name: fingerprint
+      type: text
+      key: MUL
+      comment: Fingerprint
+      datatype: varchar
+    - name: scope
+      type: text
+      key: MUL
+      comment: Scope
+      datatype: varchar
+    - name: comment
+      type: text
+      comment: Comment
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: backup
+      type: text
+      comment: Backup
+      datatype: varchar
+    - name: backup_fingerprint
+      type: text
+      comment: Backup Fingerprint
+      datatype: varchar
+    - name: rotated_at
+      type: timestamp
+      comment: Rotated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_info_1
+      columns:
+        - name
+      primary: true
+      unique: true
+    - name: idx_key_info_fingerprint
+      columns:
+        - fingerprint
+      unique: true
+    - name: idx_key_info_scope
+      columns:
+        - scope
+        - purpose
+- name: key_read
+  comment: Key Read
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: token_id
+      type: text
+      key: MUL
+      comment: Token ID
+      datatype: varchar
+    - name: via
+      type: TEXT
+      comment: Via
+      datatype: varchar
+      values:
+        - api
+        - mcp
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_read_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_key_read_key
+      columns:
+        - key_name
+        - created_at
+- name: key_role
+  comment: Key Role
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: role
+      type: TEXT
+      key: MUL
+      comment: Role
+      datatype: varchar
+      values:
+        - admin
+        - runner
+        - viewer
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_role_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_key_role_key_role
+      columns:
+        - key_name
+        - role
+      unique: true
+- name: key_user
+  comment: Key User
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_user_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_key_user_key_user
+      columns:
+        - key_name
+        - user_name
+      unique: true
+- name: migrations
+  comment: Migrations
+  columns:
+    - name: project
+      type: text
+      key: PRI
+      comment: Project
+      datatype: varchar
+    - name: filename
+      type: text
+      key: PRI
+      comment: Filename
+      datatype: varchar
+    - name: statement_index
+      type: integer
+      comment: Statement Index
+      datatype: bigint
+      size: 8
+    - name: status
+      type: text
+      comment: Status
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_migrations_1
+      columns:
+        - project
+        - filename
+      primary: true
+      unique: true
+- name: module
+  comment: Module
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: vendor
+      type: text
+      comment: Vendor
+      datatype: varchar
+    - name: plugin
+      type: text
+      comment: Plugin
+      datatype: varchar
+    - name: root
+      type: text
+      comment: Root
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: icon
+      type: text
+      comment: Icon
+      datatype: varchar
+    - name: version
+      type: text
+      comment: Version
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_module_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: uidx_module_name
+      columns:
+        - name
+      unique: true
+- name: note
+  comment: Note
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: channel
+      type: TEXT
+      key: MUL
+      comment: Channel
+      datatype: varchar
+      values:
+        - chat
+        - notes
+    - name: parent_id
+      type: text
+      key: MUL
+      comment: Parent ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+    - name: mentions
+      type: text
+      comment: Mentions
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - ""
+        - done
+        - failed
+        - open
+        - working
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: about_run_id
+      type: text
+      key: MUL
+      comment: About Run ID
+      datatype: char(26)
+    - name: about_workflow_run_id
+      type: text
+      key: MUL
+      comment: About Workflow Run ID
+      datatype: char(26)
+    - name: area
+      type: text
+      comment: Area
+      datatype: varchar
+    - name: edited_at
+      type: timestamp
+      comment: Edited At
+      datatype: datetime
+    - name: deleted_at
+      type: timestamp
+      key: MUL
+      comment: Deleted At
+      datatype: datetime
+    - name: audio_path
+      type: text
+      comment: Audio Path
+      datatype: varchar
+    - name: spoken
+      type: text
+      comment: Spoken
+      datatype: varchar
+    - name: workspace_id
+      type: text
+      key: MUL
+      comment: Workspace ID
+      datatype: char(26)
+    - name: dir
+      type: text
+      key: MUL
+      comment: Dir
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_note_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_note_about_run
+      columns:
+        - about_run_id
+    - name: idx_note_about_workflow_run
+      columns:
+        - about_workflow_run_id
+    - name: idx_note_channel
+      columns:
+        - channel
+        - parent_id
+    - name: idx_note_deleted
+      columns:
+        - deleted_at
+    - name: idx_note_parent
+      columns:
+        - parent_id
+    - name: idx_note_state
+      columns:
+        - state
+    - name: idx_note_workspace
+      columns:
+        - workspace_id
+        - dir
+- name: note_participant
+  comment: Note Participant
+  columns:
+    - name: note_id
+      type: text
+      key: PRI
+      comment: Note ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: PRI
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: last_read_at
+      type: timestamp
+      comment: Last Read At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_note_participant_1
+      columns:
+        - note_id
+        - user_id
+      primary: true
+      unique: true
+    - name: idx_note_participant_user
+      columns:
+        - user_id
+- name: permission_policy
+  comment: Permission Policy
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: subject_kind
+      type: TEXT
+      key: MUL
+      comment: Subject Kind
+      datatype: varchar
+      values:
+        - role
+        - user
+    - name: subject
+      type: text
+      key: MUL
+      comment: Subject
+      datatype: varchar
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: effect
+      type: TEXT
+      comment: Effect
+      datatype: varchar
+      values:
+        - allow
+        - deny
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_permission_policy_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_permission_policy_subject_path
+      columns:
+        - subject_kind
+        - subject
+        - path
+      unique: true
+- name: pin
+  comment: Pin
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: dir
+      type: text
+      key: MUL
+      comment: Dir
+      datatype: varchar
+    - name: args
+      type: text
+      key: MUL
+      comment: Args
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_pin_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: pin_user_target
+      columns:
+        - user_name
+        - folder
+        - job
+        - dir
+        - args
+      unique: true
+- name: project
+  comment: Project
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: source_url
+      type: text
+      comment: Source URL
+      datatype: varchar
+    - name: branch
+      type: text
+      comment: Branch
+      datatype: varchar
+    - name: allow
+      type: text
+      comment: Allow
+      datatype: varchar
+    - name: commands
+      type: text
+      comment: Commands
+      datatype: varchar
+    - name: sources
+      type: text
+      comment: Sources
+      datatype: varchar
+    - name: job_allow
+      type: text
+      comment: Job Allow
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: shallow
+      type: boolean
+      comment: Shallow
+      datatype: boolean
+    - name: sidebar_hidden
+      type: boolean
+      comment: Sidebar Hidden
+      datatype: boolean
+  indexes:
+    - name: sqlite_autoindex_project_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_project_folder
+      columns:
+        - folder
+      unique: true
+- name: refinement_artifact
+  comment: Refinement Artifact
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: thread_id
+      type: text
+      key: MUL
+      comment: Thread ID
+      datatype: char(26)
+    - name: comment_id
+      type: text
+      key: MUL
+      comment: Comment ID
+      datatype: char(26)
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_artifact_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_refinement_artifact_thread
+      columns:
+        - thread_id
+        - path
+- name: refinement_comment
+  comment: Refinement Comment
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: thread_id
+      type: text
+      key: MUL
+      comment: Thread ID
+      datatype: char(26)
+    - name: user
+      type: text
+      comment: User
+      datatype: varchar
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+    - name: note_id
+      type: text
+      key: MUL
+      comment: Note ID
+      datatype: char(26)
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
+    - name: collapsed_into
+      type: text
+      comment: Collapsed Into
+      datatype: char(26)
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_comment_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_refinement_comment_thread
+      columns:
+        - thread_id
+        - created_at
+- name: refinement_correction
+  comment: Refinement Correction
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: thread_id
+      type: text
+      key: MUL
+      comment: Thread ID
+      datatype: char(26)
+    - name: comment_id
+      type: text
+      key: MUL
+      comment: Comment ID
+      datatype: char(26)
+    - name: corrects_id
+      type: text
+      key: MUL
+      comment: Corrects ID
+      datatype: char(26)
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_correction_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: uidx_refinement_correction_comment
+      columns:
+        - comment_id
+      unique: true
+    - name: idx_refinement_correction_thread
+      columns:
+        - thread_id
+        - created_at
+- name: refinement_thread
+  comment: Refinement Thread
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: user
+      type: text
+      comment: User
+      datatype: varchar
+    - name: report_markdown
+      type: text
+      comment: Report Markdown
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_thread_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_refinement_thread_created
+      columns:
+        - created_at
+- name: run
+  comment: Run
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - failed
+        - killed
+        - ok
+        - queued
+        - running
+        - stopped
+    - name: exit_code
+      type: integer
+      comment: Exit Code
+      datatype: bigint
+      size: 8
+    - name: forced
+      type: integer
+      comment: Forced
+      datatype: bigint
+      size: 8
+    - name: scheduled
+      type: integer
+      comment: Scheduled
+      datatype: bigint
+      size: 8
+    - name: term_cols
+      type: integer
+      comment: Term Cols
+      datatype: bigint
+      size: 8
+    - name: term_rows
+      type: integer
+      comment: Term Rows
+      datatype: bigint
+      size: 8
+    - name: cast_path
+      type: text
+      comment: Cast Path
+      datatype: varchar
+    - name: reason
+      type: text
+      comment: Reason
+      datatype: varchar
+    - name: started_at
+      type: timestamp
+      key: MUL
+      comment: Started At
+      datatype: datetime
+    - name: finished_at
+      type: timestamp
+      comment: Finished At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
+    - name: args
+      type: text
+      comment: Args
+      datatype: varchar
+    - name: target
+      type: text
+      comment: Target
+      datatype: varchar
+    - name: batch_id
+      type: text
+      key: MUL
+      comment: Batch ID
+      datatype: char(26)
+    - name: message
+      type: text
+      comment: Message
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: parent_id
+      type: text
+      key: MUL
+      comment: Parent ID
+      datatype: char(26)
+    - name: parent_kind
+      type: text
+      comment: Parent Kind
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_run_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_run_batch
+      columns:
+        - batch_id
+    - name: idx_run_folder_job
+      columns:
+        - folder
+        - job
+    - name: idx_run_parent
+      columns:
+        - parent_id
+        - started_at
+        - id
+    - name: idx_run_started_at
+      columns:
+        - started_at
+    - name: idx_run_state
+      columns:
+        - state
+- name: run_summary
+  comment: Run Summary
+  columns:
+    - name: run_id
+      type: text
+      key: PRI
+      comment: Run ID
+      datatype: char(26)
+    - name: summary
+      type: text
+      comment: Summary
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_run_summary_1
+      columns:
+        - run_id
+      primary: true
+      unique: true
+- name: schedule
+  comment: Schedule
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: expression
+      type: text
+      comment: Expression
+      datatype: varchar
+    - name: enabled
+      type: integer
+      key: MUL
+      comment: Enabled
+      datatype: bigint
+      size: 8
+    - name: last_run_at
+      type: timestamp
+      comment: Last Run At
+      datatype: datetime
+    - name: next_run_at
+      type: timestamp
+      key: MUL
+      comment: Next Run At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: target
+      type: text
+      comment: Target
+      datatype: varchar
+    - name: args
+      type: text
+      comment: Args
+      datatype: varchar
+    - name: triage
+      type: integer
+      comment: Triage
+      datatype: bigint
+      size: 8
+    - name: workflow_id
+      type: text
+      key: MUL
+      comment: Workflow ID
+      datatype: char(26)
+  indexes:
+    - name: sqlite_autoindex_schedule_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_schedule_next_run_at
+      columns:
+        - enabled
+        - next_run_at
+    - name: idx_schedule_folder_job
+      columns:
+        - folder
+        - job
+- name: secret
+  comment: Secret
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: scope
+      type: text
+      key: MUL
+      comment: Scope
+      datatype: varchar
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: content
+      type: text
+      comment: Content
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: is_secret
+      type: integer
+      comment: Is Secret
+      datatype: bigint
+      size: 8
+  indexes:
+    - name: sqlite_autoindex_secret_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_secret_scope_name
+      columns:
+        - scope
+        - name
+      unique: true
+- name: secret_read
+  comment: Secret Read
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: secret_id
+      type: text
+      key: MUL
+      comment: Secret ID
+      datatype: char(26)
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      comment: Folder
+      datatype: varchar
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
+    - name: job
+      type: text
+      comment: Job
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_secret_read_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_secret_read_run
+      columns:
+        - run_id
+    - name: idx_secret_read_secret
+      columns:
+        - secret_id
+        - created_at
+- name: setting
+  comment: Setting
+  columns:
+    - name: name
+      type: text
+      key: PRI
+      comment: Name
+      datatype: varchar
+    - name: value
+      type: text
+      comment: Value
+      datatype: varchar
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_setting_1
+      columns:
+        - name
+      primary: true
+      unique: true
+- name: sidebar
+  comment: Sidebar
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
+    - name: href
+      type: text
+      key: MUL
+      comment: Href
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: icon
+      type: text
+      comment: Icon
+      datatype: varchar
+    - name: position
+      type: integer
+      key: MUL
+      comment: Position
+      datatype: bigint
+      size: 8
+    - name: hidden
+      type: boolean
+      comment: Hidden
+      datatype: boolean
+    - name: rule
+      type: text
+      comment: Rule
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_sidebar_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: uidx_sidebar_href
+      columns:
+        - href
+      unique: true
+    - name: idx_sidebar_position
+      columns:
+        - position
+- name: ssh_key_policy
+  comment: SSH Key Policy
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: role
+      type: TEXT
+      key: MUL
+      comment: Role
+      datatype: varchar
+      values:
+        - admin
+        - runner
+        - viewer
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_ssh_key_policy_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_ssh_key_policy_key_role
+      columns:
+        - key_name
+        - role
+      unique: true
+    - name: idx_ssh_key_policy_role
+      columns:
+        - role
+- name: ssh_key_user
+  comment: SSH Key User
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_ssh_key_user_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_ssh_key_user_key_user
+      columns:
+        - key_name
+        - user_name
+      unique: true
+    - name: idx_ssh_key_user_user
+      columns:
+        - user_name
+- name: tool
+  comment: Tool
+  columns:
+    - name: name
+      type: text
+      key: PRI
+      comment: Name
+      datatype: varchar
+    - name: category
+      type: text
+      comment: Category
+      datatype: varchar
+    - name: version
+      type: text
+      comment: Version
+      datatype: varchar
+    - name: path
+      type: text
+      comment: Path
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_tool_1
+      columns:
+        - name
+      primary: true
+      unique: true
+- name: user
+  comment: User
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: role
+      type: TEXT
+      comment: Role
+      datatype: varchar
+      values:
+        - admin
+        - runner
+        - viewer
+    - name: folders
+      type: text
+      comment: Folders
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: admin
+      type: boolean
+      comment: Admin
+      datatype: boolean
+    - name: mcp
+      type: boolean
+      comment: Mcp
+      datatype: boolean
+    - name: agent_reply
+      type: boolean
+      comment: Agent Reply
+      datatype: boolean
+  indexes:
+    - name: sqlite_autoindex_user_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_name
+      columns:
+        - name
+      unique: true
+- name: user_auth_password
+  comment: User Auth Password
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: hash
+      type: text
+      comment: Hash
+      datatype: varchar
+    - name: kind
+      type: TEXT
+      key: MUL
+      comment: Kind
+      datatype: varchar
+      values:
+        - backup
+        - password
+    - name: used_at
+      type: timestamp
+      comment: Used At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_auth_password_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_auth_password_user_id
+      columns:
+        - user_id
+        - kind
+- name: user_auth_token
+  comment: User Auth Token
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: hash
+      type: text
+      key: MUL
+      comment: Hash
+      datatype: varchar
+    - name: used_at
+      type: timestamp
+      comment: Used At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: expires_at
+      type: timestamp
+      comment: Expires At
+      datatype: datetime
+    - name: kind
+      type: text
+      key: MUL
+      comment: Kind
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_user_auth_token_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_auth_token_hash
+      columns:
+        - hash
+      unique: true
+    - name: idx_user_auth_token_user_kind_name
+      columns:
+        - user_id
+        - kind
+        - name
+      unique: true
+- name: user_email
+  comment: User Email
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: email
+      type: text
+      key: MUL
+      comment: Email
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_email_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_email_email
+      columns:
+        - email
+      unique: true
+    - name: idx_user_email_user_id
+      columns:
+        - user_id
+- name: user_session
+  comment: User Session
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: hash
+      type: text
+      key: MUL
+      comment: Hash
+      datatype: varchar
+    - name: expires_at
+      type: timestamp
+      comment: Expires At
+      datatype: datetime
+    - name: used_at
+      type: timestamp
+      comment: Used At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_session_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_session_hash
+      columns:
+        - hash
+      unique: true
+    - name: idx_user_session_user_id
+      columns:
+        - user_id
+- name: workflow
+  comment: Workflow
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: prompt
+      type: text
+      comment: Prompt
+      datatype: varchar
+    - name: prompt_folder
+      type: text
+      comment: Prompt Folder
+      datatype: varchar
+    - name: run_as_user_id
+      type: text
+      key: MUL
+      comment: Run As User ID
+      datatype: varchar
+    - name: runs_over
+      type: text
+      comment: Runs Over
+      datatype: varchar
+    - name: sidebar_hidden
+      type: boolean
+      comment: Sidebar Hidden
+      datatype: boolean
+  indexes:
+    - name: sqlite_autoindex_workflow_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_name
+      columns:
+        - name
+- name: workflow_run
+  comment: Workflow Run
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workflow_id
+      type: text
+      key: MUL
+      comment: Workflow ID
+      datatype: char(26)
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - failed
+        - ok
+        - running
+        - stopped
+    - name: message
+      type: text
+      comment: Message
+      datatype: varchar
+    - name: started_at
+      type: timestamp
+      key: MUL
+      comment: Started At
+      datatype: datetime
+    - name: finished_at
+      type: timestamp
+      comment: Finished At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: input
+      type: text
+      comment: Input
+      datatype: varchar
+    - name: answer
+      type: text
+      comment: Answer
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_workflow_run_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_run_state
+      columns:
+        - state
+    - name: idx_workflow_run_workflow
+      columns:
+        - workflow_id
+        - started_at
+- name: workflow_run_step
+  comment: Workflow Run Step
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workflow_run_id
+      type: text
+      key: MUL
+      comment: Workflow Run ID
+      datatype: char(26)
+    - name: position
+      type: integer
+      key: MUL
+      comment: Position
+      datatype: bigint
+      size: 8
+    - name: folder
+      type: text
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      comment: Job
+      datatype: varchar
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: state
+      type: TEXT
+      comment: State
+      datatype: varchar
+      values:
+        - failed
+        - killed
+        - ok
+        - pending
+        - running
+        - skipped
+        - stopped
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: prompt
+      type: text
+      comment: Prompt
+      datatype: varchar
+    - name: answer
+      type: text
+      comment: Answer
+      datatype: varchar
+    - name: workflow_ref
+      type: text
+      comment: Workflow Ref
+      datatype: char(26)
+    - name: workflow_run_ref
+      type: text
+      comment: Workflow Run Ref
+      datatype: char(26)
+    - name: kind
+      type: TEXT
+      comment: Kind
+      datatype: varchar
+      values:
+        - check
+        - job
+        - prompt
+        - summary
+        - workflow
+    - name: markers
+      type: text
+      comment: Markers
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_workflow_run_step_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_run_step_run
+      columns:
+        - workflow_run_id
+        - position
+- name: workflow_step
+  comment: Workflow Step
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workflow_id
+      type: text
+      key: MUL
+      comment: Workflow ID
+      datatype: char(26)
+    - name: position
+      type: integer
+      key: MUL
+      comment: Position
+      datatype: bigint
+      size: 8
+    - name: folder
+      type: text
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      comment: Job
+      datatype: varchar
+    - name: disabled
+      type: boolean
+      comment: Disabled
+      datatype: boolean
+    - name: prompt
+      type: text
+      comment: Prompt
+      datatype: varchar
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
+    - name: workflow_ref
+      type: text
+      comment: Workflow Ref
+      datatype: char(26)
+    - name: target
+      type: text
+      comment: Target
+      datatype: varchar
+    - name: args
+      type: text
+      comment: Args
+      datatype: varchar
+    - name: kind
+      type: TEXT
+      comment: Kind
+      datatype: varchar
+      values:
+        - check
+        - job
+        - prompt
+        - summary
+        - workflow
+    - name: markers
+      type: text
+      comment: Markers
+      datatype: varchar
+    - name: tries
+      type: integer
+      comment: Tries
+      datatype: bigint
+      size: 8
+  indexes:
+    - name: sqlite_autoindex_workflow_step_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_step_workflow
+      columns:
+        - workflow_id
+        - position
+- name: workspace
+  comment: Workspace
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+    - name: home_project_id
+      type: text
+      key: MUL
+      comment: Home Project ID
+      datatype: char(26)
+    - name: home_url
+      type: text
+      comment: Home URL
+      datatype: varchar
+    - name: home_branch
+      type: text
+      comment: Home Branch
+      datatype: varchar
+    - name: hours
+      type: text
+      comment: Hours
+      datatype: varchar
+    - name: shallow
+      type: boolean
+      comment: Shallow
+      datatype: boolean
+    - name: sidebar_limit
+      type: integer
+      comment: Sidebar Limit
+      datatype: bigint
+      size: 8
+    - name: sort
+      type: integer
+      comment: Sort
+      datatype: bigint
+      size: 8
+  indexes:
+    - name: sqlite_autoindex_workspace_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workspace_folder
+      columns:
+        - folder
+      unique: true
+- name: workspace_key_grant
+  comment: Workspace Key Grant
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workspace_id
+      type: text
+      key: MUL
+      comment: Workspace ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: role
+      type: text
+      key: MUL
+      comment: Role
+      datatype: varchar
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_workspace_key_grant_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workspace_key_grant_workspace_id
+      columns:
+        - workspace_id
+    - name: idx_workspace_key_grant_key
+      columns:
+        - workspace_id
+        - key_name
+        - role
+        - user_name
+      unique: true

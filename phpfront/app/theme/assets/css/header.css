@@ -240,6 +240,99 @@ header.login-top {
   justify-content: center;
 }
 
+/* details.notes-bell is the chat bell beside the avatar and the list it opens. */
+details.notes-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+details.notes-bell summary {
+  list-style: none;
+  position: relative;
+  cursor: pointer;
+
+  &::marker,
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+.notes-bell .bell-count {
+  position: absolute;
+  top: -0.15rem;
+  inset-inline-end: -0.15rem;
+  min-width: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--ink-0);
+  font-size: 0.65rem;
+  line-height: 1rem;
+  text-align: center;
+}
+
+.notes-bell-menu {
+  position: absolute;
+  z-index: 25;
+  top: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  width: min(22rem, 80vw);
+  max-height: 60vh;
+  overflow: auto;
+  padding: 0.25rem;
+  background: var(--ink-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-menu);
+}
+
+.notes-bell-empty {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+}
+
+.notes-bell-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.notes-bell-item a {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  color: var(--text);
+
+  &:hover {
+    background: var(--ink-2);
+    text-decoration: none;
+  }
+
+  & b {
+    font-weight: 600;
+  }
+
+  & span {
+    overflow: hidden;
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.notes-bell-item.unread a b {
+  color: var(--signal);
+}
+
+.notes-bell-item .badge {
+  margin-inline-end: 0.5rem;
+}
+
 /* details.user styles the avatar at the end of the bar and the menu it opens. */
 details.user {
   position: relative;

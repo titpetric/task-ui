@@ -49,7 +49,7 @@ class Talk {
 	static function spokenFor($note, $replies) {
 		$clip = $note->getAudioPath();
 
-		if ($clip === "" || $replies === 0) {
+		if ($clip === "" || $replies === 0 || \Task\Note::isChat($note)) {
 			return array();
 		}
 
@@ -114,7 +114,15 @@ class Talk {
 	static function audio($note) {
 		$path = $note->getAudioPath();
 
-		return $path === "" ? "" : self::url($path);
+		if ($path === "") {
+			return "";
+		}
+
+		if (\Task\Note::isChat($note)) {
+			return "/api/threads/messages/" . rawurlencode($note->getId()) . "/audio";
+		}
+
+		return self::url($path);
 	}
 
 	/** url is a file of the artifact tree as the player reads it, by byte range. */

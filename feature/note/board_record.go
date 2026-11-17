@@ -33,6 +33,9 @@ func (b *Board) Record(ctx context.Context, user *model.User, parentID, spoken, 
 		if parent, err = b.Notes.Get(ctx, parentID); err != nil {
 			return nil, err
 		}
+		if err := chatParent(parent); err != nil {
+			return nil, err
+		}
 		if parent.ParentID != "" {
 			return nil, fmt.Errorf("%w: a reply goes to a note, not to a reply", ErrInvalid)
 		}

@@ -15,6 +15,6 @@ $module->setTitle("Threads");
 $module->setDescription("The notes a reader writes, each thread a conversation with the agent");
 $module->setIcon("note");
 
-$module->setTables(array("note"));
+$module->setTables(array("note", "note_participant"));
 
 Task::register($module);

@@ -111,7 +111,7 @@ func (a *App) wire(version string) error {
 	a.Guard.Now = cfg.Clock()
 	a.Guard.RunTokens = access.NewRunTokens()
 	a.Board = &note.Board{
-		Notes: store.Notes, Users: store.Users, Runs: store.Runs, WorkflowRuns: store.WorkflowRuns, RunSummaries: store.RunSummaries, Catalogue: a.Catalogue, Runner: a.Runner,
+		Notes: store.Notes, Chats: store.Chats, Users: store.Users, Runs: store.Runs, WorkflowRuns: store.WorkflowRuns, RunSummaries: store.RunSummaries, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: svc.Recordings, Events: svc.Events, Root: cfg.Root, Workspaces: store.Workspaces,
 		Hosts: promptHosts(svc.Hosts, svc.SSH, store.Hosts.Names), BaseURL: cfg.URL,
 		RunTokens: a.Guard.RunTokens, MCPURL: func() string { return MCPURL(a.Addr()) },

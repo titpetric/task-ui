@@ -1,7 +1,7 @@
 {eval $data_head = $data.head}
 {include components/page-head.tpl}
 
-<ol class="talk" data-notes>
+<ol class="talk" data-notes{if $data.chat_thread} data-chat-thread="{data.id}"{/if}>
 {foreach $data.messages as $message}	<li class="said{if $message.mine} mine{/if}{if $message.working} working{/if}" id="note-{message.id}">
 		<header>
 			<span class="author">{eval $data_user = $message.author}{include components/user.tpl}</span>
@@ -14,7 +14,7 @@
 	</li>
 {/foreach}</ol>
 
-{if $data.replies}<form class="note-form" data-note-form data-parent="{data.id}">
+{if $data.replies}<form class="note-form" data-note-form data-parent="{data.id}" data-channel="{data.channel}">
 	{eval $data_markdown = $data.editor}{include components/editor.tpl}
-	<div class="form-foot note"><span class="faint">Ctrl+Enter posts.</span><button class="btn btn-primary" type="submit">Reply</button></div>
+	<div class="form-foot note"><span class="faint">Ctrl+Enter posts.</span>{if $data.mic}<button class="btn btn-ghost" type="button" data-voice-reply data-parent="{data.id}" data-channel="{data.channel}" title="Record a reply" aria-label="Record a reply"><svg class="ic"><use href="#i-mic"/></svg></button>{/if}<button class="btn btn-primary" type="submit">Reply</button></div>
 </form>{/if}

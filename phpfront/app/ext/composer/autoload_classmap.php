@@ -44,6 +44,7 @@ return array(
     'Task\\Model\\Migrations' => $baseDir . '/code/Task/Model/Migrations.php',
     'Task\\Model\\Module' => $baseDir . '/code/Task/Model/Module.php',
     'Task\\Model\\Note' => $baseDir . '/code/Task/Model/Note.php',
+    'Task\\Model\\NoteParticipant' => $baseDir . '/code/Task/Model/NoteParticipant.php',
     'Task\\Model\\PermissionPolicy' => $baseDir . '/code/Task/Model/PermissionPolicy.php',
     'Task\\Model\\Pin' => $baseDir . '/code/Task/Model/Pin.php',
     'Task\\Model\\Project' => $baseDir . '/code/Task/Model/Project.php',

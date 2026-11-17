@@ -42,6 +42,22 @@ class Timeline {
 		);
 	}
 
+	/** chat is one chat thread as the Chats section reads it. */
+	static function chat($row, $chrome) {
+		$said = $row["last_spoken"] !== "" ? $row["last_spoken"] : $row["last_body"];
+
+		return array(
+			"id" => $row["id"],
+			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($row["id"])),
+			"peer" => $chrome->who()->of($row["peer"]),
+			"said" => \Task\Note::excerpt($said),
+			"ago" => \Task\Clock::ago($row["last_at"]),
+			"stamp" => \Task\Clock::read($row["last_at"]),
+			"heard" => $row["last_audio_path"] !== "",
+			"unread" => (int)$row["unread"],
+		);
+	}
+
 	/** kind names what started the thread: a recording, a prompt asked from a page, or a note. */
 	static function kind($note) {
 		if ($note->getAudioPath() !== "") {

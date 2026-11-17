@@ -23,7 +23,7 @@ class mod_notes implements Module {
 	}
 
 	function tables() {
-		return array("note");
+		return array("note", "note_participant");
 	}
 
 	function serve() {

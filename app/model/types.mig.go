@@ -1019,6 +1019,65 @@ var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}
 
+// NoteParticipant generated for db table `note_participant`.
+//
+// Note Participant.
+type NoteParticipant struct {
+	// Note ID
+	NoteID string `db:"note_id" json:"note_id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Last Read At
+	LastReadAt *time.Time `db:"last_read_at" json:"last_read_at"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetNoteID will return the value of NoteID.
+func (n *NoteParticipant) GetNoteID() string { return n.NoteID }
+
+// SetNoteID sets NoteID to the provided value.
+func (n *NoteParticipant) SetNoteID(val string) { n.NoteID = val }
+
+// GetUserID will return the value of UserID.
+func (n *NoteParticipant) GetUserID() string { return n.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (n *NoteParticipant) SetUserID(val string) { n.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (n *NoteParticipant) GetUserName() string { return n.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (n *NoteParticipant) SetUserName(val string) { n.UserName = val }
+
+// GetLastReadAt will return the value of LastReadAt.
+func (n *NoteParticipant) GetLastReadAt() *time.Time { return n.LastReadAt }
+
+// SetLastReadAt sets LastReadAt to the provided value.
+func (n *NoteParticipant) SetLastReadAt(stamp time.Time) { n.LastReadAt = &stamp }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (n *NoteParticipant) GetCreatedAt() *time.Time { return n.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (n *NoteParticipant) SetCreatedAt(stamp time.Time) { n.CreatedAt = &stamp }
+
+// NoteParticipantTable is the name of the table in the DB.
+const NoteParticipantTable = "`note_participant`"
+
+// NoteParticipantFields is a list of all columns in the DB table.
+var NoteParticipantFields = []string{"note_id", "user_id", "user_name", "last_read_at", "created_at"}
+
+// NoteParticipantPrimaryFields are the primary key fields in the DB table.
+var NoteParticipantPrimaryFields = []string{"note_id", "user_id"}
+
 // PermissionPolicy generated for db table `permission_policy`.
 //
 // Permission Policy.
@@ -4233,6 +4292,67 @@ func (n *Note) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (n *Note) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: NoteTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (n *NoteParticipant) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteParticipantTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := NoteParticipantFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (n *NoteParticipant) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteParticipantTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (n *NoteParticipant) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteParticipantTable}).Apply(opts...)
+	cols := NoteParticipantFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (n *NoteParticipant) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteParticipantTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

@@ -12,6 +12,9 @@ class Note {
 	/** NOTES is the channel the board's own notes carry. */
 	const NOTES = Threads\Notes::NOTES;
 
+	/** CHAT is the channel a private chat thread carries. */
+	const CHAT = Threads\Notes::CHAT;
+
 	/** EXCERPT is how many characters of a note an excerpt keeps. */
 	const EXCERPT = 240;
 
@@ -256,6 +259,11 @@ class Note {
 	/** isPrompt reports whether a note is a prompt, which belongs to a page and not to the board. */
 	static function isPrompt($note) {
 		return $note->getWorkspaceId() !== "";
+	}
+
+	/** isChat reports whether a note is a private chat message. */
+	static function isChat($note) {
+		return $note->getChannel() === self::CHAT;
 	}
 
 	/**

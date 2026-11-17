@@ -27,7 +27,7 @@ $old = new mod_notes;
 echo $old->name(), " ", $old->title(), "\n";
 ---
 threads Threads note
-note,run,user
+note,note_participant,run,user
 true
 true
  Name <span class="mention">@claude</span> to start the agent on a thread, and reply to follow up: a reply goes to it without naming it again.

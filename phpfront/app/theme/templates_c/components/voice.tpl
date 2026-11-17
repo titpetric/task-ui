@@ -2,7 +2,8 @@
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"<?php if($_v['chrome']['claude']){?>
  data-claude<?php }?><?php if($_v['chrome']['can']['note/edit']){?>
- data-note-edit<?php }?>>
+ data-note-edit<?php }?><?php if($_v['chrome']['contacts']){?>
+ data-chat<?php }?>>
 		<div class="voice-who">
 <?php if($_v['chrome']['agents'] && $_v['chrome']['claude']){?>
 			<label for="voice-agent">Talking to</label>
@@ -11,6 +12,14 @@
  (you)</option>
 <?php if(!empty($_v['chrome']['agents']))foreach($_v['chrome']['agents'] as $_v['agent']){?>				<option value="<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
 ">@<?php echo htmlspecialchars($_v['agent'], ENT_QUOTES);?>
+</option>
+<?php }?>			</select>
+<?php }?><?php if($_v['chrome']['contacts']){?>
+			<label for="voice-chat">Chat</label>
+			<select id="voice-chat" class="voice-chat" aria-label="Chat with">
+				<option value="">No one</option>
+<?php if(!empty($_v['chrome']['contacts']))foreach($_v['chrome']['contacts'] as $_v['contact']){?>				<option value="<?php echo htmlspecialchars($_v['contact']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['contact']['name'], ENT_QUOTES);?>
 </option>
 <?php }?>			</select>
 <?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>

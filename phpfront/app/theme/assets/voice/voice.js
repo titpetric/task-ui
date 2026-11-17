@@ -72,6 +72,7 @@
   var replayBtn = document.getElementById("voice-replay");
   var avatar = document.getElementById("voice-avatar");
   var agent = document.getElementById("voice-agent");
+  var chat = document.getElementById("voice-chat");
   var wakeBtn = document.getElementById("voice-wake");
   if (!stage || !replayBtn || !discardBtn) return;
   var discardIcon = discardBtn.querySelector("use");
@@ -182,6 +183,10 @@
   var reply = "";       // the reply as audio the instance made, for replay
   var player = null;    // the element playing that audio
   var thread = "";      // the session, one thread for as long as the window is open
+  var chatThread = false; // the session is a private chat, not a board note or a prompt
+  var chatWith = "";    // the user a chat session talks to, empty for none
+  var replyTo = "";     // the thread the reply box opened the window for
+  var replyChannel = ""; // notes or chat, the channel of that reply
   var stamp = "";       // the clip the session opened on, which names its audio
   var played = 0;       // how many answers of the thread have been played
   var source = null;    // the event stream the thread is followed over
@@ -1069,9 +1074,12 @@
     document.head.appendChild(script);
   }
 
-  // target picks where send puts the words: the terminal, the board note, Claude, or the artifacts.
+  // target picks where send puts the words: the terminal, a chat, a reply, the board note, Claude, or the artifacts.
   function target() {
     if (window.taskUI.attached()) return { kind: "run", say: "Sends to the run" };
+    if (replyTo) return { kind: replyChannel === "chat" ? "chat" : "note", say: "Replies in the thread" };
+    if (chatThread) return { kind: "chat", say: "Sends to the conversation" };
+    if (chatWith) return { kind: "chat", say: "Sends to " + chatWith };
     if (canNote && (!canAgent || !document.getElementById("header-prompt"))) {
       return { kind: "note", say: "Records your note" };
     }
@@ -1186,9 +1194,30 @@
     said.appendChild(span);
   }
 
+  // endSession ends the last conversation: the next window is a new one.
+  function endSession() {
+    clear();
+    hush();
+    deaf();
+    thread = "";
+    chatThread = false;
+    chatWith = "";
+    replyTo = "";
+    replyChannel = "";
+    stamp = "";
+    played = 0;
+    holding = "";
+    holdingAt = 0;
+    said.textContent = "";
+    where.textContent = "";
+    if (chat) chat.value = "";
+    if (player) player.pause();
+  }
+
   // open shows the window with nothing recording; the orb starts it, and
   // so does a name once the switch is on.
   function open() {
+    endSession();
     show(true);
     dress();
     // Whether the instance transcribes decides whether a name can be heard,
@@ -1525,6 +1554,129 @@
     });
   }
 
+  // chatted sends a private message to a user, or replies in the chat thread on screen.
+  function chatted(words, clip) {
+    var mine = ++gen;
+    var parent = replyTo || (chatThread ? thread : "");
+    var to = parent ? "" : chatWith;
+    var audio = clip ? clip + ".wav" : "";
+    pending = true;
+    failed = false;
+    answer = "";
+    reply = "";
+    holding = "";
+    holdingAt = 0;
+    replayBtn.hidden = true;
+    said.textContent = "";
+    ticking("Sending");
+    var body = { parent_id: parent, body: words, spoken: words, audio: audio };
+    if (to) body.to = to;
+    fetch("/api/threads", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        return { ok: res.ok, status: res.status, data: data || {} };
+      }, function () {
+        return { ok: false, status: res.status, data: {} };
+      });
+    }).then(function (res) {
+      if (mine !== gen) return;
+      if (!res.ok) {
+        if (res.status === 404) replyTo = "";
+        throw new Error((res.data && res.data.error) || ("HTTP " + res.status));
+      }
+      var note = res.data || {};
+      chatThread = true;
+      replyTo = "";
+      thread = note.parent_id || note.id || thread;
+      if (to) chatWith = to;
+      stamp = (note.audio_path || audio).replace(/\.wav$/, "");
+      answer = words || "";
+      reply = note.audio_path ? chatAudio(note.id) : "";
+      pending = false;
+      replayBtn.hidden = !reply;
+      ended("Message sent");
+      dress(words ? words.slice(0, 400) : "Message sent");
+      say("Message sent", "ok");
+      markRead(thread);
+      follow();
+      shape();
+    }).catch(function (err) {
+      if (mine !== gen) return;
+      fell(err, "The message was not sent");
+    });
+  }
+
+  // chatAudio is the route a chat message's recording plays from, for its participants alone.
+  function chatAudio(id) {
+    return "/api/threads/messages/" + encodeURIComponent(id) + "/audio";
+  }
+
+  // markRead clears a chat thread's unread count and refreshes the bell.
+  function markRead(id) {
+    if (!id) return;
+    fetch("/api/threads/" + encodeURIComponent(id) + "/read", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    }).then(function () {
+      if (window.taskUI.bell) window.taskUI.bell.refresh();
+    }, function () {});
+  }
+
+  // landedChat shows a chat message the window has not heard, and plays its recording.
+  function landedChat(note) {
+    var words = note.spoken || note.body || "";
+    answer = words;
+    reply = note.audio_path ? chatAudio(note.id) : "";
+    replayBtn.hidden = !reply;
+    pending = false;
+    failed = false;
+    said.textContent = words.slice(0, 400);
+    ended("Message");
+    where.textContent = "Message with " + (chatWith || "someone");
+    dress(words || "A message");
+    shape();
+    if (reply) play();
+  }
+
+  // openThread opens a chat thread from a notification and shows its last message.
+  function openThread(id) {
+    if (!id) return;
+    endSession();
+    chatThread = true;
+    thread = id;
+    show(true);
+    dress();
+    fetch("/api/threads/" + encodeURIComponent(id), { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (!data || !data.thread) return;
+        chatWith = data.with || "";
+        if (chat && chatWith) chat.value = chatWith;
+        var messages = data.messages || [];
+        if (messages.length) landedChat(messages[messages.length - 1]);
+        markRead(id);
+        follow();
+        shape();
+      })
+      .catch(function () {});
+  }
+
+  // replyIn opens the window on a reply to a thread, from the thread's microphone.
+  function replyIn(parent, channel) {
+    if (!parent) return;
+    open();
+    thread = parent;
+    chatThread = channel === "chat";
+    replyTo = parent;
+    replyChannel = chatThread ? "chat" : "notes";
+    record();
+  }
+
   // follow watches the thread for as long as the window is open, so a reply
   // Claude writes after the work it started finishes reaches the window on
   // its own. It is one stream for the session.
@@ -1534,6 +1686,13 @@
     source.addEventListener("note", function (event) {
       var note = {};
       try { note = JSON.parse(event.data); } catch (e) { return; }
+      if (note.channel === "chat") {
+        if (!chatThread || (note.id !== thread && note.parent_id !== thread)) return;
+        if (note.user_id === document.body.dataset.me) return;
+        landedChat(note);
+        markRead(thread);
+        return;
+      }
       if (note.id !== thread && note.parent_id !== thread) return;
       if (note.state === "working" || note.state === "open") {
         if (!answer) tell(STAGES[1]);
@@ -1552,6 +1711,7 @@
   // pull reads the thread and takes the newest reply it has not played yet.
   // A reply that arrives with no state change still lands through it.
   function pull() {
+    if (chatThread) return Promise.resolve();
     var mine = gen;
     var place = window.taskUI.place ? window.taskUI.place() : null;
     if (!place) return Promise.resolve();
@@ -1715,15 +1875,8 @@
   // stays on the board: closing the window is leaving the conversation, and
   // the next one starts a new one.
   function trash() {
-    deaf();
-    clear();
     shut();
-    hush();
-    thread = "";
-    stamp = "";
-    played = 0;
-    holding = "";
-    holdingAt = 0;
+    endSession();
     show(false);
   }
 
@@ -1772,6 +1925,10 @@
       if (!kept && !words) {
         say("The recording was not kept, so there was nothing to send", "bad");
         flush();
+        return;
+      }
+      if (to.kind === "chat") {
+        chatted(words, kept);
         return;
       }
       if (to.kind === "note") {
@@ -1851,6 +2008,33 @@
   // The pick of user is the pick of avatar: the window wears whoever it
   // calls, and the words go to that user's Claude.
   if (agent) agent.addEventListener("change", function () { wear(agentName()); });
+  // The pick of a person starts a chat; another person ends the one on screen.
+  if (chat) chat.addEventListener("change", function () {
+    var picked = chat.value;
+    if (thread && picked !== chatWith) {
+      hush();
+      thread = "";
+      chatThread = false;
+      replyTo = "";
+      replyChannel = "";
+      stamp = "";
+      played = 0;
+      answer = "";
+      reply = "";
+      pending = false;
+      replayBtn.hidden = true;
+      said.textContent = "";
+      where.textContent = "";
+    }
+    chatWith = picked;
+    if (picked) chatThread = false;
+    dress();
+  });
+  window.taskUI.voice = {
+    openThread: openThread,
+    reply: replyIn,
+    activeThread: function () { return thread; },
+  };
   stage.addEventListener("click", function () {
     if (worn && worn.tap) worn.tap();
     if (waking) begin();

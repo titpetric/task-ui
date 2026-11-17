@@ -67,6 +67,7 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         'Task\\Model\\Migrations' => __DIR__ . '/../..' . '/code/Task/Model/Migrations.php',
         'Task\\Model\\Module' => __DIR__ . '/../..' . '/code/Task/Model/Module.php',
         'Task\\Model\\Note' => __DIR__ . '/../..' . '/code/Task/Model/Note.php',
+        'Task\\Model\\NoteParticipant' => __DIR__ . '/../..' . '/code/Task/Model/NoteParticipant.php',
         'Task\\Model\\PermissionPolicy' => __DIR__ . '/../..' . '/code/Task/Model/PermissionPolicy.php',
         'Task\\Model\\Pin' => __DIR__ . '/../..' . '/code/Task/Model/Pin.php',
         'Task\\Model\\Project' => __DIR__ . '/../..' . '/code/Task/Model/Project.php',

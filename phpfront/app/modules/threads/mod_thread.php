@@ -13,7 +13,8 @@ require "ext/autoload.php";
 // other, each with the recording it was spoken into where there is one.
 //
 // A prompt belongs to the page it was asked from, so reading one takes
-// prompt/view as well; a note takes note/view alone.
+// prompt/view as well; a note takes note/view alone, and a chat takes one of
+// its participants or an admin.
 class mod_thread implements Module {
 	/** MISSING is what the page of a thread that is not there says. */
 	const MISSING = "No thread with that ID. Someone may have deleted it.";
@@ -31,7 +32,7 @@ class mod_thread implements Module {
 	}
 
 	function tables() {
-		return array("note", "run", "user");
+		return array("note", "note_participant", "run", "user");
 	}
 
 	function serve() {
@@ -59,6 +60,16 @@ class mod_thread implements Module {
 			return;
 		}
 
+		$chat = Task\Note::isChat($note);
+		$userID = $chrome->user === null ? "" : $chrome->user->getID();
+		$member = $chat && $store->participant($note->getId(), $userID);
+
+		if ($chat && !$member && !Task\User::admin($chrome->user)) {
+			$view->missing(self::MISSING);
+
+			return;
+		}
+
 		$replies = $store->replies(array($note->getId()));
 		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
 		$title = Task\Note::excerpt(Task\Threads\Talk::said($note));
@@ -76,9 +87,12 @@ class mod_thread implements Module {
 		$view->page(array(
 			"head" => $head->data(),
 			"id" => $note->getId(),
+			"channel" => $note->getChannel(),
+			"chat_thread" => $chat,
 			"messages" => Task\Threads\Talk::messages($note, $under, $chrome, $seen),
 			"editor" => self::field(),
-			"replies" => $chrome->allowed("note/edit"),
+			"replies" => $chat ? $member && $chrome->allowed("note/edit") : $chrome->allowed("note/edit"),
+			"mic" => $chrome->allowed("note/edit"),
 		), "thread.tpl");
 	}
 

@@ -8,16 +8,17 @@ require "ext/autoload.php";
 // an alias and leaves the import behind, so a file writes what the formatter
 // would leave.
 
-// mod_threads is the timeline: every thread the reader may see, newest first,
-// and the box that starts one.
+// mod_threads is the timeline: every board thread the reader may see, newest
+// first, the chats the reader is in, and the box that starts a note.
 //
-// A thread is a note of the board, a prompt asked from a page, or a question
-// put to the orb: one table, one list, one page per thread. The list is rows
-// and not the threads themselves, because a thread is read on its own page,
-// where the messages take sides and a recording plays.
+// A thread is a note of the board, a prompt asked from a page, a question put
+// to the orb, or a chat with another user: one table, one list, one page per
+// thread. The list is rows and not the threads themselves, because a thread is
+// read on its own page, where the messages take sides and a recording plays.
 //
 // The page reads and does not write. The box holds data-note-form, which the
-// script posts to /api/notes and then refreshes the list in place.
+// script posts to /api/notes, and a chat's reply form posts to /api/threads;
+// either refreshes the list in place.
 class mod_threads implements Module {
 	/** LEAD is the sentence under the heading, as HTML: it names a tag. */
 	const LEAD = 'Everything said on this instance: a note to someone with <code>@name</code>, a prompt asked from a page, and what the orb heard. If you can run jobs, a note is an instruction to the people it names, and naming several splits one request between them.';
@@ -38,7 +39,7 @@ class mod_threads implements Module {
 	}
 
 	function tables() {
-		return array("note", "run", "user");
+		return array("note", "note_participant", "run", "user");
 	}
 
 	function serve() {
@@ -60,10 +61,16 @@ class mod_threads implements Module {
 		$agents = $users->agents();
 		$seen = new Task\Seen($chrome);
 		$rows = array();
+		$chats = array();
+		$userID = $chrome->user === null ? "" : $chrome->user->getID();
 
 		foreach ($roots as $note) {
 			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
 			$rows[] = Task\Threads\Timeline::row($note, $under, $chrome, $seen);
+		}
+
+		foreach ($store->chats($userID) as $chat) {
+			$chats[] = Task\Threads\Timeline::chat($chat, $chrome);
 		}
 
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
@@ -74,6 +81,7 @@ class mod_threads implements Module {
 			"agent" => $agent,
 			"editor" => self::field(),
 			"rows" => $rows,
+			"chats" => $chats,
 		));
 	}
 

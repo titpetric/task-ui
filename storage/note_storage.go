@@ -58,12 +58,16 @@ type NoteFilter struct {
 	Threads bool
 }
 
-// Live is what a listing adds to its WHERE: a deleted note and the replies
-// under it are read by nothing.
+// Live is the WHERE clause a listing adds: deleted notes and replies are read by nothing.
 const Live = "deleted_at IS NULL"
 
 // Create inserts a note, with the mentions of its body.
 func (s *NoteStorage) Create(ctx context.Context, note *model.Note) error {
+	return insertNote(ctx, client(s.db), note)
+}
+
+// insertNote inserts a note on a client, filling its mentions and timestamps.
+func insertNote(ctx context.Context, c conn, note *model.Note) error {
 	note.Body = strings.TrimSpace(note.Body)
 	if note.Body == "" || note.UserName == "" {
 		return errors.New("a note needs an author and some text")
@@ -77,7 +81,7 @@ func (s *NoteStorage) Create(ctx context.Context, note *model.Note) error {
 	note.Mentions = model.EncodeMentions(model.Mentions(note.Body))
 	note.CreatedAt = stamp()
 	note.UpdatedAt = note.CreatedAt
-	return client(s.db).Insert(ctx, model.NoteTable, note)
+	return c.Insert(ctx, model.NoteTable, note)
 }
 
 // Get returns a note by ID, or ErrNotFound once it is deleted.
@@ -222,14 +226,17 @@ func (s *NoteStorage) Delete(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "UPDATE note SET deleted_at = ?, updated_at = ? WHERE (id = ? OR parent_id = ?) AND "+Live, now, now, id, id)
 }
 
-// Purge removes a note and its replies, deleted or not, for retention.
+// Purge removes a note, its replies and its participants, for retention.
 func (s *NoteStorage) Purge(ctx context.Context, id string) error {
-	return client(s.db).Exec(ctx, "DELETE FROM note WHERE id = ? OR parent_id = ?", id, id)
+	return inTx(ctx, s.db, func(c conn) error {
+		if err := c.Exec(ctx, "DELETE FROM note_participant WHERE note_id = ?", id); err != nil {
+			return err
+		}
+		return c.Exec(ctx, "DELETE FROM note WHERE id = ? OR parent_id = ?", id, id)
+	})
 }
 
-// Threads returns the prompt threads, the notes with a workspace, by
-// their last reply, oldest first, for the data retention rules. The
-// board's notes are not among them.
+// Threads returns the prompt threads the data retention rules sweep, oldest first.
 func (s *NoteStorage) Threads(ctx context.Context) ([]Thread, error) {
 	db := client(s.db)
 	roots, err := db.Select[model.Note](ctx, "SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' ORDER BY rowid ASC")
