@@ -34,11 +34,12 @@ func TestDiscover(t *testing.T) {
 	write(t, filepath.Join(root, "acme", "notes", phpfront.ModInfo), "<?php\n// no annotation\n")
 	write(t, filepath.Join(root, "acme", "notes", "vendor", "dep", phpfront.ModInfo), startup)
 	write(t, filepath.Join(root, "acme", "notes", "node_modules", "dep", phpfront.ModInfo), startup)
+	write(t, filepath.Join(root, "acme", "notes", "testdata", "probe", phpfront.ModInfo), startup)
 	write(t, filepath.Join(root, "acme", "notes", "index.php"), "<?php\n")
 
 	found, err := phpfront.Discover(root)
 	assert.NoError(t, err)
-	assert.Len(t, found, 2, "a vendor or node_modules tree carries no module")
+	assert.Len(t, found, 2, "a vendor, node_modules or testdata tree carries no module")
 
 	assert.Equal(t, filepath.Join(root, "acme", "notes"), found[0].Root, "the roots come back by path")
 	assert.False(t, found[0].Startup, "a modinfo.php with no @startup is reported, not run")

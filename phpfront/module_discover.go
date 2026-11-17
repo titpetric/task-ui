@@ -13,10 +13,8 @@ import (
 // ModInfo is the file a module is found by.
 const ModInfo = "modinfo.php"
 
-// skipped are the directory names a walk never descends into: composer writes
-// the first, a package manager the second, and the third is a checkout's own
-// history.
-var skipped = map[string]bool{"vendor": true, "node_modules": true, ".git": true}
+// skipped are the directory names a walk never descends into.
+var skipped = map[string]bool{"vendor": true, "node_modules": true, "testdata": true, ".git": true}
 
 // Found is a modinfo.php a walk reached, and the directory holding it, which
 // is the module's root. Startup reports whether the file holds the @startup
@@ -60,9 +58,7 @@ func Discover(roots ...string) ([]Found, error) {
 	return found, nil
 }
 
-// walk reads one root and reports every modinfo.php under it. A directory
-// already seen through another root is left out, because two roots that
-// overlap would otherwise register the same module twice.
+// walk reads one root and reports every modinfo.php under it, once per directory.
 func walk(root string, seen map[string]bool) ([]Found, error) {
 	var found []Found
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
