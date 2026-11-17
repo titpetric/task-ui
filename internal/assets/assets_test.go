@@ -13,6 +13,9 @@ import (
 	"github.com/titpetric/task-ui/internal/assets"
 )
 
+// revision is the ULID a test tree answers under.
+const revision = "01jx8z5j6k7m8n9p0q1r2s3t4v"
+
 // tree is a theme of two files and a module of one.
 func tree() *assets.Tree {
 	return assets.New(map[string]fs.FS{
@@ -23,7 +26,25 @@ func tree() *assets.Tree {
 			"task-ui.js":      {Data: []byte("//")},
 		},
 		"notes": fstest.MapFS{"notes.js": {Data: []byte("// notes")}},
-	})
+	}, revision)
+}
+
+// TestTree_Revision returns the identifier the tree was built with.
+func TestTree_Revision(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, revision, tree().Revision())
+	var none *assets.Tree
+	assert.Equal(t, "", none.Revision())
+}
+
+// TestTree_Href returns the tree's URL under its revision.
+func TestTree_Href(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "/assets/r_"+revision, tree().Href())
+	var none *assets.Tree
+	assert.Equal(t, "/assets", none.Href())
 }
 
 // The version is a short hash of every file, the same every call.
@@ -41,7 +62,7 @@ func TestVersion_Changes(t *testing.T) {
 
 	other := assets.New(map[string]fs.FS{
 		assets.Theme: fstest.MapFS{"task-ui.js": {Data: []byte("// other")}},
-	})
+	}, revision)
 	assert.NotEqual(t, tree().Version(), other.Version())
 }
 
@@ -65,11 +86,11 @@ func TestCSS(t *testing.T) {
 	assert.NotContains(t, css, `"css/base.css"`)
 }
 
-// A theme with no stylesheet is a tree with no CSS, not a panic.
+// A theme without a stylesheet is a tree without CSS, not a panic.
 func TestCSS_Missing(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, assets.New(nil).CSS())
+	assert.Empty(t, assets.New(nil, revision).CSS())
 }
 
 func TestServeHTTP(t *testing.T) {
@@ -86,8 +107,13 @@ func TestServeHTTP(t *testing.T) {
 		{"a nested theme file", assets.Prefix + "theme/css/base.css", http.StatusOK, "body{}"},
 		{"a module file", assets.Prefix + "notes/notes.js", http.StatusOK, "// notes"},
 		{"the stylesheet is the versioned one", assets.Prefix + "theme/" + assets.Stylesheet, http.StatusOK, "?v=" + tr.Version()},
+		{"a revisioned theme file", assets.Prefix + "r_" + revision + "/theme/task-ui.js", http.StatusOK, "//"},
+		{"a revisioned nested theme file", assets.Prefix + "r_" + revision + "/theme/css/base.css", http.StatusOK, "body{}"},
+		{"a revisioned module file", assets.Prefix + "r_" + revision + "/modules/notes/notes.js", http.StatusOK, "// notes"},
+		{"the revisioned stylesheet", assets.Prefix + "r_" + revision + "/theme/" + assets.Stylesheet, http.StatusOK, "?v=" + tr.Version()},
+		{"another revision", assets.Prefix + "r_other/theme/task-ui.js", http.StatusNotFound, ""},
 		{"an unknown segment", assets.Prefix + "nope/task-ui.js", http.StatusNotFound, ""},
-		{"a segment with no file", assets.Prefix + "theme/", http.StatusNotFound, ""},
+		{"a segment naming no file", assets.Prefix + "theme/", http.StatusNotFound, ""},
 		{"a file that is not there", assets.Prefix + "theme/missing.js", http.StatusNotFound, ""},
 		{"a path leaving the root", assets.Prefix + "theme/../../go.mod", http.StatusNotFound, ""},
 	} {
@@ -151,7 +177,7 @@ func TestDirs(t *testing.T) {
 	assert.Len(t, segments, 2)
 }
 
-// A root with nothing in it is a tree with no segments, not a failure.
+// A root holding nothing is a tree without segments, not a failure.
 func TestDirs_Empty(t *testing.T) {
 	t.Parallel()
 

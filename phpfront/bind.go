@@ -66,12 +66,14 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 		return opts.Login, nil
 	})
 
-	// The static files sit at the root, outside the base, so an asset URL
-	// survives the cutover unchanged. The version is their content hash,
-	// which the URLs carry as ?v= so an hour of caching never outlives a
-	// deploy.
+	// The static files sit at the root, outside the base, under the revision
+	// this server started with. The version they carry as ?v= is the content
+	// hash, so an hour of caching never outlives a deploy.
 	rt.RegisterFunc(HostClass+"::assets", func() (string, error) {
-		return strings.TrimSuffix(assets.Prefix, "/"), nil
+		if static == nil {
+			return strings.TrimSuffix(assets.Prefix, "/"), nil
+		}
+		return static.Href(), nil
 	})
 	rt.RegisterFunc(HostClass+"::assetVersion", func() (string, error) {
 		return static.Version(), nil

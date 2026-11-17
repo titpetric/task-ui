@@ -44,13 +44,15 @@ type Tree struct {
 	// Segments is the filesystem each URL segment answers from.
 	Segments map[string]fs.FS
 
-	version string
-	css     []byte
+	revision string
+	version  string
+	css      []byte
 }
 
-// New returns the Tree of a segment name to filesystem map.
-func New(segments map[string]fs.FS) *Tree {
-	t := &Tree{Segments: segments}
+// New returns the Tree of a segment name to filesystem map, under the revision
+// the server made for this run.
+func New(segments map[string]fs.FS, revision string) *Tree {
+	t := &Tree{Segments: segments, revision: revision}
 	if t.Segments == nil {
 		t.Segments = map[string]fs.FS{}
 	}
@@ -90,6 +92,23 @@ func (t *Tree) Version() string {
 	return t.version
 }
 
+// Revision is the identifier of this tree, made once when the server starts.
+func (t *Tree) Revision() string {
+	if t == nil {
+		return ""
+	}
+	return t.revision
+}
+
+// Href is where the tree is served, the revision segment included.
+func (t *Tree) Href() string {
+	href := strings.TrimSuffix(Prefix, "/")
+	if t == nil || t.revision == "" {
+		return href
+	}
+	return href + "/r_" + t.revision
+}
+
 // CSS is the entry stylesheet as served, each import of css/ carrying Version.
 func (t *Tree) CSS() []byte {
 	if t == nil {
@@ -119,9 +138,19 @@ func (t *Tree) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // serveHTTP writes the file and reports what was not there.
 func (t *Tree) serveHTTP(w http.ResponseWriter, r *http.Request) error {
-	segment, rest, ok := strings.Cut(strings.TrimPrefix(path.Clean(r.URL.Path), Prefix), "/")
+	rest := strings.TrimPrefix(path.Clean(r.URL.Path), Prefix)
+	if first, after, ok := strings.Cut(rest, "/"); ok && first == "r_"+t.revision {
+		rest = after
+	}
+	segment, rest, ok := strings.Cut(rest, "/")
 	if !ok || rest == "" {
 		return fs.ErrNotExist
+	}
+	if segment == "modules" {
+		segment, rest, ok = strings.Cut(rest, "/")
+		if !ok || rest == "" {
+			return fs.ErrNotExist
+		}
 	}
 	if _, known := t.Segments[segment]; !known {
 		return fs.ErrNotExist
@@ -144,7 +173,7 @@ func (t *Tree) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// hash is the content hash of every file of every segment, in a fixed order.
+// hash is the content hash over all files in all segments, in a fixed order.
 func (t *Tree) hash() string {
 	h := sha256.New()
 	names := make([]string, 0, len(t.Segments))
@@ -170,8 +199,7 @@ func (t *Tree) hash() string {
 	return hex.EncodeToString(h.Sum(nil))[:12]
 }
 
-// stylesheet versions every import of the entry stylesheet, so a deploy that
-// changes one file changes that import's URL with it.
+// stylesheet returns the entry stylesheet with each import versioned.
 func (t *Tree) stylesheet() []byte {
 	data, err := t.Open(Theme, Stylesheet)
 	if err != nil {

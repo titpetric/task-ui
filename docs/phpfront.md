@@ -21,7 +21,7 @@ A byte stream is not a page: `/files/*`, `/artifacts/files/*` and the archives a
 | `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                    |
 | `theme/templates/index.tpl`   | the page shell, which places the components                                        |
 | `theme/templates/components/` | a component and its `.md` per piece of shared markup                               |
-| `theme/assets/`               | the stylesheet, the script, the fonts, the icon and `ext/`, at `/assets/theme/`    |
+| `theme/assets/`               | the stylesheet, the script, the fonts, the icon and `ext/`, at `/assets/r_<ulid>/theme/` |
 | `theme/mod_notfound.php`      | the catch-all, the one page that belongs to no module                              |
 | `modules/<name>/`             | one directory per sidebar entry                                                    |
 | `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime  |
@@ -38,7 +38,7 @@ A module directory holds:
 | `storage/`                               | the SQL of a data model the module owns; neither, where it owns no table |
 | `templates/index.tpl`                    | the module's body; more templates beside it                      |
 | `templates_c/`                           | the same compiled, written by `tools/precompile.php` and shipped |
-| `assets/`                                | served at `/assets/<name>/`                                      |
+| `assets/`                                | served at `/assets/r_<ulid>/modules/<name>/`                     |
 | `api/`                                   | new JSON endpoints, `@route` annotated                           |
 | `docs/`                                  | what a module owning `storage/` adds to its generated README     |
 | `README.md`, `schema.puml`, `schema.svg` | generated; the last two only where `tables()` names one          |
@@ -149,7 +149,7 @@ return new Model\Note($row);
 
 The matched pattern reaches no superglobal, so a file holding several routes matches on the method and the segments: `Task\Route::posted()` and `Task\Route::segments()`.
 
-An `@route` never names a file. The static files are Go's, at `/assets/theme/` and `/assets/<module>/`, and `phpfront/app/semgrep/` refuses a route path with an extension.
+An `@route` never names a file. The static files are Go's, at `/assets/r_<ulid>/theme/` and `/assets/r_<ulid>/modules/<module>/`, and `phpfront/app/semgrep/` refuses a route path with an extension.
 
 **A path is annotated or bound.** A `routes.php` is an `@startup` job calling `Runtime\Router::Bind($fn)`; `$fn` takes an `HTTP\Mux` and `handle("GET /path", $closure)` registers on the instance's router. `phpfront.Front` builds one `Runtime\Router`, shares it with the endpoint scanner and the `@startup` runner, and `annotations.Bindings` mounts every registration the jobs made. `phpfront/testdata/routes/routes.php` is the shape; `TestFront_Bound` answers a literal path and a `{id}` segment through it.
 

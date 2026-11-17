@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/phpscript/runner"
 	psruntime "github.com/titpetric/phpscript/stdlib/ps/runtime"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/internal/assets"
 )
 
@@ -36,7 +37,7 @@ func New(opts Options) (*Front, error) {
 	if opts.PoolSize <= 0 {
 		opts.PoolSize = 2
 	}
-	static := assets.New(assets.Dirs(opts.Root))
+	static := assets.New(assets.Dirs(opts.Root), model.NewID())
 	router := psruntime.NewRouter()
 	tree := os.DirFS(opts.Root)
 	return &Front{

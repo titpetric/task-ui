@@ -94,7 +94,7 @@ class View {
 	/**
 	 * assets is the module's own stylesheet and script, where it has them:
 	 * modules/<name>/assets/<name>.css and the same name with .js, which the
-	 * asset router serves at /assets/<name>/.
+	 * asset router serves at /assets/<revision>/modules/<name>/.
 	 *
 	 * Most modules have neither. A page drawn out of the theme's own components
 	 * is styled by the theme's own stylesheet, and the one script every page
@@ -109,7 +109,7 @@ class View {
 	function assets($chrome) {
 		$name = $this->module->name();
 		$dir = "modules/" . $name . "/assets/" . $name;
-		$href = $chrome["assets"] . "/" . $name . "/" . $name;
+		$href = $chrome["assets"] . "/modules/" . $name . "/" . $name;
 		$version = "?v=" . $chrome["assetVersion"];
 		$styles = array();
 		$scripts = array();
