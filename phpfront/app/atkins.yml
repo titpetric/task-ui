@@ -28,11 +28,12 @@ jobs:
       - task: test
       - task: ruleslint
 
-  # The editor is a composer package: the update pulls mdedit's dev-main into
-  # theme/assets/ext/, where the theme serves it.
+  # The editor is a composer package; mdedit's dev-main lands in ext/titpetric/mdedit.
   deps:
     desc: "Update the front end's composer dependencies"
     steps:
+      # A committed composer tree has no .git, so the first update starts clean.
+      - test -d ext/titpetric/mdedit/.git || rm -rf ext/titpetric/mdedit ext/composer/installed.json ext/composer/installed.php
       - composer update --no-interaction
 
   # `phpscript fmt -l` exits zero whether or not it listed a file, so the
