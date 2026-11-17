@@ -3,7 +3,7 @@
         'name' => 'titpetric/task-ui-front',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'c43dc6c16dba6cdf55b0fcd4664ffab80c819982',
+        'reference' => 'efd5266149ba8b7b42ad3baa417db70004c18814',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -33,7 +33,7 @@
         'titpetric/task-ui-front' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'c43dc6c16dba6cdf55b0fcd4664ffab80c819982',
+            'reference' => 'efd5266149ba8b7b42ad3baa417db70004c18814',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -89,8 +89,6 @@ jobs:
       - task: test
       - task: front
 
-  # The editor and the PHP dependency are composer packages: one job updates
-  # them without running the gate.
   deps:
     desc: "Update the front end's composer dependencies"
     dir: phpfront/app
