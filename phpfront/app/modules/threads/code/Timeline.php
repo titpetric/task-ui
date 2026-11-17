@@ -30,14 +30,14 @@ class Timeline {
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
 			"kind" => self::kind($note),
 			"author" => $chrome->who()->of($note->getUserName()),
-			"said" => \Task\Note::excerpt(Talk::said($note)),
+			"said" => \Task\Note::excerpt(Talk::opening($note, $replies)),
 			"state" => $note->getState(),
 			"working" => $note->getState() === \Task\Note::WORKING,
 			"run" => $run,
 			"short" => substr($run, 0, 8),
 			"ago" => \Task\Clock::ago(self::lastAt($note, $replies)),
 			"stamp" => \Task\Clock::read(self::lastAt($note, $replies)),
-			"messages" => count($replies) + 1,
+			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
 			"heard" => self::heard($note, $replies),
 		);
 	}

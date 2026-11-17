@@ -72,7 +72,7 @@ class mod_thread implements Module {
 
 		$replies = $store->replies(array($note->getId()));
 		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
-		$title = Task\Note::excerpt(Task\Threads\Talk::said($note));
+		$title = Task\Note::excerpt(Task\Threads\Talk::opening($note, $under));
 
 		$chrome->heading($title, array(
 			array("text" => "Threads", "href" => "/threads"),

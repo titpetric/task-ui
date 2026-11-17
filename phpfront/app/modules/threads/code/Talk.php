@@ -14,6 +14,9 @@ class Talk {
 	/** FILES is where a recording of the artifact tree is played from. */
 	const FILES = "/artifacts/files/";
 
+	/** RECORDING is the body a clip without a transcript carries. */
+	const RECORDING = "A recording.";
+
 	/**
 	 * messages is the thread and its replies, oldest first, as the template
 	 * reads them.
@@ -36,10 +39,30 @@ class Talk {
 				$said["audio"] = $spoken[$at];
 			}
 
+			if ($at === 1 && $said["audio"] === "" && self::joins($note, $reply)) {
+				$out[0]["body"] = $said["body"];
+
+				continue;
+			}
+
 			$out[] = $said;
 		}
 
 		return $out;
+	}
+
+	/** joins reports whether a note and the reply after it are one recording. */
+	static function joins($note, $reply) {
+		return $note->getAudioPath() !== "" && $note->getSpoken() === "" && $note->getBody() === self::RECORDING && $reply->getAudioPath() === "" && $reply->getSpoken() !== "" && $reply->getUserId() === $note->getUserId();
+	}
+
+	/** opening is what a thread is read as: the transcript of its first message. */
+	static function opening($note, $replies) {
+		if (isset($replies[0]) && self::joins($note, $replies[0])) {
+			return self::said($replies[0]);
+		}
+
+		return self::said($note);
 	}
 
 	/**

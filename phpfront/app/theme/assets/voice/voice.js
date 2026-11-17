@@ -198,6 +198,7 @@
   var doing = "";       // the step the counter sits beside
   var failed = false;   // the run ended and left nothing beside the recording
   var server = null;    // null until asked, then whether the server transcribes
+  var transcribing = false; // the clip is being read before it is sent
   var sent = 0;         // how many frames of the buffer have been posted
   var posting = 0;      // the interval posting the slices
   var flight = false;   // a slice is out and the next tick waits for it
@@ -1278,7 +1279,9 @@
   // during a recording are the same act, and so is the dead air after one
   // a name started.
   function stop() {
-    if (state() === "idle" || waking) return;
+    if (transcribing || state() === "idle" || waking) return;
+    var mine = gen;
+    transcribing = true;
     starting = false;
     quiet();
     release();
@@ -1288,6 +1291,11 @@
     // line that does not move reads as stuck.
     if (server) ticking("Transcribing");
     reading().then(function () {
+      if (mine !== gen) {
+        transcribing = false;
+        return;
+      }
+      transcribing = false;
       stopped();
       heard(text, "");
       send();
@@ -1844,6 +1852,7 @@
   // would have written them, so nothing draws into a window that moved on.
   function drop() {
     gen++;
+    transcribing = false;
     stopped();
     since = 0;
     began = 0;
@@ -1902,7 +1911,7 @@
 
   // send delivers the words, writes the file and leaves the window open on an empty buffer, so the next sentence is one press away.
   function send() {
-    if (state() === "idle" || waking) return;
+    if (transcribing || state() === "idle" || waking) return;
     var words = spoken(text);
     var to = target();
     var at = keep(words);

@@ -176,11 +176,12 @@
 " title="The run this message comes from">run <?php echo htmlspecialchars($_v['message']['short'], ENT_QUOTES);?>
 </a>
 <?php }?>		</header>
+		<div class="said-body prose"><?php echo $_v['message']['body'];?>
+</div>
 <?php if($_v['message']['audio']){?>
 		<audio class="said-audio" controls preload="none" src="<?php echo htmlspecialchars($_v['message']['audio'], ENT_QUOTES);?>
 "></audio>
-<?php }?>		<div class="said-body prose"><?php echo $_v['message']['body'];?>
-</div>
+<?php }?>
 	</li>
 <?php }?></ol>
 

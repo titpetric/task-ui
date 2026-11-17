@@ -9,8 +9,9 @@
 {if $message.working}			<span class="badge note-state working">working</span>
 {/if}{if $message.run}			<a class="faint mono" href="{base}/runs/{message.run}" title="The run this message comes from">run {message.short}</a>
 {/if}		</header>
+		<div class="said-body prose">{message.body|raw}</div>
 {if $message.audio}		<audio class="said-audio" controls preload="none" src="{message.audio}"></audio>
-{/if}		<div class="said-body prose">{message.body|raw}</div>
+{/if}
 	</li>
 {/foreach}</ol>
 
