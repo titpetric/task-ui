@@ -47,6 +47,9 @@ func (h *Handlers) listThreads(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
+	if chats == nil {
+		chats = []storage.ChatSummary{}
+	}
 	var unread int64
 	for _, chat := range chats {
 		unread += chat.Unread
