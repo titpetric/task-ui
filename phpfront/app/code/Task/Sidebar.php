@@ -43,15 +43,31 @@ class Sidebar {
 	 * items is the top block as one user sees it: the table's order, less
 	 * the hidden rows and the rows whose rule the user lacks.
 	 *
+	 * A module row is left out where a view row the reader sees carries its
+	 * title: the module is the same page under its plugin link, and both rows
+	 * in the block would read as two pages.
+	 *
 	 * Two rows carry more than a link, and the template keys on the flag and
 	 * not on the href, so renaming a page does not quietly empty either.
 	 */
 	function items($access, $path) {
 		$settings = self::settings($access);
+		$rows = $this->all();
+		$views = array();
 		$out = array();
 
-		foreach ($this->all() as $row) {
+		foreach ($rows as $row) {
+			if ($row->getKind() === self::VIEW && $row->getTitle() !== "" && !$row->getHidden() && self::sees($row, $access, $settings)) {
+				$views[$row->getTitle()] = true;
+			}
+		}
+
+		foreach ($rows as $row) {
 			if ($row->getHidden() || !self::sees($row, $access, $settings)) {
+				continue;
+			}
+
+			if ($row->getKind() === self::MODULE && isset($views[$row->getTitle()])) {
 				continue;
 			}
 
