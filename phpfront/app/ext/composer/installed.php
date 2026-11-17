@@ -3,7 +3,7 @@
         'name' => 'titpetric/task-ui-front',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '6be261b0e6d94f3fa36d4721eae0b508835a3f02',
+        'reference' => 'f511f2339fead40d8e1bd73c7f324e4a3d7d8ed2',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'titpetric/mdedit' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '84b9714b60374ee5c3db36224c4fd1dc54337d8b',
+            'reference' => '50c362a73c2234397978e8dae36d59a67cf7b446',
             'type' => 'mdedit-asset',
             'install_path' => __DIR__ . '/../titpetric/mdedit',
             'aliases' => array(
@@ -33,7 +33,7 @@
         'titpetric/task-ui-front' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '6be261b0e6d94f3fa36d4721eae0b508835a3f02',
+            'reference' => 'f511f2339fead40d8e1bd73c7f324e4a3d7d8ed2',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

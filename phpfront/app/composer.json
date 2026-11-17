@@ -29,7 +29,11 @@
   },
 
   "scripts": {
+    "pre-update-cmd": ["rm -rf ext/titpetric/mdedit"],
     "post-install-cmd": ["rm -rf ext/titpetric/mdedit/.git"],
-    "post-update-cmd": ["rm -rf ext/titpetric/mdedit/.git"]
+    "post-update-cmd": [
+      "composer install --no-interaction",
+      "rm -rf ext/titpetric/mdedit/.git"
+    ]
   }
 }
