@@ -26,6 +26,10 @@ git user. Markdown keeps the rich editor; every other kind opens as source,
 in the code face and coloured by the extension. The saved window offers Push,
 which sends the checkout to its remote with the instance key.
 
+The window offers no Download. A file is read in task-ui, which is the
+environment for it, and the transfers that remain are a directory's `.tgz` on
+the artifacts page, a workspace's export, and a key's public half.
+
 The run window's foot is every action a run takes, each hidden until the state
 says it applies: Attach, Run again, Take input, Stop, Kill, Pause, Restart and
 Run force. `run-reason` asks why a job runs outside its hours, and the instance

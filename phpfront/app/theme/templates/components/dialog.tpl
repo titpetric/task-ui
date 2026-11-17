@@ -48,7 +48,6 @@
 		<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div><audio id="preview-audio" class="preview-audio" controls preload="metadata" hidden></audio><iframe id="preview-frame" class="preview-frame" title="The page the run wrote" sandbox referrerpolicy="no-referrer" hidden></iframe></div>
 		<div class="run-foot">
 			<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
-			<a class="btn" id="preview-download" href="#" download>Download</a>
 			<span class="preview-actions" id="preview-actions"></span>
 			<button type="button" class="btn" id="preview-edit" hidden>Edit</button>
 			<button type="button" class="btn" id="preview-push" hidden>Push</button>

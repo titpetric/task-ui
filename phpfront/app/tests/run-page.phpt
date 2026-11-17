@@ -555,7 +555,7 @@ true true 2
 Artifacts [files left under $TASK_UI_ARTIFACTS] []
 report.html /api/artifacts/fx-rp-a1 2.0 KB text/html
 build.log 300 B
-Download,Delete
+Delete
 0 [None: a job keeps files by writing them to the directory in $TASK_UI_ARTIFACTS.]
 1 /runs/fx-rp-5 fx-rp / @claude-prompt ok
 0

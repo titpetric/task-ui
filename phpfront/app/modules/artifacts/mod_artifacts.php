@@ -194,7 +194,6 @@ class mod_artifacts implements Module {
 			$menu->item("copy", self::COPY, array("data-copy" => $archive));
 		} else {
 			$menu->item("eye", "View and versions", array("href" => $href, "data-artifact" => $path));
-			$menu->item("download", "Download", array("href" => $href . "?download"));
 			$menu->item("copy", "Copy the link", array("data-copy" => $href));
 		}
 
@@ -300,7 +299,7 @@ class mod_artifacts implements Module {
 	 * reads it the same way.
 	 *
 	 * A row with no commit is kept apart from the tree and has no version to
-	 * view, so its name links to the record itself.
+	 * view, so its name links nowhere.
 	 */
 	static function version($artifact, $chrome, $workspaces, $deletes) {
 		$id = $artifact->getId();
@@ -334,7 +333,6 @@ class mod_artifacts implements Module {
 			"data-artifact" => $path,
 			"data-version" => $commit,
 		));
-		$menu->item("download", "Download this version", array("href" => $download));
 		$menu->whenDanger($deletes, "trash", "Delete the record", array(
 			"data-delete" => $download,
 			"data-confirm" => "Delete the record of " . $name . ($run === "" ? "" : " from " . $folder . " / " . $job) . "?",
@@ -354,7 +352,7 @@ class mod_artifacts implements Module {
 			"jobHref" => $claude || $place === "" ? "" : Task\Route::href($place . "/" . $job),
 			"user" => $run === "" ? $chrome->who()->of($artifact->getUserName()) : array(),
 			"name" => $name,
-			"nameHref" => $commit === "" ? $download : $version,
+			"nameHref" => $commit === "" ? "" : $version,
 			"path" => $path,
 			"commit" => $commit,
 			"version" => substr($commit, 0, 7),

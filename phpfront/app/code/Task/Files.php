@@ -159,13 +159,12 @@ class Files {
 		return $row;
 	}
 
-	/** menu is the [...] of a file: when it changed, and the two ways to open it. */
+	/** menu is the [...] of a file: when it changed, and the way to open it. */
 	static function menu($row) {
 		$menu = new Menu("Actions on " . $row["name"]);
 
 		$menu->detail("Changed", $row["stamp"]);
 		$menu->item("eye", "Preview", array("href" => $row["href"], "data-file" => $row["path"]));
-		$menu->item("download", "Download", array("href" => $row["href"] . "?download"));
 
 		return $menu->data();
 	}

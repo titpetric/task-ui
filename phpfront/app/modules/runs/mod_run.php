@@ -349,7 +349,6 @@ class mod_run implements Module {
 			$href = self::ARTIFACT_API . $file->getId();
 			$menu = new Task\Menu("Actions on " . $name);
 
-			$menu->item("download", "Download", array("href" => $href));
 			$menu->whenDanger($deletes, "trash", "Delete", array(
 				"data-delete" => $href,
 				"data-confirm" => "Delete " . $name . "?",

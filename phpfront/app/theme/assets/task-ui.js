@@ -3528,7 +3528,6 @@
     var previewFrame = document.getElementById("preview-frame");
     var previewAudio = document.getElementById("preview-audio");
     var previewVersion = document.getElementById("preview-version");
-    var previewDownload = document.getElementById("preview-download");
     var previewEdit = document.getElementById("preview-edit");
     var previewSave = document.getElementById("preview-save");
     var previewCancel = document.getElementById("preview-cancel");
@@ -3598,17 +3597,16 @@
     };
     var previewLabel = document.getElementById("preview-label");
     var showView = function (view, src) {
-      previewDownload.setAttribute("href", src + (src.indexOf("?") < 0 ? "?" : "&") + "download");
       if (view.kind === "image") showImage(src);
       else if (view.kind === "audio" && previewAudio) showAudio(src);
       else if (view.kind === "page") showFrame(src);
       else if (view.kind === "markdown") showDoc(view.html, "markdown");
       else if (view.kind === "text") {
         var cut = view.truncated ? '<p class="faint">The first ' + escapeHTML(String(view.text.length)) + " characters of " +
-          escapeHTML(String(view.byte_size)) + ' bytes. Download it for the rest.</p>' : "";
+          escapeHTML(String(view.byte_size)) + " bytes.</p>" : "";
         showDoc(cut + "<pre>" + (view.html || escapeHTML(view.text)) + "</pre>", "text");
       }
-      else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
+      else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ".</p>", "text");
     };
     // previewActions carries a file's Run or Attach from its button in
     // the Jobs table into the window's foot; the window closes for the

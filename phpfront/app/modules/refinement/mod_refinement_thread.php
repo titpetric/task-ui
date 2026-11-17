@@ -12,9 +12,9 @@ require "ext/autoload.php";
 // requests that got it there, and the boxes that ask for the next one.
 //
 // The files are not listed. They are a folder of the artifact tree and the
-// instance already has the page that browses one, with the preview, the
-// versions and the download beside it, so the head links that folder and the
-// scratch pad the runs keep for themselves.
+// instance already has the page that browses one, with the preview and the
+// versions, so the head links that folder and the scratch pad the runs keep
+// for themselves.
 //
 // The page reconciles before it draws. A run writes the files and rewrites the
 // report and goes through nothing of this module's, so the record the tables
