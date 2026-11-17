@@ -200,6 +200,8 @@ func (h *Handlers) Routes() http.Handler {
 
 	r.Get("/sources/*", h.getSource)
 	r.Get("/files/*", h.viewFile)
+	r.Put("/files/*", h.writeFile)
+	r.Post("/files/push", h.pushCheckout)
 
 	return r
 }

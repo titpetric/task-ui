@@ -91,7 +91,7 @@ func (g *Git) run(ctx context.Context, dir string, w io.Writer, args ...string) 
 // reaches reports whether a git subcommand talks to the remote, so it runs with the key.
 func reaches(command string) bool {
 	switch command {
-	case "clone", "pull", "fetch", "ls-remote":
+	case "clone", "pull", "fetch", "push", "ls-remote":
 		return true
 	}
 	return false
@@ -220,6 +220,41 @@ func (g *Git) Pull(ctx context.Context, dir string, w io.Writer) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	return g.run(ctx, dir, w, "pull", "--ff-only", "--no-rebase")
+}
+
+// CommitPath stages rel and commits it as the checkout's user, answering the commit and whether one was made.
+func (g *Git) CommitPath(ctx context.Context, dir, rel, message string) (string, bool, error) {
+	if !g.IsRepo(dir) {
+		return "", false, ErrNotRepo
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	if err := g.run(ctx, dir, io.Discard, "add", "--", rel); err != nil {
+		return "", false, err
+	}
+	staged, err := g.capture(ctx, dir, 10*time.Second, "status", "--porcelain", "--", rel)
+	if err != nil {
+		return "", false, err
+	}
+	if staged == "" {
+		return "", false, nil
+	}
+	if err := g.run(ctx, dir, io.Discard, "commit", "-m", message, "--", rel); err != nil {
+		return "", false, err
+	}
+	commit, err := g.capture(ctx, dir, 10*time.Second, "rev-parse", "HEAD")
+	return commit, err == nil, err
+}
+
+// Push sends the checkout's branch to its remote, with the key Keys hands
+// out, and writes git's output to w.
+func (g *Git) Push(ctx context.Context, dir string, w io.Writer) error {
+	if !g.IsRepo(dir) {
+		return ErrNotRepo
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	return g.run(ctx, dir, w, "push")
 }
 
 // Remove deletes a cloned folder. It refuses a folder that is not a

@@ -35,7 +35,7 @@ func TestListing(t *testing.T) {
 	for _, item := range Listing(dir) {
 		sealed = append(sealed, item.Sealed)
 	}
-	if want := []bool{false, true, false, false, true, true, false, false}; !slices.Equal(sealed, want) {
+	if want := []bool{false, true, false, false, true, false, false, false}; !slices.Equal(sealed, want) {
 		t.Fatalf("sealed: got %v, want %v", sealed, want)
 	}
 	if Listing(filepath.Join(dir, "nope")) != nil {

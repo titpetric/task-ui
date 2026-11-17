@@ -36,7 +36,8 @@
  data-me="<?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
 "<?php }?><?php if($_v['chrome']['can']['artifact/edit']){?>
  data-upload="<?php echo htmlspecialchars($_v['chrome']['upload'], ENT_QUOTES);?>
-" data-artifact-edit<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
+" data-artifact-edit<?php }?><?php if($_v['chrome']['can']['project/edit']){?>
+ data-file-edit<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
 edit<?php }elseif($_v['chrome']['can']['user/view']){?>
 view<?php }?>">
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
@@ -436,6 +437,8 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 			<a class="btn" id="preview-download" href="#" download>Download</a>
 			<span class="preview-actions" id="preview-actions"></span>
 			<button type="button" class="btn" id="preview-edit" hidden>Edit</button>
+			<button type="button" class="btn" id="preview-push" hidden>Push</button>
+			<button type="button" class="btn" id="preview-cancel" hidden>Cancel</button>
 			<button type="button" class="btn btn-primary" id="preview-save" hidden>Save</button>
 			<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 		</div>

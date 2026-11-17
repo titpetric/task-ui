@@ -25,13 +25,37 @@
   --mdedit-comment: var(--text-faint);
 }
 
-/* The window's own editor fills the body it opens in. */
+/* The window's own editor fills the body it opens in, and the surface
+   scrolls the file under it. */
 .preview-doc.editing {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 .preview-doc.editing .mdedit {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   height: 100%;
+}
+
+.preview-doc.editing .mdedit__frame {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.preview-doc.editing .mdedit__surface {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* What a picture written in a note or a document is laid out by, which is

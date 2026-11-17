@@ -3531,15 +3531,24 @@
     var previewDownload = document.getElementById("preview-download");
     var previewEdit = document.getElementById("preview-edit");
     var previewSave = document.getElementById("preview-save");
+    var previewCancel = document.getElementById("preview-cancel");
+    var previewPush = document.getElementById("preview-push");
     // Whether this reader may write a file of the tree, which is what the
     // body says and what the API refuses whatever the body says.
     var edits = document.body.hasAttribute("data-artifact-edit");
+    var fileEdits = document.body.hasAttribute("data-file-edit");
     var editing = null;
+    var editingKind = "";
+    var editingHref = "";
+    var editingRel = "";
+    var pushTarget = "";
     var previewPath = "";
     document.getElementById("preview-close").addEventListener("click", function () { previewDialog.close(); });
     previewDialog.addEventListener("close", function () {
       closeEditing();
       bare();
+      previewPush.hidden = true;
+      pushTarget = "";
     });
 
     var fileURL = function (rel, version) {
@@ -3627,8 +3636,12 @@
     };
     // openCheckout opens a file of a folder's checkout: its link is where
     // it opens on its own, and the API answers the same path.
-    var openCheckout = function (href, rel) {
+    var openCheckout = function (href, rel, keepPush) {
       closeEditing();
+      if (!keepPush) {
+        previewPush.hidden = true;
+        pushTarget = "";
+      }
       previewEdit.hidden = true;
       previewPath = href;
       previewLabel.textContent = "File";
@@ -3644,11 +3657,13 @@
           return;
         }
         showView(res.data, href);
+        previewEdit.hidden = !(fileEdits && (res.data.kind === "text" || res.data.kind === "markdown"));
       });
     };
     var openFile = function (rel, version) {
       closeEditing();
       previewEdit.hidden = true;
+      previewPush.hidden = true;
       previewPath = rel;
       previewLabel.textContent = "Artifact";
       previewActions.innerHTML = "";
@@ -3677,14 +3692,37 @@
     };
     previewVersion.addEventListener("change", function () { openFile(previewPath, previewVersion.value); });
 
-    // Editing a markdown file of the tree: the file opens in the editor
-    // over the window's body, and Save puts it back at the same path, which
-    // the history keeps the version before of. A file dropped in lands
-    // beside it, in the directory the file itself is in.
+    // Editing a file of the tree, or of a checkout: the file opens in the
+    // editor over the window's body, and Save puts it back at the same path.
+    // A file dropped in lands beside it, in the directory the file is in.
     function closeEditing() {
       destroyEditors(previewDoc);
+      previewDialog.classList.remove("editing");
       editing = null;
+      editingKind = "";
       previewSave.hidden = true;
+      previewCancel.hidden = true;
+    }
+
+    // beginEditing opens a textarea in the window's body and answers it; a
+    // named upload directory is where a dropped file lands.
+    function beginEditing(rel, text, options, upload) {
+      showDoc("", "editing");
+      previewDialog.classList.add("editing");
+      var area = document.createElement("textarea");
+      area.setAttribute("data-markdown", "");
+      area.setAttribute("aria-label", rel);
+      if (upload !== undefined) area.dataset.upload = upload;
+      area.value = text;
+      previewDoc.appendChild(area);
+      editing = area;
+      editingRel = rel;
+      mountEditor(area, options);
+      previewEdit.hidden = true;
+      previewSave.hidden = false;
+      previewCancel.hidden = false;
+      previewVersion.hidden = true;
+      previewActions.innerHTML = "";
     }
 
     var editArtifact = function (rel) {
@@ -3692,17 +3730,10 @@
         .then(function (res) { return res.ok ? res.text() : Promise.reject(res.status); })
         .then(function (text) {
           if (rel !== previewPath) return;
-          showDoc("", "markdown editing");
-          var area = document.createElement("textarea");
-          area.setAttribute("data-markdown", "");
-          area.setAttribute("aria-label", rel);
-          area.dataset.upload = rel.indexOf("/") < 0 ? "" : rel.slice(0, rel.lastIndexOf("/"));
-          area.value = text;
-          previewDoc.appendChild(area);
-          editing = area;
-          mountEditor(area);
-          previewEdit.hidden = true;
-          previewSave.hidden = false;
+          editingKind = "artifact";
+          editingHref = "";
+          var dir = rel.indexOf("/") < 0 ? "" : rel.slice(0, rel.lastIndexOf("/"));
+          beginEditing(rel, text, { toolbar: window.mdedit ? window.mdedit.TOOLBAR_FULL : false }, dir);
         })
         .catch(function (status) { toast("The file did not open, HTTP " + status, "bad"); });
     };
@@ -3727,8 +3758,98 @@
       });
     };
 
-    previewEdit.addEventListener("click", function () { editArtifact(previewPath); });
-    previewSave.addEventListener("click", function () { saveArtifact(previewPath); });
+    // editCheckout opens a file of a folder's checkout: markdown keeps the
+    // rich editor, everything else opens as source of the language its
+    // extension names.
+    var editCheckout = function (href, rel) {
+      fetch("/api" + href + "?raw", { credentials: "same-origin" })
+        .then(function (res) { return res.ok ? res.text() : Promise.reject(res.status); })
+        .then(function (text) {
+          if (href !== previewPath) return;
+          editingKind = "checkout";
+          editingHref = href;
+          beginEditing(
+            rel,
+            text,
+            isMarkdownFile(rel)
+              ? { uploads: null, toolbar: window.mdedit ? window.mdedit.TOOLBAR_FULL : false }
+              : { code: true, language: fileLanguage(rel), toolbar: false, uploads: null },
+          );
+        })
+        .catch(function (status) { toast("The file did not open, HTTP " + status, "bad"); });
+    };
+
+    // saveCheckout writes the file and commits it as the checkout's user;
+    // Push is the action the saved window offers next.
+    var saveCheckout = function (href, rel) {
+      if (!editing) return;
+      previewSave.disabled = true;
+      fetch("/api" + href, {
+        method: "PUT",
+        credentials: "same-origin",
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+        body: editing.value,
+      })
+        .then(function (res) {
+          return res.text().then(function (text) {
+            var data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { error: text }; }
+            return { ok: res.ok, status: res.status, data: data };
+          });
+        })
+        .then(function (answer) {
+          previewSave.disabled = false;
+          if (!answer.ok) {
+            toast(answer.data.error || ("The file was not written, HTTP " + answer.status), "bad");
+            return;
+          }
+          pushTarget = answer.data.committed ? (answer.data.folder || "") : "";
+          if (answer.data.committed) {
+            toast("Saved " + rel + ", committed " + String(answer.data.commit || "").slice(0, 7));
+          } else {
+            toast("Saved " + rel + ", nothing to commit");
+          }
+          previewPush.hidden = !pushTarget;
+          closeEditing();
+          openCheckout(href, rel, true);
+        })
+        .catch(function () {
+          previewSave.disabled = false;
+          toast("The file was not written", "bad");
+        });
+    };
+
+    previewEdit.addEventListener("click", function () {
+      var rel = document.getElementById("preview-title").textContent;
+      if (previewLabel.textContent === "File") editCheckout(previewPath, rel);
+      else editArtifact(previewPath);
+    });
+    previewSave.addEventListener("click", function () {
+      if (editingKind === "checkout") saveCheckout(editingHref, editingRel);
+      else saveArtifact(previewPath);
+    });
+    previewCancel.addEventListener("click", function () {
+      var kind = editingKind;
+      var href = editingHref;
+      var rel = editingRel;
+      closeEditing();
+      if (kind === "checkout" && href) openCheckout(href, rel);
+      else if (kind === "artifact" && rel) openFile(rel, "");
+    });
+    previewPush.addEventListener("click", function () {
+      if (!pushTarget) return;
+      previewPush.disabled = true;
+      api("POST", "/api/files/push", { folder: pushTarget }).then(function (res) {
+        previewPush.disabled = false;
+        if (res.status !== 200) {
+          toast(res.data.error || ("Push failed, HTTP " + res.status), "bad");
+          return;
+        }
+        toast("Pushed " + pushTarget);
+        previewPush.hidden = true;
+        pushTarget = "";
+      });
+    });
 
     document.addEventListener("click", function (event) {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
@@ -3860,19 +3981,47 @@
     };
   }
 
-  // mountEditor draws the editor over one field and answers it, or null
+  // fileExtension answers the extension a path ends in, lower case; a
+  // dotfile is its whole name, since `.gitignore` carries none.
+  function fileExtension(rel) {
+    var base = String(rel).split("/").pop() || "";
+    var at = base.lastIndexOf(".");
+    return (at > 0 ? base.slice(at + 1) : base).toLowerCase();
+  }
+
+  // CODE_LANGUAGES is what code mode colours by; an extension not here
+  // leaves the choice to the editor's keyword detection.
+  var CODE_LANGUAGES = {
+    yml: "yaml", yaml: "yaml", json: "json", toml: "toml",
+    ini: "bash", conf: "bash", ".gitignore": "bash", dockerfile: "bash", makefile: "bash",
+    sh: "bash", bash: "bash", zsh: "bash",
+    js: "js", mjs: "js", cjs: "js", ts: "ts",
+    css: "css", scss: "css", html: "html", htm: "html",
+    go: "go", php: "php", py: "python", sql: "sql",
+  };
+
+  function fileLanguage(rel) {
+    return CODE_LANGUAGES[fileExtension(rel)] || "";
+  }
+
+  function isMarkdownFile(rel) {
+    var ext = fileExtension(rel);
+    return ext === "md" || ext === "markdown";
+  }
+
+  // mountEditor draws the editor over a field and answers it, or null
   // where the bundle did not load, which leaves the textarea as it was.
-  function mountEditor(area) {
+  function mountEditor(area, extra) {
     if (area.mdeditor) return area.mdeditor;
     if (!window.mdedit) return null;
     var dir = uploadDir(area);
-    var options = {};
+    var options = extra && typeof extra === "object" ? Object.assign({}, extra) : {};
     // The upload button is drawn where a directory is named: nothing says one
     // for a reader who may not write the tree.
-    if (area.dataset.toolbar === "inline") {
+    if (area.dataset.toolbar === "inline" && options.toolbar === undefined) {
       options.toolbar = dir === null ? window.mdedit.TOOLBAR_INLINE : window.mdedit.TOOLBAR_INLINE.concat("upload");
     }
-    if (dir !== null) options.uploads = uploads(dir);
+    if (dir !== null && options.uploads === undefined) options.uploads = uploads(dir);
     area.mdeditor = new window.mdedit.MarkdownEditor(area, options);
     return area.mdeditor;
   }

@@ -40,20 +40,19 @@ func checkout(t *testing.T) *folder.Folder {
 	return &folder.Folder{ID: "acme/api", Dir: dir}
 }
 
-// Path opens what is inside the folder and nothing else: no .., no
-// symlink out, no dot file, nothing in .git, nor any of them by a
-// symlink. A dot directory other than .git opens, and what is in it
-// but its dot files.
+// Path opens the inside of the folder and nothing else: no .., no symlink
+// out, no sealed dot file, nothing in .git, nor any of them by a symlink. A
+// dot directory other than .git opens, as do the config dot files inside it.
 func TestFolder_Path(t *testing.T) {
 	t.Parallel()
 	f := checkout(t)
 	for _, rel := range []string{"", "README.md", "bin", "bin/deploy", "readme", "./README.md",
-		".claude", ".claude/CLAUDE.md", ".atkins/skills/x.yml", "claude", "claude/CLAUDE.md"} {
+		".claude", ".claude/CLAUDE.md", ".atkins/skills/x.yml", "claude", "claude/CLAUDE.md", ".gitignore"} {
 		_, ok := f.Path(rel)
 		assert.True(t, ok, rel)
 	}
 	for _, rel := range []string{"../secret.txt", "bin/../README.md", "escape", ".git", ".git/config", ".env", "config", "/etc/passwd", "missing",
-		".gitignore", ".hook", ".claude/.secret", ".claude/.run", "claude/.secret", "envlink", "hook", ".readme", "repo", "repo/config", ".gone"} {
+		".hook", ".claude/.secret", ".claude/.run", "claude/.secret", "envlink", "hook", ".readme", "repo", "repo/config", ".gone"} {
 		_, ok := f.Path(rel)
 		assert.False(t, ok, rel)
 	}
@@ -104,10 +103,10 @@ func TestListing_Sealed(t *testing.T) {
 	for _, item := range folder.Listing(f.Dir) {
 		sealed[item.Name], exec[item.Name] = item.Sealed, item.Exec
 	}
-	for _, name := range []string{".git", ".env", ".gitignore", ".hook", ".readme", ".gone", "envlink", "hook", "config", "repo"} {
+	for _, name := range []string{".git", ".env", ".hook", ".readme", ".gone", "envlink", "hook", "config", "repo"} {
 		assert.True(t, sealed[name], name)
 	}
-	for _, name := range []string{".claude", ".atkins", "claude", "bin", "README.md", "readme", "escape"} {
+	for _, name := range []string{".claude", ".atkins", "claude", "bin", "README.md", "readme", "escape", ".gitignore"} {
 		assert.False(t, sealed[name], name)
 	}
 	assert.False(t, exec[".hook"])

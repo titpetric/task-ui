@@ -5,13 +5,35 @@ import (
 	"strings"
 )
 
-// repository is the directory task-ui lists but never goes into: the git
-// repository of a checkout.
+// repository is the git directory task-ui lists but never goes into.
 const repository = ".git"
 
-// Sealed reports whether task-ui lists an entry but keeps it closed: .git, or a dot file that is not a dir.
+// configFiles are the dot files task-ui opens: project configuration, and nothing a secret would be written in.
+var configFiles = map[string]bool{
+	".gitignore":      true,
+	".gitattributes":  true,
+	".dockerignore":   true,
+	".editorconfig":   true,
+	".npmignore":      true,
+	".prettierignore": true,
+	".eslintignore":   true,
+	".prettierrc":     true,
+	".eslintrc":       true,
+	".golangci.yml":   true,
+	".mdox.yml":       true,
+	".splint.yml":     true,
+	".vale.ini":       true,
+}
+
+// Sealed reports whether task-ui lists an entry but keeps it closed: .git, or a dot file that is not a config file or a dir.
 func Sealed(name string, dir bool) bool {
-	return name == repository || (!dir && strings.HasPrefix(name, ".") && name != "." && name != "..")
+	if name == repository {
+		return true
+	}
+	if dir || !strings.HasPrefix(name, ".") || name == "." || name == ".." {
+		return false
+	}
+	return !configFiles[name]
 }
 
 // SealedPath reports whether a slash path names a sealed entry or has .git among its segments.

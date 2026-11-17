@@ -11,14 +11,14 @@ import (
 // other than .git and what is in them open.
 func TestSealed(t *testing.T) {
 	t.Parallel()
-	for _, name := range []string{".env", ".env.local", ".htpasswd", ".htaccess", ".gitignore", ".envrc", ".git", ".x"} {
+	for _, name := range []string{".env", ".env.local", ".htpasswd", ".htaccess", ".envrc", ".git", ".x"} {
 		assert.True(t, folder.Sealed(name, false), name)
 	}
 	assert.True(t, folder.Sealed(".git", true))
 	for _, name := range []string{".github", ".claude", ".atkins", "env", "bin"} {
 		assert.False(t, folder.Sealed(name, true), name)
 	}
-	for _, name := range []string{"README.md", "env", "Makefile"} {
+	for _, name := range []string{"README.md", "env", "Makefile", ".gitignore", ".dockerignore", ".editorconfig"} {
 		assert.False(t, folder.Sealed(name, false), name)
 	}
 	assert.True(t, folder.SealedPath(".git/config", false))

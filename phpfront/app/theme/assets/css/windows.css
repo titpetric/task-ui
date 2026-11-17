@@ -23,6 +23,19 @@ dialog.preview .preview-body:has(.preview-frame:not([hidden])) {
   align-items: flex-start;
 }
 
+/* Editing fills the screen's height: the window takes most of the viewport
+   and the editor's surface scrolls the file inside it. */
+dialog.preview.editing {
+  height: min(52rem, calc(100vh - 2rem));
+}
+
+dialog.preview .preview-body:has(.preview-doc.editing) {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
 dialog.preview .preview-audio {
   width: min(34rem, 100%);
 }

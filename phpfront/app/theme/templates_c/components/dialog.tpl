@@ -53,6 +53,8 @@
 			<a class="btn" id="preview-download" href="#" download>Download</a>
 			<span class="preview-actions" id="preview-actions"></span>
 			<button type="button" class="btn" id="preview-edit" hidden>Edit</button>
+			<button type="button" class="btn" id="preview-push" hidden>Push</button>
+			<button type="button" class="btn" id="preview-cancel" hidden>Cancel</button>
 			<button type="button" class="btn btn-primary" id="preview-save" hidden>Save</button>
 			<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 		</div>

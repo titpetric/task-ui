@@ -2,10 +2,12 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 
@@ -17,10 +19,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// viewFile returns a file of a folder's checkout for the preview window,
-// /api/files/<folder>/<path>, for whoever sees the folder. Only a file
-// inside the checkout opens: a path with .., a symlink out of it, a
-// sealed entry or a path through one answer 404, as a directory does.
+// viewFile returns a file of a folder's checkout, or its bytes with ?raw, for whoever sees the folder.
 func (h *Handlers) viewFile(w http.ResponseWriter, r *http.Request) {
 	f, rel := folder.Resolve(h.opts.Catalogue, param(r, "*"))
 	if f == nil || rel == "" || !access.UserFrom(r.Context()).CanSee(f.ID) {
@@ -41,6 +40,11 @@ func (h *Handlers) viewFile(w http.ResponseWriter, r *http.Request) {
 	info, err := file.Stat()
 	if err != nil || !info.Mode().IsRegular() {
 		failErr(w, storage.ErrNotFound)
+		return
+	}
+	if _, raw := r.URL.Query()["raw"]; raw {
+		w.Header().Set("Content-Type", runner.ContentType(rel))
+		http.ServeContent(w, r, path.Base(rel), info.ModTime(), file)
 		return
 	}
 	data, err := io.ReadAll(io.LimitReader(file, maxPreview))
@@ -73,4 +77,116 @@ func (h *Handlers) viewFile(w http.ResponseWriter, r *http.Request) {
 		view.HTML = string(highlight.HTML(rel, view.Text))
 	}
 	writeJSON(w, http.StatusOK, view)
+}
+
+// maxFileWrite bounds a file written into a checkout from the editor.
+const maxFileWrite = 16 << 20
+
+// fileSaved is what the editor's Save answers.
+type fileSaved struct {
+	Folder    string `json:"folder"`
+	Path      string `json:"path"`
+	Commit    string `json:"commit,omitempty"`
+	Committed bool   `json:"committed"`
+}
+
+// writeFile writes a text file of a checkout and commits it as the checkout's user.
+func (h *Handlers) writeFile(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "project/edit") {
+		return
+	}
+	f, rel := folder.Resolve(h.opts.Catalogue, param(r, "*"))
+	if f == nil || rel == "" || !access.UserFrom(r.Context()).CanSee(f.ID) {
+		failErr(w, storage.ErrNotFound)
+		return
+	}
+	full, ok := f.Path(rel)
+	if !ok {
+		failErr(w, storage.ErrNotFound)
+		return
+	}
+	info, err := os.Stat(full)
+	if err != nil || !info.Mode().IsRegular() {
+		failErr(w, storage.ErrNotFound)
+		return
+	}
+	defer r.Body.Close()
+	data, err := io.ReadAll(io.LimitReader(r.Body, maxFileWrite+1))
+	if err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if len(data) > maxFileWrite {
+		fail(w, http.StatusRequestEntityTooLarge, "a file written from the editor is at most 16 MiB")
+		return
+	}
+	if !utf8.Valid(data) || bytes.IndexByte(data, 0) >= 0 {
+		fail(w, http.StatusBadRequest, "a binary file is not editable")
+		return
+	}
+	if err := os.WriteFile(full, data, info.Mode().Perm()); err != nil {
+		failErr(w, err)
+		return
+	}
+	saved := fileSaved{Folder: f.ID, Path: rel}
+	if h.opts.Git != nil {
+		if checkout := h.opts.Git.Checkout(f.Dir, f.Depth()); checkout != "" {
+			target, err := filepath.Rel(checkout, full)
+			if err == nil {
+				commit, made, err := h.opts.Git.CommitPath(r.Context(), checkout, filepath.ToSlash(target), "edit: "+rel)
+				if err != nil {
+					writeJSON(w, http.StatusInternalServerError, map[string]any{
+						"written": true,
+						"folder":  f.ID,
+						"path":    rel,
+						"error":   "the file was written but the commit failed: " + err.Error(),
+					})
+					return
+				}
+				saved.Commit, saved.Committed = commit, made
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, saved)
+}
+
+// pushRequest names the folder whose checkout the Push action sends.
+type pushRequest struct {
+	Folder string `json:"folder"`
+}
+
+// pushCheckout pushes a folder's checkout, with the key the instance holds.
+func (h *Handlers) pushCheckout(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "project/edit") {
+		return
+	}
+	var req pushRequest
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
+		fail(w, http.StatusBadRequest, "a folder is needed")
+		return
+	}
+	f, _ := folder.Resolve(h.opts.Catalogue, req.Folder)
+	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
+		failErr(w, storage.ErrNotFound)
+		return
+	}
+	if h.opts.Git == nil {
+		fail(w, http.StatusBadRequest, "this instance holds no git")
+		return
+	}
+	checkout := h.opts.Git.Checkout(f.Dir, f.Depth())
+	if checkout == "" {
+		fail(w, http.StatusBadRequest, "the folder is not a git checkout")
+		return
+	}
+	var out bytes.Buffer
+	if err := h.opts.Git.Push(r.Context(), checkout, &out); err != nil {
+		said := strings.TrimSpace(out.String())
+		if said == "" {
+			said = err.Error()
+		}
+		fail(w, http.StatusBadGateway, said)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"pushed": true, "output": strings.TrimSpace(out.String())})
 }
