@@ -59,7 +59,7 @@ class mod_sidebar implements Module {
 		));
 
 		$admin = Task\User::admin($chrome->user);
-		$store = new Task\Sidebar;
+		$store = new Task\Sidebar(Task\DB::writer());
 
 		$store->seed();
 		$items = $store->all();
