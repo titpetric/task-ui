@@ -162,16 +162,10 @@ data-api="/api/sidebar" data-method="PUT" data-next="reload" data-notice="Sideba
 				<td class="key">
 					<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['row']['icon'], ENT_QUOTES);?>
 "/></svg>
-<?php if($_v['row']['note']){?>
-					<?php echo htmlspecialchars($_v['row']['title'], ENT_QUOTES);?>
-<small class="faint"><?php echo htmlspecialchars($_v['row']['note'], ENT_QUOTES);?>
-</small>
-				</td>
-<?php }else{?>
 					<?php echo htmlspecialchars($_v['row']['title'], ENT_QUOTES);?>
 
 				</td>
-<?php }?>				<td class="mono"><a href="<?php echo htmlspecialchars($_v['row']['link'], ENT_QUOTES);?>
+				<td class="mono"><a href="<?php echo htmlspecialchars($_v['row']['link'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
 </a></td>
 				<td class="num">

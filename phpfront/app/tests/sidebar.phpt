@@ -42,7 +42,6 @@ $modules = array(
 	mod("taskui/quiet", "Quiet", "box", "/fx-sb/quiet", false, ""),
 );
 
-$modules[0]->setDescription("Every run.");
 
 Task\Host::$rules = array(
 	"paths" => array("note/view", "run", "user/view"),
@@ -105,7 +104,7 @@ echo $links["Runs"], " ", $links["A module"], "\n";
 // order: the one no row saved goes last. Each carries the module's own title,
 // icon and description, not the saved row's.
 foreach ($sidebar->rows($sidebar->all()) as $row) {
-	echo $row["title"], "=", $row["hidden"] ? "hidden" : "shown", "=", $row["kind"], "=", $row["icon"], "=", $row["note"], "\n";
+	echo $row["title"], "=", $row["hidden"] ? "hidden" : "shown", "=", $row["kind"], "=", $row["icon"], "\n";
 }
 
 // The page being read is the row it sits under: the row's own path, and
@@ -142,13 +141,13 @@ Open=/development/fx-sb/open,Runs=/development/fx-sb/runs,A module=/m/titpetric/
 Open=/development/fx-sb/open,Runs=/development/fx-sb/runs,Settings=/development/fx-sb/settings,A module=/m/titpetric/fx-sb,New=/development/fx-sb/new
 Open=/development/fx-sb/open,A module=/m/titpetric/fx-sb,New=/development/fx-sb/new
 /development/fx-sb/runs /m/titpetric/fx-sb
-Hidden=hidden=view=box=
-Open=shown=view=box=
-Notes=shown=view=note=
-Runs=shown=view=play=Every run.
-Settings=shown=view=settings=
-A module=shown=module=flow=
-New=shown=view=grid=
+Hidden=hidden=view=box
+Open=shown=view=box
+Notes=shown=view=note
+Runs=shown=view=play
+Settings=shown=view=settings
+A module=shown=module=flow
+New=shown=view=grid
 true true
 false false true
 play note-o script box

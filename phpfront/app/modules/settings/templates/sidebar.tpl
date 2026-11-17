@@ -14,11 +14,9 @@
 				</td>
 				<td class="key">
 					<svg class="ic"><use href="#i-{row.icon}"/></svg>
-{if $row.note}					{row.title}<small class="faint">{row.note}</small>
+					{row.title}
 				</td>
-{else}					{row.title}
-				</td>
-{/if}				<td class="mono"><a href="{row.link}">{row.href}</a></td>
+				<td class="mono"><a href="{row.link}">{row.href}</a></td>
 				<td class="num">
 					<label class="switch" title="{if $row.hidden}Left out of the sidebar{else}Listed in the sidebar{/if}">
 						<input type="checkbox" data-row-shown="{if $row.hidden}false{else}true{/if}"{if !$row.hidden} checked{/if}{if !$data.admin} disabled{/if} aria-label="Show {row.title} in the sidebar">

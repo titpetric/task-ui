@@ -118,7 +118,7 @@ class Sidebar {
 	/**
 	 * listing pairs the modules that enabled a row with the saved row of
 	 * their link: the order and the hidden flag are the table's, the title,
-	 * icon, rule and description are the module's own. A module that enabled
+	 * icon and rule are the module's own. A module that enabled
 	 * no row, and a second module of a link already listed, are left out.
 	 */
 	static function listing($modules, $items) {
@@ -146,7 +146,6 @@ class Sidebar {
 				"title" => $module->getTitle(),
 				"icon" => self::icon($module->getIcon()),
 				"rule" => $module->getSideBarRule(),
-				"note" => $module->getDescription(),
 				"hidden" => $row !== null && $row->getHidden(),
 				"position" => $row === null ? 1000 + $index : $row->getPosition(),
 				"order" => $index,

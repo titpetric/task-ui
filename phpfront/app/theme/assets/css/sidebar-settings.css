@@ -8,6 +8,7 @@
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
+    white-space: normal;
   }
 
   & td.key .ic {
@@ -16,10 +17,6 @@
     height: 0.95rem;
     color: var(--text-faint);
     transform: translateY(0.15rem);
-  }
-
-  & td.key small {
-    font-size: 0.8125rem;
   }
 }
 
