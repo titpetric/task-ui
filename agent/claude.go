@@ -1,8 +1,11 @@
 package agent
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -26,8 +29,7 @@ func (a *Agent) getenv(name string) string {
 	return value
 }
 
-// signedIn reports whether Claude Code has a sign-in: an OAuth token, or
-// OpenRouter's auth token with its base URL.
+// signedIn reports whether Claude Code has an OAuth token, or OpenRouter's auth token and base URL.
 func (a *Agent) signedIn() bool {
 	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") != "" {
 		return true
@@ -35,8 +37,7 @@ func (a *Agent) signedIn() bool {
 	return a.getenv("ANTHROPIC_AUTH_TOKEN") != "" && a.getenv("ANTHROPIC_BASE_URL") != ""
 }
 
-// environ returns a.Env with IS_SANDBOX=1, which skips Claude's permission prompts as root.
-// A run with a home also reads the CLAUDE.md of every added directory.
+// environ returns a.Env with IS_SANDBOX=1 and the flag that reads the CLAUDE.md of every added directory.
 func (a *Agent) environ() []string {
 	env := append(append([]string{}, a.Env...), "IS_SANDBOX=1")
 	if a.getenv("TASK_UI_HOME") != "" {
@@ -45,8 +46,7 @@ func (a *Agent) environ() []string {
 	return env
 }
 
-// homeArgs returns --add-dir TASK_UI_HOME for a session in dir, so Claude reads that home's CLAUDE.md and skills.
-// It returns nil when the home is unset or is dir itself.
+// homeArgs returns --add-dir TASK_UI_HOME unless the home is unset or is dir itself.
 func (a *Agent) homeArgs(dir string) []string {
 	home := a.getenv("TASK_UI_HOME")
 	if home == "" || filepath.Clean(home) == filepath.Clean(dir) {
@@ -85,8 +85,7 @@ func (a *Agent) claudePath() (string, error) {
 	return "", errors.New("claude: not found in PATH")
 }
 
-// ask runs claude -p on prompt in dir and writes the reply to out.
-// It appends system, TASK_UI_MCP_CONFIG and the workspace home when each is set.
+// ask runs claude -p on prompt in dir, streams its work to a.Stdout and writes the final answer to out.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if !a.signedIn() {
 		return errNoToken
@@ -95,7 +94,7 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 	if err != nil {
 		return err
 	}
-	args := append([]string{"-p", "--dangerously-skip-permissions", "--output-format", "text"}, a.homeArgs(dir)...)
+	args := append([]string{"-p", "--dangerously-skip-permissions", "--output-format", "stream-json", "--verbose"}, a.homeArgs(dir)...)
 	if config := a.getenv("TASK_UI_MCP_CONFIG"); config != "" {
 		args = append(args, "--mcp-config", config)
 	}
@@ -105,6 +104,83 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 	cmd := exec.CommandContext(ctx, path, append(args, prompt)...)
 	cmd.Dir = dir
 	cmd.Env = a.environ()
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = a.Stdin, out, a.Stderr
-	return cmd.Run()
+	cmd.Stdin, cmd.Stderr = a.Stdin, a.Stderr
+	pipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	streamClaude(pipe, a.Stdout, out)
+	return cmd.Wait()
+}
+
+// claudeEvent is the part of a stream-json line the run reads: what Claude writes, does and answers.
+type claudeEvent struct {
+	Type    string `json:"type"`
+	Message struct {
+		Content []struct {
+			Type  string          `json:"type"`
+			Text  string          `json:"text"`
+			Name  string          `json:"name"`
+			Input json.RawMessage `json:"input"`
+		} `json:"content"`
+	} `json:"message"`
+	Result string `json:"result"`
+}
+
+// streamClaude writes each message and tool Claude writes to progress, and the run's answer to answer.
+func streamClaude(r io.Reader, progress, answer io.Writer) {
+	if answer == nil {
+		answer = io.Discard
+	}
+	said := false
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 0, 64<<10), 16<<20)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		var event claudeEvent
+		if json.Unmarshal(line, &event) != nil {
+			fmt.Fprintln(progress, string(line))
+			continue
+		}
+		if event.Type == "assistant" {
+			for _, block := range event.Message.Content {
+				if block.Type == "text" && strings.TrimSpace(block.Text) != "" {
+					fmt.Fprintln(progress, block.Text)
+					said = true
+				}
+				if block.Type == "tool_use" {
+					fmt.Fprintln(progress, toolLine(block.Name, block.Input))
+				}
+			}
+		}
+		if event.Type == "result" && event.Result != "" {
+			fmt.Fprintln(answer, event.Result)
+			if !said {
+				fmt.Fprintln(progress, event.Result)
+			}
+		}
+	}
+}
+
+// toolLine names a tool Claude uses and the value that says what it works on.
+func toolLine(name string, input json.RawMessage) string {
+	fields := map[string]any{}
+	_ = json.Unmarshal(input, &fields)
+	detail := ""
+	for _, key := range []string{"description", "command", "file_path", "path", "pattern", "query", "url", "prompt"} {
+		if value, ok := fields[key].(string); ok && value != "" {
+			detail = strings.Join(strings.Fields(value), " ")
+			break
+		}
+	}
+	if len(detail) > 160 {
+		detail = detail[:160] + "..."
+	}
+	if detail == "" {
+		return "> " + name
+	}
+	return "> " + name + ": " + detail
 }

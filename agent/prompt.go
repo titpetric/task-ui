@@ -46,14 +46,14 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		prompt = aboutWorkflow(string(run), thread, source)
 	}
 
-	out := a.Stdout
+	var out io.Writer
 	if path := a.getenv("TASK_UI_PROMPT_REPLY"); path != "" {
 		reply, err := os.Create(path)
 		if err != nil {
 			return err
 		}
 		defer reply.Close()
-		out = io.MultiWriter(a.Stdout, reply)
+		out = reply
 	}
 	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), source, inventory(a.getenv("TASK_UI_HOSTS")), a.context()), out)
 }
@@ -78,7 +78,6 @@ func system(parts ...string) string {
 }
 
 // aboutRun returns the prompt of a thread from a run's page: run, then thread.
-// A fix the question names is committed to main.
 func aboutRun(run, thread, source string) string {
 	return "A prompt from the page of a task-ui run, about that run. The run:\n\n" +
 		strings.TrimSpace(run) + "\n\n" +
@@ -87,8 +86,7 @@ func aboutRun(run, thread, source string) string {
 		thread + "\n\n" + answerLine(source, "the run's page")
 }
 
-// aboutWorkflow returns the prompt a workflow step asks once the steps before it ended: run, then thread, the workflow's prompt first.
-// Claude changes nothing the prompt does not name.
+// aboutWorkflow returns the prompt a workflow step asks: run, then thread, the workflow's prompt first.
 func aboutWorkflow(run, thread, source string) string {
 	return "A prompt of a task-ui workflow, asked in a run of the workflow once the steps before it ended, about that run. The run:\n\n" +
 		strings.TrimSpace(run) + "\n\n" +

@@ -23,20 +23,19 @@ func (a *Agent) Note(ctx context.Context) error {
 	}
 	prompt := notePrompt(a.getenv("TASK_UI_NOTE_ID"), author, a.getenv("TASK_UI_NOTE_AGENT"), thread)
 
-	out := a.Stdout
+	var out io.Writer
 	if path := a.getenv("TASK_UI_NOTE_REPLY"); path != "" {
 		reply, err := os.Create(path)
 		if err != nil {
 			return err
 		}
 		defer reply.Close()
-		out = io.MultiWriter(a.Stdout, reply)
+		out = reply
 	}
 	return a.ask(ctx, a.getenv("TASK_UI_WORKSPACE_DIR"), prompt, a.context(), out)
 }
 
-// notePrompt returns the prompt for note id: the author, the thread, and the agent this run answers as.
-// A message naming several agents splits the work, so the agent has to be named.
+// notePrompt returns the prompt for note id: the author, the thread and the agent this run answers as.
 func notePrompt(id, author, agent, thread string) string {
 	you := "you"
 	if agent != "" {
