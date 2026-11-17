@@ -40,23 +40,27 @@
 // window; the only write is taskUI.paste on send, which is the whole of the
 // interface this file has. There is no path from the recogniser to the socket.
 //
-// Send goes to the run when one is attached and takes input, and to Claude
-// otherwise: the window then shows what the request is doing and reads the
-// reply out through a voice this device holds.
+// Send goes to the run when one is attached and takes input, to Claude
+// otherwise, and to a board note where no Claude integration is set up: the
+// window then says so and the thread page plays the clip beside its words.
 //
-// Everything but a run goes to one prompt thread, which is the session: the
-// first clip opens it and every later one replies in it, so Claude reads the
-// conversation so far and holds the task tools to do what is asked with. The
-// window follows the thread over the notes event stream for as long as it is
-// open, so a reply Claude writes after the work it started finishes arrives
-// and plays on its own. A device with no recogniser sends the clip alone and
-// the session transcribes it. See docs/guide/voice.md.
+// Everything but a run goes to one thread, which is the session: the first
+// clip opens it and every later one replies in it. With a coding harness it is
+// a prompt thread, Claude reads the conversation so far and holds the task
+// tools, and the window follows it over the notes event stream, so a reply
+// written after the work finishes arrives and plays on its own. Without one it
+// is a board note and there is no reply to wait for. A device with no
+// recogniser sends the clip alone and the session transcribes it. See
+// docs/guide/voice.md.
 (function (TAP) {
   "use strict";
 
   var overlay = document.getElementById("voice-overlay");
   var orb = document.getElementById("voice-orb");
   if (!overlay || !orb || !window.taskUI) return;
+
+  var canAgent = overlay.hasAttribute("data-claude");
+  var canNote = overlay.hasAttribute("data-note-edit");
 
   var dialog = document.getElementById("run-dialog");
   var mic = document.getElementById("run-mic");
@@ -214,14 +218,22 @@
   // because a modal run window puts the orb behind its backdrop.
   function paint() {
     orb.hidden = !canRecord;
-    orb.title = ready || server ? "Dictate" : "Record";
+    orb.title = orbTitle();
+    orb.setAttribute("aria-label", orb.title);
     if (mic) mic.hidden = !(canRecord && mic.dataset.allowed);
     if (!wakeBtn) return;
     // The switch shows where a name can be heard at all, which takes a
-    // transcriber: this instance's, or the one in this browser.
-    wakeBtn.hidden = !(canRecord && (server || ready));
+    // transcriber and an agent to call.
+    wakeBtn.hidden = !(canAgent && canRecord && (server || ready));
     wakeBtn.setAttribute("aria-pressed", wakeOn ? "true" : "false");
     wakeBtn.classList.toggle("on", wakeOn);
+  }
+
+  // orbTitle names the corner orb for the target the page offers: a note, a prompt or the raw recording.
+  function orbTitle() {
+    if (waking) return "Listening for a name";
+    if (!canAgent) return "Record a note";
+    return ready || server ? "Dictate" : "Record";
   }
 
   // probe settles once whether this browser transcribes without sending the
@@ -470,11 +482,7 @@
     return base;
   }
 
-  // keep writes the recording and the words beside each other under voice/ in
-  // the artifact tree, where the Dictations retention rule ages them out. It
-  // returns the path the pair shares, or empty when a write failed: a reader
-  // without artifact/edit dictates all the same. With no words there is no
-  // .txt, and the clip alone is what the session is asked to transcribe.
+  // keep writes the recording and the words under voice/ and returns the clip's path, or empty when the clip was not written.
   function keep(words) {
     var audio = wav();
     if (!audio) return Promise.resolve("");
@@ -482,7 +490,7 @@
     var writes = [put(at + ".wav", audio, "audio/wav")];
     if (words) writes.push(put(at + ".txt", words, "text/plain"));
     return Promise.all(writes).then(function (ok) {
-      return ok.indexOf(false) < 0 ? at : "";
+      return ok[0] ? at : "";
     }, function () { return ""; });
   }
 
@@ -617,7 +625,7 @@
       word = String(word || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
       if (word.length >= WORD) out.push({ value: value, word: word });
     };
-    if (agent) {
+    if (agent && canAgent) {
       Array.prototype.forEach.call(agent.options, function (option) {
         add(option.value, option.value || option.textContent.replace(/\(you\)/i, ""));
       });
@@ -690,7 +698,7 @@
       hit.rest = "";
     }
     streaming(false);
-    if (agent && agent.value !== hit.value) {
+    if (canAgent && agent && agent.value !== hit.value) {
       agent.value = hit.value;
       if (overlay.open) wear(agentName());
     }
@@ -763,6 +771,7 @@
   // switched turns the listening on or off and remembers which, so hands
   // free is one press ever.
   function switched(on) {
+    if (!canAgent) on = false;
     wakeOn = !!on;
     try { window.localStorage.setItem(WAKEKEY, wakeOn ? "1" : ""); } catch (e) { /* no storage here */ }
     if (!wakeOn) deaf();
@@ -1060,12 +1069,15 @@
     document.head.appendChild(script);
   }
 
-  // target picks where send puts the words. A run that is attached and takes
-  // input is the terminal; anything else is the header prompt, which is on
-  // every page a user may ask Claude from.
+  // target picks where send puts the words: the terminal, the board note, Claude, or the artifacts.
   function target() {
     if (window.taskUI.attached()) return { kind: "run", say: "Sends to the run" };
-    if (document.getElementById("header-prompt")) return { kind: "prompt", say: "Asks Claude, and reads the answer out" };
+    if (canNote && (!canAgent || !document.getElementById("header-prompt"))) {
+      return { kind: "note", say: "Records your note" };
+    }
+    if (canAgent && document.getElementById("header-prompt")) {
+      return { kind: "prompt", say: "Asks Claude, and reads the answer out" };
+    }
     return { kind: "keep", say: "Keeps the recording in the artifacts" };
   }
 
@@ -1135,7 +1147,8 @@
     // The corner orb says the page is listening, which is the only sign of
     // it while the window is shut.
     orb.classList.toggle("listening", waking);
-    orb.title = waking ? "Listening for a name" : (ready || server ? "Dictate" : "Record");
+    orb.title = orbTitle();
+    orb.setAttribute("aria-label", orb.title);
     stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
     stage.title = now === "recording" ? "Stop and send" : (now === "paused" ? "Send" : "Record");
     stage.setAttribute("aria-label", stage.title);
@@ -1459,6 +1472,59 @@
     }, thread, agentName(), { audio: clip ? clip + ".wav" : "", spoken: words });
   }
 
+  // noted leaves a spoken note on the board when no agent answers, and says so in the window.
+  function noted(words, clip) {
+    var mine = ++gen;
+    pending = true;
+    failed = false;
+    answer = "";
+    reply = "";
+    holding = "";
+    holdingAt = 0;
+    replayBtn.hidden = true;
+    said.textContent = "";
+    ticking("Saving");
+    fetch("/api/voice/note", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        parent_id: thread,
+        spoken: words,
+        audio: clip ? clip + ".wav" : "",
+      }),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        return { ok: res.ok, status: res.status, data: data || {} };
+      }, function () {
+        return { ok: false, status: res.status, data: {} };
+      });
+    }).then(function (res) {
+      if (mine !== gen) return;
+      if (!res.ok) {
+        if (res.status === 404) thread = "";
+        throw new Error((res.data && res.data.error) || ("HTTP " + res.status));
+      }
+      var note = res.data || {};
+      var audio = note.audio_path || (clip ? clip + ".wav" : "");
+      thread = note.parent_id || note.id || thread;
+      stamp = audio.replace(/\.wav$/, "");
+      answer = words || "";
+      reply = audio ? file(audio) + "?raw" : "";
+      pending = false;
+      failed = false;
+      replayBtn.hidden = !reply;
+      ended("Note recorded");
+      dress(words ? "Your note has been recorded and transcribed." : "Your note has been recorded.");
+      where.textContent = "Note recorded";
+      say("Note recorded", "ok");
+      shape();
+    }).catch(function (err) {
+      if (mine !== gen) return;
+      fell(err, "The note was not saved");
+    });
+  }
+
   // follow watches the thread for as long as the window is open, so a reply
   // Claude writes after the work it started finishes reaches the window on
   // its own. It is one stream for the session.
@@ -1586,12 +1652,8 @@
     });
   }
 
-  // fell leaves the reason in the window and in a toast, since a phone shows
-  // the window for as long as it is open and the toast after that.
-  // A failed run posts its reason as a reply, so the window has already taken
-  // it for an answer and gone looking for the audio of it. Letting go of the
-  // answer here is what stops that hunt and keeps the reason off the replay.
-  function fell(err) {
+  // fell leaves the reason in the window and in a toast, and drops a reply that was only the run's failure.
+  function fell(err, what) {
     var why = (err && err.message) || String(err);
     pending = false;
     failed = true;
@@ -1602,7 +1664,7 @@
     stopped();
     shape();
     where.textContent = why;
-    say("The recording was kept but not answered: " + why, "bad");
+    say((what || "The recording was kept but not answered") + ": " + why, "bad");
   }
 
   // play plays the reply the instance synthesised, and reads the words out
@@ -1685,10 +1747,7 @@
     dress();
   }
 
-  // send delivers the words, writes the file and leaves the window open on
-  // an empty buffer, so the next sentence is one press away. Everything but
-  // a run goes to the session, with the clip for Claude to transcribe when
-  // this device could not.
+  // send delivers the words, writes the file and leaves the window open on an empty buffer, so the next sentence is one press away.
   function send() {
     if (state() === "idle" || waking) return;
     var words = spoken(text);
@@ -1712,6 +1771,15 @@
     at.then(function (kept) {
       if (!kept && !words) {
         say("The recording was not kept, so there was nothing to send", "bad");
+        flush();
+        return;
+      }
+      if (to.kind === "note") {
+        noted(words, kept);
+        return;
+      }
+      if (to.kind === "keep") {
+        if (kept) say("Recording kept in artifacts, under voice/", "ok");
         flush();
         return;
       }
@@ -1816,7 +1884,7 @@
     if (waking) deaf();
     else if (media) pause();
   });
-  try { wakeOn = !!window.localStorage.getItem(WAKEKEY); } catch (e) { wakeOn = false; }
+  try { wakeOn = canAgent && !!window.localStorage.getItem(WAKEKEY); } catch (e) { wakeOn = false; }
   probe();
   // The page listens for a name with the window shut as well: the switch
   // is the reader's standing answer, and this is what acts on it.

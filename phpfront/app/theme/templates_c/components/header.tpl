@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars; if($_v['data']['can']['prompt/edit']){?>
+<?php $_v=&$this->vars; if($_v['data']['can']['prompt/edit'] && $_v['data']['claude']){?>
 	<header class="top" data-prompt-folder="<?php echo htmlspecialchars($_v['data']['prompt']['folder'], ENT_QUOTES);?>
 " data-prompt-dir="<?php echo htmlspecialchars($_v['data']['prompt']['dir'], ENT_QUOTES);?>
 " data-prompt-run="<?php echo htmlspecialchars($_v['data']['prompt']['run'], ENT_QUOTES);?>

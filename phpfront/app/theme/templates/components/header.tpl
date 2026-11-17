@@ -1,4 +1,4 @@
-{if $data.can['prompt/edit']}	<header class="top" data-prompt-folder="{data.prompt.folder}" data-prompt-dir="{data.prompt.dir}" data-prompt-run="{data.prompt.run}" data-prompt-label="{data.prompt.label}" data-prompt-href="{data.prompt.href}">
+{if $data.can['prompt/edit'] && $data.claude}	<header class="top" data-prompt-folder="{data.prompt.folder}" data-prompt-dir="{data.prompt.dir}" data-prompt-run="{data.prompt.run}" data-prompt-label="{data.prompt.label}" data-prompt-href="{data.prompt.href}">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="{data.base}/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{include components/logo.tpl}</button></h1>
 		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">

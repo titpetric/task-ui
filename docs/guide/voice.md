@@ -9,7 +9,8 @@ The orb shows wherever the browser can open a microphone: a secure page, so `htt
 Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifacts.md), which needs `artifact/edit`; without it you still dictate and a toast says the recording went nowhere. The **Dictations** rule on the [Data retention](settings.md#data-retention) page is what takes it out again, every version of it, 31 days on at the start. Where it goes next depends on the browser and the page:
 
 - **A run is attached and takes input.** The words go to the terminal as if typed, with no newline: punctuation is spelled out as `[dot]`, `[slash]` and the rest, so a dictated sentence cannot run a command.
-- **Anything else.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
+- **A coding harness is set up.** The words go to Claude, in the session below. The window shows what the request is doing, then what came back, played as audio.
+- **No coding harness is set up.** The words go to a board note, in the session below, with the recording linked beside them and no Claude run started. The window says `Your note has been recorded and transcribed.`, or `Your note has been recorded.` when nothing was transcribed. The note is written directly. A transcript that names `@claude` starts nothing.
 
 ## Wake
 
@@ -17,7 +18,7 @@ Send writes the recording to `voice/<stamp>.wav` in the [artifact tree](artifact
 
 **The recording starts at the sentence the name is in.** Everything the listener held before it goes, so the clip is that sentence and the dead air after it, not the minutes of room the page listened through. A sentence is a run of speech with at least six tenths of a second of quiet in front of it.
 
-The names are the ones the picker lists, every agent in the system and your own, and `hey` or `ok` in front of one is a word like any other. A name under three letters is left out: `ed` and `al` are words of a sentence as often as they are names, and the listener cannot tell the two apart. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. It holds between windows and pages, so hands free is one press ever, and the orb in the corner stands in the signal colour while the page listens.
+The names are the ones the picker lists, every agent in the system and your own, and `hey` or `ok` in front of one is a word like any other. A name under three letters is left out: `ed` and `al` are words of a sentence as often as they are names, and the listener cannot tell the two apart. The switch shows where a name can be heard at all, which takes a transcriber: this instance's, or the one in the browser. Without a coding harness there is no one to call. The switch is not there. A page already listening stays shut. It holds between windows and pages, so hands free is one press ever, and the orb in the corner stands in the signal colour while the page listens.
 
 One a press started still ends on a press, however long the quiet runs. Pressing the orb while the page is listening starts the recording there and then, and drops everything heard before the press.
 
@@ -36,7 +37,7 @@ The listening is a microphone and nothing else: a piece with no name in it is dr
 
 ## Who transcribes
 
-With the **Speech to text** integration set up, this instance transcribes: the recording goes to `POST /api/voice/transcribe` once, whole, when it ends, and whisper.cpp answers with the words. **A recording is never cut into pieces.** A cut lands mid-word, each piece is a whisper run of its own on the instance, and the words of one arrive while the next sentence is still being said. The window counts the seconds it waits, under `Transcribing`. Transcribing takes `prompt/edit`, the same as asking Claude.
+With the **Speech to text** integration set up, this instance transcribes: the recording goes to `POST /api/voice/transcribe` once, whole, when it ends, and whisper.cpp answers with the words. **A recording is never cut into pieces.** A cut lands mid-word, each piece is a whisper run of its own on the instance, and the words of one arrive while the next sentence is still being said. The window counts the seconds it waits, under `Transcribing`. Transcribing takes `note/edit` or `prompt/edit`, because the words feed a board note or a prompt.
 
 The integration names two paths: the `whisper-cli` binary and the ggml model, both built and downloaded by the `setup` job of the `stt` folder.
 
@@ -56,7 +57,9 @@ Only one of the two reads a recording. Where the server transcribes, the device'
 
 ## The session
 
-Everything the orb sends, bar a run's terminal, goes to one prompt thread. The first clip opens it; every later one replies in it. Claude reads the whole conversation each time and holds [the task tools](mcp.md), so it can run jobs, start workflows and read artifacts to answer, or to do the work itself.
+Everything the orb sends, bar a run's terminal, goes to one thread. With a coding harness it is a prompt thread: the first clip opens it, every later one replies in it, and Claude reads the whole conversation each time. It holds [the task tools](mcp.md), so it can run jobs, start workflows and read artifacts to answer, or to do the work itself.
+
+Without a coding harness the thread is a board note. The first clip opens it with the transcript in the body and the recording in `audio_path`. Every later clip replies in it. `/threads/<id>` shows each transcript with its `<audio>` player, pointed at the raw clip. No agent reads it and no reply is awaited.
 
 The thread opens with an instruction the orb writes: reply in two or three spoken sentences of plain words; for work that takes a while, leave a sentence saying what you started, do it, then answer with what came of it; and after each reply write the same sentences to `<clip>.N.reply.txt` and run the `speak` job of `titpetric/stt`, so the window has the audio.
 

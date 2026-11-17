@@ -1,7 +1,7 @@
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
-	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
+	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"{if $chrome.claude} data-claude{/if}{if $chrome.can['note/edit']} data-note-edit{/if}>
 		<div class="voice-who">
-{if $chrome.agents}			<label for="voice-agent">Talking to</label>
+{if $chrome.agents && $chrome.claude}			<label for="voice-agent">Talking to</label>
 			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
 				<option value="">{chrome.user.name} (you)</option>
 {foreach $chrome.agents as $agent}				<option value="{agent}">@{agent}</option>

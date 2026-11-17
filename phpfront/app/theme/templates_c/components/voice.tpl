@@ -1,8 +1,10 @@
 <?php $_v=&$this->vars;?>
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
-	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
+	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"<?php if($_v['chrome']['claude']){?>
+ data-claude<?php }?><?php if($_v['chrome']['can']['note/edit']){?>
+ data-note-edit<?php }?>>
 		<div class="voice-who">
-<?php if($_v['chrome']['agents']){?>
+<?php if($_v['chrome']['agents'] && $_v['chrome']['claude']){?>
 			<label for="voice-agent">Talking to</label>
 			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
 				<option value=""><?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>

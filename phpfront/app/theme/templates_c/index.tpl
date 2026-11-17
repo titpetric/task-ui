@@ -90,7 +90,7 @@ view<?php }?>">
 <?php if($_v['chrome']['user']){?>
 
 <a class="skip-link" href="#main">Skip to content</a>
-<?php $_v['data'] = $_v['chrome'];if($_v['data']['can']['prompt/edit']){?>
+<?php $_v['data'] = $_v['chrome'];if($_v['data']['can']['prompt/edit'] && $_v['data']['claude']){?>
 	<header class="top" data-prompt-folder="<?php echo htmlspecialchars($_v['data']['prompt']['folder'], ENT_QUOTES);?>
 " data-prompt-dir="<?php echo htmlspecialchars($_v['data']['prompt']['dir'], ENT_QUOTES);?>
 " data-prompt-run="<?php echo htmlspecialchars($_v['data']['prompt']['run'], ENT_QUOTES);?>
@@ -486,9 +486,11 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 	</dialog>
 
 	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
-	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate">
+	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"<?php if($_v['chrome']['claude']){?>
+ data-claude<?php }?><?php if($_v['chrome']['can']['note/edit']){?>
+ data-note-edit<?php }?>>
 		<div class="voice-who">
-<?php if($_v['chrome']['agents']){?>
+<?php if($_v['chrome']['agents'] && $_v['chrome']['claude']){?>
 			<label for="voice-agent">Talking to</label>
 			<select id="voice-agent" class="voice-agent" aria-label="Talking to">
 				<option value=""><?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>

@@ -119,6 +119,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Delete("/integrations/spotify/link", h.spotifyUnlink)
 	r.Post("/voice/transcribe", h.voiceTranscribe)
 	r.Get("/voice/ready", h.voiceReady)
+	r.Post("/voice/note", h.voiceNote)
 	r.Post("/forms", h.listForms)
 	r.Get("/spotify/now-playing", h.spotifyNowPlaying)
 	r.Get("/spotify/search", h.spotifySearch)
@@ -255,7 +256,7 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrBacklogFull):
 		return http.StatusTooManyRequests
-	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAssigned):
+	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNoteForbidden), errors.Is(err, note.ErrNotAssigned):
 		return http.StatusForbidden
 	case errors.Is(err, secret.ErrNoKey), errors.Is(err, keystore.ErrExists):
 		return http.StatusConflict
@@ -271,8 +272,7 @@ func statusOf(err error) int {
 	return http.StatusInternalServerError
 }
 
-// storageNotFound is the not found error, named for the handlers that
-// find nothing themselves.
+// storageNotFound is the not found error, named for the handlers that find nothing themselves.
 var storageNotFound = storage.ErrNotFound
 
 // queryInt reads an integer query parameter, or the fallback.
