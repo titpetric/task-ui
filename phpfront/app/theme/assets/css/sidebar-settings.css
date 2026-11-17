@@ -5,18 +5,19 @@
   }
 
   & td.key {
-    display: flex;
-    align-items: baseline;
-    gap: 0.4rem;
     white-space: normal;
   }
 
   & td.key .ic {
-    flex: none;
     width: 0.95rem;
     height: 0.95rem;
+    margin-right: 0.4rem;
     color: var(--text-faint);
-    transform: translateY(0.15rem);
+    vertical-align: -0.15rem;
+  }
+
+  & td.num .switch {
+    vertical-align: middle;
   }
 }
 
