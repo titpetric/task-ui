@@ -18,7 +18,7 @@
 /theme/ext/xterm.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/ext/mdedit/dist/mdedit.min.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/mdedit/mdedit.min.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
@@ -560,7 +560,7 @@ Add a git repository in Settings<?php }?>, or put a folder with jobs under the r
 /theme/ext/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/ext/mdedit/dist/mdedit.global.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/mdedit/mdedit.global.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>

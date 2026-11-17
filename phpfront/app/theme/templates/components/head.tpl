@@ -8,7 +8,7 @@
 	<title>{if $data.title}{data.title} | {/if}TaskUI</title>
 	<link rel="icon" href="{data.assets}/theme/icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="{data.assets}/theme/ext/xterm.css?v={data.assetVersion}">
-	<link rel="stylesheet" href="{data.assets}/theme/ext/mdedit/dist/mdedit.min.css?v={data.assetVersion}">
+	<link rel="stylesheet" href="{data.assets}/mdedit/mdedit.min.css?v={data.assetVersion}">
 	<link rel="stylesheet" href="{data.assets}/theme/task-ui.css?v={data.assetVersion}">
 	<link rel="stylesheet" href="{data.assets}/theme/voice/voice.css?v={data.assetVersion}">
 {foreach $data.styles as $style}	<link rel="stylesheet" href="{style}">

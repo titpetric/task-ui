@@ -9,7 +9,7 @@
 	</footer>
 	<script src="{data.assets}/theme/ext/xterm.js?v={data.assetVersion}" defer></script>
 	<script src="{data.assets}/theme/ext/addon-fit.js?v={data.assetVersion}" defer></script>
-	<script src="{data.assets}/theme/ext/mdedit/dist/mdedit.global.js?v={data.assetVersion}" defer></script>
+	<script src="{data.assets}/mdedit/mdedit.global.js?v={data.assetVersion}" defer></script>
 	<script src="{data.assets}/theme/task-ui.js?v={data.assetVersion}" defer></script>
 	<script src="{data.assets}/theme/voice/orbs.js?v={data.assetVersion}" defer></script>
 	<script src="{data.assets}/theme/voice/voice.js?v={data.assetVersion}" defer></script>

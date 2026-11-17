@@ -61,8 +61,9 @@ func New(segments map[string]fs.FS, revision string) *Tree {
 	return t
 }
 
-// Dirs is the segment map of an application tree: the theme's assets and
-// every module's, leaving out a directory that is not there.
+// Dirs is the segment map of an application tree: the theme's assets, the
+// editor's bundle and every module's, leaving out a directory that is not
+// there.
 func Dirs(root string) map[string]fs.FS {
 	segments := map[string]fs.FS{}
 	add := func(name, dir string) {
@@ -71,6 +72,7 @@ func Dirs(root string) map[string]fs.FS {
 		}
 	}
 	add(Theme, filepath.Join(root, "theme", "assets"))
+	add("mdedit", filepath.Join(root, "ext", "titpetric", "mdedit", "dist"))
 	entries, err := os.ReadDir(filepath.Join(root, "modules"))
 	if err != nil {
 		return segments

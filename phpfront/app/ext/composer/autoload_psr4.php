@@ -7,7 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Task\\' => array($baseDir . '/code/Task'),
-    'OomphInc\\ComposerInstallersExtender\\' => array($vendorDir . '/oomphinc/composer-installers-extender/src'),
     'MiniTPL\\' => array($vendorDir . '/titpetric/minitpl/code/MiniTPL'),
-    'Composer\\Installers\\' => array($vendorDir . '/composer/installers/src/Composer/Installers'),
 );

@@ -164,6 +164,7 @@ func TestDirs(t *testing.T) {
 	root := t.TempDir()
 	for _, dir := range []string{
 		filepath.Join(root, "theme", "assets"),
+		filepath.Join(root, "ext", "titpetric", "mdedit", "dist"),
 		filepath.Join(root, "modules", "notes", "assets"),
 		filepath.Join(root, "modules", "runs", "templates"),
 	} {
@@ -172,9 +173,10 @@ func TestDirs(t *testing.T) {
 
 	segments := assets.Dirs(root)
 	assert.Contains(t, segments, assets.Theme)
+	assert.Contains(t, segments, "mdedit")
 	assert.Contains(t, segments, "notes")
 	assert.NotContains(t, segments, "runs")
-	assert.Len(t, segments, 2)
+	assert.Len(t, segments, 3)
 }
 
 // A root holding nothing is a tree without segments, not a failure.

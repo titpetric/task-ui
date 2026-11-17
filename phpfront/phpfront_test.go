@@ -23,7 +23,7 @@ func TestApp(t *testing.T) {
 		"stubs/autoload.php", "stubs/host.php",
 		"tools/models.php", "tools/templates/model.tpl",
 		"theme/assets/task-ui.css", "theme/assets/task-ui.js",
-		"theme/assets/ext/mdedit/dist/mdedit.global.js",
+		"ext/titpetric/mdedit/dist/mdedit.global.js",
 	} {
 		data, err := fs.ReadFile(phpfront.App(), name)
 		assert.NoError(t, err, name)
@@ -43,15 +43,15 @@ func TestApp_InstallsIntoExt(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// TestApp_ThemeBundlesInExt holds the theme's browser bundles in ext and no vendor directory.
+// TestApp_ThemeBundlesInExt holds the browser bundles in ext and no vendor directory.
 func TestApp_ThemeBundlesInExt(t *testing.T) {
 	t.Parallel()
 
 	for _, name := range []string{
 		"theme/assets/ext/addon-fit.js",
-		"theme/assets/ext/mdedit/LICENSE",
-		"theme/assets/ext/mdedit/dist/mdedit.global.js",
-		"theme/assets/ext/mdedit/dist/mdedit.min.css",
+		"ext/titpetric/mdedit/LICENSE",
+		"ext/titpetric/mdedit/dist/mdedit.global.js",
+		"ext/titpetric/mdedit/dist/mdedit.min.css",
 		"theme/assets/ext/xterm.LICENSE",
 		"theme/assets/ext/xterm.css",
 		"theme/assets/ext/xterm.js",

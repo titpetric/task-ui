@@ -15,7 +15,7 @@
 /theme/ext/addon-fit.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
-/theme/ext/mdedit/dist/mdedit.global.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
+/mdedit/mdedit.global.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
