@@ -15,7 +15,7 @@ A byte stream is not a page: `/files/*`, `/artifacts/files/*` and the archives a
 | Path                          | What it is                                                                         |
 |-------------------------------|------------------------------------------------------------------------------------|
 | `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/`  |
-| `ext/`                        | what `composer install` wrote, the autoloader among it                             |
+| `ext/`                        | what composer wrote, the autoloader and the plugins among it                        |
 | `code/Module.php`             | the interface every `mod_` class declares                                          |
 | `code/Task/`                  | the task-ui domain: what a row means, and the helpers every page shares           |
 | `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                    |
@@ -308,7 +308,7 @@ A module's `templates/index.tpl` is the body. `Task\View` renders it with the mo
 
 No `set_compile_location` is called. MiniTPL's default writes beside each search path, which is `modules/<name>/templates_c/` and `theme/templates_c/`.
 
-**A field somebody writes markdown in is `components/editor.tpl`.** The board's note, a reply, a prompt and the artifact window's own field are one component over one scope, and `task-ui.js` draws [mdedit](https://github.com/titpetric/mdedit) over each of them; the textarea stays under the surface holding what the form posts, so the forms and the fixtures read the field as they did. The bundle is vendored beside xterm's, `theme/assets/ext/mdedit.js` and `.css`, and `atkins mdedit` refreshes it from a checkout. [The shared markup](framework.md#the-markdown-field) is the attribute contract and `Task\Upload` is where a file dropped into a field lands.
+**A field somebody writes markdown in is `components/editor.tpl`.** The board's note, a reply, a prompt and the artifact window's own field are one component over one scope, and `task-ui.js` draws [mdedit](https://github.com/titpetric/mdedit) over each of them; the textarea stays under the surface holding what the form posts, so the forms and the fixtures read the field as they did. The bundle is installed beside xterm's under `theme/assets/ext/mdedit/dist/`, and the default pipeline's `composer update` refreshes it. [The shared markup](framework.md#the-markdown-field) is the attribute contract and `Task\Upload` is where a file dropped into a field lands.
 
 **A module repeats no markup the theme has.** A piece of markup two views share is a component with a `.md`, and the component set starts from the `{{ define }}` list of `frontend/view/templates/_layout.tpl` and the shared parts table of [the sitemap](sitemap.md).
 

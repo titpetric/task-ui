@@ -7,8 +7,16 @@
 
   "type": "project",
 
+  "repositories": [
+    { "type": "vcs", "url": "https://git.cdn.si/titpetric/mdedit" }
+  ],
+
   "config": {
-    "vendor-dir": "ext"
+    "vendor-dir": "ext",
+    "allow-plugins": {
+      "composer/installers": true,
+      "oomphinc/composer-installers-extender": true
+    }
   },
 
   "autoload": {
@@ -20,6 +28,20 @@
   },
 
   "require": {
-    "titpetric/minitpl": "^1.3"
+    "titpetric/minitpl": "^1.3",
+    "titpetric/mdedit": "dev-main",
+    "oomphinc/composer-installers-extender": "^2.0"
+  },
+
+  "scripts": {
+    "post-install-cmd": ["rm -rf theme/assets/ext/mdedit/.git"],
+    "post-update-cmd": ["rm -rf theme/assets/ext/mdedit/.git"]
+  },
+
+  "extra": {
+    "installer-types": ["mdedit-asset"],
+    "installer-paths": {
+      "theme/assets/ext/{$name}": ["type:mdedit-asset"]
+    }
   }
 }

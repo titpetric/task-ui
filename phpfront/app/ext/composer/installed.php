@@ -1,15 +1,44 @@
 <?php return array(
     'root' => array(
-        'name' => 'titpetric/refinement',
+        'name' => 'titpetric/task-ui-front',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'a4282cff8d20f3bbd2fd79634ca261977aebd821',
+        'reference' => '9c03af8a4980d37675065a683a03775b14b432bf',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
         'dev' => true,
     ),
     'versions' => array(
+        'composer/installers' => array(
+            'pretty_version' => 'v2.3.0',
+            'version' => '2.3.0.0',
+            'reference' => '12fb2dfe5e16183de69e784a7b84046c43d97e8e',
+            'type' => 'composer-plugin',
+            'install_path' => __DIR__ . '/./installers',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'oomphinc/composer-installers-extender' => array(
+            'pretty_version' => '2.0.1',
+            'version' => '2.0.1.0',
+            'reference' => 'cbf4b6f9a24153b785d09eee755b995ba87bd5f9',
+            'type' => 'composer-plugin',
+            'install_path' => __DIR__ . '/../oomphinc/composer-installers-extender',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'titpetric/mdedit' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '84b9714b60374ee5c3db36224c4fd1dc54337d8b',
+            'type' => 'mdedit-asset',
+            'install_path' => __DIR__ . '/../../theme/assets/ext/mdedit',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
+            'dev_requirement' => false,
+        ),
         'titpetric/minitpl' => array(
             'pretty_version' => 'v1.3.4',
             'version' => '1.3.4.0',
@@ -19,10 +48,10 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'titpetric/refinement' => array(
+        'titpetric/task-ui-front' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'a4282cff8d20f3bbd2fd79634ca261977aebd821',
+            'reference' => '9c03af8a4980d37675065a683a03775b14b432bf',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

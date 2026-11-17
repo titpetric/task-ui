@@ -11,9 +11,17 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         array (
             'Task\\' => 5,
         ),
+        'O' =>
+        array (
+            'OomphInc\\ComposerInstallersExtender\\' => 36,
+        ),
         'M' =>
         array (
             'MiniTPL\\' => 8,
+        ),
+        'C' =>
+        array (
+            'Composer\\Installers\\' => 20,
         ),
     );
 
@@ -22,9 +30,17 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         array (
             0 => __DIR__ . '/../..' . '/code/Task',
         ),
+        'OomphInc\\ComposerInstallersExtender\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/oomphinc/composer-installers-extender/src',
+        ),
         'MiniTPL\\' =>
         array (
             0 => __DIR__ . '/..' . '/titpetric/minitpl/code/MiniTPL',
+        ),
+        'Composer\\Installers\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/composer/installers/src/Composer/Installers',
         ),
     );
 

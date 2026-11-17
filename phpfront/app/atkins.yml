@@ -9,8 +9,7 @@ name: phpfront
 # The paths are named rather than globbed from the root for two reasons: the
 # compiled templates under every templates_c are generated PHP, which the
 # formatter would rewrite and the next precompile would write back, and ext/ is
-# what `composer install` put there, which is upstream's to format and not
-# ours.
+# what composer put there, which is upstream's to format and not ours.
 vars:
   paths: ./code/... ./modules/... ./stubs/... ./tools/...
 
@@ -20,13 +19,21 @@ jobs:
   # fixture runtime does not write, so a template edited since the last
   # precompile would fail the fixture rather than the template.
   default:
-    desc: "Format, lint, generate, precompile and test"
+    desc: "Update the dependencies, format, lint, generate, precompile and test"
     cmds:
+      - task: deps
       - task: fmt
       - task: lint
       - task: precompile
       - task: test
       - task: ruleslint
+
+  # The editor is a composer package: the update pulls mdedit's dev-main into
+  # theme/assets/ext/, where the theme serves it.
+  deps:
+    desc: "Update the front end's composer dependencies"
+    steps:
+      - composer update --no-interaction
 
   # `phpscript fmt -l` exits zero whether or not it listed a file, so the
   # check is whether it printed anything. Without the test this job reports
