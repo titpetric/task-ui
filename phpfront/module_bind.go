@@ -21,18 +21,7 @@ var ErrNoModule = errors.New("no module on the context")
 // ErrEscapes is returned when a module names a path outside its own root.
 var ErrEscapes = errors.New("the path leaves the module root")
 
-// BindModule registers the host symbols of a module's runtime: the
-// `Task\Module` constructor, and `Task::register` and `Task::dispatch` as host
-// functions whose names hold `::`. registered takes what a modinfo.php
-// registers, and nil refuses the call.
-//
-// A module declares no migrations of its own. Every table of the instance,
-// a module's pages included, is migrated once at start out of the embedded
-// trees app.Migrations merges, under the one project name.
-//
-// The context.Context each binding takes first is the interpreter's and names
-// the module; PHP counts it as no argument. docs/modules.md is the contract
-// and docs/todo-correction.md says why the constructor is not `Task::Module`.
+// BindModule registers the host symbols a module's pages call; docs/modules.md is the contract.
 func BindModule(rt *runner.Runtime, opts ModuleOptions, registered func(*Module)) {
 	// A constructor publishes every exported method of the value it returns,
 	// so setName and set_name both reach Module.SetName.
@@ -56,6 +45,15 @@ func BindModule(rt *runner.Runtime, opts ModuleOptions, registered func(*Module)
 			registered(m)
 		}
 		return true, nil
+	})
+
+	// Task::reindex starts the documentation index in the background; an
+	// instance without one answers false and starts nothing.
+	rt.RegisterFunc("Task::reindex", func(ctx context.Context) (bool, error) {
+		if opts.Search == nil {
+			return false, nil
+		}
+		return true, opts.Search(ctx)
 	})
 
 	rt.RegisterFunc("Task::dispatch", func(ctx context.Context, comment, action, folder string) (string, error) {
@@ -131,10 +129,7 @@ func BindModule(rt *runner.Runtime, opts ModuleOptions, registered func(*Module)
 // files its report names.
 const ArtifactPrefix = "/artifacts/files/"
 
-// ArtifactHref is the link a path inside one folder of the tree reads
-// as, the whole tree when the folder is empty. A report written inside
-// a folder names its files relative to that folder, and the page has to
-// put the folder back.
+// ArtifactHref returns the link a path inside a folder of the artifact tree reads as.
 func ArtifactHref(folder string) string {
 	folder = strings.Trim(folder, "/")
 	if folder == "" {
@@ -143,9 +138,7 @@ func ArtifactHref(folder string) string {
 	return ArtifactPrefix + folder + "/"
 }
 
-// taskClass is the host class the constants live on. RegisterClass takes PHP
-// declarations alone, so this declares no method: the three static calls are
-// host functions of the same spelling.
+// taskClass returns the host class the constants live on; its methods are host functions.
 func taskClass(opts ModuleOptions) *phpmodel.Class {
 	return &phpmodel.Class{
 		Name: "Task",

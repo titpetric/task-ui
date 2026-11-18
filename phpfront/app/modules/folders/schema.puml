@@ -114,6 +114,7 @@ entity "schedule" {
   + next_run_at : timestamp
   + created_at : timestamp
   + updated_at : timestamp
+  + source : text
   + target : text
   + args : text
   + triage : integer

@@ -169,6 +169,21 @@ with `write_artifact`, replacing the version there, which the history keeps;
 holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
 `list_artifacts`, `read_artifact`, `write_artifact`.
 
+## Search (`prompt`)
+
+Every start indexes the `.md` and `.txt` files of every project of every
+workspace, and the job targets of every project, as sections with their
+headings and order. The index is read a section at a time, so no
+paragraph enters a context unless a search reached it: `search_docs`
+returns the sections that hold the words with an excerpt, the path and
+the heading; `search_outline` lists a document's headings and no text;
+`search_read` reads one section whole; `search_browse` lists the folders
+and documents under a path. Results are filtered to the folders the user
+sees, and the tools take `prompt/view`. Page: `/search`; API:
+`/api/search`; MCP: `search_docs`, `search_outline`, `search_read`,
+`search_browse`. A job target named `ci:daily` registers a disabled
+`@daily` schedule for an admin to approve.
+
 ## Modules (`module`)
 
 Modules are plugins written in PHP, run inside task-ui by the phpscript
@@ -303,7 +318,8 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `get_workflow`, `create_workflow`,
 `update_workflow`, `list_notes`, `note_comment`, `post_note`,
-`ask_prompt`, `list_artifacts`, `read_artifact`, `write_artifact` and,
+`ask_prompt`, `list_artifacts`, `read_artifact`, `write_artifact`,
+`search_docs`, `search_outline`, `search_read`, `search_browse` and,
 for a user who linked Spotify, the seven `spotify_` tools of its section.
 A prompt's run and the Notes agent's reach these tools as their user
 for as long as they run, with no token of the user's.

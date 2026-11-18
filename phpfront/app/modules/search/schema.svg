@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="432px" preserveAspectRatio="none" style="width:326px;height:432px;" version="1.1" viewBox="0 0 326 432" width="326px" zoomAndPan="magnify"><defs/><g><!--MD5=[25b53614a5d6df0aefc74a377197df06]
+class search_document--><rect fill="#FEFECE" height="259.0724" id="search_document" style="stroke: #A80036; stroke-width: 1.5;" width="152" x="6" y="7.66"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="99" x="32.5" y="25.4881">search_document</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="7" x2="157" y1="34.0041" y2="34.0041"/><ellipse cx="17" cy="45.0041" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="39" x="26" y="49.763">id : text</text><ellipse cx="17" cy="59.986" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="52" x="26" y="64.7449">kind : text</text><ellipse cx="17" cy="74.9679" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="53" x="26" y="79.7268">path : text</text><ellipse cx="17" cy="89.9498" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="45" x="26" y="94.7087">file : text</text><ellipse cx="17" cy="104.9317" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="76" x="26" y="109.6906">folder_id : text</text><ellipse cx="17" cy="119.9136" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="85" x="26" y="124.6725">workspace : text</text><ellipse cx="17" cy="134.8954" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="26" y="139.6544">project : text</text><ellipse cx="17" cy="149.8773" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="61" x="26" y="154.6362">target : text</text><ellipse cx="17" cy="164.8592" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="58" x="26" y="169.6181">name : text</text><ellipse cx="17" cy="179.8411" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="44" x="26" y="184.6">dir : text</text><ellipse cx="17" cy="194.823" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="49" x="26" y="199.5819">title : text</text><ellipse cx="17" cy="209.8049" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="54" x="26" y="214.5638">hash : text</text><ellipse cx="17" cy="224.7868" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="26" y="229.5457">size : integer</text><ellipse cx="17" cy="239.7687" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="126" x="26" y="244.5276">modified_at : timestamp</text><ellipse cx="17" cy="254.7505" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="121" x="26" y="259.5095">indexed_at : timestamp</text><!--MD5=[9a672934cd0dbb07abdbe96859e6364d]
+class search_section--><rect fill="#FEFECE" height="139.2173" id="search_section" style="stroke: #A80036; stroke-width: 1.5;" width="123" x="192.5" y="67.58"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="83" x="212.5" y="85.4081">search_section</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="193.5" x2="314.5" y1="93.9241" y2="93.9241"/><ellipse cx="203.5" cy="104.9241" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="97" x="212.5" y="109.683">document_id : text</text><ellipse cx="203.5" cy="119.906" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="85" x="212.5" y="124.6649">ordinal : integer</text><ellipse cx="203.5" cy="134.8879" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="71" x="212.5" y="139.6468">level : integer</text><ellipse cx="203.5" cy="149.8698" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="72" x="212.5" y="154.6287">heading : text</text><ellipse cx="203.5" cy="164.8517" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="94" x="212.5" y="169.6106">breadcrumb : text</text><ellipse cx="203.5" cy="179.8336" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="66" x="212.5" y="184.5925">line : integer</text><ellipse cx="203.5" cy="194.8154" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="56" x="212.5" y="199.5744">body : text</text><!--MD5=[549a6c68b483adf4e307b5b662bf226f]
+class search_term--><rect fill="#FEFECE" height="94.2717" id="search_term" style="stroke: #A80036; stroke-width: 1.5;" width="123" x="20.5" y="326.73"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="70" x="47" y="344.5581">search_term</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="21.5" x2="142.5" y1="353.0741" y2="353.0741"/><ellipse cx="31.5" cy="364.0741" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="97" x="40.5" y="368.833">document_id : text</text><ellipse cx="31.5" cy="379.056" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="85" x="40.5" y="383.8149">ordinal : integer</text><ellipse cx="31.5" cy="394.0379" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="54" x="40.5" y="398.7968">term : text</text><ellipse cx="31.5" cy="409.0198" fill="none" rx="3" ry="3" style="stroke: #038048; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="83" x="40.5" y="413.7787">weight : integer</text><!--MD5=[ecda87b5af4a2d164c235277c0ad8d19]
+link search_document to search_section--><!--MD5=[1744ab7ecf9d8329cae2c94a650abbc2]
+link search_document to search_term--><!--MD5=[ceb6695e30700c8cc603707e5ff2870c]
+@startuml
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "search_document" {
+  * id : text
+  + kind : text
+  + path : text
+  + file : text
+  + folder_id : text
+  + workspace : text
+  + project : text
+  + target : text
+  + name : text
+  + dir : text
+  + title : text
+  + hash : text
+  + size : integer
+  + modified_at : timestamp
+  + indexed_at : timestamp
+}
+
+entity "search_section" {
+  * document_id : text
+  * ordinal : integer
+  + level : integer
+  + heading : text
+  + breadcrumb : text
+  + line : integer
+  + body : text
+}
+
+entity "search_term" {
+  * document_id : text
+  * ordinal : integer
+  * term : text
+  + weight : integer
+}
+
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 11:22:07 CET 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 25.0.5.0.3+1-3-26.04.1-Ubuntu
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

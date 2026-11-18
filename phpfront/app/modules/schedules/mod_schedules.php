@@ -160,6 +160,7 @@ class mod_schedules implements Module {
 			"job" => $flow ? $what : $schedule->getJob(),
 			"jobHref" => $this->jobHref($schedule, $workspaces),
 			"args" => Task\Schedule::argLine($schedule->getJob(), $schedule->getArgs()),
+			"source" => $schedule->getSource(),
 			"menu" => $this->menu($schedule, $cells["on"], $what, $edits),
 		);
 

@@ -1,6 +1,7 @@
 package phpfront
 
 import (
+	"context"
 	"runtime"
 	"time"
 
@@ -21,6 +22,9 @@ type ModuleOptions struct {
 
 	// Dispatcher starts the Claude runs. Nil makes Task::dispatch refuse.
 	Dispatcher Dispatcher
+
+	// Search starts the documentation index in the background. Nil makes Task::reindex refuse.
+	Search func(ctx context.Context) error
 
 	// Runs answers which run a dispatch turned into, for the status
 	// label a module draws. Nil answers "" for every note.

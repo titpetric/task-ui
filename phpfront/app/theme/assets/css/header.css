@@ -110,128 +110,34 @@ header.top .spacer {
   flex: 1;
 }
 
-header.top .header-prompt {
+/* The header's search takes the width the prompt took, and posts to the search page. */
+header.top .header-search {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
   align-self: stretch;
-  margin: 0;
-  padding: 0 0.25rem;
-  border: 0;
-  outline: 0;
-  background: var(--ink-0);
-  color: var(--ink-0);
-  caret-color: var(--ink-0);
-  font-family: var(--font);
-  font-size: var(--fs-md);
-  cursor: default;
+  margin: 0 0.75rem;
 
-  &::selection {
-    background: transparent;
-  }
-
-  &:focus,
-  &.typed {
-    color: var(--signal);
-    caret-color: var(--signal);
-
-    &::selection {
-      background: var(--signal-wash);
-    }
-  }
-}
-
-header.top:has(.header-prompt:focus) h1 .logo .cursor {
-  animation: none;
-}
-
-/* The picker collapses to nothing while hidden, and min-width: 0 lets it
-   shrink past its content: a span of names has an automatic minimum wide
-   enough to push the badge off a phone. */
-header.top .header-runas {
-  min-width: 0;
-  width: 0;
-  overflow: clip;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-
-  & .dd {
-    width: auto;
-  }
-
-  & .dd-button {
-    height: var(--control-xs);
-    padding-inline: 0.5rem;
+  & input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
     background: var(--ink-1);
-    color: var(--text-dim);
-    font-size: var(--fs-xs);
-  }
-}
+    color: var(--text);
+    font-family: var(--font);
+    font-size: var(--fs-sm);
 
-header.top:has(.header-prompt:focus, .header-prompt.typed, .header-runas:focus-within, .header-runas .open) .header-runas {
-  width: auto;
-  max-width: 55%;
-  overflow: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-header.top .header-answer {
-  position: absolute;
-  top: 100%;
-  inset-inline-start: 1.25rem;
-  width: min(48rem, calc(100% - 2.5rem));
-  max-height: 70vh;
-  overflow: auto;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--line-2);
-  border-top: 0;
-  border-radius: 0 0 var(--radius) var(--radius);
-  background: var(--ink-1);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: var(--fs-sm);
-  box-shadow: var(--shadow-menu);
-
-  & .place {
-    margin: 0 0 0.5rem;
-    color: var(--text-dim);
-    font-size: var(--fs-xs);
-
-    & a {
-      color: inherit;
+    &:focus {
+      border-color: var(--signal);
+      outline: 2px solid var(--signal-wash);
     }
-  }
 
-  & .question {
-    margin: 0 0 0.5rem;
-    white-space: pre-wrap;
-
-    &::before {
-      content: "> ";
-      color: var(--signal);
+    &::placeholder {
+      color: var(--text-faint);
     }
-  }
-
-  & .working {
-    color: var(--signal);
-  }
-
-  & .failed {
-    color: var(--bad);
-  }
-
-  & .answer {
-    margin: 0 0 0.5rem;
-  }
-
-  & .answer pre {
-    white-space: pre-wrap;
-  }
-
-  & a.thread {
-    color: var(--signal);
-    font-size: var(--fs-xs);
   }
 }
 

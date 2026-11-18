@@ -159,6 +159,13 @@ func (h *Handlers) Routes() http.Handler {
 	r.Delete("/workspaces/{folder}/home", h.removeHome)
 	r.Get("/prompts", h.listPrompts)
 	r.Post("/prompts", h.startPrompt)
+
+	r.Get("/search", h.searchDocs)
+	r.Get("/search/browse", h.browseSearch)
+	r.Get("/search/documents/{id}", h.getSearchDocument)
+	r.Get("/search/documents/{id}/sections/{ordinal}", h.getSearchSection)
+	r.Post("/search/reindex", h.reindexSearch)
+
 	r.Post("/workspaces/{folder}/export", h.exportWorkspace)
 	r.Get("/workspaces/{folder}/keys", h.listWorkspaceKeys)
 	r.Post("/workspaces/{folder}/keys/generate", h.generateWorkspaceKey)

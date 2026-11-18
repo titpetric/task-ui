@@ -1,0 +1,43 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "search_document" {
+  * id : text
+  + kind : text
+  + path : text
+  + file : text
+  + folder_id : text
+  + workspace : text
+  + project : text
+  + target : text
+  + name : text
+  + dir : text
+  + title : text
+  + hash : text
+  + size : integer
+  + modified_at : timestamp
+  + indexed_at : timestamp
+}
+
+entity "search_section" {
+  * document_id : text
+  * ordinal : integer
+  + level : integer
+  + heading : text
+  + breadcrumb : text
+  + line : integer
+  + body : text
+}
+
+entity "search_term" {
+  * document_id : text
+  * ordinal : integer
+  * term : text
+  + weight : integer
+}
+
+@enduml

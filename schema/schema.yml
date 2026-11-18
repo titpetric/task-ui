@@ -342,6 +342,199 @@
         - key_name
         - user_name
       unique: true
+- name: meeting
+  comment: Meeting
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - ended
+        - open
+    - name: started_at
+      type: timestamp
+      key: MUL
+      comment: Started At
+      datatype: datetime
+    - name: ended_at
+      type: timestamp
+      comment: Ended At
+      datatype: datetime
+    - name: limit_seconds
+      type: integer
+      comment: Limit Seconds
+      datatype: bigint
+      size: 8
+    - name: empty_since
+      type: timestamp
+      comment: Empty Since
+      datatype: datetime
+    - name: summary
+      type: text
+      comment: Summary
+      datatype: varchar
+    - name: summary_state
+      type: TEXT
+      comment: Summary State
+      datatype: varchar
+      values:
+        - ""
+        - done
+        - failed
+        - working
+    - name: summary_message
+      type: text
+      comment: Summary Message
+      datatype: varchar
+    - name: summary_user_name
+      type: text
+      comment: Summary User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_meeting_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_meeting_state
+      columns:
+        - state
+        - started_at
+- name: meeting_line
+  comment: Meeting Line
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: meeting_id
+      type: text
+      key: MUL
+      comment: Meeting ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: kind
+      type: TEXT
+      comment: Kind
+      datatype: varchar
+      values:
+        - end
+        - join
+        - leave
+        - rejoin
+        - said
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+    - name: start_ms
+      type: integer
+      comment: Start Ms
+      datatype: bigint
+      size: 8
+    - name: end_ms
+      type: integer
+      comment: End Ms
+      datatype: bigint
+      size: 8
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_meeting_line_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_meeting_line_meeting
+      columns:
+        - meeting_id
+        - created_at
+- name: meeting_participant
+  comment: Meeting Participant
+  columns:
+    - name: meeting_id
+      type: text
+      key: PRI
+      comment: Meeting ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: PRI
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: joined_at
+      type: timestamp
+      comment: Joined At
+      datatype: datetime
+    - name: last_seen_at
+      type: timestamp
+      comment: Last Seen At
+      datatype: datetime
+    - name: left_at
+      type: timestamp
+      key: MUL
+      comment: Left At
+      datatype: datetime
+    - name: joins
+      type: integer
+      comment: Joins
+      datatype: bigint
+      size: 8
+  indexes:
+    - name: sqlite_autoindex_meeting_participant_1
+      columns:
+        - meeting_id
+        - user_id
+      primary: true
+      unique: true
+    - name: idx_meeting_participant_meeting
+      columns:
+        - meeting_id
+        - left_at
 - name: migrations
   comment: Migrations
   columns:
@@ -1165,6 +1358,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: source
+      type: text
+      comment: Source
+      datatype: varchar
     - name: target
       type: text
       comment: Target
@@ -1197,6 +1394,172 @@
       columns:
         - folder
         - job
+- name: search_document
+  comment: Search Document
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: kind
+      type: text
+      key: MUL
+      comment: Kind
+      datatype: varchar
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: file
+      type: text
+      comment: File
+      datatype: varchar
+    - name: folder_id
+      type: text
+      key: MUL
+      comment: Folder ID
+      datatype: varchar
+    - name: workspace
+      type: text
+      comment: Workspace
+      datatype: varchar
+    - name: project
+      type: text
+      comment: Project
+      datatype: varchar
+    - name: target
+      type: text
+      key: MUL
+      comment: Target
+      datatype: varchar
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: hash
+      type: text
+      comment: Hash
+      datatype: varchar
+    - name: size
+      type: integer
+      comment: Size
+      datatype: bigint
+      size: 8
+    - name: modified_at
+      type: timestamp
+      comment: Modified At
+      datatype: datetime
+    - name: indexed_at
+      type: timestamp
+      comment: Indexed At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_search_document_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_search_document_folder
+      columns:
+        - folder_id
+    - name: idx_search_document_target
+      columns:
+        - kind
+        - target
+        - name
+    - name: sqlite_autoindex_search_document_2
+      columns:
+        - path
+      unique: true
+- name: search_section
+  comment: Search Section
+  columns:
+    - name: document_id
+      type: text
+      key: PRI
+      comment: Document ID
+      datatype: char(26)
+    - name: ordinal
+      type: integer
+      key: PRI
+      comment: Ordinal
+      datatype: bigint
+      size: 8
+    - name: level
+      type: integer
+      comment: Level
+      datatype: bigint
+      size: 8
+    - name: heading
+      type: text
+      comment: Heading
+      datatype: varchar
+    - name: breadcrumb
+      type: text
+      comment: Breadcrumb
+      datatype: varchar
+    - name: line
+      type: integer
+      comment: Line
+      datatype: bigint
+      size: 8
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_search_section_1
+      columns:
+        - document_id
+        - ordinal
+      primary: true
+      unique: true
+- name: search_term
+  comment: Search Term
+  columns:
+    - name: document_id
+      type: text
+      key: PRI
+      comment: Document ID
+      datatype: char(26)
+    - name: ordinal
+      type: integer
+      key: PRI
+      comment: Ordinal
+      datatype: bigint
+      size: 8
+    - name: term
+      type: text
+      key: PRI
+      comment: Term
+      datatype: varchar
+    - name: weight
+      type: integer
+      comment: Weight
+      datatype: bigint
+      size: 8
+  indexes:
+    - name: sqlite_autoindex_search_term_1
+      columns:
+        - document_id
+        - ordinal
+        - term
+      primary: true
+      unique: true
+    - name: idx_search_term_term
+      columns:
+        - term
 - name: secret
   comment: Secret
   columns:

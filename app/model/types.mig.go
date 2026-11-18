@@ -1962,6 +1962,9 @@ type Schedule struct {
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 
+	// Source
+	Source string `db:"source" json:"source"`
+
 	// Target
 	Target string `db:"target" json:"target"`
 

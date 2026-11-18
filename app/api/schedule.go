@@ -293,6 +293,9 @@ func (h *Handlers) getSchedule(w http.ResponseWriter, r *http.Request) {
 // or anyone who may run its job, or every step of its workflow.
 func (h *Handlers) mayChange(r *http.Request, schedule *model.Schedule) bool {
 	user := access.UserFrom(r.Context())
+	if schedule.Source != "" {
+		return user != nil && user.CanAdmin()
+	}
 	if user.ID == schedule.UserID && schedule.UserID != "" {
 		return true
 	}
@@ -378,7 +381,17 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Enabled != nil {
 		schedule.Enabled = onOff(*req.Enabled)
+		if schedule.Enabled != 0 && schedule.NextRunAt == nil {
+			next, err := scheduler.NextRun(schedule.Expression, time.Now())
+			if err != nil {
+				fail(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			schedule.NextRunAt = &next
+		}
 	}
+	// A change by a person makes the row theirs; the reconciler leaves it alone.
+	schedule.Source = ""
 	if err := h.opts.Schedules.Update(r.Context(), schedule); err != nil {
 		failErr(w, err)
 		return

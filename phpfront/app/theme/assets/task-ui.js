@@ -4655,34 +4655,18 @@
   }
   window.taskUI.bell = { refresh: bellRefresh };
 
-  // The header's prompt asks Claude where the page is, as the header's
-  // data-prompt-* name it: a folder or a directory in it, a run, or the
-  // root, _. A panel under the header follows the thread over the notes
-  // topic: the place, the question, working, then the answer, rendered as
-  // the thread's page renders it. The logo opens and closes the panel;
-  // Esc or a click outside closes it. The tab keeps the panel's thread
-  // and whether it is open, so another page brings the same thread back.
-  var headerPrompt = document.getElementById("header-prompt");
-  var headerAnswer = document.getElementById("header-answer");
-  var headerToggle = document.getElementById("header-toggle");
+  // The header's place, as data-prompt-* names it, is where the orb's prompts
+  // go: a folder or a directory in it, a run, or the root, _. The header's own
+  // box is the search, and its page starts the run; this keeps taskUI.ask for
+  // the orb and follows the thread over the notes topic.
   var headerTop = document.querySelector("header.top[data-prompt-folder]");
-  var headerOpen = function () { return !!headerAnswer && !headerAnswer.hidden; };
-  if (headerPrompt && headerAnswer && headerTop) {
+  if (headerTop) {
     var here = {
       folder: headerTop.dataset.promptFolder, dir: headerTop.dataset.promptDir || "", run: headerTop.dataset.promptRun || "",
       label: headerTop.dataset.promptLabel, href: headerTop.dataset.promptHref
     };
-    var me = document.body.dataset.me || "";
-    var stateKey = "task-ui.header-prompt";
     var follow = null;
-    var shown = "";
-    var saved = function () {
-      try { return JSON.parse(sessionStorage.getItem(stateKey)) || {}; } catch (e) { return {}; }
-    };
-    var save = function (state) {
-      try { sessionStorage.setItem(stateKey, JSON.stringify(state)); } catch (e) { /* the tab forgets */ }
-    };
-    var typed = function () { headerPrompt.classList.toggle("typed", headerPrompt.value !== ""); };
+    var watchers = [];
     var unfollow = function () {
       if (follow) follow.close();
       follow = null;
@@ -4691,76 +4675,25 @@
       if (place.run) return "/api/prompts?limit=20&run=" + encodeURIComponent(place.run);
       return "/api/prompts?limit=20&folder=" + encodeURIComponent(place.folder) + (place.dir ? "&dir=" + encodeURIComponent(place.dir) : "");
     };
-    var setOpen = function (open) {
-      headerAnswer.hidden = !open;
-      if (headerToggle) headerToggle.setAttribute("aria-expanded", open ? "true" : "false");
-      var state = saved();
-      state.open = open;
-      save(state);
-      if (!open) unfollow();
-    };
-    // frame draws the panel for a thread in a place: the place, linked to
-    // the thread, the question, its state, and room for the answer.
-    var frame = function (place, question, id) {
-      shown = id || "";
-      headerAnswer.innerHTML = '<p class="place">@claude-prompt · <a></a></p><p class="question"></p><p class="working" data-state>open</p><div class="answer note-body"></div>';
-      var link = headerAnswer.querySelector(".place a");
-      link.textContent = place.label;
-      link.href = place.href + (id ? "#note-" + encodeURIComponent(id) : "");
-      headerAnswer.querySelector(".question").textContent = question;
-    };
     // watchers hear every state the asked thread passes through and the
     // reply that ends it, so the voice window can speak one.
-    var watchers = [];
     var tell = function (update) {
       watchers.forEach(function (on) {
         try { on(update); } catch (e) { /* a watcher is not the thread's problem */ }
       });
       if (update.state === "done" || update.state === "failed") watchers = [];
     };
-    var setState = function (state, text) {
-      tell({ state: state, text: text });
-      var line = headerAnswer.querySelector("[data-state]");
-      if (!line) return;
-      if (state === "done") {
-        line.remove();
-        return;
-      }
-      line.className = state === "failed" ? "failed" : "working";
-      line.textContent = text || state;
-    };
-    // answer puts the last reply of the thread in the panel: as the
-    // thread's page renders it, or as the summaries render markdown.
-    var answer = function (place, id, reply) {
+    var answer = function (reply) {
       tell({ state: "answered", body: reply.body });
-      var put = function (html) {
-        var box = headerAnswer.querySelector(".answer");
-        if (shown === id && box && html) box.innerHTML = html;
-      };
-      put(markdownHTML(reply.body));
-      fetch(place.href, { credentials: "same-origin" })
-        .then(function (res) { return res.ok ? res.text() : ""; })
-        .then(function (text) {
-          var doc = new DOMParser().parseFromString(text, "text/html");
-          var bodies = doc.querySelectorAll("#note-" + CSS.escape(id) + " .replies > li .note-body");
-          if (bodies.length) put(bodies[bodies.length - 1].innerHTML);
-        })
-        .catch(function () {});
     };
-    // load draws a thread from its place's list, and follows it while it
-    // runs; false when the place no longer lists it.
-    var load = function (place, id) {
+    // settle reads the thread's last reply once the run has ended.
+    var settle = function (place, id) {
       return api("GET", threadsURL(place)).then(function (res) {
         var thread = ((res.data && res.data.notes) || []).filter(function (n) { return n.id === id; })[0];
-        if (!thread) return false;
-        frame(place, thread.body, thread.id);
+        if (!thread) return;
         var replies = thread.replies || [];
-        var running = thread.state === "open" || thread.state === "working";
-        // The reply goes out before the state that retires the watchers.
-        if (replies.length && !running) answer(place, id, replies[replies.length - 1]);
-        setState(thread.state || "done", thread.state === "failed" ? "failed" : "");
-        if (!replies.length || running) watch(place, id);
-        return true;
+        if (replies.length) answer(replies[replies.length - 1]);
+        else tell({ state: thread.state || "done" });
       });
     };
     // watch follows a thread over the notes topic until it ends.
@@ -4771,45 +4704,19 @@
       follow.addEventListener("note", function (event) {
         var changed = {};
         try { changed = JSON.parse(event.data); } catch (e) { return; }
-        if (shown !== id || changed.id !== id) return;
+        if (changed.id !== id) return;
         if (changed.state === "done" || changed.state === "failed") {
           unfollow();
-          load(place, id);
+          settle(place, id);
         } else if (changed.state) {
-          setState(changed.state);
+          tell({ state: changed.state });
         }
-      });
-    };
-    // reopen shows the tab's thread, or else the user's latest here, or
-    // an empty panel with the field focused.
-    var reopen = function () {
-      var state = saved();
-      var empty = function () {
-        frame(here, "", "");
-        headerAnswer.querySelector(".question").remove();
-        headerAnswer.querySelector("[data-state]").remove();
-        headerPrompt.focus();
-      };
-      if (state.thread && state.place) {
-        return load(state.place, state.thread).then(function (found) {
-          if (found) return;
-          save({ open: true });
-          return reopen();
-        });
-      }
-      return api("GET", threadsURL(here)).then(function (res) {
-        var mine = ((res.data && res.data.notes) || []).filter(function (n) { return n.user_name === me; })[0];
-        if (!mine) return empty();
-        save({ open: true, thread: mine.id, place: here });
-        return load(here, mine.id);
       });
     };
     // ask posts a prompt, or a reply in parent's thread. A reply runs in the
     // thread's place, with everything said in the thread so far.
     var ask = function (text, parent, user, heard) {
       unfollow();
-      frame(here, text, parent || "");
-      setOpen(true);
       var body = { prompt: text };
       // What the orb recorded rides with the prompt: the thread plays the
       // clip and shows the words, where the prompt itself also carries
@@ -4819,28 +4726,19 @@
       if (parent) body.parent = parent;
       else if (here.run) body.run = here.run;
       else { body.folder = here.folder; body.dir = here.dir; }
-      // An admin's pick of who the prompt runs as goes with it: the caller's
-      // own, such as the voice window's, else the header's. A reply takes
-      // none: the thread keeps its own user.
-      var runAs = document.getElementById("header-prompt-user");
       if (!parent && user) body.user = user;
-      else if (!parent && runAs && runAs.value) body.user = runAs.value;
       api("POST", "/api/prompts", body).then(function (res) {
         if (res.status >= 300) {
-          setState("failed", res.data.error || ("HTTP " + res.status));
+          tell({ state: "failed", text: res.data.error || ("HTTP " + res.status) });
           return;
         }
         var id = parent || res.data.id;
         tell({ state: "asked", thread: id });
-        save({ open: true, thread: id, place: here });
-        frame(here, text, id);
-        setState(res.data.state || "open");
         watch(here, id);
       });
     };
-    // taskUI.ask posts a prompt the way Enter does, or a reply in parent's
-    // thread, and reports what the thread does next, so voice.js can follow
-    // a question it sent and keep one session across several of them.
+    // taskUI.ask posts a prompt, or a reply in parent's thread, and reports
+    // what the thread does next, so voice.js can follow a question it sent.
     window.taskUI.ask = function (text, on, parent, user, heard) {
       if (!text) return false;
       if (on) watchers.push(on);
@@ -4852,45 +4750,6 @@
     window.taskUI.place = function () {
       return { folder: here.folder, dir: here.dir, run: here.run, label: here.label, href: here.href };
     };
-    if (headerToggle) {
-      headerToggle.addEventListener("click", function (event) {
-        event.stopPropagation();
-        if (headerOpen()) {
-          setOpen(false);
-          return;
-        }
-        setOpen(true);
-        reopen();
-      });
-    }
-    headerPrompt.addEventListener("input", typed);
-    headerPrompt.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        headerPrompt.value = "";
-        typed();
-        headerPrompt.blur();
-        return;
-      }
-      if (event.key !== "Enter" || event.isComposing) return;
-      event.preventDefault();
-      var text = headerPrompt.value.trim();
-      if (!text) return;
-      headerPrompt.value = "";
-      typed();
-      ask(text);
-    });
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && headerOpen() && event.target !== headerPrompt) setOpen(false);
-    });
-    document.addEventListener("click", function (event) {
-      if (!headerOpen() || event.target === headerPrompt || headerAnswer.contains(event.target)) return;
-      setOpen(false);
-    });
-    if (saved().open && saved().thread) {
-      setOpen(true);
-      reopen();
-    }
   }
 
   // The inventory runs a command on the hosts checked, all at once, and

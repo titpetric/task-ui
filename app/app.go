@@ -16,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/feature/scheduler"
+	"github.com/titpetric/task-ui/feature/search"
 	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/integration/ssh/diskusage"
 	"github.com/titpetric/task-ui/internal/access"
@@ -43,6 +44,8 @@ type App struct {
 	Guard     *access.Guard
 	// Board is the notes board and the chat.
 	Board *note.Board
+	// Search indexes documentation and job targets for the search page and MCP.
+	Search *search.Indexer
 	// UsersFile is the password file, nil when there is none.
 	UsersFile *UsersFile
 	// Modules are the plugins written in PHP, served under /m.

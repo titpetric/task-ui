@@ -69,6 +69,7 @@ func (a *App) wire(version string) error {
 	// The detector reads a folder's pipeline from the same listing the
 	// skill chips come from, so one atkins answers both.
 	detector.UseProber(a.Catalogue.Skills)
+	a.Search = newSearchIndexer(cfg, store, a.Catalogue)
 	a.Runner = runner.New(runner.Options{
 		HostPaths: svc.mounts, HostData: svc.hostData,
 		Keys:          svc.Keystore,
@@ -136,6 +137,7 @@ func (a *App) wire(version string) error {
 	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
 	moduleOpts.Registry = phpfront.NewStore(store.Modules)
 	moduleOpts.Dispatcher = dispatcher
+	moduleOpts.Search = a.Search.Trigger
 	moduleOpts.Runs = moduleRuns
 	moduleOpts.Database = phpfront.NewDatabase(store.DB)
 	moduleOpts.Artifacts = phpfront.NewTree(svc.Artifacts)
@@ -200,6 +202,7 @@ func (a *App) wire(version string) error {
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: store.RunSummaries, Version: version,
 		Cleaner: svc.Cleaner, Pins: store.Pins, Tools: store.Tools,
 		Sidebar: store.Sidebar, Modules: a.Modules, Telemetry: svc.Telemetry,
+		Search: store.Search, Index: a.Search.Trigger,
 	})
 	routes := apiHandlers.Routes()
 	r := chi.NewRouter()

@@ -22,6 +22,7 @@ class Schedule {
 		"next_run_at",
 		"created_at",
 		"updated_at",
+		"source",
 		"target",
 		"args",
 		"triage",
@@ -55,6 +56,8 @@ class Schedule {
 	var $created_at = "";
 	/** Updated At */
 	var $updated_at = "";
+	/** Source */
+	var $source = "";
 	/** Target */
 	var $target = "";
 	/** Args */
@@ -76,6 +79,7 @@ class Schedule {
 		$this->next_run_at = \Task\Row::stamp($row, "next_run_at");
 		$this->created_at = \Task\Row::stamp($row, "created_at");
 		$this->updated_at = \Task\Row::stamp($row, "updated_at");
+		$this->source = \Task\Row::text($row, "source");
 		$this->target = \Task\Row::text($row, "target");
 		$this->args = \Task\Row::text($row, "args");
 		$this->triage = \Task\Row::number($row, "triage");
@@ -199,6 +203,17 @@ class Schedule {
 	/** setUpdatedAt sets Updated At. */
 	function setUpdatedAt($value) {
 		$this->updated_at = $value;
+
+		return $this;
+	}
+	/** getSource is Source. */
+	function getSource() {
+		return $this->source;
+	}
+
+	/** setSource sets Source. */
+	function setSource($value) {
+		$this->source = $value;
 
 		return $this;
 	}

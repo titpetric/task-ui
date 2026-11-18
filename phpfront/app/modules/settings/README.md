@@ -138,6 +138,7 @@ Schedule
 | `next_run_at` | `timestamp` | indexed |
 | `created_at`  | `timestamp` |         |
 | `updated_at`  | `timestamp` |         |
+| `source`      | `text`      |         |
 | `target`      | `text`      |         |
 | `args`        | `text`      |         |
 | `triage`      | `integer`   |         |
@@ -361,6 +362,7 @@ Sidebars reads and writes the sidebar table: the top block of the sidebar, in it
 |--------------------------|---------------------------------------------------------------------------------|
 | `all()`                  | all is every row, hidden ones included, in the order the table holds.           |
 | `byHref($href)`          | byHref is one row by its link, or null.                                         |
+| `ensure($rows)`          | ensure writes a row for each link the table does not hold.                      |
 | `order($hrefs, $hidden)` | order writes the position and the hidden flag of each link, in one transaction. |
 
 ### `Tools`

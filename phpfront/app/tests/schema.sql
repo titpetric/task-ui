@@ -76,6 +76,47 @@ CREATE TABLE key_user (
     created_at DATETIME
 );
 CREATE UNIQUE INDEX idx_key_user_key_user ON key_user(key_name, user_name);
+CREATE TABLE meeting (
+    id CHAR(26) PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    user_id CHAR(26) NOT NULL,
+    user_name TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'ended')),
+    started_at DATETIME NOT NULL,
+    ended_at DATETIME,
+    limit_seconds INTEGER NOT NULL DEFAULT 3600,
+    empty_since DATETIME,
+    summary TEXT NOT NULL DEFAULT '',
+    summary_state TEXT NOT NULL DEFAULT '' CHECK (summary_state IN ('', 'working', 'done', 'failed')),
+    summary_message TEXT NOT NULL DEFAULT '',
+    summary_user_name TEXT NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
+);
+CREATE INDEX idx_meeting_state ON meeting(state, started_at);
+CREATE TABLE meeting_line (
+    id CHAR(26) PRIMARY KEY NOT NULL,
+    meeting_id CHAR(26) NOT NULL,
+    user_id CHAR(26) NOT NULL DEFAULT '',
+    user_name TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT 'said' CHECK (kind IN ('said', 'join', 'leave', 'rejoin', 'end')),
+    body TEXT NOT NULL DEFAULT '',
+    start_ms INTEGER NOT NULL DEFAULT 0,
+    end_ms INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL
+);
+CREATE INDEX idx_meeting_line_meeting ON meeting_line(meeting_id, created_at);
+CREATE TABLE meeting_participant (
+    meeting_id CHAR(26) NOT NULL,
+    user_id CHAR(26) NOT NULL,
+    user_name TEXT NOT NULL DEFAULT '',
+    joined_at DATETIME NOT NULL,
+    last_seen_at DATETIME NOT NULL,
+    left_at DATETIME,
+    joins INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (meeting_id, user_id)
+);
+CREATE INDEX idx_meeting_participant_meeting ON meeting_participant(meeting_id, left_at);
 CREATE TABLE module (
     id CHAR(26) PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
@@ -238,9 +279,46 @@ CREATE TABLE schedule (
     next_run_at DATETIME,
     created_at DATETIME,
     updated_at DATETIME
-, target TEXT NOT NULL DEFAULT '', args TEXT NOT NULL DEFAULT '[]', triage INTEGER NOT NULL DEFAULT 0, workflow_id CHAR(26) NOT NULL DEFAULT '');
+, source TEXT NOT NULL DEFAULT '', target TEXT NOT NULL DEFAULT '', args TEXT NOT NULL DEFAULT '[]', triage INTEGER NOT NULL DEFAULT 0, workflow_id CHAR(26) NOT NULL DEFAULT '');
 CREATE INDEX idx_schedule_next_run_at ON schedule(enabled, next_run_at);
 CREATE INDEX idx_schedule_folder_job ON schedule(folder, job);
+CREATE TABLE search_document (
+    id CHAR(26) PRIMARY KEY NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'doc',
+    path TEXT NOT NULL UNIQUE,
+    file TEXT NOT NULL DEFAULT '',
+    folder_id TEXT NOT NULL DEFAULT '',
+    workspace TEXT NOT NULL DEFAULT '',
+    project TEXT NOT NULL DEFAULT '',
+    target TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
+    dir TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    hash TEXT NOT NULL DEFAULT '',
+    size INTEGER NOT NULL DEFAULT 0,
+    modified_at DATETIME,
+    indexed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_search_document_folder ON search_document(folder_id);
+CREATE INDEX idx_search_document_target ON search_document(kind, target, name);
+CREATE TABLE search_section (
+    document_id CHAR(26) NOT NULL,
+    ordinal INTEGER NOT NULL,
+    level INTEGER NOT NULL DEFAULT 0,
+    heading TEXT NOT NULL DEFAULT '',
+    breadcrumb TEXT NOT NULL DEFAULT '',
+    line INTEGER NOT NULL DEFAULT 1,
+    body TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (document_id, ordinal)
+);
+CREATE TABLE search_term (
+    document_id CHAR(26) NOT NULL,
+    ordinal INTEGER NOT NULL,
+    term TEXT NOT NULL,
+    weight INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (document_id, ordinal, term)
+);
+CREATE INDEX idx_search_term_term ON search_term(term);
 CREATE TABLE secret (
     id CHAR(26) PRIMARY KEY NOT NULL,
     scope TEXT NOT NULL,

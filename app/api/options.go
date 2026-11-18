@@ -118,4 +118,8 @@ type Options struct {
 	Modules *phpfront.Manager
 	// Telemetry is the tracer's settings; nil turns that route off.
 	Telemetry Telemetry
+	// Search is the documentation and job target index; nil turns the search routes off.
+	Search *storage.SearchStorage
+	// Index starts the search index in the background.
+	Index func(ctx context.Context) error
 }

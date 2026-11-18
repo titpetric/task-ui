@@ -137,6 +137,7 @@ Schedule
 | `next_run_at` | `timestamp` | indexed |
 | `created_at`  | `timestamp` |         |
 | `updated_at`  | `timestamp` |         |
+| `source`      | `text`      |         |
 | `target`      | `text`      |         |
 | `args`        | `text`      |         |
 | `triage`      | `integer`   |         |

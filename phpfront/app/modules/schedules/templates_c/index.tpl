@@ -243,7 +243,9 @@
 				<td data-label="State"><?php if($_v['row']['on']){?>
 <span class="badge ok">enabled</span><?php }else{?>
 <span class="badge">disabled</span><?php }?><?php if($_v['row']['triage']){?>
- <span class="badge signal" title="Claude triages a failed run">triage</span><?php }?></td>
+ <span class="badge signal" title="Claude triages a failed run">triage</span><?php }?><?php if($_v['row']['source']){?>
+ <span class="badge" title="Declared in source; an admin sets Runs as and enables it"><?php echo htmlspecialchars($_v['row']['source'], ENT_QUOTES);?>
+</span><?php }?></td>
 				<td class="actions"><?php $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>

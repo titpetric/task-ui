@@ -77,6 +77,7 @@ view<?php }?>">
 	<symbol id="i-pin" viewBox="0 0 16 16"><path d="M6 1.5h4M7 1.5v4.2L4.5 8.5h7L9 5.7V1.5M8 8.5v6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
 	<symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+	<symbol id="i-magnifier" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 10.5 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
 	<symbol id="i-expand" viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-collapse" viewBox="0 0 16 16"><path d="M13 7H9V3M9 7l4.5-4.5M3 9h4v4M7 9l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></symbol>
@@ -92,7 +93,7 @@ view<?php }?>">
 <?php if($_v['chrome']['user']){?>
 
 <a class="skip-link" href="#main">Skip to content</a>
-<?php $_v['data'] = $_v['chrome'];if($_v['data']['can']['prompt/edit'] && $_v['data']['claude']){?>
+<?php $_v['data'] = $_v['chrome'];if($_v['data']['can']['prompt/edit'] && $_v['data']['can']['prompt/view'] && $_v['data']['can']['note/view'] && $_v['data']['claude']){?>
 	<header class="top" data-prompt-folder="<?php echo htmlspecialchars($_v['data']['prompt']['folder'], ENT_QUOTES);?>
 " data-prompt-dir="<?php echo htmlspecialchars($_v['data']['prompt']['dir'], ENT_QUOTES);?>
 " data-prompt-run="<?php echo htmlspecialchars($_v['data']['prompt']['run'], ENT_QUOTES);?>
@@ -101,20 +102,12 @@ view<?php }?>">
 ">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
-/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
-</button></h1>
-		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
-<?php if($_v['data']['runAs']['users']){?>
-
-		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data']['runAs']; if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
-"<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
- selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES); if(!$_v['data_options']['short']){?>
- (<?php echo htmlspecialchars($_v['option']['role'], ENT_QUOTES);?>
-)<?php }?> · <?php echo htmlspecialchars($_v['option']['said'], ENT_QUOTES);?>
-</option>
-<?php }?>		</select></span>
-<?php }?>		<div class="header-answer" id="header-answer" hidden></div>
+/"><span>TaskUI</span><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
+</a></h1>
+		<form class="header-search" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/search/ask" role="search">
+			<input type="search" name="q" aria-label="Search the documentation and job targets" autocomplete="off" spellcheck="false" placeholder="Search docs and jobs">
+		</form>
 <?php }else{?>
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>

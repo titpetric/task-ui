@@ -9,6 +9,13 @@ import (
 	"github.com/titpetric/task-ui/phpfront"
 )
 
+// A report inside a folder links its files through that folder.
+func TestArtifactHref(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, phpfront.ArtifactPrefix, phpfront.ArtifactHref(""))
+	assert.Equal(t, phpfront.ArtifactPrefix+"thread-1/", phpfront.ArtifactHref("/thread-1/"))
+}
+
 func TestModule(t *testing.T) {
 	t.Parallel()
 	m, err := phpfront.NewModule(context.Background())

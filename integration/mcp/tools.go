@@ -11,9 +11,7 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 )
 
-// tools are the server's tools. The set does not grow: a change adds a
-// tool only for a need these cannot serve, and states the reason
-// (docs/guide/mcp.md).
+// tools returns the server's tools; docs/guide/mcp.md says when a new one is earned.
 func tools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
 	num := func(text string) Property { return Property{Type: "integer", Description: text} }
@@ -104,7 +102,7 @@ func tools() []Tool {
 			}, "workflow"),
 			call: listWorkflowRuns,
 		},
-	}, append(append(append(append(noteTools(), artifactTools()...), workflowTools()...), spotifyTools()...), whoamiTool())...)
+	}, append(append(append(append(append(append([]Tool{}, noteTools()...), artifactTools()...), workflowTools()...), spotifyTools()...), whoamiTool()), searchTools()...)...)
 }
 
 // decode reads a tool's arguments into v; none is an empty object.

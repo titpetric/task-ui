@@ -1,10 +1,9 @@
-{if $data.can['prompt/edit'] && $data.claude}	<header class="top" data-prompt-folder="{data.prompt.folder}" data-prompt-dir="{data.prompt.dir}" data-prompt-run="{data.prompt.run}" data-prompt-label="{data.prompt.label}" data-prompt-href="{data.prompt.href}">
+{if $data.can['prompt/edit'] && $data.can['prompt/view'] && $data.can['note/view'] && $data.claude}	<header class="top" data-prompt-folder="{data.prompt.folder}" data-prompt-dir="{data.prompt.dir}" data-prompt-run="{data.prompt.run}" data-prompt-label="{data.prompt.label}" data-prompt-href="{data.prompt.href}">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
-		<h1><a href="{data.base}/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{include components/logo.tpl}</button></h1>
-		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
-{if $data.runAs.users}
-		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">{eval $data_options = $data.runAs}{include components/user-options.tpl}		</select></span>
-{/if}		<div class="header-answer" id="header-answer" hidden></div>
+		<h1><a href="{data.base}/"><span>TaskUI</span>{include components/logo.tpl}</a></h1>
+		<form class="header-search" method="post" action="{base}/search/ask" role="search">
+			<input type="search" name="q" aria-label="Search the documentation and job targets" autocomplete="off" spellcheck="false" placeholder="Search docs and jobs">
+		</form>
 {else}	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="{data.base}/"><span>TaskUI</span>{include components/logo.tpl}</a></h1>
