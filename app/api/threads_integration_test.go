@@ -40,6 +40,54 @@ func ask(t *testing.T, user *model.User, next http.Handler, method, path, body s
 	return rec
 }
 
+// A thread's agent is changed by its author or an admin, never while it works.
+func TestThreadAgentAPI(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db, err := storage.OpenAndMigrate(ctx, ":memory:", app.Migrations())
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	users := storage.NewUserStorage(db)
+	alice := &model.User{Name: "alice", Role: model.RoleRunner, Admin: true}
+	bob := &model.User{Name: "bob", Role: model.RoleRunner}
+	claude := &model.User{Name: "claude", Role: model.RoleViewer, AgentReply: true, Mcp: true}
+	helper := &model.User{Name: "helper", Role: model.RoleViewer, AgentReply: true, Mcp: true}
+	plain := &model.User{Name: "plain", Role: model.RoleViewer}
+	for _, user := range []*model.User{alice, bob, claude, helper, plain} {
+		assert.NoError(t, users.Create(ctx, user))
+	}
+	policies := storage.NewPermissionPolicyStorage(db)
+	assert.NoError(t, policies.Put(ctx, permission.KindRole, model.RoleRunner, "prompt/view", permission.Allow))
+	notes := storage.NewNoteStorage(db)
+	board := &note.Board{Notes: notes, Chats: storage.NewChatStorage(db), Users: users}
+	routes := api.New(api.Options{Users: users, Board: board}).Routes()
+
+	thread := &model.Note{Channel: model.ChannelNotes, UserID: alice.ID, UserName: alice.Name, Body: "why did the build fail", WorkspaceID: model.Default, Dir: model.Default, State: model.NoteDone, Agent: "claude"}
+	assert.NoError(t, notes.Create(ctx, thread))
+	path := "/threads/" + thread.ID + "/agent"
+
+	rec := ask(t, alice, routes, http.MethodPost, path, `{"agent":"helper"}`)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	stored, err := notes.Get(ctx, thread.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "helper", stored.Agent)
+
+	rec = ask(t, bob, routes, http.MethodPost, path, `{"agent":"helper"}`)
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+
+	rec = ask(t, alice, routes, http.MethodPost, path, `{"agent":"plain"}`)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+	assert.NoError(t, notes.SetState(ctx, thread.ID, model.NoteWorking, ""))
+	rec = ask(t, alice, routes, http.MethodPost, path, `{"agent":"helper"}`)
+	assert.Equal(t, http.StatusConflict, rec.Code)
+	assert.NoError(t, notes.SetState(ctx, thread.ID, model.NoteDone, ""))
+
+	rec = ask(t, alice, routes, http.MethodGet, "/threads?threads=1&limit=10", "")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), thread.ID)
+}
+
 // A chat is posted, listed and read by its participants alone, and its read marker clears the list's count.
 func TestThreadsAPI(t *testing.T) {
 	t.Parallel()
