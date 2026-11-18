@@ -16,7 +16,7 @@ The page follows the thread over Server-Sent Events at `/api/sse/thread/<id>` an
 
 ## The list
 
-`/threads` lists every thread the reader may see, newest activity first: board notes with `note/view`, prompts with `prompt/view` in a place the reader sees, and chats they are in. Recents and the dashboard show a working thread at the top with a pulsing marker, and they do not also list its Claude run.
+`/threads` lists every thread the reader may see, newest activity first: board notes with `note/view`, prompts with `prompt/view` in a place the reader sees, and chats they are in. The filter row narrows the list by words of the body, a place and the directories under it, a state and a user. Recents and the dashboard show a working thread at the top with a pulsing marker, and they do not also list its Claude run.
 
 ## API
 

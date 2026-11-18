@@ -56,8 +56,20 @@ class mod_threads implements Module {
 
 		$store = new Task\Threads\Notes;
 		$users = new Task\User;
+		$form = [
+			"q" => trim(Task\Route::input("q")),
+			"place" => trim(Task\Route::input("place")),
+			"state" => Task\Route::input("state"),
+			"user" => trim(Task\Route::input("user")),
+		];
+		$filter = [
+			"q" => $form["q"],
+			"dir" => $form["place"],
+			"state" => $form["state"],
+			"user" => $form["user"],
+		];
 		$roots = [];
-		foreach ($store->feed() as $note) {
+		foreach ($store->feed($filter) as $note) {
 			if (Task\Threads\Timeline::visible($note, $chrome)) {
 				$roots[] = $note;
 			}
@@ -88,6 +100,8 @@ class mod_threads implements Module {
 			"head" => $head->data(),
 			"agent" => $agent,
 			"editor" => self::field(),
+			"form" => $form,
+			"states" => ["open", "working", "done", "failed"],
 			"rows" => $rows,
 			"chats" => $chats,
 		]);

@@ -43,9 +43,44 @@ class Notes {
 		return \Task\Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND workspace_id = '' AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", self::NOTES, $limit));
 	}
 
-	/** feed is every board thread and prompt, newest first; a chat is listed by chats(). */
-	function feed($limit = self::LIMIT) {
-		return \Task\Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", self::NOTES, $limit));
+	/**
+	 * feed is every board thread and prompt, newest first, narrowed by a
+	 * place and the directories under it, a user, a state, an origin or words
+	 * of the body. A chat is listed by chats().
+	 */
+	function feed($filter = [], $limit = self::LIMIT) {
+		$where = "";
+		$args = [self::NOTES];
+
+		if (($filter["dir"] ?? "") !== "") {
+			$where .= " AND (dir = ? OR dir LIKE ?)";
+			$args[] = $filter["dir"];
+			$args[] = $filter["dir"] . "/%";
+		}
+
+		foreach ([
+			"user" => "user_name",
+			"state" => "state",
+			"origin" => "origin",
+		] as $key => $column) {
+			if (($filter[$key] ?? "") === "") {
+				continue;
+			}
+
+			$where .= " AND " . $column . " = ?";
+			$args[] = $filter[$key];
+		}
+
+		if (($filter["q"] ?? "") !== "") {
+			$where .= " AND body LIKE ?";
+			$args[] = "%" . $filter["q"] . "%";
+		}
+
+		$args[] = $limit;
+
+		$sql = "SELECT * FROM note WHERE parent_id = '' AND channel = ? AND " . self::LIVE . $where . " ORDER BY rowid DESC LIMIT ?";
+
+		return \Task\Model\Note::rows(\Task\DB::all($this->db, $sql, $args));
 	}
 
 	/** live is the board threads and prompts the agent is working on, newest first. */

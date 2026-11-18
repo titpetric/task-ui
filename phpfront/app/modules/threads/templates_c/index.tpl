@@ -155,6 +155,26 @@
 	<div class="form-foot note"><span class="faint">Ctrl+Enter posts. Markdown: <code>**bold**</code>, <code>- lists</code>, <code>`code`</code> and <code>```</code> blocks.</span><button class="btn btn-primary" type="submit">Post note</button></div>
 </form>
 
+<form method="get" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/threads" class="filters">
+	<label>Words <input type="search" name="q" value="<?php echo htmlspecialchars($_v['data']['form']['q'], ENT_QUOTES);?>
+" spellcheck="false" autocomplete="off"></label>
+	<label>Place <input type="text" name="place" value="<?php echo htmlspecialchars($_v['data']['form']['place'], ENT_QUOTES);?>
+" spellcheck="false" autocomplete="off"></label>
+	<label for="threads-state">State
+		<select id="threads-state" name="state">
+			<option value="">any state</option>
+<?php if(!empty($_v['data']['states']))foreach($_v['data']['states'] as $_v['state']){?><option value="<?php echo htmlspecialchars($_v['state'], ENT_QUOTES);?>
+"<?php if($_v['data']['form']['state'] === $_v['state']){?>
+ selected<?php }?>><?php echo htmlspecialchars($_v['state'], ENT_QUOTES);?>
+</option>
+<?php }?>		</select>
+	</label>
+	<label>By <input type="text" name="user" value="<?php echo htmlspecialchars($_v['data']['form']['user'], ENT_QUOTES);?>
+" spellcheck="false" autocomplete="off"></label>
+	<button class="btn" type="submit">Filter</button>
+</form>
+
 <?php if($_v['data']['chats']){?>
 
 <h3 class="section-title">Chats</h3>
