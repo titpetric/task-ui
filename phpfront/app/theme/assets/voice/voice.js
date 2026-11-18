@@ -1614,7 +1614,7 @@
       }
       if (update.state === "done") return;
       tell(label(update.text || update.state));
-    }, thread, agentName(), { audio: clip ? clip + ".wav" : "", spoken: words });
+    }, thread, agentName(), { audio: clip ? clip + ".wav" : "", spoken: words }, agentName());
   }
 
   // noted leaves a spoken note on the board when no agent answers, and shows

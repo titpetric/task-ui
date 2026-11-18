@@ -4706,7 +4706,7 @@
     };
     // ask posts a prompt, or a reply in parent's thread. A reply runs in the
     // thread's place, with everything said in the thread so far.
-    var ask = function (text, parent, user, heard) {
+    var ask = function (text, parent, user, heard, agent) {
       unfollow();
       var body = { prompt: text };
       // What the orb recorded rides with the prompt: the thread plays the
@@ -4718,6 +4718,7 @@
       else if (here.run) body.run = here.run;
       else { body.folder = here.folder; body.dir = here.dir; body.origin = "orb"; }
       if (!parent && user) body.user = user;
+      if (!parent && agent) body.agent = agent;
       api("POST", "/api/prompts", body).then(function (res) {
         if (res.status >= 300) {
           tell({ state: "failed", text: res.data.error || ("HTTP " + res.status) });
@@ -4730,10 +4731,10 @@
     };
     // taskUI.ask posts a prompt, or a reply in parent's thread, and reports
     // what the thread does next, so voice.js can follow a question it sent.
-    window.taskUI.ask = function (text, on, parent, user, heard) {
+    window.taskUI.ask = function (text, on, parent, user, heard, agent) {
       if (!text) return false;
       if (on) watchers.push(on);
-      ask(text, parent, user, heard);
+      ask(text, parent, user, heard, agent);
       return true;
     };
     // taskUI.place is where a prompt from this page goes. Reading a thread
