@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/titpetric/oida"
 
@@ -146,6 +147,15 @@ func (h *FrontHost) Instance(ctx context.Context, admin bool) phpfront.Instance 
 	if h.Storage != nil && admin {
 		out.Measured = true
 		out.Storage = frontStorage(h.Storage.Table())
+	}
+	// The uptime is the one field of the page that moves between one request
+	// and the next, so it is worded here and not kept in the configuration.
+	if !h.Started.IsZero() {
+		now := time.Now()
+		if h.Now != nil {
+			now = h.Now()
+		}
+		out.Uptime = phpfront.Uptime(now.Sub(h.Started))
 	}
 	return out
 }

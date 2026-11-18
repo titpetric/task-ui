@@ -48,6 +48,10 @@ type AppServices struct {
 	STT          *stt.Service
 	Instance     *phpfront.Instance
 
+	// StartedAt is when this process started, which the Instance page counts
+	// the uptime from.
+	StartedAt time.Time
+
 	// mounts and hostData are the container's bind mounts, read once for the runner and the Instance page.
 	mounts   hostpath.Mounts
 	hostData string
@@ -55,6 +59,11 @@ type AppServices struct {
 
 // NewAppServices returns the services over s, failing on stored telemetry options that build no tracer.
 func NewAppServices(cfg *Config, s *AppStorage) (*AppServices, error) {
+	started := time.Now()
+	id, err := instanceID(context.Background(), s.Settings)
+	if err != nil {
+		return nil, err
+	}
 	keys := newKeystore(cfg, s)
 	secrets := newSecrets(keys, s)
 	integrations := &integration.Store{Secrets: secrets}
@@ -114,13 +123,15 @@ func NewAppServices(cfg *Config, s *AppStorage) (*AppServices, error) {
 		// What the server runs with, as the Instance page draws it. The meter
 		// behind it is one, so a page drawn twice walks the disk once.
 		Instance: &phpfront.Instance{
+			ID: id, Started: started.Format(phpfront.Stamp),
 			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
 			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),
 			SessionTTL: cfg.SessionTTL.String(), SessionMax: cfg.SessionMax.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(),
 			ArtifactHistory: cfg.ArtifactHistory, ComposeProject: compose,
 		},
-		mounts:   mounts,
-		hostData: hostData,
+		StartedAt: started,
+		mounts:    mounts,
+		hostData:  hostData,
 	}, nil
 }
 

@@ -77,6 +77,7 @@ func TestInstance(t *testing.T) {
 	t.Parallel()
 
 	out := instance(Instance{
+		ID: "01kj4m2p0rq7s8t9vwa3xyzabc", Started: "2026-11-18 13:05:39 CET", Uptime: "4h 7m",
 		URL: "https://task.cdn.si", Listen: ":3000", Root: "/src",
 		DataDir: "/data", SSHDir: "/data/keys", TimeZone: "Europe/Ljubljana",
 		Running: true,
@@ -95,6 +96,9 @@ func TestInstance(t *testing.T) {
 		assert.True(t, ok, key)
 	}
 
+	assert.Equal(t, "01kj4m2p0rq7s8t9vwa3xyzabc", text(t, out, "id"))
+	assert.Equal(t, "2026-11-18 13:05:39 CET", text(t, out, "started"))
+	assert.Equal(t, "4h 7m", text(t, out, "uptime"))
 	assert.Equal(t, "https://task.cdn.si", text(t, out, "url"))
 	assert.Equal(t, "Europe/Ljubljana", text(t, out, "time_zone"))
 	assert.True(t, flag(t, out, "running"))

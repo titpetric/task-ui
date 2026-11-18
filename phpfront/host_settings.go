@@ -57,6 +57,13 @@ type Key struct {
 // configuration from the environment and the command line, less anything
 // secret. A path shows; a token never does.
 type Instance struct {
+	// ID is the instance's own identifier, made at its first start and kept
+	// in the setting table, so a restart and a deploy name the same instance.
+	ID string `json:"id"`
+	// Started is when this process started, worded for the page, and Uptime
+	// how long ago that was, which the host words again on every request.
+	Started  string `json:"started"`
+	Uptime   string `json:"uptime"`
 	URL      string `json:"url"`
 	Listen   string `json:"listen"`
 	Root     string `json:"root"`

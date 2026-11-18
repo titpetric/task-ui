@@ -168,7 +168,7 @@ func (a *App) wire(version string) error {
 		Artifacts: svc.Artifacts, Disk: svc.Disk, Now: cfg.Clock(),
 		Hosts: svc.Hosts, SSH: svc.SSH, Facts: svc.Facts,
 		Tools: svc.Tooling, Compose: cfg.ComposeProject,
-		Keystore: svc.Keystore, Config: svc.Instance,
+		Keystore: svc.Keystore, Config: svc.Instance, Started: svc.StartedAt,
 		Tracing: svc.Telemetry,
 		Cleaner: svc.Cleaner, Storage: svc.Measured,
 		Dispatcher: dispatcher, Runs: moduleRuns, FrontRoot: frontRoot,

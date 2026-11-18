@@ -155,6 +155,12 @@ The link pages and MCP clients use.<?php }else{?>
 Empty: task-ui reads the link from each request.<?php }?></span></td></tr>
 		<tr><td class="key">Version</td><td class="value mono ro" data-label="Value"><?php echo htmlspecialchars($_v['chrome']['version'], ENT_QUOTES);?>
 </td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>The build that serves this page.</span></td></tr>
+		<tr><td class="key">Instance ID</td><td class="value mono" data-label="Value"><?php if($_v['data']['instance']['id']){ echo htmlspecialchars($_v['data']['instance']['id'], ENT_QUOTES); }else{?>
+<span class="faint">unknown</span><?php }?></td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>This instance's own identifier: made at its first start and kept in the database.</span></td></tr>
+		<tr><td class="key">Uptime</td><td class="value mono" data-label="Value"><?php if($_v['data']['instance']['uptime']){ echo htmlspecialchars($_v['data']['instance']['uptime'], ENT_QUOTES);?>
+<small class="faint">since <?php echo htmlspecialchars($_v['data']['instance']['started'], ENT_QUOTES);?>
+</small><?php }else{?>
+<span class="faint">unknown</span><?php }?></td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>How long the server has been up, counted from when task-ui started.</span></td></tr>
 		<tr><td class="key">Listen</td><td class="value mono" data-label="Value"><?php echo htmlspecialchars($_v['data']['instance']['listen'], ENT_QUOTES);?>
 </td><td class="var" data-label="Variable"><code>TASK_UI_LISTEN</code></td><td class="desc" data-label="About"><span>The address the server listens on.</span></td></tr>
 		<tr><td class="key">Time zone</td><td class="value mono ro" data-label="Value"><?php if($_v['data']['instance']['time_zone']){ echo htmlspecialchars($_v['data']['instance']['time_zone'], ENT_QUOTES); }else{?>

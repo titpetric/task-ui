@@ -49,6 +49,9 @@ func keys(found []Key) *model.Array {
 // instance is what the server runs with as a PHP array.
 func instance(found Instance) *model.Array {
 	return phpMap(
+		"id", found.ID,
+		"started", found.Started,
+		"uptime", found.Uptime,
 		"url", found.URL,
 		"listen", found.Listen,
 		"root", found.Root,

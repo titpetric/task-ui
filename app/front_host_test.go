@@ -218,3 +218,24 @@ func TestFrontUptime(t *testing.T) {
 // The host satisfies the interface it is handed to, which keeps the binding
 // list and the host in step.
 var _ phpfront.Host = &FrontHost{}
+
+// The Instance page names the instance, and words its uptime from when the
+// process started on every request: the figure moves with the page and is not
+// frozen at the start the configuration was built with.
+func TestFrontHost_Instance(t *testing.T) {
+	t.Parallel()
+
+	started := time.Date(2026, 11, 18, 13, 5, 39, 0, time.UTC)
+	host := &FrontHost{
+		Config:  &phpfront.Instance{ID: "01kj4m2p0rq7s8t9vwa3xyzabc", Started: "2026-11-18 14:05:39 CET"},
+		Started: started,
+		Now:     func() time.Time { return started.Add(4*time.Hour + 7*time.Minute) },
+	}
+	found := host.Instance(context.Background(), false)
+	assert.Equal(t, "01kj4m2p0rq7s8t9vwa3xyzabc", found.ID)
+	assert.Equal(t, "2026-11-18 14:05:39 CET", found.Started)
+	assert.Equal(t, "4h 7m", found.Uptime)
+
+	// A host with no start time, as a bare test host has none, words none.
+	assert.Equal(t, "", (&FrontHost{}).Instance(context.Background(), false).Uptime)
+}

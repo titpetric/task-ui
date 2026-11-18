@@ -81,6 +81,11 @@ type FrontHost struct {
 	Keystore *keystore.Local
 	Config   *phpfront.Instance
 
+	// Started is when this process started. The Instance page counts its
+	// uptime from here on every request, so the figure moves with the page
+	// and not only with the configuration the instance was built with.
+	Started time.Time
+
 	// Tracing is the tracer's options, which the Telemetry page reads.
 	Tracing *Telemetry
 

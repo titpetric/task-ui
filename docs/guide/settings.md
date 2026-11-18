@@ -21,7 +21,7 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 
 `/settings/instance` shows what the server runs with, in sections, each a table of the setting, its value, the variable that sets it and what it does:
 
-- **General**: the base link (`TASK_UI_URL`), the version, the listen address, the time zone of the server's clock, how users sign in, the session lifetime, the password file, the roles and the MCP endpoint.
+- **General**: the base link (`TASK_UI_URL`), the version, the instance's own ID, how long the server has been up, the listen address, the time zone of the server's clock, how users sign in, the session lifetime, the password file, the roles and the MCP endpoint.
 - **Runs**: the runs that go at once, the backlog of runs that wait for a slot, how long a finished run stays attachable, the stop grace, the artifact history and a link to Data retention.
 - **Parent environment**: how much of the server's own environment a run starts with, and, for an admin, the server's variables by name.
 - **Paths**: the workspace folder, discovery, the data folder and how the host sees it, the key folder and the compose project.
@@ -30,7 +30,7 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 - **Integrations**: whether the Beszel integration lists the Inventory's hosts.
 - **Keys**: the instance's encryption key and the git key, in the columns of the Keys page: name, algorithm, size, public key with its copy button, purpose, `encryption` or `git + ssh`. The **⋯** menu of a key shows its fingerprint and dates, copies its public key, downloads it as `<name>.pub` and rotates the key (see [Keys](#keys)); nothing shows the private key.
 
-The environment sets most of these: change one on the server, then restart task-ui. The backlog length and the parent environment are the settings the page saves. The page shows paths and names, never a password, token or key. Anyone who may open a step of the settings may open it.
+The environment sets most of these: change one on the server, then restart task-ui. The backlog length and the parent environment are the settings the page saves. The **Instance ID** is neither: an instance makes one at its first start and keeps it in the `setting` table as `instance.id`, so a restart and a deploy name the same instance. **Uptime** counts from the start of the process that serves the page, and the `since` under it is when that start was. The page shows paths and names, never a password, token or key. Anyone who may open a step of the settings may open it.
 
 ![Instance](https://cdn.si/titpetric/task-ui/docs/assets/instance-dark.png)
 
