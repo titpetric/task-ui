@@ -4122,7 +4122,7 @@
     });
     // Enter in the message field saves, as the button does.
     previewCommit.addEventListener("keydown", function (event) {
-      if (event.key !== "Enter" || editingKind !== "checkout") return;
+      if (event.key !== "Enter" || event.isComposing || editingKind !== "checkout") return;
       event.preventDefault();
       saveCheckout(editingHref, editingRel);
     });

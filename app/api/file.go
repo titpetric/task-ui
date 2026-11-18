@@ -82,12 +82,14 @@ func (h *Handlers) viewFile(w http.ResponseWriter, r *http.Request) {
 // maxFileWrite bounds a file written into a checkout from the editor.
 const maxFileWrite = 16 << 20
 
-// maxFileRequest bounds the body the editor sends: the file as JSON, whose
-// characters can escape to more than the bytes they stand for.
-const maxFileRequest = maxFileWrite*3 + 1<<20
-
 // maxCommitMessage bounds the message an edit is committed with.
 const maxCommitMessage = 200
+
+// maxFileRequest bounds the body the editor sends: the file as JSON, whose
+// characters can escape to more than the bytes they stand for. A control
+// character escapes to six bytes, \u00XX, and the message escapes with it, so
+// a file at maxFileWrite fits the bound; the rest is the JSON around them.
+const maxFileRequest = maxFileWrite*6 + maxCommitMessage*6 + 4096
 
 // fileWrite is what the editor's Save sends: the whole file and the message
 // its change is committed with.

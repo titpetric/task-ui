@@ -225,7 +225,8 @@ func (g *Git) Pull(ctx context.Context, dir string, w io.Writer) error {
 // CommitPath stages rel and commits it with the message, as the author the
 // editor's reader names, answering the commit and whether one was made. A
 // path that holds no change makes no commit. The identity is task-ui's and
-// the author the reader's, as the artifact tree commits a file a user writes.
+// the author the reader's, or task-ui when the reader is unnamed, as the
+// artifact tree commits a file a user writes.
 func (g *Git) CommitPath(ctx context.Context, dir, rel, message, author string) (string, bool, error) {
 	if !g.IsRepo(dir) {
 		return "", false, ErrNotRepo
@@ -242,11 +243,10 @@ func (g *Git) CommitPath(ctx context.Context, dir, rel, message, author string) 
 	if staged == "" {
 		return "", false, nil
 	}
-	args := []string{"commit", "-q"}
-	if author != "" {
-		args = append(args, "--author", author+" <"+author+"@task-ui>")
+	if author == "" {
+		author = "task-ui"
 	}
-	args = append(args, "-m", message, "--", rel)
+	args := []string{"commit", "-q", "--author", author + " <" + author + "@task-ui>", "-m", message, "--", rel}
 	if err := g.editor(ctx, dir, io.Discard, args...); err != nil {
 		return "", false, err
 	}

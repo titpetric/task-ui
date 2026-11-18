@@ -110,6 +110,22 @@ func TestGit_CommitPath_NoIdentity(t *testing.T) {
 	}
 }
 
+// An edit with no author commits as task-ui, as a file the artifact tree
+// writes with no author does.
+func TestGit_CommitPath_NoAuthor(t *testing.T) {
+	t.Parallel()
+	l := newGitlab(t)
+	g := &Git{}
+
+	l.save("notes.txt", "five\n")
+	if _, made, err := g.CommitPath(context.Background(), l.dir, "notes.txt", "edit: notes.txt", ""); err != nil || !made {
+		t.Fatalf("CommitPath without an author: made=%v err=%v", made, err)
+	}
+	if author := l.git(l.dir, "log", "-1", "--format=%an <%ae>"); author != "task-ui <task-ui@task-ui>" {
+		t.Fatalf("author is %q", author)
+	}
+}
+
 // Push sends the commit on the branch to the remote the checkout came from.
 func TestGit_Push(t *testing.T) {
 	t.Parallel()
