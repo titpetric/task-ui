@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"database/sql"
 )
 
 // Connection is the name a module opens the instance's database under:
@@ -21,17 +21,17 @@ const Connection = "task-ui"
 // is why a module's work belongs in a statement and not in a long
 // transaction.
 type Database struct {
-	DB *sqlx.DB
+	DB *sql.DB
 }
 
 // NewDatabase returns the provider over a pool. A nil pool answers every
 // name with an error, which is an instance whose modules store nothing.
-func NewDatabase(db *sqlx.DB) *Database {
+func NewDatabase(db *sql.DB) *Database {
 	return &Database{DB: db}
 }
 
 // Open returns the pool for the first name it knows.
-func (d *Database) Open(_ context.Context, names ...string) (*sqlx.DB, error) {
+func (d *Database) Open(_ context.Context, names ...string) (*sql.DB, error) {
 	if d == nil || d.DB == nil {
 		return nil, fmt.Errorf("no database on this instance: a module reads %q", Connection)
 	}
@@ -46,7 +46,7 @@ func (d *Database) Open(_ context.Context, names ...string) (*sqlx.DB, error) {
 // Connect is Open plus a ping, which is what the Database constructor
 // calls: the ping proves the storage reachable before a script sees a
 // client.
-func (d *Database) Connect(ctx context.Context, names ...string) (*sqlx.DB, error) {
+func (d *Database) Connect(ctx context.Context, names ...string) (*sql.DB, error) {
 	db, err := d.Open(ctx, names...)
 	if err != nil {
 		return nil, err

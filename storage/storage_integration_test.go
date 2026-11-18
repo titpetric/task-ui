@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/go-bridget/mig/migrate"
+	"github.com/titpetric/pdo/client"
 	_ "modernc.org/sqlite"
 
 	"github.com/titpetric/task-ui/app"
@@ -24,6 +25,12 @@ import (
 // It comes from app and not from schema, because app is the one place that
 // names the owners: see app/migrations.go.
 var migrations = app.Migrations()
+
+// newClient returns a pdo client over the shared pool, for the reads that
+// scan straight into a model and the writes that name their columns.
+func newClient(db storage.DB) *client.Client {
+	return client.NewClient(db)
+}
 
 // newDB opens a private in-memory database with the schema applied.
 func newDB(t *testing.T) storage.DB {
@@ -103,7 +110,7 @@ func widen(t *testing.T, db storage.DB, table string) {
 	assert.NoError(t, err)
 }
 
-// errNoField is what sqlx says when a row holds a column the model type
+// errNoField is what the pdo scanner says when a row holds a column the model type
 // has no field for. widenedDB arranges that.
 const errNoField = "missing destination name unexpected"
 
@@ -156,7 +163,7 @@ func TestMigrate(t *testing.T) {
 	assert.NoError(t, err)
 
 	var count int
-	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
+	assert.NoError(t, newClient(db).Get(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
 	assert.Equal(t, len(files), count)
 }
 
@@ -164,7 +171,7 @@ func TestOpenAndMigrate(t *testing.T) {
 	t.Parallel()
 	db := newDB(t)
 	var name string
-	assert.NoError(t, db.GetContext(context.Background(), &name, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'run'"))
+	assert.NoError(t, newClient(db).Get(context.Background(), &name, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'run'"))
 	assert.Equal(t, "run", name)
 
 	_, err := storage.OpenAndMigrate(context.Background(), "file:/nonexistent/dir/x.db", migrations)
@@ -206,7 +213,7 @@ func TestMigrate_scheduleUTC(t *testing.T) {
 		Last *string `db:"last_run_at"`
 	}
 	var got []times
-	assert.NoError(t, db.SelectContext(ctx, &got, "SELECT CAST(next_run_at AS TEXT) AS next_run_at, CAST(last_run_at AS TEXT) AS last_run_at FROM schedule ORDER BY id"))
+	assert.NoError(t, newClient(db).Select(ctx, &got, "SELECT CAST(next_run_at AS TEXT) AS next_run_at, CAST(last_run_at AS TEXT) AS last_run_at FROM schedule ORDER BY id"))
 	assert.Len(t, got, 3)
 	assert.Equal(t, "2026-10-23 05:00:00 +0000 UTC", got[0].Next)
 	assert.Equal(t, "2026-10-22 07:00:28 +0000 UTC", *got[0].Last)
@@ -243,12 +250,12 @@ func TestMigrate_hostJobs(t *testing.T) {
 		Target string `db:"target"`
 	}
 	var runs []row
-	assert.NoError(t, db.SelectContext(ctx, &runs, "SELECT job, target FROM run ORDER BY id"))
+	assert.NoError(t, newClient(db).Select(ctx, &runs, "SELECT job, target FROM run ORDER BY id"))
 	assert.Equal(t, []row{{"@host:dev1", "dev1"}, {"plan", ""}}, runs)
 	var schedule, step row
-	assert.NoError(t, db.GetContext(ctx, &schedule, "SELECT job, target FROM schedule"))
+	assert.NoError(t, newClient(db).Get(ctx, &schedule, "SELECT job, target FROM schedule"))
 	assert.Equal(t, row{"@host:*", ""}, schedule)
-	assert.NoError(t, db.GetContext(ctx, &step, "SELECT job, target FROM workflow_step"))
+	assert.NoError(t, newClient(db).Get(ctx, &step, "SELECT job, target FROM workflow_step"))
 	assert.Equal(t, row{"@host:dev2", ""}, step)
 }
 
@@ -293,7 +300,7 @@ func TestMigrate_stepKinds(t *testing.T) {
 		Prompt   string `db:"prompt"`
 	}
 	var steps []row
-	assert.NoError(t, db.SelectContext(ctx, &steps, "SELECT workflow_id, position, folder, job, kind, prompt FROM workflow_step ORDER BY workflow_id, position"))
+	assert.NoError(t, newClient(db).Select(ctx, &steps, "SELECT workflow_id, position, folder, job, kind, prompt FROM workflow_step ORDER BY workflow_id, position"))
 	assert.Equal(t, []row{
 		{"w1", 0, "_", "@claude-prompt", "prompt", "fetch the weather"},
 		{"w1", 1, "_", "@claude-prompt", "prompt", "water today?"},
@@ -302,10 +309,10 @@ func TestMigrate_stepKinds(t *testing.T) {
 		{"w3", 1, "infra", "plan", "job", ""},
 	}, steps)
 	var kinds []string
-	assert.NoError(t, db.SelectContext(ctx, &kinds, "SELECT kind FROM workflow_run_step ORDER BY position"))
+	assert.NoError(t, newClient(db).Select(ctx, &kinds, "SELECT kind FROM workflow_run_step ORDER BY position"))
 	assert.Equal(t, []string{"prompt", "workflow"}, kinds)
 	var left int
-	assert.NoError(t, db.GetContext(ctx, &left, "SELECT COUNT(*) FROM workflow WHERE prompt <> '' OR prompt_folder <> ''"))
+	assert.NoError(t, newClient(db).Get(ctx, &left, "SELECT COUNT(*) FROM workflow WHERE prompt <> '' OR prompt_folder <> ''"))
 	assert.Equal(t, 0, left)
 }
 
@@ -320,19 +327,19 @@ func TestMigrate_runParent(t *testing.T) {
 	ctx := context.Background()
 	db := newDB(t)
 	var columns []string
-	assert.NoError(t, db.SelectContext(ctx, &columns, "SELECT name FROM pragma_table_info('run') WHERE name LIKE 'parent%' ORDER BY name"))
+	assert.NoError(t, newClient(db).Select(ctx, &columns, "SELECT name FROM pragma_table_info('run') WHERE name LIKE 'parent%' ORDER BY name"))
 	assert.Equal(t, []string{"parent_id", "parent_kind"}, columns)
 
 	// The order carries the listing's, so neither query sorts.
 	var index []string
-	assert.NoError(t, db.SelectContext(ctx, &index, "SELECT name FROM pragma_index_info('idx_run_parent')"))
+	assert.NoError(t, newClient(db).Select(ctx, &index, "SELECT name FROM pragma_index_info('idx_run_parent')"))
 	assert.Equal(t, []string{"parent_id", "started_at", "id"}, index)
 }
 
 // A database that cannot be migrated and a closed pool each return the
 // error the driver gave them.
 //
-// Open itself has no error to test: sqlx.Open answers one only for a
+// Open itself has no error to test: sql.Open answers one only for a
 // driver that is not registered, and the program links this one in.
 func TestOpen_Errors(t *testing.T) {
 	t.Parallel()
