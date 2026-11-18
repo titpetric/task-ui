@@ -59,8 +59,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, root, comment, action, folder
 	}
 	// model.Default is the root folder, where a prompt with no folder of
 	// its own runs: a module is not a checkout and has no folder.
-	origin := "module:" + filepath.Base(filepath.Clean(root))
-	asked, err := d.Board.AskAs(ctx, user, "", model.Default, body, note.Spoken{}, "", origin)
+	asked, err := d.Board.AskAs(ctx, user, "", model.Default, body, note.Spoken{}, "", origin(root, action))
 	if err != nil {
 		return "", err
 	}
@@ -94,6 +93,14 @@ func (d *Dispatcher) prompt(root, comment, action, folder string) (string, error
 		parts = append(parts, history)
 	}
 	return strings.Join(parts, "\n\n"), nil
+}
+
+// origin returns search for the header's question and module:<name> for any other action.
+func origin(root, action string) string {
+	if filepath.Base(action) == "search.md" {
+		return "search"
+	}
+	return "module:" + filepath.Base(filepath.Clean(root))
 }
 
 // Revisions is how many of a folder's commits the prompt lists: enough to roll
