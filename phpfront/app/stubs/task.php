@@ -15,6 +15,10 @@ class Task {
 		return true;
 	}
 
+	public static function reindex() {
+		return false;
+	}
+
 	public static function dispatch($comment, $action, $folder) {
 		return "";
 	}

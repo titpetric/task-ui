@@ -44,6 +44,37 @@ func TestFront_Bound(t *testing.T) {
 	}
 }
 
+// A module's startup job reaches Task::reindex, which starts the search once.
+func TestStartup_Reindex(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, ModulesDir, "probe")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	modinfo := "<?php\n// @startup\n$m = new Task\\Module;\n$m->setName(\"taskui/probe\");\nTask::register($m);\n"
+	if err := os.WriteFile(filepath.Join(dir, ModInfo), []byte(modinfo), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	boot := "<?php\n// @startup\nTask::reindex();\n"
+	if err := os.WriteFile(filepath.Join(dir, "boot.php"), []byte(boot), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	started := 0
+	opts := NewOptions(root)
+	opts.Search = func(context.Context) error { started++; return nil }
+	front, err := New(opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	if err := front.Mount(context.Background(), chi.NewRouter()); err != nil {
+		t.Fatalf("mounting: %v", err)
+	}
+	if started != 1 {
+		t.Errorf("want the index started once, got %d", started)
+	}
+}
+
 // TestRegisterModule: a modinfo.php registers through the startup runtime, and
 // one that names itself wrongly fails the mount rather than an instance.
 func TestRegisterModule(t *testing.T) {

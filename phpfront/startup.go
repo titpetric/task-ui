@@ -1,6 +1,8 @@
 package phpfront
 
 import (
+	"context"
+
 	"github.com/titpetric/phpscript/runner"
 )
 
@@ -13,5 +15,15 @@ func registerModule(rt *runner.Runtime) {
 			return false, ErrName
 		}
 		return true, nil
+	})
+}
+
+// registerSearch registers Task::reindex for a front end startup job.
+func registerSearch(rt *runner.Runtime, search func(ctx context.Context) error) {
+	rt.RegisterFunc("Task::reindex", func(ctx context.Context) (bool, error) {
+		if search == nil {
+			return false, nil
+		}
+		return true, search(ctx)
 	})
 }

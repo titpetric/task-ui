@@ -46,7 +46,8 @@ func New(opts Options) (*Front, error) {
 		// The module symbols after the shared list, which ends in the page's
 		// own: a @startup job calls both and the two register in one order.
 		startup: annotations.NewStartup(tree, append(scan(static, opts, router),
-			annotations.WithRuntimeFunc(registerModule))...),
+			annotations.WithRuntimeFunc(registerModule),
+			annotations.WithRuntimeFunc(func(rt *runner.Runtime) { registerSearch(rt, opts.Search) }))...),
 		bindings: annotations.NewBindings(annotations.WithRouter(router),
 			annotations.WithModuleSuffix("taskui")),
 		static: static,

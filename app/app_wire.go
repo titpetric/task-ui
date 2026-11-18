@@ -164,6 +164,7 @@ func (a *App) wire(version string) error {
 	frontOpts.Database = phpfront.NewDatabase(store.DB)
 	frontOpts.Artifacts = phpfront.NewTree(svc.Artifacts)
 	frontOpts.Tracer = svc.Telemetry.Tracer()
+	frontOpts.Search = a.Search.Trigger
 	frontOpts.Host = &FrontHost{
 		Catalogue: a.Catalogue, Runner: a.Runner, Workflows: a.Workflows, Git: svc.Git, Events: svc.Events,
 		Recordings: svc.Recordings, Integrations: svc.Integrations, Secrets: svc.Secrets, Root: cfg.Root,

@@ -1,6 +1,7 @@
 package phpfront
 
 import (
+	"context"
 	"runtime"
 	"time"
 
@@ -52,6 +53,10 @@ type Options struct {
 
 	// Timeout bounds one page.
 	Timeout time.Duration
+
+	// Search starts the documentation index in the background, bound as
+	// Task::reindex(). Nil starts nothing.
+	Search func(ctx context.Context) error
 
 	// OnError receives a refused route, a duplicate, a tree it could not read.
 	OnError func(error)
