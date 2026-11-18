@@ -261,6 +261,7 @@ class mod_workflows implements Module {
 		$roots = $notes->ofArea(Task\Note::AREA_WORKFLOWS);
 		$replies = $notes->replies(Task\Note::ids($roots));
 		$agents = $users->agents();
+		$pick = Task\Prompt::agents($chrome);
 		$threads = [];
 
 		foreach ($roots as $note) {
@@ -283,8 +284,11 @@ class mod_workflows implements Module {
 			"editor" => Task\Prompt::field("Describe a workflow to build or change"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in ",
+			"agents" => $pick["names"],
+			"agent" => $pick["current"],
 			"picks" => $this->picks($chrome),
 			"after" => " with the task tools: it saves the workflow and runs it up to 3 times.",
+			"next" => Task\Route::href("/threads/{id}"),
 			"options" => $chrome->runAs(),
 			"place" => Task\Route::INTERNAL,
 			"area" => Task\Note::AREA_WORKFLOWS,
