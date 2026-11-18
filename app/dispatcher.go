@@ -59,7 +59,8 @@ func (d *Dispatcher) Dispatch(ctx context.Context, root, comment, action, folder
 	}
 	// model.Default is the root folder, where a prompt with no folder of
 	// its own runs: a module is not a checkout and has no folder.
-	asked, err := d.Board.Ask(ctx, user, "", model.Default, body, note.Spoken{})
+	origin := "module:" + filepath.Base(filepath.Clean(root))
+	asked, err := d.Board.AskAs(ctx, user, "", model.Default, body, note.Spoken{}, "", origin)
 	if err != nil {
 		return "", err
 	}
