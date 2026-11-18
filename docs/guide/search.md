@@ -21,12 +21,12 @@ The index holds no paragraphs in an agent's context until a search reaches one. 
 
 The run gets the `task` MCP server as every prompt run does, with four tools:
 
-| Tool             | Arguments          | What it reads                                                                                                       |
-|------------------|--------------------|---------------------------------------------------------------------------------------------------------------------|
-| `search_docs`    | `query`, `limit`   | The sections that hold the words, best first, with a short excerpt, the path, the heading and the section number    |
-| `search_outline` | `id`               | A document's headings in order, with the section numbers, and no paragraph text                                     |
-| `search_read`    | `id`, `section`    | One section of a document, whole                                                                                    |
-| `search_browse`  | `path`             | The folders, documents and job targets directly under a path, which is how the folder structure is read             |
+| Tool             | Arguments        | What it reads                                                                                                    |
+|------------------|------------------|------------------------------------------------------------------------------------------------------------------|
+| `search_docs`    | `query`, `limit` | The sections that hold the words, best first, with a short excerpt, the path, the heading and the section number |
+| `search_outline` | `id`             | A document's headings in order, with the section numbers, and no paragraph text                                  |
+| `search_read`    | `id`, `section`  | One section of a document, whole                                                                                 |
+| `search_browse`  | `path`           | The folders, documents and job targets directly under a path, which is how the folder structure is read          |
 
 The instructions the Search page dispatches are [`prompts/search.md`](https://github.com/titpetric/task-ui/blob/main/phpfront/app/prompts/search.md): answer from the tools, cite the path and heading, quote under three lines, and say plainly when the index holds nothing.
 

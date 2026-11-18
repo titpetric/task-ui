@@ -75,16 +75,16 @@ A startup file that throws keeps the module from registering, which is what shou
 
 These reach the PHP of every module.
 
-| Symbol                                       | What it does                                                                                     |
-|----------------------------------------------|--------------------------------------------------------------------------------------------------|
+| Symbol                                       | What it does                                                                                                   |
+|----------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | `new Task\Module`                            | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion` and the sidebar setters |
-| `return $module;`                            | what a `modinfo.php` ends with: the module the runtime records                                   |
-| `Task::dispatch($comment, $action, $folder)` | starts a Claude run in that folder of the tree, returns the identifier of the note that holds it |
-| `Task::reindex()`                            | starts the documentation and job target index in the background, and returns whether it started  |
-| `Task::artifacts($folder)`                   | the files under one folder of the artifact tree, by path relative to it                          |
-| `Task::artifact($path)`                      | the text of one artifact, from the top of the tree, or `""`                                      |
-| `Task::markdown($src, $folder)`              | markdown as HTML, through the renderer that owns the content policy                              |
-| `new Database("task-ui")`                    | the instance's database, with `query`, `get`, `get_all` and `insert`                             |
+| `return $module;`                            | what a `modinfo.php` ends with: the module the runtime records                                                 |
+| `Task::dispatch($comment, $action, $folder)` | starts a Claude run in that folder of the tree, returns the identifier of the note that holds it               |
+| `Task::reindex()`                            | starts the documentation and job target index in the background, and returns whether it started                |
+| `Task::artifacts($folder)`                   | the files under one folder of the artifact tree, by path relative to it                                        |
+| `Task::artifact($path)`                      | the text of one artifact, from the top of the tree, or `""`                                                    |
+| `Task::markdown($src, $folder)`              | markdown as HTML, through the renderer that owns the content policy                                            |
+| `new Database("task-ui")`                    | the instance's database, with `query`, `get`, `get_all` and `insert`                                           |
 
 `Task::VERSION` is the instance's version and `Task::PREFIX` is `/m`.
 

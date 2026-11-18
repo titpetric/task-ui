@@ -12,36 +12,36 @@ A byte stream is not a page: `/files/*`, `/artifacts/files/*` and the archives a
 
 ## The tree
 
-| Path                          | What it is                                                                         |
-|-------------------------------|------------------------------------------------------------------------------------|
-| `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/`  |
-| `ext/`                        | what composer wrote, the autoloader and the plugins among it                        |
-| `code/Module.php`             | the interface every `mod_` class declares                                          |
-| `code/Task/`                  | the task-ui domain: what a row means, and the helpers every page shares           |
-| `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                    |
-| `theme/templates/index.tpl`   | the page shell, which places the components                                        |
-| `theme/templates/components/` | a component and its `.md` per piece of shared markup                               |
+| Path                          | What it is                                                                               |
+|-------------------------------|------------------------------------------------------------------------------------------|
+| `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/`        |
+| `ext/`                        | what composer wrote, the autoloader and the plugins among it                             |
+| `code/Module.php`             | the interface every `mod_` class declares                                                |
+| `code/Task/`                  | the task-ui domain: what a row means, and the helpers every page shares                  |
+| `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                          |
+| `theme/templates/index.tpl`   | the page shell, which places the components                                              |
+| `theme/templates/components/` | a component and its `.md` per piece of shared markup                                     |
 | `theme/assets/`               | the stylesheet, the script, the fonts, the icon and `ext/`, at `/assets/r_<ulid>/theme/` |
-| `theme/mod_notfound.php`      | the catch-all, the one page that belongs to no module                              |
-| `modules/<name>/`             | one directory per sidebar entry                                                    |
-| `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime  |
-| `tools/`                      | the generators and the precompiler                                                 |
-| `tests/`                      | the `.phpt` fixtures, `bootstrap.php`, `setup.php` and `schema.sql`                |
+| `theme/mod_notfound.php`      | the catch-all, the one page that belongs to no module                                    |
+| `modules/<name>/`             | one directory per sidebar entry                                                          |
+| `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime        |
+| `tools/`                      | the generators and the precompiler                                                       |
+| `tests/`                      | the `.phpt` fixtures, `bootstrap.php`, `setup.php` and `schema.sql`                      |
 
 A module directory holds:
 
-| Path                                     | What it is                                                       |
-|------------------------------------------|------------------------------------------------------------------|
-| `modinfo.php`                            | `@startup`: what the module is called, and the tables it bundles |
-| `mod_<name>.php`                         | one per view: its `@route` lines, its class, its dispatch        |
-| `schema/`                                | the `*.up.sql` of each table this module's pages own             |
+| Path                                     | What it is                                                               |
+|------------------------------------------|--------------------------------------------------------------------------|
+| `modinfo.php`                            | `@startup`: what the module is called, and the tables it bundles         |
+| `mod_<name>.php`                         | one per view: its `@route` lines, its class, its dispatch                |
+| `schema/`                                | the `*.up.sql` of each table this module's pages own                     |
 | `storage/`                               | the SQL of a data model the module owns; neither, where it owns no table |
-| `templates/index.tpl`                    | the module's body; more templates beside it                      |
-| `templates_c/`                           | the same compiled, written by `tools/precompile.php` and shipped |
-| `assets/`                                | served at `/assets/r_<ulid>/modules/<name>/`                     |
-| `api/`                                   | new JSON endpoints, `@route` annotated                           |
-| `docs/`                                  | what a module owning `storage/` adds to its generated README     |
-| `README.md`, `schema.puml`, `schema.svg` | generated; the last two only where `tables()` names one          |
+| `templates/index.tpl`                    | the module's body; more templates beside it                              |
+| `templates_c/`                           | the same compiled, written by `tools/precompile.php` and shipped         |
+| `assets/`                                | served at `/assets/r_<ulid>/modules/<name>/`                             |
+| `api/`                                   | new JSON endpoints, `@route` annotated                                   |
+| `docs/`                                  | what a module owning `storage/` adds to its generated README             |
+| `README.md`, `schema.puml`, `schema.svg` | generated; the last two only where `tables()` names one                  |
 
 `modinfo.php` is the directory stating its own shape, the same file and the same `Task\Module` a plugin under `data/modules/` registers with. It runs on a runtime of its own, never on a request's, and nothing serves it: a feature of the interface is drawn by the theme's router and is not a plugin. `Front.Mount` runs every `@startup` file of the tree at boot, so a `modinfo.php` that throws keeps the instance from starting; the registration validates the name and records nothing, because the module table is the Manager's and holds a checkout's plugins. `Front.Modules` runs all eleven again under `TestFront_Modules`, which reads what they declared against the directories. A name other than `taskui/<dir>`, a missing title or icon, or a `setTables` list the module's `schema/*.up.sql` does not create fails there. `phpfront/app/.ruleslint.conf` is the rest of the shape, and `atkins lint` runs it at zero findings.
 
@@ -374,7 +374,7 @@ So an edit to `mod_*.php` shows on the next request, and an edit to a class unde
 | `docs`       | each module's `README.md`, `schema.puml` and `schema.svg`         |
 | `ruleslint`  | the structure of a module, and the semgrep conventions            |
 
-`atkins` runs five of them: `fmt`, `lint`, `precompile`, `test`, `ruleslint`. Precompile is ahead of test because a compiled template is an input to `tests/form.phpt`. `models` and `docs` write generated files and are run by name. The Go side keeps its own: `atkins test` and `splint ./...`.
+`atkins` runs five of them: `fmt`, `lint`, `precompile`, `test`, `ruleslint`. Precompile is ahead of test because a compiled template is an input to `tests/form.phpt`. The root's `schema` writes both model sets and runs first in `default`, which fails when the tree does not hold the generated files; `docs` writes generated files and is run by name. The Go side keeps its own: `atkins test` and `splint ./...`.
 
 Run `atkins fmt`, never the bare command. `phpscript fmt -l .` prints nothing here because `.` reads the files of the directory it names and this root holds no `.php`; the gate is `phpscript fmt -l ./code/... ./modules/... ./stubs/... ./tools/...`, which is the four trees and not `./...`, because the recursive walk reaches `ext/`, which is composer's to format. `tests/` is the one tree the gate leaves out, and `fmt -l ./...` names `tests/setup.php`. `-l` exits zero whether or not it named a file, so the job's test is whether it printed anything.
 

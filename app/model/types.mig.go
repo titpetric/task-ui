@@ -668,6 +668,325 @@ var KeyUserFields = []string{"id", "key_name", "user_name", "created_at"}
 // KeyUserPrimaryFields are the primary key fields in the DB table.
 var KeyUserPrimaryFields = []string{"id"}
 
+// Meeting generated for db table `meeting`.
+type Meeting struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Title
+	Title string `db:"title" json:"title"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// State
+	State string `db:"state" json:"state"`
+
+	// Started At
+	StartedAt *time.Time `db:"started_at" json:"started_at"`
+
+	// Ended At
+	EndedAt *time.Time `db:"ended_at" json:"ended_at"`
+
+	// Limit Seconds
+	LimitSeconds int64 `db:"limit_seconds" json:"limit_seconds"`
+
+	// Empty Since
+	EmptySince *time.Time `db:"empty_since" json:"empty_since"`
+
+	// Summary
+	Summary string `db:"summary" json:"summary"`
+
+	// Summary State
+	SummaryState string `db:"summary_state" json:"summary_state"`
+
+	// Summary Message
+	SummaryMessage string `db:"summary_message" json:"summary_message"`
+
+	// Summary User Name
+	SummaryUserName string `db:"summary_user_name" json:"summary_user_name"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (m *Meeting) GetID() string { return m.ID }
+
+// SetID sets ID to the provided value.
+func (m *Meeting) SetID(val string) { m.ID = val }
+
+// GetTitle will return the value of Title.
+func (m *Meeting) GetTitle() string { return m.Title }
+
+// SetTitle sets Title to the provided value.
+func (m *Meeting) SetTitle(val string) { m.Title = val }
+
+// GetUserID will return the value of UserID.
+func (m *Meeting) GetUserID() string { return m.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (m *Meeting) SetUserID(val string) { m.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (m *Meeting) GetUserName() string { return m.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (m *Meeting) SetUserName(val string) { m.UserName = val }
+
+// GetState will return the value of State.
+func (m *Meeting) GetState() string { return m.State }
+
+// SetState sets State to the provided value.
+func (m *Meeting) SetState(val string) { m.State = val }
+
+// GetStartedAt will return the value of StartedAt.
+func (m *Meeting) GetStartedAt() *time.Time { return m.StartedAt }
+
+// SetStartedAt sets StartedAt to the provided value.
+func (m *Meeting) SetStartedAt(stamp time.Time) { m.StartedAt = &stamp }
+
+// GetEndedAt will return the value of EndedAt.
+func (m *Meeting) GetEndedAt() *time.Time { return m.EndedAt }
+
+// SetEndedAt sets EndedAt to the provided value.
+func (m *Meeting) SetEndedAt(stamp time.Time) { m.EndedAt = &stamp }
+
+// GetLimitSeconds will return the value of LimitSeconds.
+func (m *Meeting) GetLimitSeconds() int64 { return m.LimitSeconds }
+
+// SetLimitSeconds sets LimitSeconds to the provided value.
+func (m *Meeting) SetLimitSeconds(val int64) { m.LimitSeconds = val }
+
+// GetEmptySince will return the value of EmptySince.
+func (m *Meeting) GetEmptySince() *time.Time { return m.EmptySince }
+
+// SetEmptySince sets EmptySince to the provided value.
+func (m *Meeting) SetEmptySince(stamp time.Time) { m.EmptySince = &stamp }
+
+// GetSummary will return the value of Summary.
+func (m *Meeting) GetSummary() string { return m.Summary }
+
+// SetSummary sets Summary to the provided value.
+func (m *Meeting) SetSummary(val string) { m.Summary = val }
+
+// GetSummaryState will return the value of SummaryState.
+func (m *Meeting) GetSummaryState() string { return m.SummaryState }
+
+// SetSummaryState sets SummaryState to the provided value.
+func (m *Meeting) SetSummaryState(val string) { m.SummaryState = val }
+
+// GetSummaryMessage will return the value of SummaryMessage.
+func (m *Meeting) GetSummaryMessage() string { return m.SummaryMessage }
+
+// SetSummaryMessage sets SummaryMessage to the provided value.
+func (m *Meeting) SetSummaryMessage(val string) { m.SummaryMessage = val }
+
+// GetSummaryUserName will return the value of SummaryUserName.
+func (m *Meeting) GetSummaryUserName() string { return m.SummaryUserName }
+
+// SetSummaryUserName sets SummaryUserName to the provided value.
+func (m *Meeting) SetSummaryUserName(val string) { m.SummaryUserName = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (m *Meeting) GetCreatedAt() *time.Time { return m.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (m *Meeting) SetCreatedAt(stamp time.Time) { m.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (m *Meeting) GetUpdatedAt() *time.Time { return m.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (m *Meeting) SetUpdatedAt(stamp time.Time) { m.UpdatedAt = &stamp }
+
+// MeetingTable is the name of the table in the DB.
+const MeetingTable = "`meeting`"
+
+// MeetingFields is a list of all columns in the DB table.
+var MeetingFields = []string{"id", "title", "user_id", "user_name", "state", "started_at", "ended_at", "limit_seconds", "empty_since", "summary", "summary_state", "summary_message", "summary_user_name", "created_at", "updated_at"}
+
+// MeetingPrimaryFields are the primary key fields in the DB table.
+var MeetingPrimaryFields = []string{"id"}
+
+// MeetingLine generated for db table `meeting_line`.
+//
+// Meeting Line.
+type MeetingLine struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Meeting ID
+	MeetingID string `db:"meeting_id" json:"meeting_id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Body
+	Body string `db:"body" json:"body"`
+
+	// Start Ms
+	StartMs int64 `db:"start_ms" json:"start_ms"`
+
+	// End Ms
+	EndMs int64 `db:"end_ms" json:"end_ms"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (m *MeetingLine) GetID() string { return m.ID }
+
+// SetID sets ID to the provided value.
+func (m *MeetingLine) SetID(val string) { m.ID = val }
+
+// GetMeetingID will return the value of MeetingID.
+func (m *MeetingLine) GetMeetingID() string { return m.MeetingID }
+
+// SetMeetingID sets MeetingID to the provided value.
+func (m *MeetingLine) SetMeetingID(val string) { m.MeetingID = val }
+
+// GetUserID will return the value of UserID.
+func (m *MeetingLine) GetUserID() string { return m.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (m *MeetingLine) SetUserID(val string) { m.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (m *MeetingLine) GetUserName() string { return m.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (m *MeetingLine) SetUserName(val string) { m.UserName = val }
+
+// GetKind will return the value of Kind.
+func (m *MeetingLine) GetKind() string { return m.Kind }
+
+// SetKind sets Kind to the provided value.
+func (m *MeetingLine) SetKind(val string) { m.Kind = val }
+
+// GetBody will return the value of Body.
+func (m *MeetingLine) GetBody() string { return m.Body }
+
+// SetBody sets Body to the provided value.
+func (m *MeetingLine) SetBody(val string) { m.Body = val }
+
+// GetStartMs will return the value of StartMs.
+func (m *MeetingLine) GetStartMs() int64 { return m.StartMs }
+
+// SetStartMs sets StartMs to the provided value.
+func (m *MeetingLine) SetStartMs(val int64) { m.StartMs = val }
+
+// GetEndMs will return the value of EndMs.
+func (m *MeetingLine) GetEndMs() int64 { return m.EndMs }
+
+// SetEndMs sets EndMs to the provided value.
+func (m *MeetingLine) SetEndMs(val int64) { m.EndMs = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (m *MeetingLine) GetCreatedAt() *time.Time { return m.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (m *MeetingLine) SetCreatedAt(stamp time.Time) { m.CreatedAt = &stamp }
+
+// MeetingLineTable is the name of the table in the DB.
+const MeetingLineTable = "`meeting_line`"
+
+// MeetingLineFields is a list of all columns in the DB table.
+var MeetingLineFields = []string{"id", "meeting_id", "user_id", "user_name", "kind", "body", "start_ms", "end_ms", "created_at"}
+
+// MeetingLinePrimaryFields are the primary key fields in the DB table.
+var MeetingLinePrimaryFields = []string{"id"}
+
+// MeetingParticipant generated for db table `meeting_participant`.
+//
+// Meeting Participant.
+type MeetingParticipant struct {
+	// Meeting ID
+	MeetingID string `db:"meeting_id" json:"meeting_id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Joined At
+	JoinedAt *time.Time `db:"joined_at" json:"joined_at"`
+
+	// Last Seen At
+	LastSeenAt *time.Time `db:"last_seen_at" json:"last_seen_at"`
+
+	// Left At
+	LeftAt *time.Time `db:"left_at" json:"left_at"`
+
+	// Joins
+	Joins int64 `db:"joins" json:"joins"`
+}
+
+// GetMeetingID will return the value of MeetingID.
+func (m *MeetingParticipant) GetMeetingID() string { return m.MeetingID }
+
+// SetMeetingID sets MeetingID to the provided value.
+func (m *MeetingParticipant) SetMeetingID(val string) { m.MeetingID = val }
+
+// GetUserID will return the value of UserID.
+func (m *MeetingParticipant) GetUserID() string { return m.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (m *MeetingParticipant) SetUserID(val string) { m.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (m *MeetingParticipant) GetUserName() string { return m.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (m *MeetingParticipant) SetUserName(val string) { m.UserName = val }
+
+// GetJoinedAt will return the value of JoinedAt.
+func (m *MeetingParticipant) GetJoinedAt() *time.Time { return m.JoinedAt }
+
+// SetJoinedAt sets JoinedAt to the provided value.
+func (m *MeetingParticipant) SetJoinedAt(stamp time.Time) { m.JoinedAt = &stamp }
+
+// GetLastSeenAt will return the value of LastSeenAt.
+func (m *MeetingParticipant) GetLastSeenAt() *time.Time { return m.LastSeenAt }
+
+// SetLastSeenAt sets LastSeenAt to the provided value.
+func (m *MeetingParticipant) SetLastSeenAt(stamp time.Time) { m.LastSeenAt = &stamp }
+
+// GetLeftAt will return the value of LeftAt.
+func (m *MeetingParticipant) GetLeftAt() *time.Time { return m.LeftAt }
+
+// SetLeftAt sets LeftAt to the provided value.
+func (m *MeetingParticipant) SetLeftAt(stamp time.Time) { m.LeftAt = &stamp }
+
+// GetJoins will return the value of Joins.
+func (m *MeetingParticipant) GetJoins() int64 { return m.Joins }
+
+// SetJoins sets Joins to the provided value.
+func (m *MeetingParticipant) SetJoins(val int64) { m.Joins = val }
+
+// MeetingParticipantTable is the name of the table in the DB.
+const MeetingParticipantTable = "`meeting_participant`"
+
+// MeetingParticipantFields is a list of all columns in the DB table.
+var MeetingParticipantFields = []string{"meeting_id", "user_id", "user_name", "joined_at", "last_seen_at", "left_at", "joins"}
+
+// MeetingParticipantPrimaryFields are the primary key fields in the DB table.
+var MeetingParticipantPrimaryFields = []string{"meeting_id", "user_id"}
+
 // Migrations generated for db table `migrations`.
 type Migrations struct {
 	// Project
@@ -4525,6 +4844,189 @@ func (k *KeyUser) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (k *KeyUser) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: KeyUserTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (m *Meeting) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := MeetingFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (m *Meeting) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (m *Meeting) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingTable}).Apply(opts...)
+	cols := MeetingFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (m *Meeting) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (m *MeetingLine) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingLineTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := MeetingLineFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (m *MeetingLine) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingLineTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (m *MeetingLine) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingLineTable}).Apply(opts...)
+	cols := MeetingLineFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (m *MeetingLine) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingLineTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (m *MeetingParticipant) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingParticipantTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := MeetingParticipantFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (m *MeetingParticipant) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingParticipantTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (m *MeetingParticipant) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingParticipantTable}).Apply(opts...)
+	cols := MeetingParticipantFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (m *MeetingParticipant) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: MeetingParticipantTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

@@ -191,7 +191,7 @@ Specified: `Task\Model` generated from the same source the Go types come from.
 
 `mig gen --lang` defaults to `go` and `go` is the only case it handles.
 
-Correction: `tools/models.php` renders `schema/schema.yml`, the file `mig docs --yaml` writes and `mig gen` reads, through `tools/templates/model.tpl`. The Go types and the PHP models come from that one file, written by `atkins schema` and then by `atkins models` in `phpfront/app`.
+Correction: `tools/models.php` renders `schema/schema.yml`, the file `mig docs --yaml` writes and `mig gen` reads, through `tools/templates/model.tpl`. The Go types and the PHP models come from that one file, written by `atkins schema`.
 
 Not a phpscript gap. Worth folding into mig as `--lang php` once the template has settled.
 

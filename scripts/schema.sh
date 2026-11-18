@@ -28,6 +28,10 @@ mig docs --output=./schema/docs
 mig docs --output=./schema --yaml --output-file schema.yml
 mig gen --go.fill-json --output=./app/model
 
+# The front end's models read the same schema.yml, so one run generates both sides.
+phpscript run phpfront/app/tools/models.php
+bash phpfront/app/tools/fmt.sh --write
+
 # The front end's fixtures open a database and cannot reach this directory:
 # a test tree resolves every path inside its own root. They get the schema
 # the migrations end at, which is what a fixture needs - it has no history to

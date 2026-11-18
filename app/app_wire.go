@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/app/api"
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/inventory/hostrun"
+	"github.com/titpetric/task-ui/feature/meeting"
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/feature/skills"
@@ -192,10 +193,23 @@ func (a *App) wire(version string) error {
 			return a.UsersFile.Remove(ctx, store.Users, store.Passwords, name)
 		}
 	}
+	// The rooms of the orb, each speaker's PCM under the data directory.
+	a.Meetings = &meeting.Service{
+		Store:    store.Meetings,
+		Users:    store.Users,
+		Channels: &meeting.Channels{Root: cfg.MeetingsDir()},
+		Hub:      meeting.NewHub(),
+		Env:      svc.Integrations.Env,
+		Summarize: (&claude.Summarizer{
+			Timeout: 3 * time.Minute,
+		}).Summarize,
+		Logger: slog.Default(),
+	}
 	apiHandlers := api.New(api.Options{
-		Spotify: svc.Spotify,
-		STT:     svc.STT,
-		Users:   store.Users, Projects: store.Projects, Workspaces: store.Workspaces, Runs: store.Runs, Artifacts: store.Artifacts, ArtifactStore: svc.Artifacts, Schedules: store.Schedules, Secrets: svc.Secrets, SecretReads: store.SecretReads,
+		Meetings: a.Meetings,
+		Spotify:  svc.Spotify,
+		STT:      svc.STT,
+		Users:    store.Users, Projects: store.Projects, Workspaces: store.Workspaces, Runs: store.Runs, Artifacts: store.Artifacts, ArtifactStore: svc.Artifacts, Schedules: store.Schedules, Secrets: svc.Secrets, SecretReads: store.SecretReads,
 		FolderRefs: store.FolderRefs,
 		Workflows:  store.Workflows, WorkflowRuns: store.WorkflowRuns, Flows: a.Workflows, Events: svc.Events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: svc.Git, Keys: svc.Keystore, Env: svc.Env, Recordings: svc.Recordings, Root: cfg.Root, Board: a.Board,

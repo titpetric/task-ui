@@ -158,12 +158,23 @@ func TestNewConfigAt_Defaults(t *testing.T) {
 	assert.ErrorContains(t, err, "the password file is <data>/.htpasswd")
 }
 
+// An app that has not listened has no address; Run and Serve are its entry points.
+func TestApp_Addr(t *testing.T) {
+	t.Parallel()
+	var a app.App
+	assert.Equal(t, "", a.Addr())
+	_ = (*app.App).Run
+	_ = (*app.App).Serve
+}
+
 func TestConfig_Validate(t *testing.T) {
 	t.Parallel()
 
 	cfg := &app.Config{Root: t.TempDir(), DataDir: "d", SessionTTL: time.Hour}
 	assert.NoError(t, cfg.Validate())
 	assert.Equal(t, filepath.Join("d", "task-ui.db"), cfg.DB)
+	assert.Equal(t, filepath.Join("d", "meetings"), cfg.MeetingsDir())
+	assert.Equal(t, filepath.Join("d", "modules"), cfg.ModulesDir())
 	assert.Equal(t, filepath.Join("d", ".htpasswd"), cfg.Htpasswd)
 	assert.Nil(t, cfg.Import)
 	assert.True(t, time.Since(cfg.Clock()()) < time.Minute)

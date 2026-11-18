@@ -138,6 +138,24 @@ tools, run it and fix it. Page: `/workflows`; API:
 `create_workflow`, `update_workflow`, `run_workflow`,
 `list_workflow_runs`.
 
+## Meetings (`meeting`)
+
+A meeting is a room in the orb: a signed-in user opens it and others
+join it with the Join button and its link. Each browser captures its
+microphone at 16 kHz mono and sends chunks a quarter second long over a
+WebSocket to task-ui, which appends them to that speaker's channel and
+relays them to every other participant, with no WebRTC and no
+signalling. Each speaker's speech is one file, and a transcript line
+plays that speaker alone. The browser's speech recogniser writes the
+live transcript, one line under the name of the speaker, among the
+system lines of join, part and rejoin. Leaving stops the microphone and
+keeps the page. A room ends on its button, at one hour, or a minute
+after everyone leaves. Claude then summarises the transcript under four
+headings: the topics, the action items, the decisions and what is still
+open, above an expandable transcript. Opening a room takes
+`meeting/edit`; reading it, its audio and its summary takes
+`meeting/view`. Page: `/orb`; API: `/api/meetings`.
+
 ## Schedules (`schedule`)
 
 A schedule runs a job, or a workflow, on a cron expression, in the
@@ -320,7 +338,7 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `update_workflow`, `list_notes`, `note_comment`, `post_note`,
 `ask_prompt`, `list_threads`, `read_thread`, `list_artifacts`, `read_artifact`, `write_artifact`,
 `search_docs`, `search_outline`, `search_read`, `search_browse` and,
-for a user who linked Spotify, the seven `spotify_` tools of its section.
+for a user who linked Spotify, the eight `spotify_` tools of its section.
 A prompt's run and the Notes agent's reach these tools as their user
 for as long as they run, with no token of the user's.
 `task-ui channel`, a Claude Code channel, pushes the open notes naming

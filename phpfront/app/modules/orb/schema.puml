@@ -1,0 +1,65 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "meeting" {
+  * id : text
+  + title : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + started_at : timestamp
+  + ended_at : timestamp
+  + limit_seconds : integer
+  + empty_since : timestamp
+  + summary : text
+  + summary_state : TEXT
+  + summary_message : text
+  + summary_user_name : text
+  + created_at : timestamp
+  + updated_at : timestamp
+}
+
+entity "meeting_line" {
+  * id : text
+  + meeting_id : text
+  + user_id : text
+  + user_name : text
+  + kind : TEXT
+  + body : text
+  + start_ms : integer
+  + end_ms : integer
+  + created_at : timestamp
+}
+
+entity "meeting_participant" {
+  * meeting_id : text
+  * user_id : text
+  + user_name : text
+  + joined_at : timestamp
+  + last_seen_at : timestamp
+  + left_at : timestamp
+  + joins : integer
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+meeting }o--|| user : user_id
+meeting_line }o--|| meeting : meeting_id
+meeting_line }o--|| user : user_id
+meeting_participant }o--|| meeting : meeting_id
+meeting_participant }o--|| user : user_id
+@enduml

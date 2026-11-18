@@ -1,0 +1,269 @@
+/* .orb-room styles the meeting room: who is in it, the microphone, the live
+   transcript and the summary above it, in task-ui's custom properties. */
+.orb-new {
+	display: flex;
+	align-items: end;
+	gap: var(--gap, 1rem);
+	margin-bottom: var(--gap, 1rem);
+}
+
+.orb-new .field {
+	flex: 1;
+}
+
+.orb-room {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap, 1rem);
+}
+
+.orb-people {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.orb-person {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.25rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: 2rem;
+	background: var(--ink-2);
+	font-size: 0.9em;
+}
+
+.orb-person .orb-dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: var(--faint, #888);
+}
+
+.orb-person.here .orb-dot {
+	background: var(--ok, #2f9e44);
+}
+
+.orb-person.gone {
+	opacity: 0.5;
+}
+
+.orb-person.self {
+	border-color: var(--accent, currentColor);
+}
+
+.orb-person.speaking .orb-dot {
+	background: var(--accent, currentColor);
+	box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.orb-person.muted .orb-name::after {
+	content: " (muted)";
+	color: var(--faint, #888);
+	font-size: 0.85em;
+}
+
+.orb-joins {
+	color: var(--faint, #888);
+	font-size: 0.8em;
+}
+
+.orb-controls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.5rem 0;
+}
+
+.orb-action {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.orb-action > .btn {
+	padding: 0.7rem 1.2rem;
+	font-size: 1rem;
+}
+
+.orb-speak {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.orb-miclabel {
+	font-size: 0.85em;
+}
+
+.orb-mic {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 4.5rem;
+	height: 4.5rem;
+	border: 2px solid var(--line);
+	border-radius: 50%;
+	background: var(--ink-2);
+	color: var(--ink);
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.orb-mic:hover {
+	border-color: var(--accent, currentColor);
+}
+
+.orb-mic:active {
+	transform: scale(0.97);
+}
+
+.orb-mic .ic {
+	width: 1.6rem;
+	height: 1.6rem;
+}
+
+.orb-mic[aria-pressed="true"] {
+	border-color: var(--ok, #2f9e44);
+	background: var(--ok, #2f9e44);
+	color: #fff;
+}
+
+.orb-mic.speaking {
+	animation: orb-pulse 1s ease-in-out infinite;
+}
+
+@keyframes orb-pulse {
+	50% { box-shadow: 0 0 0 0.6rem color-mix(in srgb, currentColor 18%, transparent); }
+}
+
+.orb-timer {
+	font-family: var(--mono, monospace);
+	font-size: 1.1em;
+	color: var(--faint, #888);
+}
+
+.orb-status {
+	min-height: 1.2em;
+	margin: 0;
+}
+
+.orb-status.bad {
+	color: var(--danger, #c92a2a);
+}
+
+[data-orb-leave][data-joined="0"] {
+	display: none;
+}
+
+.orb-hint {
+	margin: 0;
+}
+
+.orb-summary h3 {
+	margin-top: 0;
+}
+
+.orb-summary .prose > :first-child {
+	margin-top: 0;
+}
+
+.orb-log-block summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.orb-log {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	max-height: 60vh;
+	overflow-y: auto;
+	padding-top: 0.5rem;
+}
+
+.orb-line {
+	display: grid;
+	grid-template-columns: minmax(5rem, max-content) 1fr auto auto;
+	gap: 0.6rem;
+	align-items: baseline;
+	padding: 0.2rem 0;
+}
+
+.orb-at {
+	color: var(--faint, #888);
+	font-size: 0.8em;
+	white-space: nowrap;
+}
+
+.orb-line .orb-who {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.orb-line .orb-said {
+	overflow-wrap: anywhere;
+}
+
+.orb-line .btn-icon {
+	opacity: 0;
+}
+
+.orb-line:hover .btn-icon,
+.orb-line .btn-icon:focus-visible {
+	opacity: 1;
+}
+
+.orb-line.system {
+	grid-template-columns: 1fr auto;
+	color: var(--faint, #888);
+	font-size: 0.9em;
+	font-style: italic;
+}
+
+.orb-line.partial .orb-said {
+	color: var(--faint, #888);
+	font-style: italic;
+}
+
+.orb-line.partial .btn-icon {
+	visibility: hidden;
+}
+
+@media (max-width: 600px) {
+	.orb-new {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.orb-line:not(.system) {
+		grid-template-columns: 1fr auto auto;
+	}
+
+	.orb-line:not(.system) .orb-who {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.orb-line:not(.system) .orb-at {
+		grid-column: 2;
+		grid-row: 1;
+		font-size: 0.75em;
+	}
+
+	.orb-line:not(.system) .btn-icon {
+		grid-column: 3;
+		grid-row: 1;
+		opacity: 1;
+	}
+
+	.orb-line:not(.system) .orb-said {
+		grid-column: 1 / -1;
+		grid-row: 2;
+	}
+}

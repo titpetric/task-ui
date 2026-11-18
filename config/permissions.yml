@@ -12,6 +12,7 @@ sections:
   note: "Notes"
   prompt: "Prompts"
   workflow: "Workflows"
+  meeting: "Meetings"
   schedule: "Schedules"
   artifact: "Artifacts"
   secret: "Secrets"

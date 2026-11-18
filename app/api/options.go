@@ -7,6 +7,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/feature/artifacts"
 	"github.com/titpetric/task-ui/feature/inventory/hostrun"
+	"github.com/titpetric/task-ui/feature/meeting"
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/feature/orb/recording"
 	"github.com/titpetric/task-ui/feature/orb/stt"
@@ -69,6 +70,8 @@ type Options struct {
 	Root string
 	// Board is the notes board and the chat; nil turns them off.
 	Board *note.Board
+	// Meetings are the rooms of the orb; nil turns their routes off.
+	Meetings *meeting.Service
 	// Integrations keep the integrations' settings, and Hosts reads what
 	// Beszel reports of a host. HostRows is the inventory itself, the list
 	// the Inventory page keeps and writes; nil answers the hub alone.

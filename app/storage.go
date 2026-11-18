@@ -31,6 +31,7 @@ type AppStorage struct {
 	Notes        *storage.NoteStorage
 	NoteEvents   *storage.NoteEventStorage
 	Search       *storage.SearchStorage
+	Meetings     *storage.MeetingStorage
 	Chats        *storage.ChatStorage
 	Pins         *storage.PinStorage
 	Hosts        *storage.HostStorage
@@ -70,6 +71,7 @@ func NewAppStorage(db storage.DB) *AppStorage {
 		Notes:        storage.NewNoteStorage(db),
 		NoteEvents:   storage.NewNoteEventStorage(db),
 		Search:       storage.NewSearchStorage(db),
+		Meetings:     storage.NewMeetingStorage(db),
 		Chats:        storage.NewChatStorage(db),
 		Pins:         storage.NewPinStorage(db),
 		Hosts:        storage.NewHostStorage(db),

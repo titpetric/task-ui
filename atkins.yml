@@ -38,8 +38,7 @@ jobs:
     desc: "CI on a push to the default branch: the whole gate, then the image"
     cmds:
       - task: lint
-      - task: test
-      - task: front
+      - task: default
       - task: ci:image
 
   # The same gate as ci:push, publishing nothing. A branch that lands by
@@ -49,8 +48,7 @@ jobs:
     desc: "CI on a pull request: the whole gate, publishing nothing"
     cmds:
       - task: lint
-      - task: test
-      - task: front
+      - task: default
 
   # The suites every push is too slow to carry: the integration tests build
   # and run a binary per package, and the budget rots one test at a time.
@@ -84,10 +82,12 @@ jobs:
   # package a change touched: `atkins test:integration`, or
   # `scripts/test-integration.sh ./storage/...`.
   default:
-    desc: "The fast gate: the unit tests and the front end"
+    desc: "The fast gate: the generated code, the unit tests and the front end"
     cmds:
+      - task: schema
       - task: test
       - task: front
+      - git status --porcelain -- app/model schema phpfront/app/code/Task/Model phpfront/app/tests/schema.sql | tee /dev/stderr | (! read)
 
   deps:
     desc: "Update the front end's composer dependencies"
@@ -169,8 +169,9 @@ jobs:
       # rules/SKILL.md says what they hold and how to add one.
       - semgrep scan --metrics=off --quiet --error --config rules .
 
-  # Run by name, after adding a migration anywhere. It is out of default
-  # because it writes generated files and needs mig and sqlite3 on the path.
+  # The first step of default: it writes the generated files, and the step
+  # after the tests fails when the tree did not carry the result. It needs
+  # mig, sqlite3 and phpscript on the path.
   #
   # The global schema skill is what this replaces. That one applies
   # `schema/*.up.sql`, and there is no such file any more: a migration lives

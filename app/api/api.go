@@ -22,6 +22,7 @@ import (
 
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/inventory/hostrun"
+	"github.com/titpetric/task-ui/feature/meeting"
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/feature/orb/recording"
 	"github.com/titpetric/task-ui/feature/secret"
@@ -98,6 +99,19 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/workflow-runs/{id}/summary", h.summarizeWorkflowRun)
 	r.Get("/sse/{topic}", h.sse)
 
+	r.Get("/meetings", h.listMeetings)
+	r.Post("/meetings", h.createMeeting)
+	r.Get("/meetings/{id}", h.getMeeting)
+	r.Delete("/meetings/{id}", h.deleteMeeting)
+	r.Post("/meetings/{id}/join", h.joinMeeting)
+	r.Post("/meetings/{id}/leave", h.leaveMeeting)
+	r.Post("/meetings/{id}/heartbeat", h.heartbeatMeeting)
+	r.Post("/meetings/{id}/finish", h.finishMeeting)
+	r.Get("/meetings/{id}/summary", h.meetingSummary)
+	r.Post("/meetings/{id}/summary", h.summarizeMeeting)
+	r.Get("/meetings/{id}/channels/{user}", h.meetingChannel)
+	r.Handle("/meetings/{id}/pipe", h.meetingPipe())
+
 	r.Put("/retention", h.saveRetention)
 	r.Get("/telemetry", h.listTelemetry)
 	r.Put("/telemetry", h.saveTelemetry)
@@ -166,7 +180,6 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/search/documents/{id}", h.getSearchDocument)
 	r.Get("/search/documents/{id}/sections/{ordinal}", h.getSearchSection)
 	r.Post("/search/reindex", h.reindexSearch)
-
 	r.Post("/workspaces/{folder}/export", h.exportWorkspace)
 	r.Get("/workspaces/{folder}/keys", h.listWorkspaceKeys)
 	r.Post("/workspaces/{folder}/keys/generate", h.generateWorkspaceKey)
@@ -266,6 +279,12 @@ func statusOf(err error) int {
 	switch {
 	case errors.Is(err, recording.ErrExpired):
 		return http.StatusGone
+	case errors.Is(err, meeting.ErrEnded), errors.Is(err, meeting.ErrOpen):
+		return http.StatusConflict
+	case errors.Is(err, meeting.ErrNotHost):
+		return http.StatusForbidden
+	case errors.Is(err, meeting.ErrTitle):
+		return http.StatusBadRequest
 	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist), errors.Is(err, note.ErrNoPrompt), errors.Is(err, note.ErrChatOff):
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving), errors.Is(err, runner.ErrQueueFull):

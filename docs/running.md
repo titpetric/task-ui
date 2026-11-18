@@ -17,7 +17,7 @@ services:
 
 Two mounts hold everything the instance keeps:
 
-- `/data`, `TASK_UI_DATA`: the database, the recordings, the artifacts, the password file, `/data/.htpasswd`, and the workspace folder, `/data/workspaces`, `TASK_UI_WORKSPACE`. The workspace folder holds `home/`, the `HOME` of every run at the root, `src/`, whose subfolders with something to run are the folders of the UI, and a directory per named workspace, each with a `home/` and a `src/` of its own ([Workspaces](guide/workspaces.md)).
+- `/data`, `TASK_UI_DATA`: the database, the recordings, the artifacts, the password file, `/data/.htpasswd`, the Claude sessions of prompts in flight, `/data/claude`, and the workspace folder, `/data/workspaces`, `TASK_UI_WORKSPACE`. The workspace folder holds `home/`, the `HOME` of every run at the root, `src/`, whose subfolders with something to run are the folders of the UI, and a directory per named workspace, each with a `home/` and a `src/` of its own ([Workspaces](guide/workspaces.md)).
 - `/keys`, `TASK_UI_SSH_DIR`: the keys of the instance. Keep it out of `/root/.ssh`, where `ssh` in a job would find them by default; a run receives the keys its policies grant it.
 
 `/app` is the working directory and `HOME`. It holds the image's own configuration: `entrypoint.d`, `.ssh`, and `.docker/config.json`, where `docker` reads the registry logins. Nothing a run writes goes there.

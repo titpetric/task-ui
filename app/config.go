@@ -96,9 +96,7 @@ func (c *Config) Clock() func() time.Time {
 	return func() time.Time { return now }
 }
 
-// timeZone names the zone of a time as the Instance page shows it: the
-// location, or the zone's abbreviation for the local one, with its
-// offset.
+// timeZone names a time's zone and offset as the Instance page shows it.
 func timeZone(t time.Time) string {
 	name, _ := t.Zone()
 	if loc := t.Location().String(); loc != "Local" && loc != name {
@@ -150,8 +148,7 @@ func envDuration(name string, fallback time.Duration) (time.Duration, error) {
 	return d, nil
 }
 
-// gone are the variables of an older layout, with what took their
-// place: task-ui reads none of them, and one set stops it at start.
+// gone names the variables of an older layout, which task-ui refuses at start.
 var gone = map[string]string{
 	"TASK_UI_ROOT":     "the folders live in TASK_UI_WORKSPACE, by default <data>/workspaces: move them there and unset TASK_UI_ROOT",
 	"TASK_UI_HTPASSWD": "the password file is <data>/.htpasswd: move it there and unset TASK_UI_HTPASSWD",
@@ -218,10 +215,7 @@ func NewConfigAt(base string, args []string) (*Config, error) {
 	return cfg, cfg.Validate()
 }
 
-// serverRoot reads the root from TASK_UI_WORKSPACE, the server's
-// variable, outside a run of task-ui alone: in a run, TASK_UI_RUN_ID
-// set, TASK_UI_WORKSPACE names the run's workspace, and a maintenance
-// command there works on the data directory, its root <data>/workspaces.
+// serverRoot reads TASK_UI_WORKSPACE, empty inside a run where it names the run's workspace.
 func serverRoot() string {
 	if os.Getenv("TASK_UI_RUN_ID") != "" {
 		return ""
@@ -272,6 +266,11 @@ func (c *Config) WorkspacesDir() string {
 // RecordingsDir is where the recordings go.
 func (c *Config) RecordingsDir() string {
 	return filepath.Join(c.DataDir, "recordings")
+}
+
+// MeetingsDir is where each participant's speech is kept, a PCM file per room and user.
+func (c *Config) MeetingsDir() string {
+	return filepath.Join(c.DataDir, "meetings")
 }
 
 // ClaudeDir is where each live Claude Code session keeps its transcript, one directory per prompt run.

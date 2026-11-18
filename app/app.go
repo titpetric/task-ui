@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/feature/meeting"
 	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/feature/scheduler"
 	"github.com/titpetric/task-ui/feature/search"
@@ -44,6 +45,8 @@ type App struct {
 	Guard     *access.Guard
 	// Board is the notes board and the chat.
 	Board *note.Board
+	// Meetings are the rooms of the orb.
+	Meetings *meeting.Service
 	// Search indexes documentation and job targets for the search page and MCP.
 	Search *search.Indexer
 	// UsersFile is the password file, nil when there is none.
@@ -86,7 +89,7 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 
 // openStorage makes the data directories and opens the database.
 func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
-	for _, dir := range []string{cfg.DataDir, cfg.RecordingsDir(), cfg.ArtifactsDir()} {
+	for _, dir := range []string{cfg.DataDir, cfg.RecordingsDir(), cfg.ArtifactsDir(), cfg.MeetingsDir()} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return nil, err
 		}
@@ -101,9 +104,7 @@ func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
 	return db, nil
 }
 
-// prepare reads the users, adds the default workspace, puts the
-// workspaces' secrets on their keys, and settles what the previous
-// process left.
+// prepare reads the users, adds the default workspace and settles what the previous process left.
 func (a *App) prepare(ctx context.Context) error {
 	if err := a.seed(ctx); err != nil {
 		return err
@@ -143,8 +144,7 @@ func (a *App) prepare(ctx context.Context) error {
 	return a.Storage.WorkflowRuns.Interrupt(ctx, "task-ui restarted while it ran")
 }
 
-// seed writes the password file to storage, when there is one. Without
-// one the users in storage stay as they are.
+// seed writes the password file to storage, and leaves the users as they are without one.
 func (a *App) seed(ctx context.Context) error {
 	if a.Config.Htpasswd == "" {
 		slog.Warn("no password file: nobody new can sign in", "hint", "task-ui passwd <user> makes <data>/.htpasswd")
@@ -165,9 +165,7 @@ func (a *App) seed(ctx context.Context) error {
 	return nil
 }
 
-// autoLogin makes the auto login user when there is none, as an admin:
-// the knob is for development, where there may be no password file at
-// all, and a user that cannot sign in would make it useless.
+// autoLogin makes the auto login user when there is none, as an admin.
 func (a *App) autoLogin(ctx context.Context) error {
 	name := a.Config.AutoLogin
 	if name == "" {
@@ -215,6 +213,7 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 	}
 
 	go a.Scheduler.Run(ctx)
+	a.Meetings.Start(ctx)
 	if a.UsersFile != nil {
 		go a.UsersFile.Watch(ctx, a.Storage.Users, a.Storage.Passwords, func(err error) { slog.Error("re-reading the password file", "err", err) })
 	}
@@ -247,11 +246,7 @@ func (a *App) Close() error {
 	return a.Storage.DB.Close()
 }
 
-// ensureWorkspaces adds the default workspace's row to an instance with
-// no workspace at all, its first start, and makes the home and src of
-// every workspace there is, so a run has a HOME and a clone has a place
-// before the first page; a default workspace deleted stays gone, and the
-// root gets no home or src back.
+// ensureWorkspaces adds the default workspace row and makes each workspace's home and src.
 func (a *App) ensureWorkspaces(ctx context.Context) error {
 	workspaces := a.Storage.Workspaces
 	if err := workspaces.EnsureDefault(ctx); err != nil {
@@ -269,11 +264,7 @@ func (a *App) ensureWorkspaces(ctx context.Context) error {
 	return nil
 }
 
-// storageItems names what the Storage table of the Instance page
-// measures: the database with its journal, the recordings, the
-// artifacts, the tool history of each workspace's home and the
-// instance's own copy under the server's HOME, and the checkouts under
-// each workspace's src. Every measure reads the workspaces again.
+// storageItems names what the Storage table of the Instance page measures.
 func storageItems(cfg *Config, workspaces *storage.WorkspaceStorage, serverHome string) func() []diskusage.Item {
 	return func() []diskusage.Item {
 		db, _, _ := strings.Cut(cfg.DB, "?")

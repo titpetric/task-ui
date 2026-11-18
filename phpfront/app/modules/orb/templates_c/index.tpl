@@ -1,0 +1,248 @@
+<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
+
+<div class="page-head">
+	<div>
+		<h2><?php if($_v['data_head']['icon']){?>
+<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['data_head']['icon'], ENT_QUOTES);?>
+"/></svg> <?php }?><?php echo htmlspecialchars($_v['data_head']['title'], ENT_QUOTES); if($_v['data_head']['badge']){?>
+ <span class="badge<?php if($_v['data_head']['tone']){?>
+ <?php echo htmlspecialchars($_v['data_head']['tone'], ENT_QUOTES); }?>"><?php echo htmlspecialchars($_v['data_head']['badge'], ENT_QUOTES);?>
+</span><?php }?><?php if(!empty($_v['data_head']['tags']))foreach($_v['data_head']['tags'] as $_v['tag']){?> <span class="badge"><?php echo htmlspecialchars($_v['tag'], ENT_QUOTES);?>
+</span><?php }?><?php if($_v['data_head']['note']){?>
+ <span class="term-title" title="<?php echo htmlspecialchars($_v['data_head']['note'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_head']['note'], ENT_QUOTES);?>
+</span><?php }?></h2>
+<?php if($_v['data_head']['lead'] || $_v['data_head']['leads']){?>
+		<p><?php echo $_v['data_head']['lead'];?>
+</p>
+<?php }?><?php if($_v['data_head']['faint']){?>
+		<p class="faint"><?php echo htmlspecialchars($_v['data_head']['faint'], ENT_QUOTES);?>
+</p>
+<?php }?>	</div>
+<?php if($_v['data_head']['show']){?>
+	<div class="actions"<?php if($_v['data_head']['live']){?>
+ data-actions<?php }?>>
+<?php if($_v['data_head']['run']){?>
+		<?php $_v['data_run'] = $_v['data_head']['run'];?>
+<div class="run-split">
+	<button type="button" class="btn btn-primary btn-sm" data-run data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
+"<?php if($_v['data_run']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['data_run']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['data_run']['job'], ENT_QUOTES);?>
+" data-title="<?php echo htmlspecialchars($_v['data_run']['what'], ENT_QUOTES);?>
+"<?php if($_v['data_run']['args']){?>
+ data-args="<?php echo htmlspecialchars($_v['data_run']['args'], ENT_QUOTES);?>
+" title="Run with arguments after <?php echo htmlspecialchars($_v['data_run']['args'], ENT_QUOTES);?>
+"<?php }?>><svg class="ic"><use href="#i-play"/></svg>Run<?php if($_v['data_run']['takesArgs']){?>
+...<?php }?></button>
+<?php if($_v['data_run']['menu']){?>
+	<details class="more-menu run-menu">
+		<summary class="btn btn-primary btn-sm run-caret" aria-haspopup="menu" aria-expanded="false" title="More ways to run <?php echo htmlspecialchars($_v['data_run']['name'], ENT_QUOTES);?>
+" aria-label="More ways to run <?php echo htmlspecialchars($_v['data_run']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-down"/></svg></summary>
+		<div class="more-list">
+			<div class="more-items" role="menu" aria-label="Run options">
+<?php if($_v['data_run']['summarize']){?>
+				<button type="button" class="more-item" role="menuitem" data-run data-summarize data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
+"<?php if($_v['data_run']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['data_run']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['data_run']['job'], ENT_QUOTES);?>
+" data-title="<?php echo htmlspecialchars($_v['data_run']['what'], ENT_QUOTES);?>
+"<?php if($_v['data_run']['args']){?>
+ data-args="<?php echo htmlspecialchars($_v['data_run']['args'], ENT_QUOTES);?>
+"<?php }?> title="Run and summarize"><svg class="ic"><use href="#i-summary"/></svg><span>Run and summarize</span></button>
+<?php }?><?php if($_v['data_run']['force']){?>
+				<button type="button" class="more-item danger" role="menuitem" data-run data-force data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
+"<?php if($_v['data_run']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['data_run']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['data_run']['job'], ENT_QUOTES);?>
+" data-title="<?php echo htmlspecialchars($_v['data_run']['place'], ENT_QUOTES);?>
+" title="Run out of hours, with a reason"><svg class="ic"><use href="#i-play"/></svg><span>Run force</span></button>
+<?php }?>			</div>
+		</div>
+	</details>
+<?php }?></div>
+
+<?php }?><?php if($_v['data_head']['buttons']['items']){?>
+		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
+ <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+"/></svg></button>
+<?php }elseif($_v['button']['faint']){?>
+	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
+</span>
+<?php }elseif($_v['button']['href']){?>
+	<a class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
+ btn-sm<?php }?><?php if($_v['button']['primary']){?>
+ btn-primary<?php }?><?php if($_v['button']['danger']){?>
+ btn-danger<?php }?>" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
+"<?php if($_v['button']['download']){?>
+ download<?php }?><?php if($_v['button']['attrs']){?>
+ <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
+<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+</a>
+<?php }else{?>
+	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
+ btn-sm<?php }?><?php if($_v['button']['primary']){?>
+ btn-primary<?php }?><?php if($_v['button']['danger']){?>
+ btn-danger<?php }?>"<?php if($_v['button']['disabled']){?>
+ disabled<?php if($_v['button']['note']){?>
+ title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
+"<?php }?><?php }?><?php if($_v['button']['attrs']){?>
+ <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
+<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+</button>
+<?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
+		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
+
+		<?php if(!$_v['data_menu']['empty']){?>
+<details class="more-menu">
+	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
+" aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-more"/></svg></summary>
+	<div class="more-list">
+<?php if($_v['data_menu']['details']){?>
+		<dl class="more-details">
+<?php if(!empty($_v['data_menu']['details']))foreach($_v['data_menu']['details'] as $_v['detail']){?>			<dt><?php echo htmlspecialchars($_v['detail']['label'], ENT_QUOTES);?>
+</dt><dd<?php if($_v['detail']['mono']){?>
+ class="mono"<?php }?><?php if($_v['detail']['title']){?>
+ title="<?php echo htmlspecialchars($_v['detail']['title'], ENT_QUOTES);?>
+"<?php }?>><?php echo htmlspecialchars($_v['detail']['value'], ENT_QUOTES);?>
+</dd>
+<?php }?>		</dl>
+<?php }?>		<div class="more-items" role="menu" aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
+">
+<?php if(!empty($_v['data_menu']['groups']))foreach($_v['data_menu']['groups'] as $_v['index'] => $_v['group']){?><?php if($_v['index']){?>
+			<hr class="more-sep">
+<?php }?><?php if(!empty($_v['group']))foreach($_v['group'] as $_v['item']){?><?php if($_v['item']['href']){?>
+			<a class="more-item<?php if($_v['item']['danger']){?>
+ danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
+"<?php if($_v['item']['download']){?>
+ download<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+</span><?php if($_v['item']['note']){?>
+<small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
+</small><?php }?></a>
+<?php }else{?>
+			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
+ danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
+ disabled<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+</span><?php if($_v['item']['note']){?>
+<small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
+</small><?php }?></button>
+<?php }?><?php }?><?php }?>
+		</div>
+	</div>
+</details><?php }}?>	</div>
+<?php }?></div>
+
+
+<?php if($_v['data']['create']){?>
+<form class="form orb-new" data-orb-create data-api="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/api" data-base="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+">
+	<label class="field">
+		<span>New meeting</span>
+		<input type="text" name="title" maxlength="120" placeholder="What it's about" autocomplete="off">
+	</label>
+	<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-mic"/></svg>Start meeting</button>
+</form>
+<?php }?>
+<section class="block">
+<?php $_v['data_block'] = $_v['data']['block'];?>
+<div class="block-head<?php if($_v['data_block']['empty']){?>
+ is-empty<?php }?>">
+	<h3><?php echo htmlspecialchars($_v['data_block']['title'], ENT_QUOTES); if($_v['data_block']['note']){?>
+ <small><?php echo htmlspecialchars($_v['data_block']['note'], ENT_QUOTES);?>
+</small><?php }?></h3>
+<?php if($_v['data_block']['empty']){?>
+	<p class="empty-line"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
+</p>
+<?php }?><?php if($_v['data_block']['buttons']['items']){?>
+	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
+	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
+ <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+"/></svg></button>
+<?php }elseif($_v['button']['faint']){?>
+	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
+</span>
+<?php }elseif($_v['button']['href']){?>
+	<a class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
+ btn-sm<?php }?><?php if($_v['button']['primary']){?>
+ btn-primary<?php }?><?php if($_v['button']['danger']){?>
+ btn-danger<?php }?>" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
+"<?php if($_v['button']['download']){?>
+ download<?php }?><?php if($_v['button']['attrs']){?>
+ <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
+<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+</a>
+<?php }else{?>
+	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
+ btn-sm<?php }?><?php if($_v['button']['primary']){?>
+ btn-primary<?php }?><?php if($_v['button']['danger']){?>
+ btn-danger<?php }?>"<?php if($_v['button']['disabled']){?>
+ disabled<?php if($_v['button']['note']){?>
+ title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
+"<?php }?><?php }?><?php if($_v['button']['attrs']){?>
+ <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
+<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+</button>
+<?php }?><?php }?>
+	</div>
+<?php }?></div>
+
+<?php if($_v['data']['rows']){?>
+	<div class="table-wrap">
+	<table class="table cards" data-api="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/api">
+		<thead><tr><th>Meeting</th><th>State</th><th>In the room</th><th>Started</th><th>By</th><th></th></tr></thead>
+		<tbody>
+<?php if(!empty($_v['data']['rows']))foreach($_v['data']['rows'] as $_v['row']){?>			<tr>
+				<td class="key"><a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/orb/<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['row']['title'], ENT_QUOTES);?>
+</a></td>
+				<td data-label="State"><span class="badge <?php echo htmlspecialchars($_v['row']['state'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['row']['state'], ENT_QUOTES);?>
+</span></td>
+				<td data-label="In the room"><?php if($_v['row']['open']){ echo htmlspecialchars($_v['row']['here'], ENT_QUOTES); }else{?>
+-<?php }?></td>
+				<td class="nowrap" data-label="Started"><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
+</td>
+				<td data-label="By"><?php $_v['data_user'] = $_v['row']['user'];?>
+<span class="user-ref"><?php if($_v['data_user']['href']){?>
+<a class="user-link" href="<?php echo htmlspecialchars($_v['data_user']['href'], ENT_QUOTES);?>
+"><?php $_v['data_avatar'] = $_v['data_user'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
+</span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
+</span></a><?php }else{ $_v['data_avatar'] = $_v['data_user'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
+</span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
+</span><?php }?></span>
+</td>
+				<td class="actions"><a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/orb/<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['row']['action'], ENT_QUOTES);?>
+</a><?php if($_v['row']['delete']){?>
+
+					<button class="btn btn-danger btn-sm" type="button" data-orb-delete="<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
+" data-confirm="Delete this meeting, its transcript and its audio?">Delete</button><?php }?></td>
+			</tr>
+<?php }?>		</tbody>
+	</table>
+	</div>
+<?php }else{?>
+	<p class="empty"><?php echo htmlspecialchars($_v['data_block']['empty'], ENT_QUOTES);?>
+</p>
+<?php }?></section>
