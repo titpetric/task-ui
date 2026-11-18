@@ -46,92 +46,92 @@ class Setup {
 	 * step every reader of the settings opens.
 	 */
 	static function order() {
-		return array(
-			array(
+		return [
+			[
 				"name" => self::INSTANCE,
 				"href" => "/settings/instance",
 				"icon" => "settings",
 				"desc" => "The server's settings, from the environment.",
 				"rule" => "",
-			),
-			array(
+			],
+			[
 				"name" => self::RETENTION,
 				"href" => "/settings/retention",
 				"icon" => "clock",
 				"desc" => "How long runs, recordings, threads, artifact history and the read log stay.",
 				"rule" => "",
-			),
-			array(
+			],
+			[
 				"name" => self::TELEMETRY,
 				"href" => "/settings/telemetry",
 				"icon" => "pulse",
 				"desc" => "What the instance records of its own requests, and who reads the traces.",
 				"rule" => "",
-			),
-			array(
+			],
+			[
 				"name" => self::KEYS,
 				"href" => "/settings/keys",
 				"icon" => "key",
 				"desc" => "The encryption key that stores the secrets, and the SSH keys that connect runs and git to hosts.",
 				"rule" => "key/view",
-			),
-			array(
+			],
+			[
 				"name" => self::SECRETS,
 				"href" => "/settings/secrets",
 				"icon" => "secret",
 				"desc" => "Run environment variables and secrets, for every workspace or one.",
 				"rule" => "secret/view",
-			),
-			array(
+			],
+			[
 				"name" => self::INTEGRATIONS,
 				"href" => "/settings/integrations",
 				"icon" => "plug",
 				"desc" => "Claude Code, OpenRouter, Forgejo and Beszel, and their tokens.",
 				"rule" => "integration/view",
-			),
-			array(
+			],
+			[
 				"name" => self::USERS,
 				"href" => "/settings/users",
 				"icon" => "users",
 				"desc" => "Who signs in, their role and folders.",
 				"rule" => "user/view",
-			),
-			array(
+			],
+			[
 				"name" => self::PERMISSIONS,
 				"href" => "/settings/permissions",
 				"icon" => "key",
 				"desc" => "What each role may do.",
 				"rule" => "user/view",
-			),
-			array(
+			],
+			[
 				"name" => self::WORKFLOWS,
 				"href" => "/workflows",
 				"icon" => "flow",
 				"desc" => "Chains of jobs, by hand, schedule or webhook.",
 				"rule" => "workflow/view",
-			),
-			array(
+			],
+			[
 				"name" => self::WORKSPACES,
 				"href" => "/settings/workspaces",
 				"icon" => "folder-open",
 				"desc" => "Directories that hold projects and their tooling.",
 				"rule" => "workspace/view",
-			),
-			array(
+			],
+			[
 				"name" => self::PROJECTS,
 				"href" => "/settings/projects",
 				"icon" => "folder",
 				"desc" => "Git checkouts under the root, pulled before each run.",
 				"rule" => "project/view",
-			),
-			array(
+			],
+			[
 				"name" => self::SIDEBAR,
 				"href" => "/settings/sidebar",
 				"icon" => "grip",
 				"desc" => "The order of the sidebar, and what it leaves out.",
 				"rule" => "",
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -155,7 +155,7 @@ class Setup {
 	 * does.
 	 */
 	static function steps($chrome, $step = "") {
-		$out = array();
+		$out = [];
 
 		foreach (self::order() as $entry) {
 			if (!self::opens($chrome, $entry["rule"])) {
@@ -182,7 +182,7 @@ class Setup {
 		$count = count($steps);
 
 		if ($count < 2) {
-			return array();
+			return [];
 		}
 
 		foreach ($steps as $at => $step) {
@@ -190,17 +190,17 @@ class Setup {
 				continue;
 			}
 
-			$previous = $at > 0 ? $steps[$at - 1] : array();
-			$next = $at + 1 < $count ? $steps[$at + 1] : array();
+			$previous = $at > 0 ? $steps[$at - 1] : [];
+			$next = $at + 1 < $count ? $steps[$at + 1] : [];
 
-			return array(
+			return [
 				"previous" => $previous,
 				"next" => $next,
 				"steps" => $steps,
-			);
+			];
 		}
 
-		return array();
+		return [];
 	}
 
 	/** says how many of a thing a step holds: 1 key, 2 keys. */

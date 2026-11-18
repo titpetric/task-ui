@@ -63,7 +63,7 @@ class mod_workflow_edit implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"workflow",
 			"workflow_step",
 			"workflow_run",
@@ -73,7 +73,7 @@ class mod_workflow_edit implements Module {
 			"key_role",
 			"key_user",
 			"workspace",
-		);
+		];
 	}
 
 	function serve() {
@@ -111,11 +111,11 @@ class mod_workflow_edit implements Module {
 			return;
 		}
 
-		$chrome->heading("Edit " . $flow["name"], array(
-			array("text" => "Workflows", "href" => "/workflows"),
-			array("text" => $flow["name"], "href" => "/workflows/" . $id),
-			array("text" => "Edit", "href" => ""),
-		));
+		$chrome->heading("Edit " . $flow["name"], [
+			["text" => "Workflows", "href" => "/workflows"],
+			["text" => $flow["name"], "href" => "/workflows/" . $id],
+			["text" => "Edit", "href" => ""],
+		]);
 
 		$space = new Task\StepSpace($chrome);
 		$head = new Task\Head("Edit " . $flow["name"], self::LEAD);
@@ -129,26 +129,26 @@ class mod_workflow_edit implements Module {
 		$canSchedule = $can && $chrome->allowed("schedule/edit");
 
 		if ($canSchedule) {
-			$buttons->primary("plus", "Add schedule", array(
+			$buttons->primary("plus", "Add schedule", [
 				"href" => Task\Route::href("/schedules/add") . "?workflow=" . Task\Route::queryEscape($id),
-			));
+			]);
 		}
 
 		$head->menu($menu);
 		$flow = $this->moved($chrome, $space, $flow);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"editor" => $editor->data($flow, "/api/workflows/", "PUT", "/workflows/" . $id, "Save"),
 			"id" => $id,
-			"block" => array(
+			"block" => [
 				"title" => "Schedule",
 				"note" => self::SCHEDULE . $this->runsAs($flow) . self::TIMELY,
 				"empty" => count($rows) === 0 ? self::NONE : "",
 				"buttons" => $buttons->data(),
-			),
+			],
 			"schedules" => $this->rows($chrome, $rows, $flow, $canSchedule),
-		), "workflow_edit.tpl");
+		], "workflow_edit.tpl");
 	}
 
 	/**
@@ -163,12 +163,12 @@ class mod_workflow_edit implements Module {
 		$head = new Task\Head(self::NOT_YOURS, self::DENIED . self::ADMIN);
 
 		Task\Route::refused();
-		$chrome->heading($flow["name"], array(
-			array("text" => "Workflows", "href" => "/workflows"),
-			array("text" => $flow["name"], "href" => ""),
-		));
+		$chrome->heading($flow["name"], [
+			["text" => "Workflows", "href" => "/workflows"],
+			["text" => $flow["name"], "href" => ""],
+		]);
 		$chrome->reports(self::DENIED);
-		$view->page(array("head" => $head->data()), "forbidden.tpl");
+		$view->page(["head" => $head->data()], "forbidden.tpl");
 	}
 
 	/**
@@ -179,7 +179,7 @@ class mod_workflow_edit implements Module {
 	 * same test that leaves out a cycle through a third one.
 	 */
 	function steppable($store, $chrome, $id) {
-		$out = array();
+		$out = [];
 
 		foreach ($store->visible($chrome) as $flow) {
 			if (!$store->reaches($flow["id"], $id)) {
@@ -218,14 +218,14 @@ class mod_workflow_edit implements Module {
 		$id = $flow["id"];
 		$menu = new Task\Menu("Actions on " . $flow["name"]);
 
-		$menu->item("flow", "Open", array("href" => Task\Route::href("/workflows/" . $id)));
+		$menu->item("flow", "Open", ["href" => Task\Route::href("/workflows/" . $id)]);
 		$space->moveItems($menu, $id);
-		$menu->danger("trash", "Delete", array(
+		$menu->danger("trash", "Delete", [
 			"data-delete" => "/api/workflows/" . $id,
 			"data-confirm" => "Delete the workflow " . $flow["name"] . "? Its runs stay in the history.",
 			"data-confirm-ok" => "Delete",
 			"data-next" => Task\Route::href("/workflows"),
-		));
+		]);
 
 		return $menu->data();
 	}
@@ -247,30 +247,30 @@ class mod_workflow_edit implements Module {
 	function rows($chrome, $schedules, $flow, $can) {
 		$fixed = $flow["runAs"];
 		$users = $chrome->runAsUsers();
-		$out = array();
+		$out = [];
 
 		foreach ($schedules as $schedule) {
 			$on = Task\Schedule::enabled($schedule);
 			$name = $fixed === "" ? $schedule->getUserName() : $fixed;
 			$last = $schedule->getLastRunAt();
 
-			$out[] = array(
+			$out[] = [
 				"expression" => $schedule->getExpression(),
 				"on" => $on,
-				"next" => $on ? explode(" ", Task\Clock::read($schedule->getNextRunAt())) : array(),
+				"next" => $on ? explode(" ", Task\Clock::read($schedule->getNextRunAt())) : [],
 				"last" => $last === "" ? "" : Task\Clock::ago($last),
 				"user" => $chrome->who()->of($name),
 				"pick" => $fixed === "" && count($users) > 0,
-				"options" => array(
+				"options" => [
 					"users" => $users,
 					"selected" => $name,
 					"short" => true,
-				),
+				],
 				"api" => "/api/schedules/" . $schedule->getId(),
 				"triage" => Task\Schedule::triages($schedule),
 				"can" => $can,
 				"menu" => $this->menuOf($schedule, $on, $flow["name"], $can),
-			);
+			];
 		}
 
 		return $out;

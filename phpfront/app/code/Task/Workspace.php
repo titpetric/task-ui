@@ -42,12 +42,12 @@ class Workspace {
 	 * of any trail has none.
 	 */
 	static function crumbs($folder, $last) {
-		return array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Setup::WORKSPACES, "href" => self::PAGE),
-			array("text" => Route::crumbName($folder), "href" => self::PAGE . "/" . $folder),
-			array("text" => $last, "href" => ""),
-		);
+		return [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Setup::WORKSPACES, "href" => self::PAGE],
+			["text" => Route::crumbName($folder), "href" => self::PAGE . "/" . $folder],
+			["text" => $last, "href" => ""],
+		];
 	}
 
 	/** folders is the folder of every named workspace, in the sidebar's order. */
@@ -121,7 +121,7 @@ class Workspace {
 	 * the home is an empty directory; the Workspaces table says empty.
 	 */
 	static function homes($rows) {
-		$out = array();
+		$out = [];
 
 		foreach ($rows as $row) {
 			$out[$row->getFolder()] = $row->getHomeUrl();
@@ -142,22 +142,22 @@ class Workspace {
 		$id = trim($id, "/");
 
 		if ($id === "" || $id === Route::INTERNAL) {
-			return array(Route::INTERNAL, "");
+			return [Route::INTERNAL, ""];
 		}
 
 		$at = strpos($id, "/");
 
 		if ($at === false) {
-			return in_array($id, $named, true) ? array($id, "") : array(Route::INTERNAL, $id);
+			return in_array($id, $named, true) ? [$id, ""] : [Route::INTERNAL, $id];
 		}
 
 		$top = substr($id, 0, $at);
 
 		if (in_array($top, $named, true)) {
-			return array($top, substr($id, $at + 1));
+			return [$top, substr($id, $at + 1)];
 		}
 
-		return array(Route::INTERNAL, $id);
+		return [Route::INTERNAL, $id];
 	}
 
 	/**
@@ -196,7 +196,7 @@ class Workspace {
 	 * project of anything. frontend/workspace.go:workspaceProjects.
 	 */
 	static function inside($entries, $folder, $named) {
-		$out = array();
+		$out = [];
 
 		foreach ($entries as $entry) {
 			$parts = explode("/", Row::text($entry, "id"));
@@ -232,7 +232,7 @@ class Workspace {
 	 * workspaces.
 	 */
 	static function nested($entries, $projects, $named) {
-		$out = array();
+		$out = [];
 
 		foreach ($entries as $entry) {
 			self::hold($out, $named, Row::text($entry, "id"));
@@ -305,7 +305,7 @@ class Workspace {
 	 * under no folder, which is what the empty name means.
 	 */
 	static function counts($scopes, $folders) {
-		$out = array();
+		$out = [];
 
 		foreach ($scopes as $scope) {
 			if (self::service($scope)) {
@@ -387,7 +387,7 @@ class Workspace {
 	 * the table a second time.
 	 */
 	static function ranked($folders) {
-		$out = array();
+		$out = [];
 
 		foreach ($folders as $rank => $folder) {
 			$out[$folder] = $rank;

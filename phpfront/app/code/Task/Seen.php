@@ -18,7 +18,7 @@ class Seen {
 	var $notes = false;
 
 	/** asked is the answer of each run looked up so far. */
-	var $asked = array();
+	var $asked = [];
 
 	function __construct($chrome) {
 		$this->runs = new Runs\Runs($chrome->db);
@@ -35,7 +35,7 @@ class Seen {
 	 * about one of them by ID later.
 	 */
 	function of($found) {
-		$out = array();
+		$out = [];
 
 		foreach ($found as $run) {
 			$id = $run->getId();
@@ -59,7 +59,7 @@ class Seen {
 	 * under.
 	 */
 	function rows($found) {
-		$out = array();
+		$out = [];
 
 		foreach ($found as $row) {
 			$id = Row::text($row, "id");

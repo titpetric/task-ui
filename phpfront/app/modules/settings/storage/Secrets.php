@@ -28,7 +28,7 @@ class Secrets {
 	 * variable, which the keys page counts by workspace.
 	 */
 	function scopes() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT scope FROM secret WHERE scope NOT LIKE ? AND scope NOT LIKE ?", \Task\Secret::OWNED, \Task\Secret::PERSONAL) as $row) {
 			$out[] = \Task\Row::text($row, "scope");
@@ -50,7 +50,7 @@ class Secrets {
 
 	/** counts is how many runs got each variable, by its ID. */
 	function counts() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT secret_id, COUNT(*) AS found FROM secret_read GROUP BY secret_id") as $row) {
 			$out[\Task\Row::text($row, "secret_id")] = \Task\Row::number($row, "found");
@@ -67,7 +67,7 @@ class Secrets {
 	 */
 	function last() {
 		$sql = "SELECT * FROM secret_read WHERE rowid IN (SELECT MAX(rowid) FROM secret_read GROUP BY secret_id)";
-		$out = array();
+		$out = [];
 
 		foreach (\Task\Model\SecretRead::rows($this->db->get_all($sql)) as $read) {
 			$out[$read->getSecretId()] = $read;
@@ -126,7 +126,7 @@ class Secrets {
 	 */
 	function reads($id, $before, $after, $limit) {
 		$sql = "SELECT * FROM secret_read WHERE secret_id = ?";
-		$args = array($id);
+		$args = [$id];
 		$order = " ORDER BY rowid DESC";
 
 		if ($before !== "") {

@@ -14,7 +14,7 @@ echo var_export($mod instanceof Module, true), "\n";
 // is named after this fixture and every read names an ID of its own.
 $db = Task\DB::writer();
 
-$db->replace("user", array("id" => "fx-doc-u1", "name" => "fx-doc-ann", "role" => "admin", "admin" => 1));
+$db->replace("user", ["id" => "fx-doc-u1", "name" => "fx-doc-ann", "role" => "admin", "admin" => 1]);
 
 // at is a moment of the day the rows record, in the shape a write leaves.
 function at($time) {
@@ -23,14 +23,14 @@ function at($time) {
 
 // The run a report is about, the run of Claude's that answered a question
 // about it, and one whose question is about a run that is gone.
-$rows = array(
-	array("id" => "fx-doc-1", "job" => "build", "state" => "ok", "from" => at("10:01:00.000"), "to" => at("10:01:02.000")),
-	array("id" => "fx-doc-2", "job" => "@claude-prompt", "state" => "ok", "from" => at("10:02:00.000"), "to" => at("10:02:30.000")),
-	array("id" => "fx-doc-3", "job" => "@claude-prompt", "state" => "ok", "from" => at("10:03:00.000"), "to" => at("10:03:30.000")),
-);
+$rows = [
+	["id" => "fx-doc-1", "job" => "build", "state" => "ok", "from" => at("10:01:00.000"), "to" => at("10:01:02.000")],
+	["id" => "fx-doc-2", "job" => "@claude-prompt", "state" => "ok", "from" => at("10:02:00.000"), "to" => at("10:02:30.000")],
+	["id" => "fx-doc-3", "job" => "@claude-prompt", "state" => "ok", "from" => at("10:03:00.000"), "to" => at("10:03:30.000")],
+];
 
 foreach ($rows as $row) {
-	$db->replace("run", array(
+	$db->replace("run", [
 		"id" => $row["id"],
 		"folder" => "fx-doc",
 		"job" => $row["job"],
@@ -39,29 +39,29 @@ foreach ($rows as $row) {
 		"state" => $row["state"],
 		"started_at" => $row["from"],
 		"finished_at" => $row["to"],
-	));
+	]);
 }
 
 // The summary the runs page kept for the run that ended, which is a report of
 // its own: a summary with no thread.
-$db->replace("run_summary", array(
+$db->replace("run_summary", [
 	"run_id" => "fx-doc-1",
 	"summary" => "the build was clean",
 	"user_name" => "claude",
 	"created_at" => Task\Clock::stamp(),
-));
+]);
 
 // The threads: a question about the run, answered by a run of Claude's, and a
 // question about a run that is no longer there.
-$notes = array(
-	array("id" => "fx-doc-n1", "parent" => "", "by" => "fx-doc-ann", "body" => "why did this run end the way it did", "about" => "fx-doc-1", "run" => ""),
-	array("id" => "fx-doc-n2", "parent" => "fx-doc-n1", "by" => "claude", "body" => "the cache was cold", "about" => "fx-doc-1", "run" => "fx-doc-2"),
-	array("id" => "fx-doc-n3", "parent" => "", "by" => "fx-doc-ann", "body" => "what did this one do", "about" => "fx-doc-gone", "run" => ""),
-	array("id" => "fx-doc-n4", "parent" => "fx-doc-n3", "by" => "claude", "body" => "the run is gone", "about" => "fx-doc-gone", "run" => "fx-doc-3"),
-);
+$notes = [
+	["id" => "fx-doc-n1", "parent" => "", "by" => "fx-doc-ann", "body" => "why did this run end the way it did", "about" => "fx-doc-1", "run" => ""],
+	["id" => "fx-doc-n2", "parent" => "fx-doc-n1", "by" => "claude", "body" => "the cache was cold", "about" => "fx-doc-1", "run" => "fx-doc-2"],
+	["id" => "fx-doc-n3", "parent" => "", "by" => "fx-doc-ann", "body" => "what did this one do", "about" => "fx-doc-gone", "run" => ""],
+	["id" => "fx-doc-n4", "parent" => "fx-doc-n3", "by" => "claude", "body" => "the run is gone", "about" => "fx-doc-gone", "run" => "fx-doc-3"],
+];
 
 foreach ($notes as $row) {
-	$db->replace("note", array(
+	$db->replace("note", [
 		"id" => $row["id"],
 		"channel" => "notes",
 		"parent_id" => $row["parent"],
@@ -74,14 +74,14 @@ foreach ($notes as $row) {
 		"workspace_id" => "fx-doc-ws",
 		"created_at" => Task\Clock::stamp(),
 		"updated_at" => Task\Clock::stamp(),
-	));
+	]);
 }
 
 Task\Host::$whoami = "fx-doc-ann";
 $build = Task\Fixture::job("build");
-$catalogue = Task\Fixture::folder("fx-doc", array($build));
+$catalogue = Task\Fixture::folder("fx-doc", [$build]);
 
-Task\Host::$folders = array(Task\Fixture::declared($catalogue));
+Task\Host::$folders = [Task\Fixture::declared($catalogue)];
 
 $runs = new Task\Runs\Runs;
 $reports = new Task\Report;
@@ -90,7 +90,7 @@ $seen = new Task\Seen($chrome);
 
 // labels names the buttons of the head, in the order the head draws them.
 function labels($data) {
-	$out = array();
+	$out = [];
 
 	foreach ($data["items"] as $item) {
 		$out[] = $item["label"] . " " . $item["href"];
@@ -149,7 +149,7 @@ echo said(mod_report::lead($plain, $answer, false), $plain), "\n";
 
 // A run that has not ended is named without a state, and a report with neither
 // a user nor a time ends after the run it is of.
-$bare = array("run" => "fx-doc-1", "about" => "fx-doc-1", "thread" => "", "question" => "", "by" => "", "body" => "nothing asked", "at" => "", "pending" => false);
+$bare = ["run" => "fx-doc-1", "about" => "fx-doc-1", "thread" => "", "question" => "", "by" => "", "body" => "nothing asked", "at" => "", "pending" => false];
 $live = $runs->get("fx-doc-1");
 
 $live->setState(Task\Run::RUNNING);

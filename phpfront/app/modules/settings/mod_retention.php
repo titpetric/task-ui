@@ -53,7 +53,7 @@ class mod_retention implements Module {
 	}
 
 	function tables() {
-		return array("setting", "run");
+		return ["setting", "run"];
 	}
 
 	function serve() {
@@ -74,10 +74,10 @@ class mod_retention implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::RETENTION, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::RETENTION, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::RETENTION, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::RETENTION, "href" => ""],
+		]);
 
 		$admin = Task\User::admin($chrome->user);
 		$head = new Task\Head(Task\Setup::RETENTION, self::lead($admin));
@@ -91,7 +91,7 @@ class mod_retention implements Module {
 
 		$steps = Task\Setup::steps($chrome, Task\Setup::RETENTION);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
 			"next" => Task\Route::href(self::PAGE) . "?notice=" . Task\Route::queryEscape(self::SAVED),
@@ -99,7 +99,7 @@ class mod_retention implements Module {
 			"last" => $this->last(),
 			"rows" => $this->rows($usage),
 			"trail" => Task\Setup::trail($steps),
-		), "retention.tpl");
+		], "retention.tpl");
 	}
 
 	/**
@@ -118,7 +118,7 @@ class mod_retention implements Module {
 	 */
 	function rows($usage) {
 		if ($usage["off"]) {
-			return array();
+			return [];
 		}
 
 		$store = new Task\Retention;
@@ -132,32 +132,32 @@ class mod_retention implements Module {
 	 */
 	function last() {
 		$runs = new Task\Runs\Runs;
-		$found = $runs->find(array(
+		$found = $runs->find([
 			"folder" => Task\Route::INTERNAL,
 			"job" => self::CLEANUP,
 			"limit" => 1,
-		));
+		]);
 
 		if (count($found) === 0) {
-			return array(
+			return [
 				"ran" => false,
 				"href" => "",
 				"stamp" => "",
 				"ago" => "",
 				"state" => Task\Run::label(null),
-			);
+			];
 		}
 
 		$run = $found[0];
 		$started = $run->getStartedAt();
 
-		return array(
+		return [
 			"ran" => true,
 			"href" => Task\Route::href("/runs/" . $run->getId()),
 			"stamp" => Task\Clock::read($started),
 			"ago" => Task\Clock::ago($started),
 			"state" => Task\Run::label($run),
-		);
+		];
 	}
 
 	/**
@@ -177,13 +177,13 @@ class mod_retention implements Module {
 	 * does: what is read of it is whether it is there.
 	 */
 	static function cleans() {
-		return array(
+		return [
 			"data-run" => null,
 			"data-folder" => Task\Route::INTERNAL,
 			"data-job" => self::CLEANUP,
 			"data-title" => self::WHAT,
 			"title" => self::STARTS,
-		);
+		];
 	}
 }
 

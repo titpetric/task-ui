@@ -40,17 +40,17 @@ class Artifacts {
 	 * `folder`, `job` and `path`, where a path is a file of the artifact tree
 	 * and the rows under it are its versions.
 	 */
-	function find($filter = array()) {
+	function find($filter = []) {
 		$limit = isset($filter["limit"]) ? (int)$filter["limit"] : self::LIMIT;
-		$where = array();
-		$args = array();
+		$where = [];
+		$args = [];
 
-		$columns = array(
+		$columns = [
 			"run_id" => "run",
 			"folder" => "folder",
 			"job" => "job",
 			"path" => "path",
-		);
+		];
 
 		foreach ($columns as $column => $field) {
 			$value = isset($filter[$field]) ? (string)$filter[$field] : "";
@@ -101,7 +101,7 @@ class Artifacts {
 
 	/** rows turns what the database answered into artifacts. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

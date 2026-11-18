@@ -56,7 +56,11 @@ A comment between the two statements is legal — the pattern matches the AST, n
 
 Adopted from mobius's `rules/arrays.yml`. One rule, `comment-in-array`, and it guards a formatter defect rather than a taste: `phpscript fmt` relocates a comment written anywhere inside an expression to after the statement that holds it, stably, so a second pass changes nothing and the author who moved it sees no diff. [`docs/todo-correction.md`](../../../docs/todo-correction.md) section 23 has the probe.
 
-Generic, because semgrep's PHP patterns cannot see comments. A comment above a statement that merely contains an inline `array(...)` stays legal, which is where every comment in this tree already sits.
+Generic, because semgrep's PHP patterns cannot see comments. A comment above a statement that merely contains an inline `[...]` stays legal, which is where every comment in this tree already sits.
+
+## array-syntax.yml, at zero
+
+One rule, `array-syntax`, with a fix: an array literal is written `[...]`, not `array(...)`. The PHP parser folds the two into one node, so the rule reads the source; the fmt job runs `phpscript fmt` and then this autofix, one nesting level per pass, and hashes each file across the pair.
 
 ## suppression.yml, at zero
 

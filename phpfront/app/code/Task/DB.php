@@ -33,12 +33,12 @@ class DB {
 	 * IDs as the caller holds - cannot be written as a call. A callback does
 	 * reach the driver's own method, and that is how the call is made.
 	 */
-	static function all($db, $sql, $args = array()) {
-		return call_user_func_array(array($db, "get_all"), array_merge(array($sql), $args));
+	static function all($db, $sql, $args = []) {
+		return call_user_func_array([$db, "get_all"], array_merge([$sql], $args));
 	}
 
 	/** row is all for a statement that answers one row. */
-	static function row($db, $sql, $args = array()) {
-		return call_user_func_array(array($db, "get"), array_merge(array($sql), $args));
+	static function row($db, $sql, $args = []) {
+		return call_user_func_array([$db, "get"], array_merge([$sql], $args));
 	}
 }

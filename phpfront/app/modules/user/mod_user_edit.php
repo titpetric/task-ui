@@ -40,7 +40,7 @@ class mod_user_edit implements Module {
 	}
 
 	function tables() {
-		return array("user", "permission_policy", "user_auth_token");
+		return ["user", "permission_policy", "user_auth_token"];
 	}
 
 	function serve() {
@@ -66,7 +66,7 @@ class mod_user_edit implements Module {
 
 		$chrome->heading("Edit " . $name, $this->crumbs($chrome, $name));
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($name),
 			"name" => $name,
 			"api" => "/api/users/" . $user->getId(),
@@ -77,7 +77,7 @@ class mod_user_edit implements Module {
 			"keys" => $this->keys($chrome, $name, $own),
 			"mcp" => $this->mcp($chrome, $user, $own),
 			"spotify" => $this->spotify($chrome, $name, $own),
-		), "user_edit.tpl");
+		], "user_edit.tpl");
 	}
 
 	/**
@@ -89,15 +89,15 @@ class mod_user_edit implements Module {
 		$profile = "/users/" . Task\Route::pathEscape($name);
 
 		if (!$chrome->allowed("user/view")) {
-			return array(array("text" => $name, "href" => $profile), array("text" => "Edit", "href" => ""));
+			return [["text" => $name, "href" => $profile], ["text" => "Edit", "href" => ""]];
 		}
 
-		return array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => "Users", "href" => "/settings/users"),
-			array("text" => $name, "href" => $profile),
-			array("text" => "Edit", "href" => ""),
-		);
+		return [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => "Users", "href" => "/settings/users"],
+			["text" => $name, "href" => $profile],
+			["text" => "Edit", "href" => ""],
+		];
 	}
 
 	/** head is the page head: the heading, the lead and the way back to the profile. */
@@ -105,7 +105,7 @@ class mod_user_edit implements Module {
 		$buttons = new Task\Buttons;
 		$head = new Task\Head("Edit " . $name);
 
-		$buttons->item("users", "View profile", array("href" => Task\Route::href("/users/" . $name)));
+		$buttons->item("users", "View profile", ["href" => Task\Route::href("/users/" . $name)]);
 		$head->said(sprintf(self::LEAD, $name));
 		$head->buttons($buttons->data());
 
@@ -124,7 +124,7 @@ class mod_user_edit implements Module {
 		$edits = Task\User::admin($chrome->user);
 		$next = "/users/" . $name . "/edit?notice=Roles+saved#roles";
 
-		return array(
+		return [
 			"edits" => $edits,
 			"next" => Task\Route::href($next),
 			"options" => Task\User::ASSIGNABLE,
@@ -132,7 +132,7 @@ class mod_user_edit implements Module {
 			"admin" => $user->getAdmin(),
 			"mcp" => $user->getMcp(),
 			"reply" => $user->getAgentReply(),
-		);
+		];
 	}
 
 	/**
@@ -148,18 +148,18 @@ class mod_user_edit implements Module {
 		$seen = Task\User::folders($user);
 		$next = "/users/" . $name . "/edit?notice=Folders+saved#folders";
 		$all = count($seen) === 0;
-		$pick = array(
+		$pick = [
 			"all" => $all,
 			"label" => false,
 			"choices" => Task\Folders::choices($chrome->all(), $seen),
-		);
+		];
 
-		return array(
+		return [
 			"edits" => $chrome->allowed("user/edit"),
 			"next" => Task\Route::href($next),
 			"pick" => $pick,
 			"list" => $seen,
-		);
+		];
 	}
 
 	/**
@@ -173,12 +173,12 @@ class mod_user_edit implements Module {
 	 */
 	function permissions($chrome, $users, $user, $own) {
 		$fixed = Task\User::admin($user);
-		$block = array(
+		$block = [
 			"links" => $chrome->allowed("user/view"),
 			"role" => Task\User::role($user),
 			"fixed" => $fixed,
 			"matrix" => null,
-		);
+		];
 
 		if ($fixed) {
 			return $block;
@@ -233,7 +233,7 @@ class mod_user_edit implements Module {
 		$agent = $user->getMcp();
 		$enable = $chrome->allowed("user/edit") && $agent;
 
-		return array(
+		return [
 			"name" => $name,
 			"api" => $api,
 			"done" => "/users/" . $name . "/edit?notice=MCP+token+made#mcp",
@@ -247,7 +247,7 @@ class mod_user_edit implements Module {
 			"named" => Task\User\Connect::NAMED,
 			"add" => Task\User\Connect::add(Task\Route::site()),
 			"settings" => Task\User\Connect::settings(Task\Route::site()),
-		);
+		];
 	}
 
 	/**
@@ -263,18 +263,18 @@ class mod_user_edit implements Module {
 			return null;
 		}
 
-		return array("next" => Task\Route::href("/users/" . $name . "/edit"));
+		return ["next" => Task\Route::href("/users/" . $name . "/edit")];
 	}
 
 	/** rows is one table row per token, each with the DELETE of its own. */
 	static function rows($tokens, $api) {
-		$out = array();
+		$out = [];
 
 		foreach ($tokens as $token) {
 			$created = $token->getCreatedAt();
 			$expires = $token->getExpiresAt();
 			$used = $token->getUsedAt();
-			$out[] = array(
+			$out[] = [
 				"name" => $token->getName(),
 				"delete" => $api . "/" . $token->getId(),
 				"created" => Task\Clock::ago($created),
@@ -286,7 +286,7 @@ class mod_user_edit implements Module {
 				"used" => $used !== "",
 				"usedAgo" => Task\Clock::ago($used),
 				"usedAt" => Task\Clock::read($used),
-			);
+			];
 		}
 
 		return $out;

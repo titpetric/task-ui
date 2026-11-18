@@ -11,6 +11,6 @@ $module->setIcon("note");
 $module->enableSideBar();
 $module->setSideBarHref("/threads");
 $module->setSideBarRule("");
-$module->setTables(array("note", "note_participant"));
+$module->setTables(["note", "note_participant"]);
 
 return $module;

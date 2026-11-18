@@ -33,8 +33,8 @@ $doc = new Task\Head("fx / build");
 $buttons = new Task\Buttons;
 $menu = new Task\Menu("Runs");
 
-$buttons->primary("", "Run", array("href" => "/runs/fx-1"));
-$menu->item("list", "Everything", array("href" => "/runs"));
+$buttons->primary("", "Run", ["href" => "/runs/fx-1"]);
+$menu->item("list", "Everything", ["href" => "/runs"]);
 $doc->badge("report");
 $doc->buttons($buttons->data());
 $doc->menu($menu->data());

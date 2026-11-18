@@ -45,7 +45,7 @@ class mod_host implements Module {
 	}
 
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {
@@ -74,10 +74,10 @@ class mod_host implements Module {
 			return;
 		}
 
-		$chrome->heading($name, array(
-			array("text" => "Inventory", "href" => "/inventory"),
-			array("text" => $name, "href" => ""),
-		));
+		$chrome->heading($name, [
+			["text" => "Inventory", "href" => "/inventory"],
+			["text" => $name, "href" => ""],
+		]);
 
 		$now = Task\Clock::now();
 		$scope = $this->scope($facts, $now);
@@ -98,13 +98,13 @@ class mod_host implements Module {
 	 */
 	function scope($facts, $now) {
 		$system = $facts["system"];
-		$containers = array();
+		$containers = [];
 
 		foreach ($facts["containers"] as $container) {
 			$containers[] = self::container($container);
 		}
 
-		$filesystems = array();
+		$filesystems = [];
 
 		foreach ($facts["filesystems"] as $filesystem) {
 			$filesystems[] = self::filesystem($filesystem);
@@ -113,7 +113,7 @@ class mod_host implements Module {
 		$charts = array_merge($this->charts($facts, $now), $this->containerCharts($facts, $now));
 		$head = new Task\Head($system["name"], sprintf(self::LEAD, Task\Route::href("/inventory")));
 
-		return array(
+		return [
 			"head" => $head->data(),
 			"name" => $system["name"],
 			"host" => $system["host"],
@@ -135,7 +135,7 @@ class mod_host implements Module {
 			"filesystems" => $filesystems,
 			"fromDF" => $facts["from_df"],
 			"charts" => $charts,
-		);
+		];
 	}
 
 	/**
@@ -154,7 +154,7 @@ class mod_host implements Module {
 		$state = $container["state"];
 		$measured = $container["measured"];
 
-		return array(
+		return [
 			"name" => $container["name"],
 			"image" => $container["image"],
 			"status" => $container["status"],
@@ -173,12 +173,12 @@ class mod_host implements Module {
 			"traffic" => $measured && $container["net"] > 0,
 			"netV" => self::number($container["net"]),
 			"net" => Task\Size::rate($container["net"]),
-		);
+		];
 	}
 
 	/** filesystem is one row of the Filesystems table: where it is mounted, what it is, and how full. */
 	static function filesystem($filesystem) {
-		return array(
+		return [
 			"mount" => $filesystem["mount"],
 			"device" => $filesystem["device"],
 			"type" => $filesystem["type"],
@@ -186,7 +186,7 @@ class mod_host implements Module {
 			"used" => Task\Size::bytes($filesystem["used"]),
 			"free" => Task\Size::bytes($filesystem["free"]),
 			"use" => Task\Meter::of($filesystem["percent"]),
-		);
+		];
 	}
 
 	/** measureNote says why a container has no measures. */
@@ -215,14 +215,14 @@ class mod_host implements Module {
 	 */
 	function charts($facts, $now) {
 		if (count($facts["samples"]) === 0) {
-			return array();
+			return [];
 		}
 
-		$cpu = array();
-		$used = array();
-		$sent = array();
-		$recv = array();
-		$disks = array("/" => array());
+		$cpu = [];
+		$used = [];
+		$sent = [];
+		$recv = [];
+		$disks = ["/" => []];
 		$ram = 0;
 
 		foreach ($facts["samples"] as $sample) {
@@ -238,7 +238,7 @@ class mod_host implements Module {
 				$name = $mount["name"];
 
 				if (!isset($disks[$name])) {
-					$disks[$name] = array();
+					$disks[$name] = [];
 				}
 
 				$disks[$name][] = Task\Chart::point($at, Task\Chart::fill($mount["used"], $mount["total"]));
@@ -246,12 +246,12 @@ class mod_host implements Module {
 		}
 
 		$from = Task\Chart::from($now);
-		$busy = new Task\Chart("CPU", Task\Chart::percent(), $from, $now, false, array(Task\Chart::series("CPU", 0, $cpu)));
-		$memory = new Task\Chart("Memory", Task\Chart::gib($ram), $from, $now, false, array(Task\Chart::series("Used", 0, $used)));
+		$busy = new Task\Chart("CPU", Task\Chart::percent(), $from, $now, false, [Task\Chart::series("CPU", 0, $cpu)]);
+		$memory = new Task\Chart("Memory", Task\Chart::gib($ram), $from, $now, false, [Task\Chart::series("Used", 0, $used)]);
 		$disk = new Task\Chart("Disk", Task\Chart::percent(), $from, $now, false, self::mounts($disks));
-		$net = new Task\Chart("Network", Task\Chart::rate(), $from, $now, false, array(Task\Chart::series("Sent", 0, $sent), Task\Chart::series("Received", 1, $recv)));
+		$net = new Task\Chart("Network", Task\Chart::rate(), $from, $now, false, [Task\Chart::series("Sent", 0, $sent), Task\Chart::series("Received", 1, $recv)]);
 
-		return array($busy->data(), $memory->data(), $disk->data(), $net->data());
+		return [$busy->data(), $memory->data(), $disk->data(), $net->data()];
 	}
 
 	/** mounts are the filesystems of the records as series, by name and each in its own colour. */
@@ -260,7 +260,7 @@ class mod_host implements Module {
 
 		sort($names);
 
-		$series = array();
+		$series = [];
 
 		foreach ($names as $i => $name) {
 			$series[] = Task\Chart::series($name, $i % self::COLORS, $disks[$name]);
@@ -279,11 +279,11 @@ class mod_host implements Module {
 	 */
 	function containerCharts($facts, $now) {
 		if (count($facts["container_samples"]) === 0) {
-			return array();
+			return [];
 		}
 
-		$memory = array();
-		$cpu = array();
+		$memory = [];
+		$cpu = [];
 
 		foreach ($facts["container_samples"] as $sample) {
 			$at = Task\Clock::seconds($sample["at"]);
@@ -292,8 +292,8 @@ class mod_host implements Module {
 				$name = $stat["name"];
 
 				if (!isset($memory[$name])) {
-					$memory[$name] = array();
-					$cpu[$name] = array();
+					$memory[$name] = [];
+					$cpu[$name] = [];
 				}
 
 				$memory[$name][] = Task\Chart::point($at, $stat["memory"]);
@@ -305,7 +305,7 @@ class mod_host implements Module {
 		$fullest = new Task\Chart("Containers by memory", Task\Chart::megabytes(), $from, $now, false, Task\Chart::busiest($memory));
 		$busiest = new Task\Chart("Containers by CPU", Task\Chart::share(), $from, $now, false, Task\Chart::busiest($cpu));
 
-		return array($fullest->data(), $busiest->data());
+		return [$fullest->data(), $busiest->data()];
 	}
 
 	/** read is how long since the host last answered over ssh, and "" where it never has. */

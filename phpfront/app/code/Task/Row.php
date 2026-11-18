@@ -51,7 +51,7 @@ class Row {
 	 */
 	static function items($row, $column) {
 		if (!is_array($row) || !isset($row[$column]) || !is_array($row[$column])) {
-			return array();
+			return [];
 		}
 
 		return $row[$column];
@@ -93,7 +93,7 @@ class Row {
 	 * back. The model names its timestamp columns, because get_object_vars
 	 * answers values and not types.
 	 */
-	static function values($model, $stamps = array()) {
+	static function values($model, $stamps = []) {
 		$values = get_object_vars($model);
 
 		foreach ($stamps as $column) {
@@ -108,7 +108,7 @@ class Row {
 	/** only is values cut to the named columns. */
 	static function only($model, $columns) {
 		$values = get_object_vars($model);
-		$out = array();
+		$out = [];
 
 		foreach ($columns as $column) {
 			if (isset($values[$column])) {

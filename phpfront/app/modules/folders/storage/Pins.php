@@ -18,7 +18,7 @@ class Pins {
 	/** ofUser is every pin of one reader, in the order they were made. */
 	function ofUser($name) {
 		if ($name === "") {
-			return array();
+			return [];
 		}
 
 		$rows = $this->db->get_all("SELECT * FROM pin WHERE user_name = ? ORDER BY rowid", $name);

@@ -26,7 +26,7 @@ class mod_search_ask implements Module {
 	}
 
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {

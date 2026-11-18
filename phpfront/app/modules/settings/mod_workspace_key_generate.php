@@ -30,7 +30,7 @@ class mod_workspace_key_generate implements Module {
 	}
 
 	function tables() {
-		return array("workspace");
+		return ["workspace"];
 	}
 
 	function serve() {
@@ -62,11 +62,11 @@ class mod_workspace_key_generate implements Module {
 		$head = new Task\Head(self::TITLE, self::lead($folder, $dir));
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"form" => Task\Key::wsGenerate($folder, $dir, $next, false),
 			"trail" => Task\Setup::trail($steps),
-		), "workspace_key_generate.tpl");
+		], "workspace_key_generate.tpl");
 	}
 
 	/**

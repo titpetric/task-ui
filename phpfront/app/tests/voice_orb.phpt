@@ -12,7 +12,7 @@ $js = file_get_contents("theme/assets/voice/voice.js");
 
 // shown is the actions a state puts on screen, as id:action and in order.
 function shown($view) {
-	$out = array();
+	$out = [];
 
 	foreach ($view["actions"] as $action) {
 		$out[] = $action["id"] . ":" . $action["action"];
@@ -40,11 +40,11 @@ echo "question-card ", implode(" ", array_column($orb["states"]["question"]["car
 
 // A voice note: the states the window passes through, in order, each with the
 // two actions it leaves on screen.
-foreach (array("idle", "recording", "saving", "saved") as $name) {
+foreach (["idle", "recording", "saving", "saved"] as $name) {
 	echo "note ", $name, " ", shown($orb["states"][$name]), "\n";
 }
 
-foreach (array("idle", "recording", "paused", "saved") as $name) {
+foreach (["idle", "recording", "paused", "saved"] as $name) {
 	echo $name, " back:", back($orb["states"][$name]), "\n";
 }
 
@@ -73,7 +73,7 @@ echo "removed ", var_export(
 preg_match('/<div class="voice-acts">(.*?)<\/div>/s', $tpl, $acts);
 echo "acts ", substr_count($acts[1], "<button"), "\n";
 
-$wanted = array();
+$wanted = [];
 
 foreach ($orb["states"] as $view) {
 	foreach ($view["actions"] as $action) {
@@ -83,7 +83,7 @@ foreach ($orb["states"] as $view) {
 	}
 }
 
-$missing = array();
+$missing = [];
 
 foreach (array_keys($wanted) as $name) {
 	if (strpos($icons, 'id="i-' . $name . '"') === false) {
@@ -93,8 +93,8 @@ foreach (array_keys($wanted) as $name) {
 
 echo "icons ", $missing ? implode(",", $missing) : "none", "\n";
 
-$allowed = array("record", "begin", "stop", "send", "back", "none");
-$bad = array();
+$allowed = ["record", "begin", "stop", "send", "back", "none"];
+$bad = [];
 
 foreach ($orb["states"] as $name => $view) {
 	foreach ($view["actions"] as $action) {

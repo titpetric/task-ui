@@ -12,10 +12,10 @@ namespace Task;
 class Meter {
 	/** of is one share as the meter component reads it. */
 	static function of($share) {
-		return array(
+		return [
 			"share" => $share,
 			"width" => sprintf("%.1f", $share),
 			"pct" => sprintf("%.0f", $share),
-		);
+		];
 	}
 }

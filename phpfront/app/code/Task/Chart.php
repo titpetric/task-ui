@@ -50,7 +50,7 @@ class Chart {
 	const EPOCH = 62135596800;
 
 	/** NICE are the multiples a value axis steps in, one of them times a power of ten. */
-	const NICE = array(1, 2, 2.5, 5, 10);
+	const NICE = [1, 2, 2.5, 5, 10];
 
 	/** SHARE is the top of a share's own axis, its hundred, in four steps. */
 	const SHARE = 100;
@@ -62,7 +62,7 @@ class Chart {
 	var $svg = "";
 
 	/** legend is each series' least, mean and most, worded in the chart's unit. */
-	var $legend = array();
+	var $legend = [];
 
 	/** total is the stack's own legend row, null on a chart that is not stacked. */
 	var $total = null;
@@ -92,7 +92,7 @@ class Chart {
 		$this->title = $title;
 		$this->from = $from->unix();
 		$this->to = $to->unix();
-		$kept = array();
+		$kept = [];
 
 		foreach ($series as $one) {
 			$one["points"] = $this->within($one["points"]);
@@ -158,13 +158,13 @@ class Chart {
 
 	/** data is the scope the line-chart component reads. */
 	function data() {
-		return array(
+		return [
 			"title" => $this->title,
 			"svg" => $this->svg,
 			"legend" => $this->legend,
 			"total" => $this->total,
 			"empty" => $this->empty,
-		);
+		];
 	}
 
 	/**
@@ -188,7 +188,7 @@ class Chart {
 			$one = $drawn[$i];
 
 			foreach (self::runs($one["points"], $limit) as $run) {
-				$below = array();
+				$below = [];
 
 				if ($stacked && $i > 0) {
 					$below = self::pointsAt($drawn[$i - 1]["points"], $run);
@@ -292,7 +292,7 @@ class Chart {
 
 	/** within keeps the points of the span. */
 	function within($points) {
-		$kept = array();
+		$kept = [];
 
 		foreach ($points as $point) {
 			if ($point["at"] < $this->from || $point["at"] > $this->to) {
@@ -317,16 +317,16 @@ class Chart {
 
 	/** series is a line of a chart: its name, one of the six series colours, and its points, oldest first. */
 	static function series($name, $color, $points) {
-		return array(
+		return [
 			"name" => $name,
 			"color" => $color,
 			"points" => $points,
-		);
+		];
 	}
 
 	/** point is a measure at a unix second; a null value is a gap. */
 	static function point($at, $v) {
-		return array("at" => $at, "v" => $v);
+		return ["at" => $at, "v" => $v];
 	}
 
 	/**
@@ -334,11 +334,11 @@ class Chart {
 	 * of the series before it at its time, a missing one counting zero.
 	 */
 	static function stack($series) {
-		$stacked = array();
-		$sums = array();
+		$stacked = [];
+		$sums = [];
 
 		foreach ($series as $one) {
-			$points = array();
+			$points = [];
 
 			foreach ($one["points"] as $point) {
 				$at = $point["at"];
@@ -358,13 +358,13 @@ class Chart {
 	 * null where others has none.
 	 */
 	static function pointsAt($others, $run) {
-		$at = array();
+		$at = [];
 
 		foreach ($others as $point) {
 			$at[$point["at"]] = $point["v"];
 		}
 
-		$found = array();
+		$found = [];
 
 		foreach ($run as $point) {
 			$v = isset($at[$point["at"]]) ? $at[$point["at"]] : null;
@@ -403,8 +403,8 @@ class Chart {
 
 	/** runs splits points at a gap, at a null and at a span past limit. */
 	static function runs($points, $limit) {
-		$all = array();
-		$run = array();
+		$all = [];
+		$run = [];
 
 		foreach ($points as $i => $point) {
 			if ($point["v"] === null || ($i > 0 && $point["at"] - $points[$i - 1]["at"] > $limit)) {
@@ -412,7 +412,7 @@ class Chart {
 					$all[] = $run;
 				}
 
-				$run = array();
+				$run = [];
 			}
 
 			if ($point["v"] === null) {
@@ -434,7 +434,7 @@ class Chart {
 	 * point in the span.
 	 */
 	static function legendOf($name, $color, $points, $divisor, $suffix) {
-		$values = array();
+		$values = [];
 		$sum = 0;
 
 		foreach ($points as $point) {
@@ -454,13 +454,13 @@ class Chart {
 
 		sort($values);
 
-		return array(
+		return [
 			"name" => $name,
 			"color" => $color,
 			"min" => self::word($values[0], $divisor, $suffix),
 			"avg" => self::word($sum / $n, $divisor, $suffix),
 			"max" => self::word($values[$n - 1], $divisor, $suffix),
-		);
+		];
 	}
 
 	/**
@@ -469,7 +469,7 @@ class Chart {
 	 */
 	static function nice($largest) {
 		if ($largest <= 0) {
-			return array("top" => 1, "step" => 0.5);
+			return ["top" => 1, "step" => 0.5];
 		}
 
 		$raw = $largest / 3;
@@ -484,7 +484,7 @@ class Chart {
 			}
 		}
 
-		return array("top" => $step * ceil($largest / $step - 1e-09), "step" => $step);
+		return ["top" => $step * ceil($largest / $step - 1e-09), "step" => $step];
 	}
 
 	/**
@@ -515,41 +515,41 @@ class Chart {
 	 * the data.
 	 */
 	static function unit($suffixes, $max = 0, $base = 1024) {
-		return array(
+		return [
 			"suffixes" => $suffixes,
 			"max" => $max,
 			"base" => $base,
-		);
+		];
 	}
 
 	/** percent is the unit of a share, 0 to 100. */
 	static function percent() {
-		return self::unit(array("%"), self::SHARE);
+		return self::unit(["%"], self::SHARE);
 	}
 
 	/** share is the unit of a percentage with no top of its own, which fits the data. */
 	static function share() {
-		return self::unit(array("%"));
+		return self::unit(["%"]);
 	}
 
 	/** cores is the unit of a count of busy cores. */
 	static function cores() {
-		return self::unit(array(" cores"));
+		return self::unit([" cores"]);
 	}
 
 	/** gib is the unit of a size in GB as Beszel counts one, 2^30 bytes. */
 	static function gib($max = 0) {
-		return self::unit(array(" GiB", " TiB"), $max);
+		return self::unit([" GiB", " TiB"], $max);
 	}
 
 	/** megabytes is the unit of a size in MB, as Beszel counts container memory. */
 	static function megabytes() {
-		return self::unit(array(" MB", " GB"));
+		return self::unit([" MB", " GB"]);
 	}
 
 	/** rate is the unit of traffic in bytes a second. */
 	static function rate() {
-		return self::unit(array(" B/s", " KB/s", " MB/s", " GB/s"));
+		return self::unit([" B/s", " KB/s", " MB/s", " GB/s"]);
 	}
 
 	/**
@@ -563,13 +563,13 @@ class Chart {
 
 		for ($i = 0; $i < $last; $i++) {
 			if ($largest < $divisor * $unit["base"]) {
-				return array("divisor" => $divisor, "suffix" => $suffixes[$i]);
+				return ["divisor" => $divisor, "suffix" => $suffixes[$i]];
 			}
 
 			$divisor = $divisor * $unit["base"];
 		}
 
-		return array("divisor" => $divisor, "suffix" => $suffixes[$last]);
+		return ["divisor" => $divisor, "suffix" => $suffixes[$last]];
 	}
 
 	/**
@@ -641,7 +641,7 @@ class Chart {
 	 * its colour, of the points a page holds by name.
 	 */
 	static function busiest($points) {
-		$means = array();
+		$means = [];
 
 		foreach ($points as $name => $all) {
 			$sum = 0;
@@ -650,11 +650,11 @@ class Chart {
 				$sum += $point["v"];
 			}
 
-			$means[] = array("name" => $name, "avg" => $sum / count($all));
+			$means[] = ["name" => $name, "avg" => $sum / count($all)];
 		}
 
-		usort($means, array("Task\\Chart", "busier"));
-		$series = array();
+		usort($means, ["Task\\Chart", "busier"]);
+		$series = [];
 
 		foreach ($means as $i => $mean) {
 			if ($i === self::BUSIEST) {
@@ -691,6 +691,6 @@ class Chart {
 	 * and named here.
 	 */
 	static function escape($text) {
-		return str_replace(array("&", "'", "<", ">", "\""), array("&amp;", "&#39;", "&lt;", "&gt;", "&#34;"), $text);
+		return str_replace(["&", "'", "<", ">", "\""], ["&amp;", "&#39;", "&lt;", "&gt;", "&#34;"], $text);
 	}
 }

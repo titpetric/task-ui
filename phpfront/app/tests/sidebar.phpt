@@ -9,12 +9,12 @@ description: Task\Sidebar is the top block of the sidebar as one reader sees it 
 
 $db = Task\DB::writer();
 
-$db->replace("sidebar", array("id" => "fx-sb-1", "kind" => "view", "href" => "/fx-sb/runs", "title" => "Stale", "icon" => "box", "position" => 3, "rule" => "run"));
-$db->replace("sidebar", array("id" => "fx-sb-2", "kind" => "view", "href" => "/fx-sb/notes", "title" => "Notes", "icon" => "note", "position" => 2, "rule" => "note/view"));
-$db->replace("sidebar", array("id" => "fx-sb-3", "kind" => "view", "href" => "/fx-sb/open", "title" => "Open", "icon" => "", "position" => 1, "rule" => ""));
-$db->replace("sidebar", array("id" => "fx-sb-4", "kind" => "view", "href" => "/fx-sb/off", "title" => "Hidden", "icon" => "box", "position" => 0, "hidden" => 1, "rule" => ""));
-$db->replace("sidebar", array("id" => "fx-sb-5", "kind" => "view", "href" => "/fx-sb/settings", "title" => "Settings", "icon" => "cog", "position" => 4, "rule" => "settings"));
-$db->replace("sidebar", array("id" => "fx-sb-6", "kind" => "module", "href" => "/m/titpetric/fx-sb", "title" => "A module", "icon" => "flow", "position" => 5, "rule" => ""));
+$db->replace("sidebar", ["id" => "fx-sb-1", "kind" => "view", "href" => "/fx-sb/runs", "title" => "Stale", "icon" => "box", "position" => 3, "rule" => "run"]);
+$db->replace("sidebar", ["id" => "fx-sb-2", "kind" => "view", "href" => "/fx-sb/notes", "title" => "Notes", "icon" => "note", "position" => 2, "rule" => "note/view"]);
+$db->replace("sidebar", ["id" => "fx-sb-3", "kind" => "view", "href" => "/fx-sb/open", "title" => "Open", "icon" => "", "position" => 1, "rule" => ""]);
+$db->replace("sidebar", ["id" => "fx-sb-4", "kind" => "view", "href" => "/fx-sb/off", "title" => "Hidden", "icon" => "box", "position" => 0, "hidden" => 1, "rule" => ""]);
+$db->replace("sidebar", ["id" => "fx-sb-5", "kind" => "view", "href" => "/fx-sb/settings", "title" => "Settings", "icon" => "cog", "position" => 4, "rule" => "settings"]);
+$db->replace("sidebar", ["id" => "fx-sb-6", "kind" => "module", "href" => "/m/titpetric/fx-sb", "title" => "A module", "icon" => "flow", "position" => 5, "rule" => ""]);
 
 function mod($name, $title, $icon, $href, $sidebar, $rule) {
 	$module = new Task\Module;
@@ -31,7 +31,7 @@ function mod($name, $title, $icon, $href, $sidebar, $rule) {
 	return $module;
 }
 
-$modules = array(
+$modules = [
 	mod("taskui/runs", "Runs", "play", "/fx-sb/runs", true, "run"),
 	mod("taskui/notes", "Notes", "note", "/fx-sb/notes", true, "note/view"),
 	mod("taskui/open", "Open", "", "/fx-sb/open", true, ""),
@@ -40,14 +40,14 @@ $modules = array(
 	mod("taskui/module", "A module", "flow", "/m/titpetric/fx-sb", true, ""),
 	mod("taskui/new", "New", "grid", "/fx-sb/new", true, ""),
 	mod("taskui/quiet", "Quiet", "box", "/fx-sb/quiet", false, ""),
-);
+];
 
 
-Task\Host::$rules = array(
-	"paths" => array("note/view", "run", "user/view"),
-	"checks" => array("note/view", "run", "user/view"),
-	"extras" => array(),
-);
+Task\Host::$rules = [
+	"paths" => ["note/view", "run", "user/view"],
+	"checks" => ["note/view", "run", "user/view"],
+	"extras" => [],
+];
 Task\Host::$base = "/development";
 
 $sidebar = new Task\Sidebar(null, $modules);
@@ -55,7 +55,7 @@ $sidebar = new Task\Sidebar(null, $modules);
 // mine is the rows this fixture's modules answer, each as its title and the
 // link the component draws.
 function mine($items) {
-	$out = array();
+	$out = [];
 
 	foreach ($items as $item) {
 		if (strpos($item["href"], "/development/fx-sb/") === 0 || strpos($item["href"], "/m/titpetric/fx-sb") === 0) {
@@ -69,8 +69,8 @@ function mine($items) {
 // The reader runs jobs and reads nobody's settings, so the rows they may see
 // are the open one, Runs and the module. The hidden row is nobody's, and a
 // module that never enabled a row is never listed.
-$runner = new Task\Model\User(array("id" => "fx-sb-u1", "name" => "fx-sb-ann", "role" => "runner"));
-$role = new Task\Policy(array("run" => Task\Policy::ALLOW));
+$runner = new Task\Model\User(["id" => "fx-sb-u1", "name" => "fx-sb-ann", "role" => "runner"]);
+$role = new Task\Policy(["run" => Task\Policy::ALLOW]);
 $access = new Task\Access($runner, $role);
 $items = $sidebar->items($access, "/fx-sb/runs");
 
@@ -78,7 +78,7 @@ echo implode(",", mine($items)), "\n";
 
 // A reader who may read a section of the settings sees the settings row,
 // which is the one rule that is not a permission path.
-$reads = new Task\Policy(array("run" => Task\Policy::ALLOW, "user/view" => Task\Policy::ALLOW));
+$reads = new Task\Policy(["run" => Task\Policy::ALLOW, "user/view" => Task\Policy::ALLOW]);
 $keeper = new Task\Access($runner, $reads);
 
 echo implode(",", mine($sidebar->items($keeper, "/fx-sb/runs"))), "\n";
@@ -92,7 +92,7 @@ echo implode(",", mine($sidebar->items($nobody, "/fx-sb/runs"))), "\n";
 // The link is the whole one: this application's rows carry the prefix, and a
 // module's row does not, because a module is another application on the
 // instance and sits outside this one's mount.
-$links = array();
+$links = [];
 
 foreach ($items as $item) {
 	$links[$item["title"]] = $item["href"];

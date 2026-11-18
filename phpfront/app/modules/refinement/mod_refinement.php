@@ -36,7 +36,7 @@ class mod_refinement implements Module {
 	}
 
 	function tables() {
-		return array("refinement_thread", "refinement_comment");
+		return ["refinement_thread", "refinement_comment"];
 	}
 
 	function serve() {
@@ -49,19 +49,19 @@ class mod_refinement implements Module {
 			return;
 		}
 
-		$chrome->heading("Refinement", array(array("text" => "Refinement", "href" => "")));
+		$chrome->heading("Refinement", [["text" => "Refinement", "href" => ""]]);
 
 		$head = new Task\Head("Refinement", self::LEAD);
 		$store = new Task\Refinement\Threads;
 		$threads = $store->all();
 		$table = self::table($threads);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"table" => $table->data(),
 			"help" => self::HELP,
 			"editor" => self::field(),
-		));
+		]);
 	}
 
 	/**
@@ -71,38 +71,38 @@ class mod_refinement implements Module {
 	 * A thread names nobody, so there is no list of users on an `@`.
 	 */
 	static function field() {
-		return array(
+		return [
 			"name" => "want",
 			"rows" => 5,
 			"label" => "What to design",
 			"placeholder" => self::WANT,
 			"mentions" => false,
 			"toolbar" => "full",
-		);
+		];
 	}
 
 	/** table is the threads: the title, how many comments it holds, when it started, and the way in. */
 	static function table($threads) {
 		$table = new Task\Table;
 
-		$table->head(array(
+		$table->head([
 			Task\Table::cell("Thread"),
 			Task\Table::cell("Comments", "num"),
 			Task\Table::cell("Started"),
 			Task\Table::raw(""),
-		));
+		]);
 
 		foreach ($threads as $thread) {
 			$id = Task\Row::text($thread, "id");
 			$href = Task\Route::href("/refinement/threads/" . Task\Route::pathEscape($id));
 			$open = '<a class="btn btn-sm" href="' . htmlspecialchars($href, ENT_QUOTES) . '">Open</a>';
 
-			$table->row(array(
+			$table->row([
 				Task\Table::link($href, Task\Row::text($thread, "title"), "key"),
 				Task\Table::cell(Task\Row::number($thread, "comments"), "num mono"),
 				Task\Table::cell(Task\Row::text($thread, "created_at"), "nowrap faint"),
 				Task\Table::raw($open, "actions"),
-			));
+			]);
 		}
 
 		return $table;

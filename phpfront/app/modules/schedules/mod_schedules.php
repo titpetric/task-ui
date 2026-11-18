@@ -36,7 +36,7 @@ class mod_schedules implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"schedule",
 			"workflow",
 			"workflow_step",
@@ -45,7 +45,7 @@ class mod_schedules implements Module {
 			"key_info",
 			"key_role",
 			"key_user",
-		);
+		];
 	}
 
 	function serve() {
@@ -58,7 +58,7 @@ class mod_schedules implements Module {
 			return;
 		}
 
-		$chrome->heading("Scheduled", array(array("text" => "Scheduled", "href" => "")));
+		$chrome->heading("Scheduled", [["text" => "Scheduled", "href" => ""]]);
 
 		$lookup = new Task\Schedules\Lookup;
 		$catalogue = $this->catalogue($chrome);
@@ -72,21 +72,21 @@ class mod_schedules implements Module {
 		$add = new Task\Buttons;
 
 		if ($edits && $any) {
-			$add->primary("plus", "Add schedule", array("href" => Task\Route::href("/schedules/add")));
+			$add->primary("plus", "Add schedule", ["href" => Task\Route::href("/schedules/add")]);
 		}
 
 		$head->buttons($add->data());
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"schedules" => $rows,
-			"block" => array(
+			"block" => [
 				"title" => "Schedules",
 				"note" => "",
 				"empty" => $this->said($rows, $any),
 				"buttons" => $buttons->data(),
-			),
-		));
+			],
+		]);
 	}
 
 	/** said is what the block says with no schedules, and "" with any. */
@@ -120,7 +120,7 @@ class mod_schedules implements Module {
 		$workspaces = $chrome->workspaces();
 		$schedules = new Task\Schedules\Schedules;
 
-		$out = array();
+		$out = [];
 
 		foreach ($schedules->all() as $schedule) {
 			if (Task\Schedule::isWorkflow($schedule)) {
@@ -153,7 +153,7 @@ class mod_schedules implements Module {
 		$what = $this->what($schedule, $workflow);
 		$fixed = $workflow === null ? "" : $workflow["runAs"];
 		$cells = Task\Schedule::cells($chrome, $schedule, $fixed, $users);
-		$own = array(
+		$own = [
 			"workflow" => $flow,
 			"folder" => $schedule->getFolder(),
 			"folderHref" => Task\Route::folderHref($schedule->getFolder(), $workspaces),
@@ -162,7 +162,7 @@ class mod_schedules implements Module {
 			"args" => Task\Schedule::argLine($schedule->getJob(), $schedule->getArgs()),
 			"source" => $schedule->getSource(),
 			"menu" => $this->menu($schedule, $cells["on"], $what, $edits),
-		);
+		];
 
 		return array_merge($own, $cells);
 	}

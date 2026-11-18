@@ -27,7 +27,7 @@ class Talk {
 	 * it, so the folder is listed once and the answers take what is there.
 	 */
 	static function messages($note, $replies, $chrome, $seen = null) {
-		$out = array(self::message($note, $chrome, $seen));
+		$out = [self::message($note, $chrome, $seen)];
 		$spoken = self::spokenFor($note, count($replies));
 		$at = 0;
 
@@ -73,7 +73,7 @@ class Talk {
 		$clip = $note->getAudioPath();
 
 		if ($clip === "" || $replies === 0 || \Task\Note::isChat($note)) {
-			return array();
+			return [];
 		}
 
 		$folder = dirname($clip);
@@ -82,7 +82,7 @@ class Talk {
 		// whole path.
 		$base = substr(basename($clip), 0, strlen(basename($clip)) - 4);
 		$held = \Task\Host::artifacts($folder);
-		$out = array();
+		$out = [];
 
 		for ($at = 1; $at <= $replies; $at = $at + 1) {
 			$name = $base . "." . $at . ".reply.wav";
@@ -104,7 +104,7 @@ class Talk {
 			$run = "";
 		}
 
-		return array(
+		return [
 			"id" => $note->getId(),
 			"mine" => $author === $chrome->name(),
 			"author" => $chrome->who()->of($author),
@@ -116,7 +116,7 @@ class Talk {
 			"short" => substr($run, 0, 8),
 			"ago" => \Task\Clock::ago($note->getCreatedAt()),
 			"stamp" => \Task\Clock::read($note->getCreatedAt()),
-		);
+		];
 	}
 
 	/**

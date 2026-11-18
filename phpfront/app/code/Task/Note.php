@@ -104,7 +104,7 @@ class Note {
 	 * the source said. A source that holds the curly character itself is not a
 	 * reference and nothing here touches it.
 	 */
-	const WRITTEN = array(
+	const WRITTEN = [
 		"&ldquo;",
 		"&rdquo;",
 		"&lsquo;",
@@ -118,9 +118,9 @@ class Note {
 		"&lt;",
 		"&gt;",
 		"&amp;",
-	);
+	];
 
-	const PLAIN = array('"', '"', "'", "'", "...", "---", "--", '"', '"', "'", "<", ">", "&");
+	const PLAIN = ['"', '"', "'", "'", "...", "---", "--", '"', '"', "'", "<", ">", "&"];
 
 	/**
 	 * FRACTION matches the markup smartypants writes a fraction as, which is
@@ -132,7 +132,7 @@ class Note {
 	const FRACTION = '#<sup>([^<]*)</sup>&frasl;<sub>([^<]*)</sub>#';
 
 	static function ids($notes) {
-		$out = array();
+		$out = [];
 
 		foreach ($notes as $note) {
 			$out[] = $note->getId();
@@ -144,7 +144,7 @@ class Note {
 	static function thread($note, $replies, $chrome, $seen = null) {
 		$out = self::card($note, $chrome, $seen);
 
-		$out["replies"] = array();
+		$out["replies"] = [];
 
 		$id = $note->getId();
 
@@ -172,15 +172,15 @@ class Note {
 		$what = $reply ? "reply" : "note";
 		$menu = new Menu("Actions on the " . $what . " of " . $author);
 
-		$menu->when($run !== "", "terminal", "Open its run", array("href" => Route::href("/runs/" . $run)));
-		$menu->whenDanger(self::deletes($note, $chrome), "trash", "Delete", array(
+		$menu->when($run !== "", "terminal", "Open its run", ["href" => Route::href("/runs/" . $run)]);
+		$menu->whenDanger(self::deletes($note, $chrome), "trash", "Delete", [
 			"data-delete" => "/api/notes/" . $id,
 			"data-confirm" => $reply ? "Delete this reply of " . $author . "?" : "Delete the note of " . $author . " and its replies?",
 			"data-confirm-ok" => "Delete",
 			"data-next" => "reload",
-		));
+		]);
 
-		return array(
+		return [
 			"id" => $id,
 			"body" => $chrome->message($note->getBody()),
 			"raw" => $note->getBody(),
@@ -195,7 +195,7 @@ class Note {
 			"editedStamp" => Clock::read($note->getEditedAt()),
 			"menu" => $menu->data(),
 			"editor" => self::field(),
-		);
+		];
 	}
 
 	/**
@@ -204,14 +204,14 @@ class Note {
 	 * because a reply is where an agent is named.
 	 */
 	static function field() {
-		return array(
+		return [
 			"name" => "body",
 			"rows" => 2,
 			"label" => "A reply",
 			"placeholder" => "",
 			"mentions" => true,
 			"toolbar" => "inline",
-		);
+		];
 	}
 
 	static function deletes($note, $chrome) {
@@ -289,7 +289,7 @@ class Note {
 	 */
 	static function answerers($thread, $replies, $agents) {
 		if (self::isPrompt($thread)) {
-			return array(self::CLAUDE);
+			return [self::CLAUDE];
 		}
 
 		$out = self::agentsIn($thread->getUserName(), $thread->getBody(), $agents);
@@ -307,7 +307,7 @@ class Note {
 
 	/** agentsIn is the agents a text names, other than its own author, once each in the order the text names them. */
 	static function agentsIn($author, $body, $agents) {
-		$out = array();
+		$out = [];
 
 		foreach (self::names($body) as $name) {
 			if ($name === $author) {
@@ -329,7 +329,7 @@ class Note {
 	 * names them, a trailing dot or dash dropped.
 	 */
 	static function names($body) {
-		$out = array();
+		$out = [];
 		// The match is its own statement. An out parameter written by a call
 		// that is an operand of && is not visible to the operand after it, so
 		// `preg_match_all(..., $found) && isset($found[1])` reads $found as

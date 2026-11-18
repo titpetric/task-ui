@@ -13,7 +13,7 @@ class Buttons {
 	/** small says the buttons are a block head's, which are the small ones. */
 	var $small = false;
 
-	var $items = array();
+	var $items = [];
 
 	/** pairs validates and escapes an item's attributes, as a menu's are. */
 	var $pairs = null;
@@ -29,17 +29,17 @@ class Buttons {
 	 * the button off with the note as its hover; a data-*, aria-* or title pair
 	 * reaches the markup, and any other name is refused.
 	 */
-	function item($icon, $label, $attrs = array()) {
+	function item($icon, $label, $attrs = []) {
 		return $this->add($icon, $label, $attrs, false, false);
 	}
 
 	/** primary adds the button of the page's own action, in the strong colour. */
-	function primary($icon, $label, $attrs = array()) {
+	function primary($icon, $label, $attrs = []) {
 		return $this->add($icon, $label, $attrs, true, false);
 	}
 
 	/** danger adds a button in the bad colour, which stops or removes something. */
-	function danger($icon, $label, $attrs = array()) {
+	function danger($icon, $label, $attrs = []) {
 		return $this->add($icon, $label, $attrs, false, true);
 	}
 
@@ -47,7 +47,7 @@ class Buttons {
 	 * small adds a button that is small in a row that is not, which is how a
 	 * job's page draws its Pin beside an Attach of full size.
 	 */
-	function small($icon, $label, $attrs = array()) {
+	function small($icon, $label, $attrs = []) {
 		return $this->add($icon, $label, $attrs, false, false, false, true);
 	}
 
@@ -58,7 +58,7 @@ class Buttons {
 	 * It takes no label, so the title and the aria-label say what it does: the
 	 * icon says it to nobody who cannot see it.
 	 */
-	function icon($icon, $attrs = array()) {
+	function icon($icon, $attrs = []) {
 		return $this->add($icon, "", $attrs, false, false, true);
 	}
 
@@ -71,7 +71,7 @@ class Buttons {
 	 * it stay after it.
 	 */
 	function faint($text) {
-		$item = $this->pairs->build("", "", array(), false);
+		$item = $this->pairs->build("", "", [], false);
 		$item["primary"] = false;
 		$item["bare"] = false;
 		$item["small"] = false;
@@ -82,7 +82,7 @@ class Buttons {
 	}
 
 	/** when adds a button where the condition holds, and nothing where it does not. */
-	function when($condition, $icon, $label, $attrs = array()) {
+	function when($condition, $icon, $label, $attrs = []) {
 		if ($condition) {
 			$this->item($icon, $label, $attrs);
 		}
@@ -91,7 +91,7 @@ class Buttons {
 	}
 
 	/** whenDanger adds a danger button where the condition holds. */
-	function whenDanger($condition, $icon, $label, $attrs = array()) {
+	function whenDanger($condition, $icon, $label, $attrs = []) {
 		if ($condition) {
 			$this->danger($icon, $label, $attrs);
 		}
@@ -106,7 +106,7 @@ class Buttons {
 
 	/** data is the scope the component reads. */
 	function data() {
-		return array("small" => $this->small, "items" => $this->items);
+		return ["small" => $this->small, "items" => $this->items];
 	}
 
 	/** add is one button, its attribute values escaped. */

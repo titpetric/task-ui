@@ -10,13 +10,13 @@ class RunSummary {
 	const TABLE = "run_summary";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("run_id", "summary", "user_name", "created_at");
+	public static $fields = ["run_id", "summary", "user_name", "created_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("run_id");
+	public static $primary = ["run_id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at");
+	public static $stamps = ["created_at"];
 	/** Run ID */
 	var $run_id = "";
 	/** Summary */
@@ -26,7 +26,7 @@ class RunSummary {
 	/** Created At */
 	var $created_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->run_id = \Task\Row::text($row, "run_id");
 		$this->summary = \Task\Row::text($row, "summary");
 		$this->user_name = \Task\Row::text($row, "user_name");
@@ -84,7 +84,7 @@ class RunSummary {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

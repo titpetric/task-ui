@@ -33,7 +33,7 @@ class mod_users implements Module {
 	}
 
 	function tables() {
-		return array("user");
+		return ["user"];
 	}
 
 	function serve() {
@@ -46,27 +46,27 @@ class mod_users implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::USERS, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::USERS, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::USERS, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::USERS, "href" => ""],
+		]);
 
 		$instance = Task\Host::instance(false);
 		$adds = Task\Row::text($instance, "htpasswd") !== "";
 		$users = new Task\User($chrome->db);
 		$steps = Task\Setup::steps($chrome, Task\Setup::USERS);
-		$rows = array();
+		$rows = [];
 
 		foreach ($users->all() as $user) {
 			$rows[] = $this->row($chrome, $user, $adds);
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($adds),
 			"rows" => $rows,
 			"mcp" => $this->mcp($chrome),
 			"trail" => Task\Setup::trail($steps),
-		), "users.tpl");
+		], "users.tpl");
 	}
 
 	/** head is the page head: the heading, the lead and Add user. */
@@ -75,7 +75,7 @@ class mod_users implements Module {
 		$head = new Task\Head(Task\Setup::USERS, self::LEAD);
 
 		if ($adds) {
-			$buttons->primary("plus", "Add user", array("href" => Task\Route::href("/settings/users/new")));
+			$buttons->primary("plus", "Add user", ["href" => Task\Route::href("/settings/users/new")]);
 		}
 
 		$head->buttons($buttons->data());
@@ -91,7 +91,7 @@ class mod_users implements Module {
 		$created = $user->getCreatedAt();
 		$menu = $this->menu($chrome, $user, $adds);
 
-		return array(
+		return [
 			"name" => $name,
 			"href" => Task\Route::href("/users/" . $name),
 			"avatar" => Task\Who::avatar($name, $role),
@@ -104,7 +104,7 @@ class mod_users implements Module {
 			"ago" => Task\Clock::ago($created),
 			"at" => Task\Clock::read($created),
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -127,21 +127,21 @@ class mod_users implements Module {
 		$drops = $adds && $chrome->allowed("user/delete") && !Task\User::admin($user);
 		$menu = new Task\Menu("Actions on " . $name);
 
-		$menu->item("edit", "Edit", array("href" => Task\Route::href("/users/" . $name . "/edit")));
-		$menu->item("users", "Profile", array("href" => Task\Route::href("/users/" . $name)));
-		$menu->item("list", "Runs by this user", array("href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))));
-		$menu->when($chrome->allowed("user/edit") && $user->getMcp(), "copy", "New MCP token", array(
+		$menu->item("edit", "Edit", ["href" => Task\Route::href("/users/" . $name . "/edit")]);
+		$menu->item("users", "Profile", ["href" => Task\Route::href("/users/" . $name)]);
+		$menu->item("list", "Runs by this user", ["href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))]);
+		$menu->when($chrome->allowed("user/edit") && $user->getMcp(), "copy", "New MCP token", [
 			"data-api" => "/api/users/" . $id . "/mcp",
 			"data-method" => "POST",
 			"data-copy-fill" => Task\User\Connect::add(Task\Route::site()),
 			"data-notice" => "MCP token for " . $name . " copied as the claude mcp add command",
-		));
-		$menu->whenDanger($drops && $reader !== null && $reader->getId() !== $id, "trash", "Delete", array(
+		]);
+		$menu->whenDanger($drops && $reader !== null && $reader->getId() !== $id, "trash", "Delete", [
 			"data-delete" => "/api/users/" . $id,
 			"data-confirm" => "Delete the user " . $name . self::DROPS,
 			"data-confirm-ok" => "Delete",
 			"data-next" => "/settings/users?notice=User+deleted",
-		));
+		]);
 
 		return $menu;
 	}
@@ -158,13 +158,13 @@ class mod_users implements Module {
 		$name = $chrome->name();
 		$add = 'claude mcp add --transport http --scope user task ' . $base . '/api/mcp --header "Authorization: Bearer <token>"';
 
-		return array(
+		return [
 			"name" => $name,
 			"edit" => Task\Route::href("/users/" . $name . "/edit#mcp"),
 			"base" => Task\Copy::of($base, "the base link"),
 			"endpoint" => Task\Copy::of($base . "/api/mcp", "the MCP endpoint"),
 			"add" => Task\Copy::of($add, "the claude mcp add command"),
-		);
+		];
 	}
 }
 

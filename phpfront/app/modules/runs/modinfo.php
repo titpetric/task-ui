@@ -11,6 +11,6 @@ $module->setIcon("list");
 $module->enableSideBar();
 $module->setSideBarHref("/runs");
 $module->setSideBarRule("");
-$module->setTables(array("run", "run_queued", "run_summary"));
+$module->setTables(["run", "run_queued", "run_summary"]);
 
 return $module;

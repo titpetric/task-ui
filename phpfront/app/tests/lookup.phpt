@@ -13,19 +13,19 @@ $db = Task\DB::writer();
 
 // The row is written with replace, because a name is unique and another
 // fixture may have written the one it is about.
-$db->replace("user", array("id" => "fx-lk-u1", "name" => "fx-lookup-ann", "role" => "runner"));
+$db->replace("user", ["id" => "fx-lk-u1", "name" => "fx-lookup-ann", "role" => "runner"]);
 
 // Three workflows: one whose runs run as a user, one that runs as whoever
 // starts it, and one whose user is gone, which reads as the second.
-$db->replace("workflow", array("id" => "fx-lk-w1", "name" => "fx Deploy", "run_as_user_id" => "fx-lk-u1"));
-$db->replace("workflow", array("id" => "fx-lk-w2", "name" => "fx Backup", "run_as_user_id" => ""));
-$db->replace("workflow", array("id" => "fx-lk-w3", "name" => "fx Orphan", "run_as_user_id" => "fx-lk-gone"));
+$db->replace("workflow", ["id" => "fx-lk-w1", "name" => "fx Deploy", "run_as_user_id" => "fx-lk-u1"]);
+$db->replace("workflow", ["id" => "fx-lk-w2", "name" => "fx Backup", "run_as_user_id" => ""]);
+$db->replace("workflow", ["id" => "fx-lk-w3", "name" => "fx Orphan", "run_as_user_id" => "fx-lk-gone"]);
 
 // Deploy runs a job and then the whole of Backup, so the folders it reaches
 // are its own and Backup's.
-$db->replace("workflow_step", array("id" => "fx-lk-s1", "workflow_id" => "fx-lk-w1", "position" => 0, "folder" => "fx-lookup-infra", "job" => "plan", "kind" => "job"));
-$db->replace("workflow_step", array("id" => "fx-lk-s2", "workflow_id" => "fx-lk-w1", "position" => 1, "folder" => "", "job" => "", "workflow_ref" => "fx-lk-w2", "kind" => "workflow"));
-$db->replace("workflow_step", array("id" => "fx-lk-s3", "workflow_id" => "fx-lk-w2", "position" => 0, "folder" => "fx-lookup-backups", "job" => "dump", "kind" => "job"));
+$db->replace("workflow_step", ["id" => "fx-lk-s1", "workflow_id" => "fx-lk-w1", "position" => 0, "folder" => "fx-lookup-infra", "job" => "plan", "kind" => "job"]);
+$db->replace("workflow_step", ["id" => "fx-lk-s2", "workflow_id" => "fx-lk-w1", "position" => 1, "folder" => "", "job" => "", "workflow_ref" => "fx-lk-w2", "kind" => "workflow"]);
+$db->replace("workflow_step", ["id" => "fx-lk-s3", "workflow_id" => "fx-lk-w2", "position" => 0, "folder" => "fx-lookup-backups", "job" => "dump", "kind" => "job"]);
 
 $lookup = new Task\Schedules\Lookup;
 
@@ -33,7 +33,7 @@ $lookup = new Task\Schedules\Lookup;
 // reach. A run as user that no row holds reads as none.
 $workflows = $lookup->workflows();
 
-foreach (array("fx-lk-w1", "fx-lk-w2", "fx-lk-w3") as $id) {
+foreach (["fx-lk-w1", "fx-lk-w2", "fx-lk-w3"] as $id) {
 	$found = $workflows[$id];
 
 	echo $found["name"], " [", $found["runAs"], "] [", implode(",", $found["folders"]), "]\n";

@@ -42,7 +42,7 @@ class mod_user_new implements Module {
 	}
 
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {
@@ -64,27 +64,27 @@ class mod_user_new implements Module {
 			return;
 		}
 
-		$chrome->heading("Add user", array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::USERS, "href" => "/settings/users"),
-			array("text" => "Add user", "href" => ""),
-		));
+		$chrome->heading("Add user", [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::USERS, "href" => "/settings/users"],
+			["text" => "Add user", "href" => ""],
+		]);
 
 		$head = new Task\Head("Add user", self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::USERS);
-		$choices = Task\Folders::choices($chrome->all(), array());
+		$choices = Task\Folders::choices($chrome->all(), []);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"pattern" => self::NAME,
 			"cancel" => Task\Route::href("/settings/users"),
-			"pick" => array(
+			"pick" => [
 				"all" => true,
 				"label" => true,
 				"choices" => $choices,
-			),
+			],
 			"trail" => Task\Setup::trail($steps),
-		), "user_form.tpl");
+		], "user_form.tpl");
 	}
 }
 

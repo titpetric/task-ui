@@ -30,7 +30,7 @@ class mod_refinement_delete implements Module {
 	}
 
 	function tables() {
-		return array("refinement_thread", "refinement_comment", "refinement_correction");
+		return ["refinement_thread", "refinement_comment", "refinement_correction"];
 	}
 
 	function serve() {

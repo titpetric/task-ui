@@ -36,7 +36,7 @@ class Workflow {
 
 	/** names is the name of every workflow, by ID, which names a step that runs one. */
 	function names() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->all() as $row) {
 			$out[$row->getId()] = $row->getName();
@@ -64,14 +64,14 @@ class Workflow {
 	 * which is what decides whether a reader sees it at all.
 	 */
 	function expand($steps) {
-		$seen = array();
+		$seen = [];
 
 		return $this->flatten($steps, $seen);
 	}
 
 	/** flatten is expand, with the workflows already read. */
 	function flatten($steps, &$seen) {
-		$flat = array();
+		$flat = [];
 
 		foreach ($steps as $step) {
 			if (Step::kind($step) !== Step::WORKFLOW) {
@@ -87,7 +87,7 @@ class Workflow {
 			}
 
 			$seen[$ref] = true;
-			$inner = $this->stepsOf($ref, array());
+			$inner = $this->stepsOf($ref, []);
 
 			foreach ($this->flatten($inner, $seen) as $one) {
 				$flat[] = $one;
@@ -99,7 +99,7 @@ class Workflow {
 
 	/** reaches reports whether a workflow runs the target through its steps; a workflow reaches itself. */
 	function reaches($from, $target) {
-		$seen = array();
+		$seen = [];
 
 		return $this->follows($from, $target, $seen);
 	}
@@ -144,7 +144,7 @@ class Workflow {
 		}
 
 		if ($this->flows === null) {
-			$out = array();
+			$out = [];
 
 			foreach (Host::flows() as $each) {
 				$out[Row::text($each, "workflow_id")] = Row::text($each, "run_id");
@@ -158,7 +158,7 @@ class Workflow {
 
 	/** schedules are the schedules that start the workflow, for the hint under its name. */
 	function schedules($id, $schedules) {
-		$out = array();
+		$out = [];
 
 		foreach ($schedules as $schedule) {
 			if ($schedule->getWorkflowId() === $id) {
@@ -174,14 +174,14 @@ class Workflow {
 	 * every page carries them, for the list under Workflows in the sidebar.
 	 */
 	function visible($chrome) {
-		$names = array();
+		$names = [];
 		$rows = $this->all();
 
 		foreach ($rows as $row) {
 			$names[$row->getId()] = $row->getName();
 		}
 
-		$out = array();
+		$out = [];
 
 		foreach ($rows as $row) {
 			$one = $this->view($chrome, $row, $names);
@@ -203,16 +203,16 @@ class Workflow {
 	 * hover over its name.
 	 */
 	static function sidebar($flows, $workspaces, $path) {
-		$out = array();
+		$out = [];
 
 		foreach ($flows as $flow) {
-			$texts = array();
+			$texts = [];
 
 			foreach (Chain::of($flow["steps"], $workspaces) as $link) {
 				$texts[] = $link["text"];
 			}
 
-			$out[] = array(
+			$out[] = [
 				"id" => $flow["id"],
 				"name" => $flow["name"],
 				"hidden" => $flow["sidebarHidden"],
@@ -221,7 +221,7 @@ class Workflow {
 				"canRun" => $flow["canRun"],
 				"prompted" => $flow["prompted"],
 				"title" => implode(" -> ", $texts),
-			);
+			];
 		}
 
 		return $out;
@@ -258,9 +258,9 @@ class Workflow {
 		}
 
 		$runs = new Workflows\Runs($this->db);
-		$last = $runs->listByWorkflow($id, array("limit" => 1));
+		$last = $runs->listByWorkflow($id, ["limit" => 1]);
 
-		return array(
+		return [
 			"id" => $id,
 			"name" => $row->getName(),
 			"description" => $row->getDescription(),
@@ -277,8 +277,8 @@ class Workflow {
 			"canChange" => $chrome->allowed("workflow/edit") && (User::admin($chrome->user) || ($row->getUserId() !== "" && $row->getUserId() === self::readerId($chrome))),
 			"prompted" => self::prompted($steps),
 			"promptPlace" => self::promptPlace($steps),
-			"schedules" => array(),
-		);
+			"schedules" => [],
+		];
 	}
 
 	/** readerId is the signed in user's ID, "" when nobody is. */
@@ -314,11 +314,11 @@ class Workflow {
 	 * nothing in its place: the workflow needs changing, not a permission.
 	 */
 	function check($chrome, $row, $steps) {
-		$out = array(
+		$out = [
 			"step" => "",
 			"user" => "",
 			"gone" => false,
-		);
+		];
 
 		$index = self::index($chrome->folders());
 		$step = $this->mayRun($chrome->access, $row, $steps, $index);
@@ -367,7 +367,7 @@ class Workflow {
 			return $over["error"];
 		}
 
-		$seen = array();
+		$seen = [];
 
 		return $this->refuse($access, $over["steps"], $over["projects"], $index, $seen);
 	}
@@ -419,7 +419,7 @@ class Workflow {
 		}
 
 		$seen[$ref] = true;
-		$inner = $this->stepsOf($ref, array());
+		$inner = $this->stepsOf($ref, []);
 		$row = $this->get($ref);
 
 		if ($row === null) {
@@ -492,11 +492,11 @@ class Workflow {
 	 * error is what the page says instead of Run.
 	 */
 	function over($row, $steps) {
-		$out = array(
+		$out = [
 			"steps" => $steps,
 			"projects" => null,
 			"error" => "",
-		);
+		];
 
 		if ($row === null || $row->getRunsOver() === "") {
 			return $out;
@@ -506,14 +506,14 @@ class Workflow {
 		$ids = self::projectIds($workspace);
 
 		if (count($ids) === 0) {
-			$out["steps"] = array();
+			$out["steps"] = [];
 			$out["error"] = "the workspace " . $workspace . " has no projects to run over";
 
 			return $out;
 		}
 
-		$projects = array();
-		$names = array();
+		$projects = [];
+		$names = [];
 
 		foreach ($ids as $id) {
 			$projects[$id] = true;
@@ -537,7 +537,7 @@ class Workflow {
 	 * name, and that is the ID a step of one carries.
 	 */
 	static function projectIds($workspace) {
-		$out = array();
+		$out = [];
 
 		foreach (Host::projects($workspace) as $path) {
 			$name = $path;
@@ -560,13 +560,13 @@ class Workflow {
 	 * each project's root.
 	 */
 	static function spread($steps, $workspace, $projects) {
-		$listed = array();
+		$listed = [];
 
 		foreach ($projects as $project) {
 			$listed[$project] = true;
 		}
 
-		$out = array();
+		$out = [];
 
 		foreach ($projects as $project) {
 			foreach ($steps as $step) {
@@ -606,25 +606,25 @@ class Workflow {
 			$prefix = $workspace . "/";
 
 			if (strpos($id, $prefix) !== 0) {
-				return array("", "", false);
+				return ["", "", false];
 			}
 
 			$rel = substr($id, strlen($prefix));
 		}
 
 		if ($rel === "" || $rel === Route::INTERNAL) {
-			return array("", "", false);
+			return ["", "", false];
 		}
 
 		$cut = strpos($rel, "/");
 
 		if ($cut === false) {
-			return array($rel, "", true);
+			return [$rel, "", true];
 		}
 
 		$tail = substr($rel, $cut + 1);
 
-		return array(substr($rel, 0, $cut), $tail === "" ? "" : "/" . $tail, true);
+		return [substr($rel, 0, $cut), $tail === "" ? "" : "/" . $tail, true];
 	}
 
 	/** join is the folder ID of a path inside a workspace, the root's names dropped. */
@@ -638,7 +638,7 @@ class Workflow {
 
 	/** index is the catalogue by folder ID, which says whether a step's folder is there at all. */
 	static function index($folders) {
-		$out = array();
+		$out = [];
 
 		foreach ($folders as $folder) {
 			$out[Row::text($folder, "id")] = $folder;

@@ -55,7 +55,7 @@ class Step {
 
 	/** blank is a step with nothing set, which every field of one. */
 	static function blank() {
-		return array(
+		return [
 			"kind" => "",
 			"folder" => "",
 			"job" => "",
@@ -71,7 +71,7 @@ class Step {
 			"state" => "",
 			"run_id" => "",
 			"workflow_run_id" => "",
-		);
+		];
 	}
 
 	/**
@@ -103,7 +103,7 @@ class Step {
 
 	/** of is a workflow's steps as a page draws them, names the name by workflow ID. */
 	static function of($steps, $names) {
-		$out = array();
+		$out = [];
 
 		foreach ($steps as $row) {
 			$ref = $row->getWorkflowRef();
@@ -134,7 +134,7 @@ class Step {
 	 * a pipeline takes the workflow's directory over it.
 	 */
 	static function ofRun($rows, $names) {
-		$out = array();
+		$out = [];
 
 		foreach ($rows as $row) {
 			$ref = $row->getWorkflowRef();

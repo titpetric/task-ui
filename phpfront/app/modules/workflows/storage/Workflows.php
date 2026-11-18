@@ -42,7 +42,7 @@ class Workflows {
 	/** steps is a workflow's step rows, in order. */
 	function steps($id) {
 		if ($id === "") {
-			return array();
+			return [];
 		}
 
 		return \Task\Model\WorkflowStep::rows($this->db->get_all("SELECT * FROM workflow_step WHERE workflow_id = ? ORDER BY position", $id));
@@ -51,7 +51,7 @@ class Workflows {
 	/** refs is the workflows the steps of one run, in order. */
 	function refs($id) {
 		$rows = $this->db->get_all("SELECT workflow_ref FROM workflow_step WHERE workflow_id = ? AND workflow_ref != '' ORDER BY position", $id);
-		$out = array();
+		$out = [];
 
 		if (!is_array($rows)) {
 			return $out;
@@ -81,13 +81,13 @@ class Workflows {
 
 	/** allSteps is every workflow's steps, in position order, by workflow ID. */
 	function allSteps() {
-		$out = array();
+		$out = [];
 
 		foreach (\Task\Model\WorkflowStep::rows($this->db->get_all("SELECT * FROM workflow_step ORDER BY workflow_id, position")) as $step) {
 			$id = $step->getWorkflowId();
 
 			if (!isset($out[$id])) {
-				$out[$id] = array();
+				$out[$id] = [];
 			}
 
 			$out[$id][] = $step;

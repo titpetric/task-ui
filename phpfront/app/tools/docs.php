@@ -19,7 +19,7 @@ const SCHEMA = "tools/schema.json";
 /** docblock is the text of a /** *\/ comment, one line. */
 function docblock($text) {
 	$text = preg_replace('#^/\*+|\*+/$#', "", $text);
-	$lines = array();
+	$lines = [];
 
 	foreach (explode("\n", $text) as $line) {
 		$line = trim(preg_replace('/^\s*\*+\s?/', "", $line));
@@ -37,7 +37,7 @@ function docblock($text) {
  * its methods with their signatures and their docblocks.
  */
 function api($dir) {
-	$out = array();
+	$out = [];
 
 	foreach (glob($dir . "/*.php") as $file) {
 		foreach (classes(file_get_contents($file)) as $class) {
@@ -56,7 +56,7 @@ function api($dir) {
  * T_STRING for each one and declares no T_STATIC, T_PUBLIC or T_ABSTRACT. See
  * docs/todo-correction.md.
  */
-const MODIFIERS = array("static", "public", "private", "protected", "final", "abstract");
+const MODIFIERS = ["static", "public", "private", "protected", "final", "abstract"];
 
 /**
  * classes reads the classes a source declares.
@@ -69,7 +69,7 @@ const MODIFIERS = array("static", "public", "private", "protected", "final", "ab
  */
 function classes($src) {
 	$tokens = token_get_all($src);
-	$out = array();
+	$out = [];
 	$doc = "";
 	$note = "";
 	// The class being read, by index: a reference binds by value here, so
@@ -119,11 +119,11 @@ function classes($src) {
 		}
 
 		if ($token[0] === T_CLASS) {
-			$out[] = array(
+			$out[] = [
 				"name" => name($tokens, $i),
 				"doc" => $doc === "" ? $note : $doc,
-				"methods" => array(),
-			);
+				"methods" => [],
+			];
 			$at = count($out) - 1;
 			$doc = "";
 			$note = "";
@@ -138,11 +138,11 @@ function classes($src) {
 			$prose = $doc === "" ? $note : $doc;
 
 			if (substr($name, 0, 2) !== "__") {
-				$out[$at]["methods"][] = array(
+				$out[$at]["methods"][] = [
 					"name" => $name,
 					"signature" => $name . signature($tokens, $i),
 					"doc" => $prose === "" ? "-" : $prose,
-				);
+				];
 			}
 
 			$doc = "";
@@ -201,10 +201,10 @@ function signature($tokens, $at) {
 
 /** routes are the @route annotations of a module's files. */
 function routes($dir) {
-	$out = array();
+	$out = [];
 
 	foreach (glob($dir . "/*.php") as $file) {
-		$found = array();
+		$found = [];
 		$count = preg_match_all('/@route\s+(?:(\w+)\s+)?(\S+)/', file_get_contents($file), $found);
 
 		if ($count < 1) {
@@ -213,11 +213,11 @@ function routes($dir) {
 
 		foreach ($found[2] as $i => $path) {
 			$method = $found[1][$i] === "" ? "GET POST" : $found[1][$i];
-			$out[] = array(
+			$out[] = [
 				"method" => $method,
 				"path" => $path,
 				"file" => basename($file),
-			);
+			];
 		}
 	}
 
@@ -227,7 +227,7 @@ function routes($dir) {
 /** schema is the tables of schema.yml a module names, in the file's order. */
 function schema($wanted) {
 	$file = json_decode(file_get_contents(SCHEMA), true);
-	$out = array();
+	$out = [];
 
 	if (!is_array($file)) {
 		return $out;
@@ -238,23 +238,23 @@ function schema($wanted) {
 			continue;
 		}
 
-		$columns = array();
+		$columns = [];
 
 		foreach ($table["columns"] as $column) {
 			$key = isset($column["key"]) ? $column["key"] : "";
-			$columns[] = array(
+			$columns[] = [
 				"name" => $column["name"],
 				"type" => $column["type"],
 				"key" => $key === "PRI" ? "primary" : ($key === "MUL" ? "indexed" : ""),
 				"mark" => $key === "PRI" ? "*" : "+",
-			);
+			];
 		}
 
-		$out[] = array(
+		$out[] = [
 			"name" => $table["name"],
 			"comment" => isset($table["comment"]) ? $table["comment"] : "",
 			"columns" => $columns,
-		);
+		];
 	}
 
 	return $out;
@@ -266,13 +266,13 @@ function schema($wanted) {
  * foreign key, so the name is what there is to read.
  */
 function links($tables) {
-	$names = array();
+	$names = [];
 
 	foreach ($tables as $table) {
 		$names[] = $table["name"];
 	}
 
-	$out = array();
+	$out = [];
 
 	foreach ($tables as $table) {
 		foreach ($table["columns"] as $column) {
@@ -283,11 +283,11 @@ function links($tables) {
 			$target = substr($column["name"], 0, strlen($column["name"]) - 3);
 
 			if ($target !== $table["name"] && in_array($target, $names, true)) {
-				$out[] = array(
+				$out[] = [
 					"from" => $table["name"],
 					"to" => $target,
 					"column" => $column["name"],
-				);
+				];
 			}
 		}
 	}
@@ -297,7 +297,7 @@ function links($tables) {
 
 /** modules are the module directories, by name. */
 function modules() {
-	$out = array();
+	$out = [];
 
 	// A module is a directory holding a mod_ file, which is also what keeps
 	// a stray file beside them out: the runtime has no GLOB_ONLYDIR.
@@ -321,7 +321,7 @@ function modules() {
  */
 function load($name) {
 	$found = glob("modules/" . $name . "/mod_*.php");
-	$out = array();
+	$out = [];
 
 	foreach ($found as $file) {
 		require_once $file;
@@ -357,7 +357,7 @@ function own($modules, $name) {
 
 /** prune drops the diagram a module used to have and no longer earns. */
 function prune($dir) {
-	$found = array($dir . "/schema.puml", $dir . "/schema.svg");
+	$found = [$dir . "/schema.puml", $dir . "/schema.svg"];
 
 	foreach ($found as $file) {
 		if (file_exists($file)) {
@@ -368,7 +368,7 @@ function prune($dir) {
 
 /** declares is the tables a directory's classes name, each one once. */
 function declares($modules) {
-	$out = array();
+	$out = [];
 
 	foreach ($modules as $module) {
 		foreach ($module->tables() as $table) {
@@ -383,7 +383,7 @@ function declares($modules) {
 
 /** names is the classes of a directory, as the footer spells them. */
 function names($modules) {
-	$out = array();
+	$out = [];
 
 	foreach ($modules as $module) {
 		$out[] = "`" . get_class($module) . "`";
@@ -401,7 +401,7 @@ function names($modules) {
  */
 function render($module, $template, $data) {
 	$own = "modules/" . $module . "/";
-	$paths = array($own, "tools/templates/");
+	$paths = [$own, "tools/templates/"];
 	$tpl = new MiniTPL\Template($paths);
 
 	$tpl->load($template);
@@ -445,17 +445,17 @@ foreach (modules() as $name) {
 	if (count($tables) === 0) {
 		prune($dir);
 	} else {
-		file_put_contents($dir . "/schema.puml", render($name, "schema.puml.tpl", array("tables" => $tables, "links" => links($tables))));
+		file_put_contents($dir . "/schema.puml", render($name, "schema.puml.tpl", ["tables" => $tables, "links" => links($tables)]));
 	}
 
-	file_put_contents($dir . "/README.md", render($name, "readme.md.tpl", array(
+	file_put_contents($dir . "/README.md", render($name, "readme.md.tpl", [
 		"title" => $module->title(),
 		"module" => names($declared),
 		"description" => description($dir . "/mod_" . $name . ".php"),
 		"routes" => routes($dir),
 		"tables" => $tables,
 		"classes" => $classes,
-	)));
+	]));
 
 	echo $name, ": ", count($tables), " tables, ", count(routes($dir)), " routes\n";
 	$written++;
@@ -476,8 +476,8 @@ function description($file) {
 		return "";
 	}
 
-	$paragraphs = array();
-	$lines = array();
+	$paragraphs = [];
+	$lines = [];
 	$started = false;
 
 	foreach (explode("\n", file_get_contents($file)) as $line) {
@@ -500,7 +500,7 @@ function description($file) {
 
 			if (count($lines) > 0) {
 				$paragraphs[] = implode(" ", $lines);
-				$lines = array();
+				$lines = [];
 			}
 
 			continue;

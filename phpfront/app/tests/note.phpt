@@ -22,18 +22,18 @@ $db->query("DELETE FROM note WHERE id LIKE 'fx-note-%'");
 // Two board threads with a reply each, a thread of the other channel, and a
 // prompt thread with its answer. Every note holds a channel, replies among
 // them; a prompt is the one that holds a workspace and the run it is about.
-$rows = array(
-	array("id" => "fx-note-1", "channel" => "notes", "parent" => "", "body" => "first"),
-	array("id" => "fx-note-2", "channel" => "notes", "parent" => "fx-note-1", "body" => "under the first"),
-	array("id" => "fx-note-3", "channel" => "notes", "parent" => "", "body" => "second"),
-	array("id" => "fx-note-4", "channel" => "notes", "parent" => "fx-note-3", "body" => "under the second", "run" => "fx-note-reply-run"),
-	array("id" => "fx-note-5", "channel" => "chat", "parent" => "", "body" => "the other channel"),
-	array("id" => "fx-note-6", "channel" => "notes", "parent" => "", "body" => "why did this run fail", "workspace" => "fx-note-ws", "about" => $run),
-	array("id" => "fx-note-7", "channel" => "notes", "parent" => "fx-note-6", "body" => "it ran out of disk", "workspace" => "fx-note-ws", "about" => $run, "run" => "fx-note-answer-run"),
-);
+$rows = [
+	["id" => "fx-note-1", "channel" => "notes", "parent" => "", "body" => "first"],
+	["id" => "fx-note-2", "channel" => "notes", "parent" => "fx-note-1", "body" => "under the first"],
+	["id" => "fx-note-3", "channel" => "notes", "parent" => "", "body" => "second"],
+	["id" => "fx-note-4", "channel" => "notes", "parent" => "fx-note-3", "body" => "under the second", "run" => "fx-note-reply-run"],
+	["id" => "fx-note-5", "channel" => "chat", "parent" => "", "body" => "the other channel"],
+	["id" => "fx-note-6", "channel" => "notes", "parent" => "", "body" => "why did this run fail", "workspace" => "fx-note-ws", "about" => $run],
+	["id" => "fx-note-7", "channel" => "notes", "parent" => "fx-note-6", "body" => "it ran out of disk", "workspace" => "fx-note-ws", "about" => $run, "run" => "fx-note-answer-run"],
+];
 
 foreach ($rows as $row) {
-	$db->replace("note", array(
+	$db->replace("note", [
 		"id" => $row["id"],
 		"channel" => $row["channel"],
 		"parent_id" => $row["parent"],
@@ -46,7 +46,7 @@ foreach ($rows as $row) {
 		"workspace_id" => isset($row["workspace"]) ? $row["workspace"] : "",
 		"created_at" => "2026-11-02 10:01:00.000 +0000 UTC",
 		"updated_at" => "2026-11-02 10:01:00.000 +0000 UTC",
-	));
+	]);
 }
 
 // A page reads through the reader, which refuses a write.
@@ -54,7 +54,7 @@ $notes = new Task\Threads\Notes;
 
 // mine is the rows this fixture owns, in the order the query answered.
 function mine($found) {
-	$out = array();
+	$out = [];
 
 	foreach ($found as $note) {
 		if (strpos($note->getId(), "fx-note-") === 0) {
@@ -75,18 +75,18 @@ echo mine($notes->threads("chat")), "\n";
 
 // ids is what replies() names, and the replies come back keyed by the thread
 // they sit under.
-echo implode(",", Task\Note::ids(array($notes->get("fx-note-1"), $notes->get("fx-note-3")))), "\n";
+echo implode(",", Task\Note::ids([$notes->get("fx-note-1"), $notes->get("fx-note-3")])), "\n";
 
-$replies = $notes->replies(array("fx-note-1", "fx-note-3"));
+$replies = $notes->replies(["fx-note-1", "fx-note-3"]);
 
 echo mine($replies["fx-note-1"]), " ", mine($replies["fx-note-3"]), "\n";
-echo count($notes->replies(array())), " ", count($notes->replies(array("fx-note-nothing"))), "\n";
+echo count($notes->replies([])), " ", count($notes->replies(["fx-note-nothing"])), "\n";
 
 // The prompts about a run, which is the board's other half: a workspace, and
 // the run the question is about.
 echo mine($notes->prompts($run)), "\n";
 echo "[", mine($notes->prompts("fx-note-no-run")), "]\n";
-echo mine($notes->replies(array("fx-note-6"))["fx-note-6"]), "\n";
+echo mine($notes->replies(["fx-note-6"])["fx-note-6"]), "\n";
 
 // One note by ID, and null for an ID that names none.
 echo $notes->get("fx-note-6")->getBody(), "\n";
@@ -123,7 +123,7 @@ $writes->drop($posted->getId());
 
 echo var_export($writes->get($posted->getId()), true), " ", var_export($writes->get($reply->getId()), true), "\n";
 
-$listed = array();
+$listed = [];
 
 foreach ($writes->timeline() as $row) {
 	$listed[] = $row->getId();
@@ -136,26 +136,26 @@ $writes->purge($posted->getId());
 // both read. The reader is an admin, so every note is theirs to rewrite; the
 // agent is the user whose mentions run one, and the run a reply worked in is a
 // row, where the run the prompt's answer names is none.
-$db->replace("user", array("id" => "fx-note-u1", "name" => "fx-note-ann", "role" => "admin", "admin" => 1));
-$db->replace("user", array("id" => "fx-note-u2", "name" => "fx-note-bot", "role" => "runner", "agent_reply" => 1, "mcp" => 1));
-$db->replace("user", array("id" => "fx-note-u3", "name" => "fx-note-maid", "role" => "runner", "agent_reply" => 1, "mcp" => 1));
+$db->replace("user", ["id" => "fx-note-u1", "name" => "fx-note-ann", "role" => "admin", "admin" => 1]);
+$db->replace("user", ["id" => "fx-note-u2", "name" => "fx-note-bot", "role" => "runner", "agent_reply" => 1, "mcp" => 1]);
+$db->replace("user", ["id" => "fx-note-u3", "name" => "fx-note-maid", "role" => "runner", "agent_reply" => 1, "mcp" => 1]);
 
-$db->replace("run", array("id" => "fx-note-reply-run", "folder" => "fx-note", "job" => "build", "user_name" => "fx-note-ann", "state" => "ok"));
+$db->replace("run", ["id" => "fx-note-reply-run", "folder" => "fx-note", "job" => "build", "user_name" => "fx-note-ann", "state" => "ok"]);
 
 // A board thread that names the agent, the agent's answer under it, and a
 // reply of the reader's own, then a thread that splits one request across two
 // agents and holds an answer from each.
-$cards = array(
-	array("id" => "fx-note-8", "parent" => "", "by" => "fx-note-ann", "body" => "@fx-note-bot look at the build", "state" => "working", "run" => ""),
-	array("id" => "fx-note-9", "parent" => "fx-note-8", "by" => "fx-note-bot", "body" => "the cache was cold", "state" => "", "run" => "fx-note-reply-run"),
-	array("id" => "fx-note-10", "parent" => "fx-note-8", "by" => "fx-note-ann", "body" => "thanks", "state" => "", "run" => ""),
-	array("id" => "fx-note-11", "parent" => "", "by" => "fx-note-ann", "body" => "@fx-note-bot take the API, @fx-note-maid take the docs", "state" => "working", "run" => ""),
-	array("id" => "fx-note-12", "parent" => "fx-note-11", "by" => "fx-note-bot", "body" => "the API is done", "state" => "", "run" => ""),
-	array("id" => "fx-note-13", "parent" => "fx-note-11", "by" => "fx-note-maid", "body" => "the docs are done", "state" => "", "run" => ""),
-);
+$cards = [
+	["id" => "fx-note-8", "parent" => "", "by" => "fx-note-ann", "body" => "@fx-note-bot look at the build", "state" => "working", "run" => ""],
+	["id" => "fx-note-9", "parent" => "fx-note-8", "by" => "fx-note-bot", "body" => "the cache was cold", "state" => "", "run" => "fx-note-reply-run"],
+	["id" => "fx-note-10", "parent" => "fx-note-8", "by" => "fx-note-ann", "body" => "thanks", "state" => "", "run" => ""],
+	["id" => "fx-note-11", "parent" => "", "by" => "fx-note-ann", "body" => "@fx-note-bot take the API, @fx-note-maid take the docs", "state" => "working", "run" => ""],
+	["id" => "fx-note-12", "parent" => "fx-note-11", "by" => "fx-note-bot", "body" => "the API is done", "state" => "", "run" => ""],
+	["id" => "fx-note-13", "parent" => "fx-note-11", "by" => "fx-note-maid", "body" => "the docs are done", "state" => "", "run" => ""],
+];
 
 foreach ($cards as $row) {
-	$db->replace("note", array(
+	$db->replace("note", [
 		"id" => $row["id"],
 		"channel" => "notes",
 		"parent_id" => $row["parent"],
@@ -168,7 +168,7 @@ foreach ($cards as $row) {
 		"workspace_id" => "",
 		"created_at" => "2026-11-02 10:02:00.000 +0000 UTC",
 		"updated_at" => "2026-11-02 10:02:00.000 +0000 UTC",
-	));
+	]);
 }
 
 Task\Host::$whoami = "fx-note-ann";
@@ -178,7 +178,7 @@ $seen = new Task\Seen($chrome);
 
 // labels names the items a card's menu offers, in the order it offers them.
 function labels($menu) {
-	$out = array();
+	$out = [];
 
 	foreach ($menu["groups"] as $group) {
 		foreach ($group as $item) {
@@ -193,7 +193,7 @@ function labels($menu) {
 // an agent may reply as and another fixture's agent is as real as this one.
 function agents() {
 	$users = new Task\User;
-	$out = array();
+	$out = [];
 
 	foreach ($users->agents() as $agent) {
 		if (strpos($agent->getName(), "fx-note-") === 0) {
@@ -214,18 +214,18 @@ echo "[", implode(",", Task\Note::names("nobody is named here")), "]\n";
 // instruction names on a board note, and nobody where no agent is named. A
 // note that names two agents is answered by both, each of them once.
 $agents = agents();
-$under = $notes->replies(array("fx-note-8"))["fx-note-8"];
+$under = $notes->replies(["fx-note-8"])["fx-note-8"];
 
-echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-6"), array(), $agents)), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-6"), [], $agents)), "]\n";
 echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-8"), $under, $agents)), "]\n";
-echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-1"), $notes->replies(array("fx-note-1"))["fx-note-1"], $agents)), "]\n";
-echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-11"), $notes->replies(array("fx-note-11"))["fx-note-11"], $agents)), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-1"), $notes->replies(["fx-note-1"])["fx-note-1"], $agents)), "]\n";
+echo "[", implode(",", Task\Note::answerers($notes->get("fx-note-11"), $notes->replies(["fx-note-11"])["fx-note-11"], $agents)), "]\n";
 echo "[", implode(",", Task\Note::agentsIn("fx-note-bot", "@fx-note-bot talking to itself", $agents)), "]\n";
 echo "[", implode(",", Task\Note::agentsIn("fx-note-ann", "@fx-note-bot and @fx-note-maid, twice: @fx-note-bot", $agents)), "]\n";
 
 // One thread as the component reads it: the note on top, its replies oldest
 // first, and the field under it where the reader may write one.
-$thread = Task\Note::thread($notes->get("fx-note-8"), $notes->replies(array("fx-note-8")), $chrome, $seen);
+$thread = Task\Note::thread($notes->get("fx-note-8"), $notes->replies(["fx-note-8"]), $chrome, $seen);
 
 echo $thread["id"], " ", var_export($thread["working"], true), " ", count($thread["replies"]), " ", $thread["author"]["name"], " ", var_export($thread["edited"], true), "\n";
 echo labels($thread["menu"]), "\n";
@@ -241,7 +241,7 @@ echo $thread["replies"][1]["id"], " [", $thread["replies"][1]["run"], "]\n";
 echo labels($thread["replies"][1]["menu"]), "\n";
 
 // A thread that split one request across two agents holds an answer from each.
-$split = Task\Note::thread($notes->get("fx-note-11"), $notes->replies(array("fx-note-11")), $chrome, $seen);
+$split = Task\Note::thread($notes->get("fx-note-11"), $notes->replies(["fx-note-11"]), $chrome, $seen);
 
 echo $split["replies"][0]["id"], " ", $split["replies"][1]["id"], "\n";
 echo labels($split["replies"][1]["menu"]), "\n";

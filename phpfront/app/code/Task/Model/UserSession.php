@@ -10,13 +10,13 @@ class UserSession {
 	const TABLE = "user_session";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "user_id", "hash", "expires_at", "used_at", "created_at", "updated_at");
+	public static $fields = ["id", "user_id", "hash", "expires_at", "used_at", "created_at", "updated_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("expires_at", "used_at", "created_at", "updated_at");
+	public static $stamps = ["expires_at", "used_at", "created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** User ID */
@@ -32,7 +32,7 @@ class UserSession {
 	/** Updated At */
 	var $updated_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->user_id = \Task\Row::text($row, "user_id");
 		$this->hash = \Task\Row::text($row, "hash");
@@ -126,7 +126,7 @@ class UserSession {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

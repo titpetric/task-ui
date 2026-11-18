@@ -31,7 +31,7 @@ class mod_settings implements Module {
 	}
 
 	function tables() {
-		return array("secret", "user", "workspace", "workflow", "workflow_step");
+		return ["secret", "user", "workspace", "workflow", "workflow_step"];
 	}
 
 	function serve() {
@@ -44,12 +44,12 @@ class mod_settings implements Module {
 			return;
 		}
 
-		$chrome->heading("Settings", array(array("text" => "Settings", "href" => "")));
+		$chrome->heading("Settings", [["text" => "Settings", "href" => ""]]);
 
 		$head = new Task\Head("Settings", self::LEAD);
 		$steps = Task\Setup::steps($chrome, "");
 		$counts = $this->counts($chrome);
-		$rows = array();
+		$rows = [];
 
 		foreach ($steps as $step) {
 			$name = $step["name"];
@@ -57,7 +57,7 @@ class mod_settings implements Module {
 			$rows[] = $step;
 		}
 
-		$view->page(array("head" => $head->data(), "steps" => $rows));
+		$view->page(["head" => $head->data(), "steps" => $rows]);
 	}
 
 	/**
@@ -70,7 +70,7 @@ class mod_settings implements Module {
 	 * hold is one page of settings and not a list.
 	 */
 	function counts($chrome) {
-		$out = array();
+		$out = [];
 
 		if ($chrome->allowed("key/view")) {
 			$keystore = Task\Key::folder();

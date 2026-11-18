@@ -45,7 +45,7 @@ class mod_workspace_new implements Module {
 	}
 
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {
@@ -58,22 +58,22 @@ class mod_workspace_new implements Module {
 			return;
 		}
 
-		$chrome->heading(self::TITLE, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::WORKSPACES, "href" => Task\Workspace::PAGE),
-			array("text" => self::TITLE, "href" => ""),
-		));
+		$chrome->heading(self::TITLE, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::WORKSPACES, "href" => Task\Workspace::PAGE],
+			["text" => self::TITLE, "href" => ""],
+		]);
 
 		$head = new Task\Head(self::TITLE, self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"next" => self::NEXT,
-			"recursive" => array("id" => self::RECURSIVE, "checked" => true),
+			"recursive" => ["id" => self::RECURSIVE, "checked" => true],
 			"cancel" => Task\Route::href(Task\Workspace::PAGE),
 			"trail" => Task\Setup::trail($steps),
-		), "workspace_new.tpl");
+		], "workspace_new.tpl");
 	}
 }
 

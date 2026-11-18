@@ -10,7 +10,7 @@ class UserAuthToken {
 	const TABLE = "user_auth_token";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"user_id",
 		"name",
@@ -20,13 +20,13 @@ class UserAuthToken {
 		"updated_at",
 		"expires_at",
 		"kind",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("used_at", "created_at", "updated_at", "expires_at");
+	public static $stamps = ["used_at", "created_at", "updated_at", "expires_at"];
 	/** ID */
 	var $id = "";
 	/** User ID */
@@ -46,7 +46,7 @@ class UserAuthToken {
 	/** Kind */
 	var $kind = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->user_id = \Task\Row::text($row, "user_id");
 		$this->name = \Task\Row::text($row, "name");
@@ -164,7 +164,7 @@ class UserAuthToken {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

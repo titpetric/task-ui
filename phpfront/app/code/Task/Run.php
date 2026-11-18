@@ -66,7 +66,7 @@ class Run {
 
 	/** states is every state, queued and running first. */
 	static function states() {
-		return array(self::QUEUED, self::RUNNING, self::OK, self::FAILED, self::STOPPED, self::KILLED);
+		return [self::QUEUED, self::RUNNING, self::OK, self::FAILED, self::STOPPED, self::KILLED];
 	}
 
 	/** ended reports whether a state is one a run ended in. */
@@ -80,23 +80,23 @@ class Run {
 	 */
 	static function label($run) {
 		if ($run === null) {
-			return array(
+			return [
 				"id" => "",
 				"state" => "",
 				"ended" => false,
 				"code" => "",
-			);
+			];
 		}
 
 		$state = $run->getState();
 		$ended = self::ended($state);
 
-		return array(
+		return [
 			"id" => $run->getId(),
 			"state" => $state,
 			"ended" => $ended,
 			"code" => $ended && $state !== self::OK ? (string)$run->getExitCode() : "",
-		);
+		];
 	}
 
 	/**

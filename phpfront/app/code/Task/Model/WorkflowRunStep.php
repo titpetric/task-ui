@@ -10,7 +10,7 @@ class WorkflowRunStep {
 	const TABLE = "workflow_run_step";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"workflow_run_id",
 		"position",
@@ -26,13 +26,13 @@ class WorkflowRunStep {
 		"workflow_run_ref",
 		"kind",
 		"markers",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at");
+	public static $stamps = ["created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Workflow Run ID */
@@ -64,7 +64,7 @@ class WorkflowRunStep {
 	/** Markers */
 	var $markers = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->workflow_run_id = \Task\Row::text($row, "workflow_run_id");
 		$this->position = \Task\Row::number($row, "position");
@@ -254,7 +254,7 @@ class WorkflowRunStep {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

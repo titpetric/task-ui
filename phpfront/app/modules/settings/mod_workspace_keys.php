@@ -34,7 +34,7 @@ class mod_workspace_keys implements Module {
 	}
 
 	function tables() {
-		return array("workspace");
+		return ["workspace"];
 	}
 
 	function serve() {
@@ -69,14 +69,14 @@ class mod_workspace_keys implements Module {
 		$edit = $chrome->allowed("workspace/edit");
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($chrome, $folder, $title, $edit && $dir !== ""),
 			"dir" => $dir,
 			"block" => $this->block($keys),
 			"keys" => Task\Key::rows($chrome, $keys, $here, $folder),
-			"dialogs" => $edit ? Task\Key::wsDialogs($folder, $dir, $here) : array(),
+			"dialogs" => $edit ? Task\Key::wsDialogs($folder, $dir, $here) : [],
 			"trail" => Task\Setup::trail($steps),
-		), "workspace_keys.tpl");
+		], "workspace_keys.tpl");
 	}
 
 	/**
@@ -89,8 +89,8 @@ class mod_workspace_keys implements Module {
 		$menu = $this->menu($chrome, $folder);
 
 		if ($adds) {
-			$buttons->item("upload", "Upload key", array("data-dialog-open" => "key-upload-dialog"));
-			$buttons->primary("key", "Generate key", array("data-dialog-open" => "key-generate-dialog"));
+			$buttons->item("upload", "Upload key", ["data-dialog-open" => "key-upload-dialog"]);
+			$buttons->primary("key", "Generate key", ["data-dialog-open" => "key-generate-dialog"]);
 		}
 
 		$head->buttons($buttons->data());
@@ -114,11 +114,11 @@ class mod_workspace_keys implements Module {
 		$menu = new Task\Menu("Actions on " . $folder);
 		$href = Task\Route::folderHref($folder, $chrome->workspaces());
 
-		$menu->item("folder-open", "Open", array("href" => Task\Route::href($href)));
-		$menu->item("settings", "Edit workspace", array("href" => Task\Route::href(Task\Workspace::PAGE . "/" . $folder)));
-		$menu->when($chrome->allowed("secret/view"), "secret", "Secrets", array(
+		$menu->item("folder-open", "Open", ["href" => Task\Route::href($href)]);
+		$menu->item("settings", "Edit workspace", ["href" => Task\Route::href(Task\Workspace::PAGE . "/" . $folder)]);
+		$menu->when($chrome->allowed("secret/view"), "secret", "Secrets", [
 			"href" => Task\Route::href("/settings/secrets?workspace=" . Task\Route::queryEscape($folder)),
-		));
+		]);
 
 		return $menu;
 	}
@@ -127,12 +127,12 @@ class mod_workspace_keys implements Module {
 	function block($keys) {
 		$found = count($keys);
 
-		return array(
+		return [
 			"title" => "Keys",
 			"note" => Task\Setup::says($found, "key", "keys"),
 			"empty" => $found === 0 ? self::EMPTY_LINE : "",
-			"buttons" => array(),
-		);
+			"buttons" => [],
+		];
 	}
 }
 

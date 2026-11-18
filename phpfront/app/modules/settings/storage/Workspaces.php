@@ -17,7 +17,7 @@ class Workspaces {
 
 	/** folders is the folder of every named workspace, in the sidebar's order. */
 	function folders() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT folder FROM workspace WHERE folder != ? ORDER BY sort, folder", \Task\Route::INTERNAL) as $row) {
 			$out[] = \Task\Row::text($row, "folder");
@@ -31,7 +31,7 @@ class Workspaces {
 	 * the named ones in the sidebar's order after it.
 	 */
 	function names() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT folder FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, sort, folder", \Task\Route::INTERNAL) as $row) {
 			$out[] = \Task\Row::text($row, "folder");
@@ -57,7 +57,7 @@ class Workspaces {
 
 	/** titles is the title of every workspace, by folder. */
 	function titles() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT folder, title FROM workspace") as $row) {
 			$out[\Task\Row::text($row, "folder")] = \Task\Row::text($row, "title");
@@ -71,7 +71,7 @@ class Workspaces {
 	 * limits them, by folder; a workspace that lists every one is not here.
 	 */
 	function limits() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT folder, sidebar_limit FROM workspace WHERE sidebar_limit > 0") as $row) {
 			$out[\Task\Row::text($row, "folder")] = \Task\Row::number($row, "sidebar_limit");

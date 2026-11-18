@@ -13,31 +13,31 @@ $db = Task\DB::writer();
 
 // The admin's row names no folder, so they see every one; the runner's names
 // one, so they see that one alone.
-$db->replace("user", array("id" => "fx-chrome-u1", "name" => "fx-chrome-ann", "role" => "admin", "admin" => 1));
-$db->replace("user", array("id" => "fx-chrome-u2", "name" => "fx-chrome-bob", "role" => "runner", "folders" => '["fx-chrome/seen"]'));
+$db->replace("user", ["id" => "fx-chrome-u1", "name" => "fx-chrome-ann", "role" => "admin", "admin" => 1]);
+$db->replace("user", ["id" => "fx-chrome-u2", "name" => "fx-chrome-bob", "role" => "runner", "folders" => '["fx-chrome/seen"]']);
 
-$db->replace("workspace", array("id" => "fx-chrome-w1", "folder" => "fx-chrome-alpha", "sort" => 1));
+$db->replace("workspace", ["id" => "fx-chrome-w1", "folder" => "fx-chrome-alpha", "sort" => 1]);
 
 // A key a role holds is a key every user of that role brings, which is what
 // the runs-as select says beside a name.
-$db->replace("key_info", array("name" => "fx-chrome-deploy", "purpose" => "ssh", "algo" => "ed25519", "fingerprint" => "fx:chrome:1", "scope" => "instance"));
-$db->replace("key_role", array("id" => "fx-chrome-kr1", "key_name" => "fx-chrome-deploy", "role" => "runner"));
+$db->replace("key_info", ["name" => "fx-chrome-deploy", "purpose" => "ssh", "algo" => "ed25519", "fingerprint" => "fx:chrome:1", "scope" => "instance"]);
+$db->replace("key_role", ["id" => "fx-chrome-kr1", "key_name" => "fx-chrome-deploy", "role" => "runner"]);
 
-$db->replace("run", array("id" => "fx-chrome-r1", "folder" => "fx-chrome/seen", "job" => "plan", "dir" => "", "user_name" => "fx-chrome-ann", "state" => "ok"));
+$db->replace("run", ["id" => "fx-chrome-r1", "folder" => "fx-chrome/seen", "job" => "plan", "dir" => "", "user_name" => "fx-chrome-ann", "state" => "ok"]);
 
 $plan = Task\Fixture::job("plan");
 $dump = Task\Fixture::job("dump");
 
-Task\Host::$folders = array(
-	Task\Fixture::folder("fx-chrome/seen", array($plan)),
-	Task\Fixture::folder("fx-chrome/hidden", array($dump)),
-);
+Task\Host::$folders = [
+	Task\Fixture::folder("fx-chrome/seen", [$plan]),
+	Task\Fixture::folder("fx-chrome/hidden", [$dump]),
+];
 Task\Host::$login = true;
 Task\Host::$whoami = "fx-chrome-ann";
 
 // mine is the entries of a list this fixture wrote, in the order it answered.
 function mine($values) {
-	$out = array();
+	$out = [];
 
 	foreach ($values as $value) {
 		if (strpos($value, "fx-chrome") === 0) {
@@ -50,7 +50,7 @@ function mine($values) {
 
 // ids names the folders of a catalogue.
 function ids($folders) {
-	$out = array();
+	$out = [];
 
 	foreach ($folders as $folder) {
 		$out[] = Task\Row::text($folder, "id");

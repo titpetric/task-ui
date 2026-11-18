@@ -24,7 +24,7 @@ class mod_search implements Module {
 	}
 
 	function tables() {
-		return array("search_document", "search_section", "search_term");
+		return ["search_document", "search_section", "search_term"];
 	}
 
 	function serve() {
@@ -37,11 +37,11 @@ class mod_search implements Module {
 			return;
 		}
 
-		$chrome->heading("Search", array(array("text" => "Search", "href" => "")));
+		$chrome->heading("Search", [["text" => "Search", "href" => ""]]);
 
 		$head = new Task\Head("Search", self::LEAD);
 
-		$view->page(array("head" => $head->data()));
+		$view->page(["head" => $head->data()]);
 	}
 }
 

@@ -12,7 +12,7 @@ namespace Task;
 class Chain {
 	/** blank is a link with nothing set. */
 	static function blank() {
-		return array(
+		return [
 			"text" => "",
 			"href" => "",
 			"state" => "",
@@ -24,11 +24,11 @@ class Chain {
 			"summary" => false,
 			"check" => false,
 			"disabled" => false,
-			"sub" => array(),
+			"sub" => [],
 			"frame" => "",
 			"complete" => false,
 			"lines" => 0,
-		);
+		];
 	}
 
 	/**
@@ -39,7 +39,7 @@ class Chain {
 	 * reader wants off a pipeline is the output.
 	 */
 	static function of($steps, $workspaces) {
-		$links = array();
+		$links = [];
 		$last = "";
 
 		foreach ($steps as $step) {
@@ -159,11 +159,11 @@ class Chain {
 		$run = $runs->get($id);
 
 		if ($run === null) {
-			return array(
+			return [
 				"svg" => "",
 				"lines" => 0,
 				"complete" => false,
-			);
+			];
 		}
 
 		return Host::screen($id, $run->getCastPath(), (int)$run->getTermCols());

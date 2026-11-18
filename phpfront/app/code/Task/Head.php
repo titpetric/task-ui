@@ -22,21 +22,21 @@ class Head {
 	var $drawn = false;
 
 	function __construct($title, $lead = "") {
-		$this->data = array(
+		$this->data = [
 			"title" => $title,
 			"icon" => "",
 			"badge" => "",
 			"tone" => "",
-			"tags" => array(),
+			"tags" => [],
 			"note" => "",
 			"lead" => $lead,
 			"leads" => false,
 			"faint" => "",
 			"live" => false,
-			"run" => array(),
-			"actions" => array(),
-			"buttons" => array(),
-		);
+			"run" => [],
+			"actions" => [],
+			"buttons" => [],
+		];
 	}
 
 	/**

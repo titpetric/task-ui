@@ -8,7 +8,7 @@ class Task {
 	const VERSION = "";
 	const PREFIX = "/m";
 
-	public static $registered = array();
+	public static $registered = [];
 
 	public static function register($module) {
 		self::$registered[] = $module;
@@ -32,7 +32,7 @@ class Task {
 	}
 
 	public static function artifacts($folder) {
-		return array();
+		return [];
 	}
 
 	public static function artifact($rel) {

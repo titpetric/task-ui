@@ -49,7 +49,7 @@ class mod_artifacts implements Module {
 	}
 
 	function tables() {
-		return array("artifact", "user");
+		return ["artifact", "user"];
 	}
 
 	function serve() {
@@ -63,7 +63,7 @@ class mod_artifacts implements Module {
 		}
 
 		$dir = self::clean(Task\Route::input("path"));
-		$form = array("folder" => Task\Route::input("folder"), "job" => Task\Route::input("job"));
+		$form = ["folder" => Task\Route::input("folder"), "job" => Task\Route::input("job")];
 		$browse = $dir === "" ? "" : $dir . "/";
 
 		$chrome->heading("Artifacts", self::crumbs($dir));
@@ -75,7 +75,7 @@ class mod_artifacts implements Module {
 			$head->menu(self::actions());
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"space" => self::space(),
 			"block" => self::block($browse, self::archive($dir)),
@@ -83,7 +83,7 @@ class mod_artifacts implements Module {
 			"form" => $form,
 			"folders" => $this->folders($chrome),
 			"history" => $this->history($chrome, $artifacts, $form),
-		));
+		]);
 	}
 
 	/**
@@ -110,19 +110,19 @@ class mod_artifacts implements Module {
 	static function block($browse, $archive) {
 		$buttons = new Task\Buttons(true);
 
-		$buttons->item("download", ($browse === "" ? "Everything" : "This folder") . " as .tgz", array("href" => $archive, "download" => ""));
-		$buttons->icon("copy", array(
+		$buttons->item("download", ($browse === "" ? "Everything" : "This folder") . " as .tgz", ["href" => $archive, "download" => ""]);
+		$buttons->icon("copy", [
 			"data-copy" => $archive,
 			"title" => self::COPY,
 			"aria-label" => self::COPY,
-		));
+		]);
 
-		return array(
+		return [
 			"title" => "Files",
 			"note" => "/" . $browse,
 			"empty" => "",
 			"buttons" => $buttons->data(),
-		);
+		];
 	}
 
 	/**
@@ -132,12 +132,12 @@ class mod_artifacts implements Module {
 	static function actions() {
 		$menu = new Task\Menu("Actions on every artifact");
 
-		$menu->danger("trash", "Delete all", array(
+		$menu->danger("trash", "Delete all", [
 			"data-delete" => self::API,
 			"data-confirm" => "Delete all artifacts? This removes every file, its history and the record of every version.",
 			"data-confirm-ok" => "Delete all",
 			"data-next" => "reload",
-		));
+		]);
 
 		return $menu->data();
 	}
@@ -153,9 +153,9 @@ class mod_artifacts implements Module {
 	 */
 	function files($chrome, $artifacts, $dir) {
 		$admin = Task\User::admin($chrome->user);
-		$visible = $admin ? array() : self::visible($artifacts, $chrome);
+		$visible = $admin ? [] : self::visible($artifacts, $chrome);
 		$edits = $chrome->allowed("artifact/edit");
-		$out = array();
+		$out = [];
 
 		foreach (Task\Host::tree($dir) as $item) {
 			$name = Task\Row::text($item, "name");
@@ -190,21 +190,21 @@ class mod_artifacts implements Module {
 		$menu = new Task\Menu("Actions on " . $name);
 
 		if ($dir) {
-			$menu->item("download", "Download as .tgz", array("href" => $archive, "download" => ""));
-			$menu->item("copy", self::COPY, array("data-copy" => $archive));
+			$menu->item("download", "Download as .tgz", ["href" => $archive, "download" => ""]);
+			$menu->item("copy", self::COPY, ["data-copy" => $archive]);
 		} else {
-			$menu->item("eye", "View and versions", array("href" => $href, "data-artifact" => $path));
-			$menu->item("copy", "Copy the link", array("data-copy" => $href));
+			$menu->item("eye", "View and versions", ["href" => $href, "data-artifact" => $path]);
+			$menu->item("copy", "Copy the link", ["data-copy" => $href]);
 		}
 
-		$menu->whenDanger($edits, "trash", "Delete from the tree", array(
+		$menu->whenDanger($edits, "trash", "Delete from the tree", [
 			"data-delete" => "/api" . ($dir ? self::FILES . $path : $href),
 			"data-confirm" => "Delete " . $path . ($dir ? "/ and everything in it" : "") . " from the tree? The history keeps its versions.",
 			"data-confirm-ok" => "Delete",
 			"data-next" => "reload",
-		));
+		]);
 
-		return array(
+		return [
 			"dir" => $dir,
 			"name" => $name,
 			"href" => $href,
@@ -213,7 +213,7 @@ class mod_artifacts implements Module {
 			"ago" => Task\Clock::ago($stamp),
 			"stamp" => Task\Clock::read($stamp),
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -224,7 +224,7 @@ class mod_artifacts implements Module {
 	 * which is what was written over MCP or the API.
 	 */
 	static function visible($artifacts, $chrome) {
-		$out = array();
+		$out = [];
 
 		foreach ($artifacts->latest() as $artifact) {
 			if (Task\User::seesArtifact($chrome->user, $artifact)) {
@@ -268,15 +268,15 @@ class mod_artifacts implements Module {
 	 * API and is nobody's folder, so anyone signed in sees it.
 	 */
 	function history($chrome, $artifacts, $form) {
-		$filter = array(
+		$filter = [
 			"folder" => $form["folder"],
 			"job" => $form["job"],
 			"limit" => self::LIMIT,
-		);
+		];
 		$found = $artifacts->find($filter);
 		$workspaces = $chrome->workspaces();
 		$deletes = $chrome->allowed("artifact/delete");
-		$out = array();
+		$out = [];
 
 		foreach ($found as $artifact) {
 			if (!Task\User::seesArtifact($chrome->user, $artifact)) {
@@ -328,19 +328,19 @@ class mod_artifacts implements Module {
 		}
 
 		$menu->detail("Created", Task\Clock::read($created));
-		$menu->when($commit !== "", "eye", "View this version", array(
+		$menu->when($commit !== "", "eye", "View this version", [
 			"href" => $version,
 			"data-artifact" => $path,
 			"data-version" => $commit,
-		));
-		$menu->whenDanger($deletes, "trash", "Delete the record", array(
+		]);
+		$menu->whenDanger($deletes, "trash", "Delete the record", [
 			"data-delete" => $download,
 			"data-confirm" => "Delete the record of " . $name . ($run === "" ? "" : " from " . $folder . " / " . $job) . "?",
 			"data-confirm-ok" => "Delete",
 			"data-next" => "reload",
-		));
+		]);
 
-		return array(
+		return [
 			"ago" => Task\Clock::ago($created),
 			"stamp" => Task\Clock::read($created),
 			"run" => $run,
@@ -350,7 +350,7 @@ class mod_artifacts implements Module {
 			"folderHref" => $place === "" ? "" : Task\Route::href($place),
 			"job" => $job,
 			"jobHref" => $claude || $place === "" ? "" : Task\Route::href($place . "/" . $job),
-			"user" => $run === "" ? $chrome->who()->of($artifact->getUserName()) : array(),
+			"user" => $run === "" ? $chrome->who()->of($artifact->getUserName()) : [],
 			"name" => $name,
 			"nameHref" => $commit === "" ? "" : $version,
 			"path" => $path,
@@ -358,12 +358,12 @@ class mod_artifacts implements Module {
 			"version" => substr($commit, 0, 7),
 			"size" => Task\Size::bytes($artifact->getByteSize()),
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/** folders is the folders of the catalogue the reader sees, for the filter. */
 	function folders($chrome) {
-		$out = array();
+		$out = [];
 
 		foreach ($chrome->folders() as $folder) {
 			$out[] = Task\Row::text($folder, "id");
@@ -379,20 +379,20 @@ class mod_artifacts implements Module {
 	 */
 	static function crumbs($dir) {
 		if ($dir === "") {
-			return array(array("text" => "Artifacts", "href" => ""));
+			return [["text" => "Artifacts", "href" => ""]];
 		}
 
-		$out = array(array("text" => "Artifacts", "href" => "/artifacts"));
+		$out = [["text" => "Artifacts", "href" => "/artifacts"]];
 		$parts = explode("/", $dir);
 		$walked = "";
 
 		foreach ($parts as $at => $part) {
 			$walked = $walked === "" ? $part : $walked . "/" . $part;
 			$last = $at === count($parts) - 1;
-			$out[] = array(
+			$out[] = [
 				"text" => $part,
 				"href" => $last ? "" : "/artifacts?path=" . Task\Route::queryEscape($walked),
-			);
+			];
 		}
 
 		return $out;
@@ -407,7 +407,7 @@ class mod_artifacts implements Module {
 	 * top and not above it.
 	 */
 	static function clean($path) {
-		$out = array();
+		$out = [];
 
 		foreach (explode("/", $path) as $step) {
 			if ($step === "" || $step === ".") {

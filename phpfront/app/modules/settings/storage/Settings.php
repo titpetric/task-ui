@@ -20,7 +20,7 @@ class Settings {
 	 * rows are a handful and the names of two of them per kind.
 	 */
 	function values() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT name, value FROM setting") as $row) {
 			$out[\Task\Row::text($row, "name")] = \Task\Row::text($row, "value");

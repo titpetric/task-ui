@@ -10,7 +10,7 @@ class Artifact {
 	const TABLE = "artifact";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"run_id",
 		"folder",
@@ -22,13 +22,13 @@ class Artifact {
 		"created_at",
 		"commit_id",
 		"user_name",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at");
+	public static $stamps = ["created_at"];
 	/** ID */
 	var $id = "";
 	/** Run ID */
@@ -52,7 +52,7 @@ class Artifact {
 	/** User Name */
 	var $user_name = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->run_id = \Task\Row::text($row, "run_id");
 		$this->folder = \Task\Row::text($row, "folder");
@@ -194,7 +194,7 @@ class Artifact {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

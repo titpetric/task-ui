@@ -98,7 +98,7 @@ class Secret {
 	 * folder's own scope and a workspace that is gone alike.
 	 */
 	static function titles($rows) {
-		$out = array(Workspace::EVERY => self::ALL);
+		$out = [Workspace::EVERY => self::ALL];
 
 		foreach ($rows as $row) {
 			$out[Workspace::SCOPE . $row->getFolder()] = $row->getTitle();
@@ -116,7 +116,7 @@ class Secret {
 	 */
 	static function reaching($rows, $workspace, $folders) {
 		$want = Route::canonical($workspace);
-		$out = array();
+		$out = [];
 
 		foreach ($rows as $row) {
 			foreach (explode(",", $row->getScope()) as $term) {
@@ -197,20 +197,20 @@ class Secret {
 	 * of the root's runs is scoped to it like any other.
 	 */
 	static function options($scope, $rows) {
-		$out = array();
-		$out[] = array(
+		$out = [];
+		$out[] = [
 			"value" => Workspace::EVERY,
 			"title" => self::ALL,
 			"selected" => $scope === Workspace::EVERY,
-		);
+		];
 
 		foreach ($rows as $row) {
 			$value = Workspace::SCOPE . $row->getFolder();
-			$out[] = array(
+			$out[] = [
 				"value" => $value,
 				"title" => $row->getTitle(),
 				"selected" => $scope === $value,
-			);
+			];
 		}
 
 		return $out;

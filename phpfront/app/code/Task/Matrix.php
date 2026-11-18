@@ -39,9 +39,9 @@ class Matrix {
 	var $own = null;
 
 	/** can is every checkable path and whether the subject may, by both policies. */
-	var $can = array();
+	var $can = [];
 
-	function __construct($own = null, $can = array(), $fixed = false) {
+	function __construct($own = null, $can = [], $fixed = false) {
 		if ($own === null) {
 			$own = new Policy;
 		}
@@ -54,13 +54,13 @@ class Matrix {
 	/** data is the scope the component reads. */
 	function data() {
 		$rules = Permission::titles("rules");
-		$sections = array();
+		$sections = [];
 
 		foreach (Permission::titles("sections") as $section) {
 			$sections[] = $this->section($section, $rules);
 		}
 
-		$permissions = array();
+		$permissions = [];
 
 		// A rule a section added is a row of its own: no column of every
 		// section holds it. frontend/view/matrix.go:51.
@@ -74,7 +74,7 @@ class Matrix {
 
 		$columns = count($rules) + 1;
 
-		return array(
+		return [
 			"api" => $this->api,
 			"fixed" => $this->fixed,
 			"editable" => $this->editable,
@@ -84,19 +84,19 @@ class Matrix {
 			"permissions" => $permissions,
 			"columns" => $columns,
 			"span" => $columns - 1,
-		);
+		];
 	}
 
 	/** section is one row of the table: the section's title and a cell per rule. */
 	function section($section, $rules) {
-		$cells = array();
+		$cells = [];
 
 		foreach ($rules as $rule) {
 			$path = $section["key"] . "/" . $rule["key"];
 			$cells[] = $this->cell($path, $section["title"] . ", " . $rule["title"]);
 		}
 
-		return array("title" => $section["title"], "cells" => $cells);
+		return ["title" => $section["title"], "cells" => $cells];
 	}
 
 	/**
@@ -114,7 +114,7 @@ class Matrix {
 		$shown = $this->effective && Permission::checkable($path);
 		$said = $effect === "" ? self::INHERIT : $effect;
 
-		return array(
+		return [
 			"path" => $path,
 			"title" => $title,
 			"effect" => $effect,
@@ -126,7 +126,7 @@ class Matrix {
 			"tone" => $allowed ? "ok" : "bad",
 			"says" => $allowed ? "allowed" : "denied",
 			"result" => $allowed ? self::TICK : self::CROSS,
-		);
+		];
 	}
 
 	/** effect is what the subject's own entry says about a path, "" to inherit. */

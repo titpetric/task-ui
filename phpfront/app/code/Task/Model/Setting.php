@@ -10,13 +10,13 @@ class Setting {
 	const TABLE = "setting";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("name", "value", "updated_at");
+	public static $fields = ["name", "value", "updated_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("name");
+	public static $primary = ["name"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("updated_at");
+	public static $stamps = ["updated_at"];
 	/** Name */
 	var $name = "";
 	/** Value */
@@ -24,7 +24,7 @@ class Setting {
 	/** Updated At */
 	var $updated_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->name = \Task\Row::text($row, "name");
 		$this->value = \Task\Row::text($row, "value");
 		$this->updated_at = \Task\Row::stamp($row, "updated_at");
@@ -70,7 +70,7 @@ class Setting {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

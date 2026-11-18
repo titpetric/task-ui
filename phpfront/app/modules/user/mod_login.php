@@ -25,7 +25,7 @@ class mod_login implements Module {
 	}
 
 	function tables() {
-		return array("user");
+		return ["user"];
 	}
 
 	function serve() {
@@ -50,7 +50,7 @@ class mod_login implements Module {
 			$error = "Wrong username or password.";
 		}
 
-		$view->page(array("back" => $back, "error" => $error), "login.tpl");
+		$view->page(["back" => $back, "error" => $error], "login.tpl");
 	}
 }
 

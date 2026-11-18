@@ -19,12 +19,12 @@ function moment($zone, $day, $hour, $minute) {
 // readings of the clock are what Activity::of projects: whole seconds place a
 // run in its slot, the nanoseconds order the duration line.
 function one($at, $elapsed, $state) {
-	return array("at" => $at, "unix" => $at->unix(), "nano" => $at->unixnano(), "elapsed" => $elapsed, "state" => $state);
+	return ["at" => $at, "unix" => $at->unix(), "nano" => $at->unixnano(), "elapsed" => $elapsed, "state" => $state];
 }
 
 $now = moment($zone, 19, 22, 0);
 // The last two are outside the window: a day before it starts, and tomorrow.
-$runs = array(
+$runs = [
 	one(moment($zone, 19, 7, 0), 2000, "ok"),
 	one(moment($zone, 19, 7, 30), 4000, "failed"),
 	one(moment($zone, 19, 1, 30), 6000, "killed"),
@@ -32,7 +32,7 @@ $runs = array(
 	one(moment($zone, 19, 21, 0), 0, "running"),
 	one(moment($zone, 19, 7, 0)->addDate(0, 0, -30), 0, "ok"),
 	one(moment($zone, 20, 7, 0), 0, "ok"),
-);
+];
 
 $a = new Task\Activity($runs, $now, Task\Activity::DAYS);
 $data = $a->data();
@@ -81,7 +81,7 @@ echo $a->bars[1][22]["hitTitle"], "\n";
 // the baseline, and a curve through them that stays inside the plot.
 echo $a->lines[0]["label"], "\n";
 
-foreach (array("avg", "min", "max") as $name) {
+foreach (["avg", "min", "max"] as $name) {
 	$path = $a->lines[0][$name];
 
 	echo $name, " ", substr($path, 0, 16), "| ", substr_count($path, " C "), " ", var_export(strpos($path, "91.67 10.00") !== false, true), " ", substr($path, -11), "\n";
@@ -117,7 +117,7 @@ echo $line["points"][3]["style"], " | ", $line["points"][3]["title"], " | ", var
 
 // No run in the window draws nothing at all. The duration line is one job's
 // own, so a page of many jobs leaves it out and keeps the rest.
-$none = new Task\Activity(array(), $now, Task\Activity::DAYS);
+$none = new Task\Activity([], $now, Task\Activity::DAYS);
 $tail = array_slice($runs, 5);
 $some = new Task\Activity($tail, $now, Task\Activity::DAYS);
 $jobs = new Task\Activity($runs, $now, Task\Activity::DAYS, false);
@@ -133,7 +133,7 @@ echo count($mixed["durations"]), " ", $mixed["sum"], " ", count($mixed["charts"]
 // this fixture's own and the filter names its folder.
 $db = Task\DB::writer();
 
-$db->replace("run", array(
+$db->replace("run", [
 	"id" => "fx-activity-1",
 	"folder" => "fx-activity",
 	"job" => "build",
@@ -145,8 +145,8 @@ $db->replace("run", array(
 	"finished_at" => "2026-10-19 07:00:02.500 +0000 UTC",
 	"term_cols" => 120,
 	"term_rows" => 30,
-));
-$db->replace("run", array(
+]);
+$db->replace("run", [
 	"id" => "fx-activity-2",
 	"folder" => "fx-activity",
 	"job" => "build",
@@ -156,18 +156,18 @@ $db->replace("run", array(
 	"exit_code" => 0,
 	"term_cols" => 120,
 	"term_rows" => 30,
-));
+]);
 
 // of() reads the rows a filter listed: when each run started, how long it took
 // and how it ended. A row that never started is on no chart.
 $table = new Task\Runs\Runs;
-$found = $table->find(array("folder" => "fx-activity", "limit" => Task\Activity::LIMIT));
+$found = $table->find(["folder" => "fx-activity", "limit" => Task\Activity::LIMIT]);
 $read = Task\Activity::of($found);
 
 echo count($found), " ", count($read), " ", $read[0]["elapsed"], " ", $read[0]["state"], " ", $read[0]["at"]->format(Task\Clock::READ), "\n";
 
 // The rows of a folder nobody ran in are no chart at all.
-$empty = $table->find(array("folder" => "fx-activity-none"));
+$empty = $table->find(["folder" => "fx-activity-none"]);
 
 echo count(Task\Activity::of($empty)), "\n";
 
@@ -175,7 +175,7 @@ echo count(Task\Activity::of($empty)), "\n";
 // reads: charted() asks for the columns the charts and the permission filter
 // want and hydrates nothing, so a window of five thousand runs costs no model
 // at all. The two paths answer the same chart, which is the whole point.
-$charted = $table->charted(array("folder" => "fx-activity"));
+$charted = $table->charted(["folder" => "fx-activity"]);
 $rows = Task\Activity::rows($charted);
 
 echo count($charted), " ", count($rows), " ", $rows[0]["elapsed"], " ", $rows[0]["state"], " ", $rows[0]["at"]->format(Task\Clock::READ), "\n";
@@ -193,7 +193,7 @@ $start = Task\Clock::parse("2026-10-19 07:00:00.000 +0000 UTC");
 echo Task\Run::took($start, Task\Clock::parse("2026-10-19 07:00:02.500 +0000 UTC")), " ", Task\Run::took(null, null), " ", var_export(Task\Run::took($start, null) > 0, true), "\n";
 
 // A folder nobody ran in is no rows and no chart, as above.
-echo count($table->charted(array("folder" => "fx-activity-none"))), "\n";
+echo count($table->charted(["folder" => "fx-activity-none"])), "\n";
 ---
 30 24 56
 5 2 5000

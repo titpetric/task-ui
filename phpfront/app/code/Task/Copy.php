@@ -11,11 +11,11 @@ namespace Task;
 class Copy {
 	/** of is one value to copy. $shown defaults to the value itself. */
 	static function of($value, $label, $shown = null, $fill = false) {
-		return array(
+		return [
 			"value" => $value,
 			"label" => $label,
 			"shown" => $shown === null ? $value : $shown,
 			"fill" => $fill,
-		);
+		];
 	}
 }

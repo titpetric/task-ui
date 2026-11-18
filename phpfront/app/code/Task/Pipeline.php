@@ -17,7 +17,7 @@ class Pipeline {
 
 	/** nodes are the links of a chain as the list draws them, in order. */
 	static function nodes($links) {
-		$out = array();
+		$out = [];
 
 		foreach ($links as $i => $link) {
 			$out[] = self::node($link, $i);
@@ -53,7 +53,7 @@ class Pipeline {
 			}
 		}
 
-		return array(
+		return [
 			"pos" => $i,
 			"then" => $i > 0,
 			"state" => $state,
@@ -73,7 +73,7 @@ class Pipeline {
 			"subId" => $link["workflow_run_id"],
 			"workflowId" => $link["workflow_id"],
 			"sub" => self::nodes($link["sub"]),
-		);
+		];
 	}
 
 	/**
@@ -99,7 +99,7 @@ class Pipeline {
 		$agent = self::agent($steps);
 		$question = self::question($run, $steps);
 
-		return array(
+		return [
 			"id" => $id,
 			"workflowId" => $flow,
 			"page" => "/workflows/" . $flow . "/runs/" . $id,
@@ -117,7 +117,7 @@ class Pipeline {
 			"answer" => $answer === "" ? "" : $chrome->message($answer),
 			"waiting" => $agent === "" ? self::WORKING . "how the run ended shows here." : self::WORKING . "Claude replies here when the run ends.",
 			"ended" => self::ended($run, $state, $message, $agent),
-		);
+		];
 	}
 
 	/**

@@ -40,7 +40,7 @@ class mod_sidebar implements Module {
 	}
 
 	function tables() {
-		return array("sidebar");
+		return ["sidebar"];
 	}
 
 	function serve() {
@@ -53,10 +53,10 @@ class mod_sidebar implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::SIDEBAR, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::SIDEBAR, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::SIDEBAR, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::SIDEBAR, "href" => ""],
+		]);
 
 		$admin = Task\User::admin($chrome->user);
 		$store = new Task\Sidebar(Task\DB::writer());
@@ -65,11 +65,11 @@ class mod_sidebar implements Module {
 		$items = $store->all();
 		$head = new Task\Head(Task\Setup::SIDEBAR, self::lead($admin));
 		$steps = Task\Setup::steps($chrome, Task\Setup::SIDEBAR);
-		$rows = array();
+		$rows = [];
 
 		foreach ($store->rows($items) as $row) {
 			$row["number"] = count($rows) + 1;
-			$row["menu"] = array();
+			$row["menu"] = [];
 
 			if ($admin) {
 				$menu = self::menu($row);
@@ -79,13 +79,13 @@ class mod_sidebar implements Module {
 			$rows[] = $row;
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
 			"rows" => $rows,
 			"cancel" => Task\Route::href("/settings"),
 			"trail" => Task\Setup::trail($steps),
-		), "sidebar.tpl");
+		], "sidebar.tpl");
 	}
 
 	/**
@@ -106,8 +106,8 @@ class mod_sidebar implements Module {
 
 		$menu->detail("Link", $row["href"], true);
 		$menu->detail("Kind", $row["kind"]);
-		$menu->item("up", "Move up", array("data-row-move" => "up"));
-		$menu->item("down", "Move down", array("data-row-move" => "down"));
+		$menu->item("up", "Move up", ["data-row-move" => "up"]);
+		$menu->item("down", "Move down", ["data-row-move" => "down"]);
 
 		return $menu;
 	}

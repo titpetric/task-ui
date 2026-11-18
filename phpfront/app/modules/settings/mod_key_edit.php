@@ -34,7 +34,7 @@ class mod_key_edit implements Module {
 	}
 
 	function tables() {
-		return array("user");
+		return ["user"];
 	}
 
 	function serve() {
@@ -60,12 +60,12 @@ class mod_key_edit implements Module {
 		$name = $key["name"];
 		$next = self::next();
 
-		$chrome->heading("Edit " . $name, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::KEYS, "href" => self::PAGE),
-			array("text" => $name, "href" => self::PAGE . "#key-" . $name),
-			array("text" => "Edit", "href" => ""),
-		));
+		$chrome->heading("Edit " . $name, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::KEYS, "href" => self::PAGE],
+			["text" => $name, "href" => self::PAGE . "#key-" . $name],
+			["text" => "Edit", "href" => ""],
+		]);
 
 		$head = new Task\Head("Edit " . $name, self::lead($key));
 		$steps = Task\Setup::steps($chrome, Task\Setup::KEYS);
@@ -73,7 +73,7 @@ class mod_key_edit implements Module {
 		$everyone = $users->all();
 		$field = Task\Key::policies($key["roles"], $key["users"], $everyone);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"api" => "/api/keys/" . $name,
 			"saved" => $next . "?notice=Links+saved#key-" . $name,
@@ -81,7 +81,7 @@ class mod_key_edit implements Module {
 			"git" => $key["git"],
 			"who" => $field->data(),
 			"trail" => Task\Setup::trail($steps),
-		), "key_edit.tpl");
+		], "key_edit.tpl");
 	}
 
 	/** of is the key of the folder a name asks for, an empty row for none. */
@@ -92,7 +92,7 @@ class mod_key_edit implements Module {
 			}
 		}
 
-		return array();
+		return [];
 	}
 
 	/**

@@ -12,14 +12,14 @@ namespace Task;
 // with phpfront/host.go.
 class Fixture {
 	/** folder is one entry of the catalogue, with the jobs it declares. */
-	static function folder($id, $jobs = array(), $allow = array()) {
-		return array(
+	static function folder($id, $jobs = [], $allow = []) {
+		return [
 			"id" => $id,
 			"title" => $id,
 			"dir" => "",
 			"allow" => $allow,
 			"jobs" => $jobs,
-		);
+		];
 	}
 
 	/**
@@ -28,17 +28,17 @@ class Fixture {
 	 * kind where it is one of the two a permission gates rather than an allow
 	 * list - "shell" for a terminal, "host" for a job on a host.
 	 */
-	static function job($id, $name = "", $allow = array(), $kind = "") {
+	static function job($id, $name = "", $allow = [], $kind = "") {
 		$called = $name === "" ? $id : $name;
 
-		return array(
+		return [
 			"id" => $id,
 			"name" => $called,
 			"dir" => "",
 			"shell" => $kind === "shell",
 			"host" => $kind === "host",
 			"allow" => $allow,
-		);
+		];
 	}
 
 	/**
@@ -49,10 +49,10 @@ class Fixture {
 	 * rather than a catalogue to resolve: the folder, the directory the run
 	 * ran in, the job, and the allow list of the folder it was found in.
 	 */
-	static function resolves($folder, $dir, $job, $folderAllow = array()) {
+	static function resolves($folder, $dir, $job, $folderAllow = []) {
 		$key = $folder . "|" . $dir . "|" . Row::text($job, "id");
 
-		Host::$jobs[$key] = array(
+		Host::$jobs[$key] = [
 			"found" => true,
 			"id" => Row::text($job, "id"),
 			"name" => Row::text($job, "name"),
@@ -61,7 +61,7 @@ class Fixture {
 			"host" => Row::flag($job, "host"),
 			"allow" => Row::items($job, "allow"),
 			"folder_allow" => $folderAllow,
-		);
+		];
 	}
 
 	/**

@@ -25,7 +25,7 @@ class Timeline {
 			$run = "";
 		}
 
-		return array(
+		return [
 			"id" => $id,
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
 			"kind" => self::kind($note),
@@ -40,7 +40,7 @@ class Timeline {
 			"stamp" => \Task\Clock::read(self::lastAt($note, $replies)),
 			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
 			"heard" => self::heard($note, $replies),
-		);
+		];
 	}
 
 	/** visible reports whether the reader may read a root note of the feed. */
@@ -56,7 +56,7 @@ class Timeline {
 	static function chat($row, $chrome) {
 		$said = $row["last_spoken"] !== "" ? $row["last_spoken"] : $row["last_body"];
 
-		return array(
+		return [
 			"id" => $row["id"],
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($row["id"])),
 			"peer" => $chrome->who()->of($row["peer"]),
@@ -65,7 +65,7 @@ class Timeline {
 			"stamp" => \Task\Clock::read($row["last_at"]),
 			"heard" => $row["last_audio_path"] !== "",
 			"unread" => (int)$row["unread"],
-		);
+		];
 	}
 
 	/** kind names what started the thread: a recording, a prompt asked from a page, or a note. */

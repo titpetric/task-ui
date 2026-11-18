@@ -3,14 +3,14 @@ description: Who draws a user, and decides which mention links.
 ---
 <?php
 
-Task\Host::$rules = array(
-	"paths" => array("user/all", "user/view", "user/edit"),
-	"checks" => array("user/view", "user/edit"),
-	"extras" => array(),
-);
+Task\Host::$rules = [
+	"paths" => ["user/all", "user/view", "user/edit"],
+	"checks" => ["user/view", "user/edit"],
+	"extras" => [],
+];
 
-$ops = new Task\Model\User(array("id" => "01", "name" => "ops", "role" => "runner"));
-$roles = array("ops" => "runner", "root" => "admin", "dev" => "viewer");
+$ops = new Task\Model\User(["id" => "01", "name" => "ops", "role" => "runner"]);
+$roles = ["ops" => "runner", "root" => "admin", "dev" => "viewer"];
 
 // A runner with no policy: their own profile opens, nobody else's.
 $plain = new Task\Access($ops);
@@ -22,7 +22,7 @@ echo var_export($runner->profile("nobody"), true), " a name nobody holds\n";
 echo implode(",", $runner->linkable()), "\n";
 
 // Granted user/view, every known name links.
-$sees = new Task\Policy(array("user/view" => Task\Policy::ALLOW));
+$sees = new Task\Policy(["user/view" => Task\Policy::ALLOW]);
 $granted = new Task\Access($ops, $sees);
 $seer = new Task\Who($granted, $roles);
 
@@ -48,26 +48,26 @@ echo $face["name"], " ", $face["role"], " ", $face["initials"], " ", count($face
 // ofRun is who started a run and how. The scheduler started this one outside
 // its window and it killed the run before it, and the window is the stronger
 // fact, so the component draws the out of hours badge and not the forced one.
-$ran = new Task\Model\Run(array(
+$ran = new Task\Model\Run([
 	"id" => "01",
 	"user_name" => "ops",
 	"scheduled" => 1,
 	"forced" => 1,
 	"reason" => "asked for by hand",
-));
+]);
 $start = $runner->ofRun($ran);
 
 echo $start["user"]["name"], " ", var_export($start["scheduled"], true), " ", var_export($start["forced"], true), " [", $start["reason"], "]\n";
 
 // A run started by hand carries no badge at all.
-$byHand = new Task\Model\Run(array("id" => "02", "user_name" => "ops"));
+$byHand = new Task\Model\Run(["id" => "02", "user_name" => "ops"]);
 $plainStart = $runner->ofRun($byHand);
 
 echo var_export($plainStart["scheduled"], true), " ", var_export($plainStart["forced"], true), " [", $plainStart["reason"], "]\n";
 
 // The initials are the first letters of the first two words, or the first
 // two of one word.
-foreach (array("ops", "a", "tit.petric", "ada lovelace", "x_y", "") as $name) {
+foreach (["ops", "a", "tit.petric", "ada lovelace", "x_y", ""] as $name) {
 	echo "[", Task\Who::initials($name), "]";
 }
 

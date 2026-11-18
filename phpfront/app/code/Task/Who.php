@@ -7,12 +7,12 @@ namespace Task;
 // Every page that names a user draws the same thing, so the roles are read
 // once per request and each name is built from that.
 class Who {
-	var $roles = array();
+	var $roles = [];
 	var $access = null;
 
 	function __construct($access, $roles) {
 		$this->access = $access;
-		$this->roles = is_array($roles) ? $roles : array();
+		$this->roles = is_array($roles) ? $roles : [];
 	}
 
 	/**
@@ -37,11 +37,11 @@ class Who {
 	 * the component that scope and does not build this one.
 	 */
 	static function avatar($name, $role) {
-		return array(
+		return [
 			"name" => $name,
 			"role" => $role,
 			"initials" => self::initials($name),
-		);
+		];
 	}
 
 	/**
@@ -52,12 +52,12 @@ class Who {
 	 * start the same way, so both read it from here.
 	 */
 	function ofRun($run) {
-		return array(
+		return [
 			"user" => $this->of($run->getUserName()),
 			"scheduled" => Run::isScheduled($run),
 			"reason" => $run->getReason(),
 			"forced" => Run::isForced($run),
-		);
+		];
 	}
 
 	/** profile reports whether the reader may open a user's profile. */
@@ -76,7 +76,7 @@ class Who {
 
 	/** linkable is every name whose profile the reader may open, for a mention. */
 	function linkable() {
-		$out = array();
+		$out = [];
 
 		foreach (array_keys($this->roles) as $name) {
 			if ($this->profile($name)) {

@@ -10,7 +10,7 @@ class Project {
 	const TABLE = "project";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"folder",
 		"title",
@@ -25,13 +25,13 @@ class Project {
 		"updated_at",
 		"shallow",
 		"sidebar_hidden",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at");
+	public static $stamps = ["created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Folder */
@@ -61,7 +61,7 @@ class Project {
 	/** Sidebar Hidden */
 	var $sidebar_hidden = false;
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->folder = \Task\Row::text($row, "folder");
 		$this->title = \Task\Row::text($row, "title");
@@ -239,7 +239,7 @@ class Project {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

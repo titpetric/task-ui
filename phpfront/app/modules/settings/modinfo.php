@@ -11,7 +11,7 @@ $module->setIcon("settings");
 $module->enableSideBar();
 $module->setSideBarHref("/settings");
 $module->setSideBarRule("settings");
-$module->setTables(array(
+$module->setTables([
 	"env_file",
 	"permission_policy",
 	"project",
@@ -21,6 +21,6 @@ $module->setTables(array(
 	"sidebar",
 	"tool",
 	"workspace",
-));
+]);
 
 return $module;

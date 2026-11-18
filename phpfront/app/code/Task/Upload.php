@@ -26,7 +26,7 @@ class Upload {
 	 * step alone.
 	 */
 	static function ofPlace($place) {
-		$steps = array();
+		$steps = [];
 
 		foreach (array_slice(explode("/", $place), 0, self::DEPTH) as $step) {
 			$slug = self::slug($step);

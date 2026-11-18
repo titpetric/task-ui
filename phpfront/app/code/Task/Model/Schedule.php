@@ -10,7 +10,7 @@ class Schedule {
 	const TABLE = "schedule";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"folder",
 		"job",
@@ -27,13 +27,13 @@ class Schedule {
 		"args",
 		"triage",
 		"workflow_id",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("last_run_at", "next_run_at", "created_at", "updated_at");
+	public static $stamps = ["last_run_at", "next_run_at", "created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Folder */
@@ -67,7 +67,7 @@ class Schedule {
 	/** Workflow ID */
 	var $workflow_id = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->folder = \Task\Row::text($row, "folder");
 		$this->job = \Task\Row::text($row, "job");
@@ -269,7 +269,7 @@ class Schedule {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

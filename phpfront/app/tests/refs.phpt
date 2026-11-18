@@ -20,15 +20,15 @@ $now = Task\Clock::stamp();
 
 // A row of each kind on the project itself, one on a folder inside it, and
 // one on a folder whose name starts the same way, which no move touches.
-$db->replace("schedule", array("id" => "fx-refs-s1", "folder" => "fx-refs", "job" => "build", "expression" => "@daily", "created_at" => $now, "updated_at" => $now));
-$db->replace("schedule", array("id" => "fx-refs-s2", "folder" => "fx-refs/api", "job" => "test", "expression" => "@daily", "created_at" => $now, "updated_at" => $now));
-$db->replace("schedule", array("id" => "fx-refs-s3", "folder" => "fx-refs-other", "job" => "build", "expression" => "@daily", "created_at" => $now, "updated_at" => $now));
+$db->replace("schedule", ["id" => "fx-refs-s1", "folder" => "fx-refs", "job" => "build", "expression" => "@daily", "created_at" => $now, "updated_at" => $now]);
+$db->replace("schedule", ["id" => "fx-refs-s2", "folder" => "fx-refs/api", "job" => "test", "expression" => "@daily", "created_at" => $now, "updated_at" => $now]);
+$db->replace("schedule", ["id" => "fx-refs-s3", "folder" => "fx-refs-other", "job" => "build", "expression" => "@daily", "created_at" => $now, "updated_at" => $now]);
 
-$db->replace("secret", array("id" => "fx-refs-v1", "scope" => "fx-refs", "name" => "TOKEN", "created_at" => $now, "updated_at" => $now));
-$db->replace("env_file", array("id" => "fx-refs-e1", "folder" => "fx-refs/api", "path" => ".env", "created_at" => $now, "updated_at" => $now));
+$db->replace("secret", ["id" => "fx-refs-v1", "scope" => "fx-refs", "name" => "TOKEN", "created_at" => $now, "updated_at" => $now]);
+$db->replace("env_file", ["id" => "fx-refs-e1", "folder" => "fx-refs/api", "path" => ".env", "created_at" => $now, "updated_at" => $now]);
 
-$db->replace("workflow", array("id" => "fx-refs-w1", "name" => "Nightly", "created_at" => $now, "updated_at" => $now));
-$db->replace("workflow_step", array("id" => "fx-refs-p1", "workflow_id" => "fx-refs-w1", "position" => 0, "folder" => "fx-refs", "job" => "deploy"));
+$db->replace("workflow", ["id" => "fx-refs-w1", "name" => "Nightly", "created_at" => $now, "updated_at" => $now]);
+$db->replace("workflow_step", ["id" => "fx-refs-p1", "workflow_id" => "fx-refs-w1", "position" => 0, "folder" => "fx-refs", "job" => "deploy"]);
 
 $projects = new Task\Project($db);
 

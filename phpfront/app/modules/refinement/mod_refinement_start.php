@@ -36,7 +36,7 @@ class mod_refinement_start implements Module {
 	}
 
 	function tables() {
-		return array("refinement_thread", "refinement_comment");
+		return ["refinement_thread", "refinement_comment"];
 	}
 
 	function serve() {

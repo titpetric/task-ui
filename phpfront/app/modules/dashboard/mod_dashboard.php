@@ -30,7 +30,7 @@ class mod_dashboard implements Module {
 	}
 
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {
@@ -45,12 +45,12 @@ class mod_dashboard implements Module {
 		$view = new Task\View($this, $chrome);
 		$note = Task\Findings::note($chrome->folders(), $chrome->workspaces());
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"note" => $note,
 			"runs" => $this->tiles($chrome),
 			"threads" => $this->threads($chrome),
-		));
+		]);
 	}
 
 	/**
@@ -65,13 +65,13 @@ class mod_dashboard implements Module {
 	function add($chrome) {
 		$menu = new Task\Menu(self::ADD);
 
-		$menu->when($chrome->allowed("workspace/edit"), "folder-open", "Add workspace", array("href" => Task\Route::href("/settings/workspaces/new")));
-		$menu->when($chrome->allowed("project/edit"), "folder", "Add project", array("href" => Task\Route::href("/settings/projects/new")));
-		$menu->when($chrome->allowed("user/edit"), "users", "Add user", array("href" => Task\Route::href("/settings/users/new")));
-		$menu->when($chrome->allowed("key/edit"), "key", "Generate key", array("href" => Task\Route::href("/settings/keys/generate")));
-		$menu->when($chrome->allowed("key/edit"), "upload", "Upload key", array("href" => Task\Route::href("/settings/keys/upload")));
-		$menu->when($chrome->allowed("secret/edit"), "secret", "Add variable", array("href" => Task\Route::href("/settings/secrets/new")));
-		$menu->when($chrome->allowed("workflow/edit"), "flow", "Add workflow", array("href" => Task\Route::href("/workflows/new")));
+		$menu->when($chrome->allowed("workspace/edit"), "folder-open", "Add workspace", ["href" => Task\Route::href("/settings/workspaces/new")]);
+		$menu->when($chrome->allowed("project/edit"), "folder", "Add project", ["href" => Task\Route::href("/settings/projects/new")]);
+		$menu->when($chrome->allowed("user/edit"), "users", "Add user", ["href" => Task\Route::href("/settings/users/new")]);
+		$menu->when($chrome->allowed("key/edit"), "key", "Generate key", ["href" => Task\Route::href("/settings/keys/generate")]);
+		$menu->when($chrome->allowed("key/edit"), "upload", "Upload key", ["href" => Task\Route::href("/settings/keys/upload")]);
+		$menu->when($chrome->allowed("secret/edit"), "secret", "Add variable", ["href" => Task\Route::href("/settings/secrets/new")]);
+		$menu->when($chrome->allowed("workflow/edit"), "flow", "Add workflow", ["href" => Task\Route::href("/workflows/new")]);
 
 		return $menu->data();
 	}
@@ -88,7 +88,7 @@ class mod_dashboard implements Module {
 		$live = $chrome->liveRuns();
 		$runs = array_values($live);
 		$roles = $chrome->who()->roles;
-		$out = array();
+		$out = [];
 
 		usort($runs, function($one, $other) {
 			return strcmp($other->getId(), $one->getId());
@@ -108,7 +108,7 @@ class mod_dashboard implements Module {
 	/** threads is a card per Claude thread in progress that the reader may read. */
 	function threads($chrome) {
 		$store = new Task\Threads\Notes;
-		$out = array();
+		$out = [];
 
 		foreach ($store->live() as $note) {
 			if (Task\Note::isPrompt($note)) {
@@ -119,7 +119,7 @@ class mod_dashboard implements Module {
 				continue;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"id" => $note->getId(),
 				"href" => Task\Route::href("/threads/" . rawurlencode($note->getId())),
 				"name" => Task\Note::excerpt($note->getBody()),
@@ -127,7 +127,7 @@ class mod_dashboard implements Module {
 				"state" => Task\Recent::threadState($note->getState()),
 				"run" => $note->getRunId(),
 				"who" => $chrome->who()->of($note->getUserName()),
-			);
+			];
 		}
 
 		return $out;
@@ -150,7 +150,7 @@ class mod_dashboard implements Module {
 		$role = Task\Recent::role($roles, $name);
 		$watching = Task\Row::number($session, "attached");
 
-		return array(
+		return [
 			"id" => $id,
 			"href" => Task\Route::href("/runs/" . $id),
 			"state" => $state,
@@ -160,7 +160,7 @@ class mod_dashboard implements Module {
 			"faint" => $this->faint($state, $message, $watching),
 			"who" => Task\Who::avatar($name, $role),
 			"frame" => Task\Host::frame($id),
-		);
+		];
 	}
 
 	/**

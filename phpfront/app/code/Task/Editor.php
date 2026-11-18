@@ -30,10 +30,10 @@ class Editor {
 	var $space;
 
 	/** flows are the workflows a step may run, each an id and a name. */
-	var $flows = array();
+	var $flows = [];
 
 	/** users are who the runs may run as, empty for a reader who may not pick. */
-	var $users = array();
+	var $users = [];
 
 	/** asks and shell are the kinds of step the reader may add. */
 	var $asks = false;
@@ -59,14 +59,14 @@ class Editor {
 	function data($flow, $api, $method, $next, $label) {
 		$runAs = $flow === null ? $this->chrome->name() : $flow["runAs"];
 		$over = $flow === null ? "" : $flow["runsOver"];
-		$steps = $flow === null ? array() : $flow["steps"];
-		$cards = array();
+		$steps = $flow === null ? [] : $flow["steps"];
+		$cards = [];
 
 		foreach ($steps as $step) {
 			$cards[] = $this->card($step, false);
 		}
 
-		return array(
+		return [
 			"api" => $flow === null ? $api : $api . $flow["id"],
 			"method" => $method,
 			"next" => $next,
@@ -75,11 +75,11 @@ class Editor {
 			"name" => $flow === null ? "" : $flow["name"],
 			"description" => $flow === null ? "" : $flow["description"],
 			"sidebar" => $flow === null || !$flow["sidebarHidden"],
-			"users" => array(
+			"users" => [
 				"users" => $this->users,
 				"selected" => $runAs,
 				"short" => false,
-			),
+			],
 			"runAs" => $runAs === "" ? self::NOBODY : $runAs,
 			"runAsValue" => $runAs,
 			"isNew" => $flow === null,
@@ -94,19 +94,19 @@ class Editor {
 			"blankPrompt" => $this->blank(Step::PROMPT),
 			"blankSummary" => $this->blank(Step::SUMMARY),
 			"blankCheck" => $this->blank(Step::CHECK),
-		);
+		];
 	}
 
 	/** overs are the workspaces the steps may run over, the one picked marked. */
 	function overs($over) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->space->spaces() as $one) {
-			$out[] = array(
+			$out[] = [
 				"id" => $one["id"],
 				"title" => $one["title"],
 				"selected" => $one["id"] === $over,
-			);
+			];
 		}
 
 		return $out;
@@ -141,7 +141,7 @@ class Editor {
 			}
 		}
 
-		return array(
+		return [
 			"kind" => $kind,
 			"disabled" => $step["disabled"],
 			"open" => $open,
@@ -177,7 +177,7 @@ class Editor {
 			"question" => Step::SUMMARY_QUESTION,
 			"instruction" => Step::SUMMARY_PROMPT,
 			"space" => $this->spaceOf($kind, $folder),
-		);
+		];
 	}
 
 	/**
@@ -197,38 +197,38 @@ class Editor {
 			$sel = "";
 		}
 
-		$spaces = array();
+		$spaces = [];
 
 		foreach ($this->space->spaces() as $one) {
-			$spaces[] = array(
+			$spaces[] = [
 				"id" => $one["id"],
 				"title" => $one["title"],
 				"selected" => $one["id"] === $sel,
-			);
+			];
 		}
 
-		return array(
+		return [
 			"none" => !$runs && $kind !== Step::SCRIPT && $this->space->none,
 			"noneSelected" => $sel === "",
 			"spaces" => $spaces,
 			"flows" => $runs && count($this->flows) > 0,
 			"flowsSelected" => $sel === self::FLOWS,
-		);
+		];
 	}
 
 	/** places are the folders a step may run in, the one it names marked. */
 	function places($selected) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->space->folders as $folder) {
 			$id = Row::text($folder, "id");
-			$out[] = array(
+			$out[] = [
 				"id" => $id,
 				"workspace" => $this->space->spaceOf($id),
 				"rel" => $this->space->rel($id),
 				"label" => $this->space->label($id),
 				"selected" => $id === $selected,
-			);
+			];
 		}
 
 		return $out;
@@ -240,24 +240,24 @@ class Editor {
 			return null;
 		}
 
-		return array(
+		return [
 			"id" => $folder,
 			"workspace" => $this->space->spaceOf($folder),
 			"rel" => $this->space->rel($folder),
 			"label" => $this->space->label($folder),
-		);
+		];
 	}
 
 	/** flowOptions are the workflows a step may run, the one it names marked. */
 	function flowOptions($selected) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->flows as $flow) {
-			$out[] = array(
+			$out[] = [
 				"id" => $flow["id"],
 				"name" => $flow["name"],
 				"selected" => $flow["id"] === $selected,
-			);
+			];
 		}
 
 		return $out;
@@ -269,19 +269,19 @@ class Editor {
 	 * so the markup holds them all.
 	 */
 	function jobs($step) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->space->folders as $folder) {
 			$id = Row::text($folder, "id");
 
 			foreach (Row::items($folder, "jobs") as $job) {
 				$key = Row::text($job, "id");
-				$out[] = array(
+				$out[] = [
 					"id" => $key,
 					"folder" => $id,
 					"name" => Row::text($job, "name"),
 					"selected" => $id === $step["folder"] && $key === $step["job"],
-				);
+				];
 			}
 		}
 
@@ -295,12 +295,12 @@ class Editor {
 	function menu($disabled) {
 		$menu = new Menu("Actions on the step");
 
-		$menu->item("up", "Move up", array("data-step-move" => "up"));
-		$menu->item("down", "Move down", array("data-step-move" => "down"));
+		$menu->item("up", "Move up", ["data-step-move" => "up"]);
+		$menu->item("down", "Move down", ["data-step-move" => "down"]);
 		$menu->sep();
-		$menu->item($disabled ? "play" : "stop", $disabled ? "Enable" : "Disable", array("data-step-off" => "1"));
-		$menu->item("copy", "Duplicate", array("data-step-duplicate" => "1"));
-		$menu->danger("trash", "Remove", array("data-step-remove" => "1"));
+		$menu->item($disabled ? "play" : "stop", $disabled ? "Enable" : "Disable", ["data-step-off" => "1"]);
+		$menu->item("copy", "Duplicate", ["data-step-duplicate" => "1"]);
+		$menu->danger("trash", "Remove", ["data-step-remove" => "1"]);
 
 		return $menu->data();
 	}

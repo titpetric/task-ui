@@ -33,20 +33,12 @@ jobs:
     steps:
       - composer update --no-interaction
 
-  # `phpscript fmt -l` exits zero whether or not it listed a file, so the
-  # check is whether it printed anything. Without the test this job reports
-  # success over an unformatted tree.
+  # phpscript fmt writes array() and the semgrep rule under semgrep/ writes
+  # []; tools/fmt.sh applies both and hashes the files across them.
   fmt:
-    desc: "Fail if phpscript fmt would rewrite a file"
+    desc: "Fail if the formatter and the array rule would rewrite a file"
     steps:
-      - |
-        out="$(phpscript fmt -l ${{paths}})"
-        if [ -n "${out}" ]; then
-            echo "phpscript fmt would rewrite:" >&2
-            echo "${out}" >&2
-            exit 1
-        fi
-        echo "every file is formatted"
+      - bash tools/fmt.sh
 
   # --include registers the names the tree's own files do not declare:
   # composer's autoloader for the MiniTPL classes, and stubs/ for the host
@@ -73,14 +65,14 @@ jobs:
       - phpscript test ./tests/...
 
   # Rewrites code/Task/Model from the same schema.yml mig gen reads for the Go
-  # types, then formats what it wrote, so the fmt job stays clean. It runs
-  # from the repository root, because the schema sits outside this tree.
+  # types, then writes the pair the fmt job holds it to. It runs from the
+  # repository root, because the schema sits outside this tree.
   models:
     desc: "Regenerate the models from schema/schema.yml"
     dir: ../..
     steps:
       - phpscript run phpfront/app/tools/models.php
-      - phpscript fmt ./phpfront/app/code/Task/Model/...
+      - bash phpfront/app/tools/fmt.sh --write
 
   precompile:
     desc: "Compile every template into the templates_c beside it"

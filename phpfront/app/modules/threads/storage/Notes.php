@@ -153,7 +153,7 @@ class Notes {
 	/** promptsAbout is the prompts asked about many runs at once, newest first. */
 	function promptsAbout($runIDs) {
 		if (count($runIDs) === 0) {
-			return array();
+			return [];
 		}
 
 		$sql = "SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' AND " . self::LIVE . " AND about_run_id IN (" . \Task\Row::placeholders($runIDs) . ") ORDER BY rowid DESC";
@@ -191,7 +191,7 @@ class Notes {
 
 	/** replies is the replies of many threads at once, oldest first, by thread. */
 	function replies($ids) {
-		$out = array();
+		$out = [];
 
 		if (count($ids) === 0) {
 			return $out;
@@ -203,7 +203,7 @@ class Notes {
 			$parent = $note->getParentId();
 
 			if (!isset($out[$parent])) {
-				$out[$parent] = array();
+				$out[$parent] = [];
 			}
 
 			$out[$parent][] = $note;

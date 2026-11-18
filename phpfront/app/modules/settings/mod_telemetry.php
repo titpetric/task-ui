@@ -54,7 +54,7 @@ class mod_telemetry implements Module {
 
 	/** The options are the tracer's own and are in no table of this database. */
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {
@@ -75,10 +75,10 @@ class mod_telemetry implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::TELEMETRY, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::TELEMETRY, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::TELEMETRY, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::TELEMETRY, "href" => ""],
+		]);
 
 		// The dashboard is mounted on the instance's own router and not inside
 		// this application, so its path carries no prefix.
@@ -87,12 +87,12 @@ class mod_telemetry implements Module {
 		$head = new Task\Head(Task\Setup::TELEMETRY, self::lead($admin));
 		$buttons = new Task\Buttons;
 
-		$buttons->item("", self::DASHBOARD, array("href" => $path, "title" => self::TRACES));
+		$buttons->item("", self::DASHBOARD, ["href" => $path, "title" => self::TRACES]);
 		$head->buttons($buttons->data());
 
 		$steps = Task\Setup::steps($chrome, Task\Setup::TELEMETRY);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
 			"next" => Task\Route::href(self::PAGE) . "?notice=" . Task\Route::queryEscape(self::SAVED),
@@ -102,7 +102,7 @@ class mod_telemetry implements Module {
 			"networks" => self::lines(Task\Row::items($opts, "allowed_networks")),
 			"opts" => $opts,
 			"trail" => Task\Setup::trail($steps),
-		), "telemetry.tpl");
+		], "telemetry.tpl");
 	}
 
 	/**
@@ -128,7 +128,7 @@ class mod_telemetry implements Module {
 
 	/** lines is a list field as the textarea that edits it spells it: one per line. */
 	static function lines($items) {
-		$out = array();
+		$out = [];
 
 		foreach ($items as $item) {
 			$out[] = (string)$item;

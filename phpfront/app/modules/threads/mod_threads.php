@@ -39,7 +39,7 @@ class mod_threads implements Module {
 	}
 
 	function tables() {
-		return array("note", "note_participant", "run", "user");
+		return ["note", "note_participant", "run", "user"];
 	}
 
 	function serve() {
@@ -52,11 +52,11 @@ class mod_threads implements Module {
 			return;
 		}
 
-		$chrome->heading("Threads", array(array("text" => "Threads", "href" => "")));
+		$chrome->heading("Threads", [["text" => "Threads", "href" => ""]]);
 
 		$store = new Task\Threads\Notes;
 		$users = new Task\User;
-		$roots = array();
+		$roots = [];
 		foreach ($store->feed() as $note) {
 			if (Task\Threads\Timeline::visible($note, $chrome)) {
 				$roots[] = $note;
@@ -66,12 +66,12 @@ class mod_threads implements Module {
 		$replies = $store->replies(Task\Note::ids($roots));
 		$agents = $users->agents();
 		$seen = new Task\Seen($chrome);
-		$rows = array();
-		$chats = array();
+		$rows = [];
+		$chats = [];
 		$userID = $chrome->user === null ? "" : $chrome->user->getID();
 
 		foreach ($roots as $note) {
-			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
+			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
 			$rows[] = Task\Threads\Timeline::row($note, $under, $chrome, $seen);
 		}
 
@@ -84,13 +84,13 @@ class mod_threads implements Module {
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
 		$head = new Task\Head("Threads", self::lead($agent));
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"agent" => $agent,
 			"editor" => self::field(),
 			"rows" => $rows,
 			"chats" => $chats,
-		));
+		]);
 	}
 
 	/**
@@ -99,14 +99,14 @@ class mod_threads implements Module {
 	 * of users, because a note is written to someone.
 	 */
 	static function field() {
-		return array(
+		return [
 			"name" => "body",
 			"rows" => 3,
 			"label" => "A new note",
 			"placeholder" => "",
 			"mentions" => true,
 			"toolbar" => "full",
-		);
+		];
 	}
 
 	/**

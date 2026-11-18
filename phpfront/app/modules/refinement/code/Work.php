@@ -66,7 +66,7 @@ class Work {
 	static function sync($store, $thread) {
 		$folder = $thread["id"];
 		$report = \Task\Host::artifact($folder . "/" . self::REPORT);
-		$changed = array();
+		$changed = [];
 
 		// A tree with no report has nothing to say, which is not the same as a
 		// report that is empty: a run that has not written one yet must not

@@ -30,7 +30,7 @@ class mod_permissions implements Module {
 	}
 
 	function tables() {
-		return array("user", "permission_policy");
+		return ["user", "permission_policy"];
 	}
 
 	function serve() {
@@ -43,29 +43,29 @@ class mod_permissions implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::PERMISSIONS, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::PERMISSIONS, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::PERMISSIONS, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::PERMISSIONS, "href" => ""],
+		]);
 
 		$head = new Task\Head(Task\Setup::PERMISSIONS, self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::PERMISSIONS);
 		$views = $chrome->allowed("key/view");
 		$members = $this->members($chrome, $views);
-		$matrices = array();
+		$matrices = [];
 
 		foreach (Task\User::ROLES as $role) {
 			$matrices[] = $this->matrix($chrome, $role, $members);
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"addUser" => $this->addUser($chrome),
 			"viewsKeys" => $views,
 			"generate" => $chrome->allowed("key/edit") ? Task\Route::href("/settings/keys/generate") : "",
 			"matrices" => $matrices,
 			"trail" => Task\Setup::trail($steps),
-		), "permissions.tpl");
+		], "permissions.tpl");
 	}
 
 	/**
@@ -84,7 +84,7 @@ class mod_permissions implements Module {
 			$policy = $policies->policy(Task\Policy::ROLE, $role);
 		}
 
-		$acts = new Task\Model\User(array("role" => $role));
+		$acts = new Task\Model\User(["role" => $role]);
 		$access = new Task\Access($acts, $policy);
 		$effective = $access->effective();
 		$matrix = new Task\Matrix($policy, $effective, $fixed);
@@ -93,7 +93,7 @@ class mod_permissions implements Module {
 		$matrix->api = "/api/permissions/roles/" . $role;
 		$matrix->editable = !$fixed && $chrome->allowed("user/edit") && ($role !== Task\User::role($chrome->user) || self::editsByRole($chrome));
 
-		return array(
+		return [
 			"id" => "role-" . $role,
 			"title" => $role,
 			"initials" => Task\Who::initials($role),
@@ -102,15 +102,15 @@ class mod_permissions implements Module {
 			"users" => self::chips($held["users"], "/users/"),
 			"keys" => self::chips($held["keys"], "/settings/keys/"),
 			"matrix" => $matrix->data(),
-		);
+		];
 	}
 
 	/** chips is a list of names as the links a role's line draws. */
 	static function chips($names, $under) {
-		$out = array();
+		$out = [];
 
 		foreach ($names as $name) {
-			$out[] = array("name" => $name, "href" => Task\Route::href($under . $name));
+			$out[] = ["name" => $name, "href" => Task\Route::href($under . $name)];
 		}
 
 		return $out;
@@ -127,10 +127,10 @@ class mod_permissions implements Module {
 	 */
 	function members($chrome, $views) {
 		$users = new Task\User($chrome->db);
-		$out = array();
+		$out = [];
 
 		foreach (Task\User::ROLES as $role) {
-			$out[$role] = array("users" => array(), "keys" => array());
+			$out[$role] = ["users" => [], "keys" => []];
 		}
 
 		foreach ($users->all() as $user) {

@@ -41,12 +41,12 @@ class Pin {
 	 */
 	static function pin($pins, $folder, $job, $dir, $what) {
 		$held = self::of($pins, $folder, $job, $dir);
-		$attrs = array(
+		$attrs = [
 			"data-pin-folder" => $folder,
 			"data-pin-job" => $job,
 			"data-pin-dir" => $dir,
 			"data-pin-key" => $folder . "|" . $dir . "|" . $job,
-		);
+		];
 		$label = "Pin " . $what;
 		$title = self::says($job, false);
 
@@ -58,7 +58,7 @@ class Pin {
 
 		$attrs["title"] = $title;
 
-		return array("label" => $label, "attrs" => $attrs);
+		return ["label" => $label, "attrs" => $attrs];
 	}
 
 	/**

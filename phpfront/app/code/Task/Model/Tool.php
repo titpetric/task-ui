@@ -10,13 +10,13 @@ class Tool {
 	const TABLE = "tool";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("name", "category", "version", "path", "description", "updated_at");
+	public static $fields = ["name", "category", "version", "path", "description", "updated_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("name");
+	public static $primary = ["name"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("updated_at");
+	public static $stamps = ["updated_at"];
 	/** Name */
 	var $name = "";
 	/** Category */
@@ -30,7 +30,7 @@ class Tool {
 	/** Updated At */
 	var $updated_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->name = \Task\Row::text($row, "name");
 		$this->category = \Task\Row::text($row, "category");
 		$this->version = \Task\Row::text($row, "version");
@@ -112,7 +112,7 @@ class Tool {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

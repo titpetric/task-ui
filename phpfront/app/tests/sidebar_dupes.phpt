@@ -9,9 +9,9 @@ description: Task\Sidebar lists a link once when two modules name it, and a view
 
 $db = Task\DB::writer();
 
-$db->replace("sidebar", array("id" => "fx-sd-1", "kind" => "view", "href" => "/fx-sd/view", "title" => "Same", "icon" => "box", "position" => 1, "rule" => ""));
-$db->replace("sidebar", array("id" => "fx-sd-2", "kind" => "view", "href" => "/fx-sd/only", "title" => "Only a view", "icon" => "box", "position" => 2, "rule" => ""));
-$db->replace("sidebar", array("id" => "fx-sd-3", "kind" => "module", "href" => "/fx-sd/other", "title" => "Other", "icon" => "flow", "position" => 3, "hidden" => 1, "rule" => ""));
+$db->replace("sidebar", ["id" => "fx-sd-1", "kind" => "view", "href" => "/fx-sd/view", "title" => "Same", "icon" => "box", "position" => 1, "rule" => ""]);
+$db->replace("sidebar", ["id" => "fx-sd-2", "kind" => "view", "href" => "/fx-sd/only", "title" => "Only a view", "icon" => "box", "position" => 2, "rule" => ""]);
+$db->replace("sidebar", ["id" => "fx-sd-3", "kind" => "module", "href" => "/fx-sd/other", "title" => "Other", "icon" => "flow", "position" => 3, "hidden" => 1, "rule" => ""]);
 
 function mod($name, $title, $icon, $href) {
 	$module = new Task\Module;
@@ -25,15 +25,15 @@ function mod($name, $title, $icon, $href) {
 	return $module;
 }
 
-$modules = array(
+$modules = [
 	mod("taskui/same", "Same", "note", "/fx-sd/view"),
 	mod("taskui/same2", "Same", "note", "/fx-sd/view"),
 	mod("taskui/other", "Other", "flow", "/fx-sd/other"),
-);
+];
 
 Task\Host::$base = "/development";
 
-$runner = new Task\Model\User(array("id" => "fx-sd-u1", "name" => "fx-sd-ann", "role" => "runner"));
+$runner = new Task\Model\User(["id" => "fx-sd-u1", "name" => "fx-sd-ann", "role" => "runner"]);
 $policy = new Task\Policy();
 $access = new Task\Access($runner, $policy);
 $sidebar = new Task\Sidebar(null, $modules);

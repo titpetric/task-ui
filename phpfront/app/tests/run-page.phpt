@@ -14,7 +14,7 @@ echo var_export($mod instanceof Module, true), "\n";
 // is named after this fixture and every read names an ID of its own.
 $db = Task\DB::writer();
 
-$db->replace("user", array("id" => "fx-rp-u1", "name" => "fx-rp-ann", "role" => "admin", "admin" => 1));
+$db->replace("user", ["id" => "fx-rp-u1", "name" => "fx-rp-ann", "role" => "admin", "admin" => 1]);
 
 // at is a moment of the day the rows record, in the shape a write leaves.
 function at($time) {
@@ -25,20 +25,20 @@ function at($time) {
 // directory of its folder; one that waits for a slot; one that broke out of
 // hours, whose recording the sweep removed; a run of Claude's; a job the
 // folder declares none of; and one whose summary Claude is still writing.
-$rows = array(
-	array("id" => "fx-rp-1", "job" => "build", "state" => "ok", "cast" => "casts/fx-rp-1.cast", "args" => '["--verbose","./pkg"]', "from" => at("10:01:00.000"), "to" => at("10:01:02.500")),
-	array("id" => "fx-rp-2", "job" => "deploy", "state" => "running", "dir" => "docker", "from" => Task\Clock::stamp()),
-	array("id" => "fx-rp-3", "job" => "test", "state" => "queued"),
-	array("id" => "fx-rp-4", "job" => "build", "state" => "failed", "code" => 2, "cast" => "casts/fx-rp-4.cast", "reason" => "the window of the job is closed", "forced" => 1, "scheduled" => 1, "from" => at("10:04:00.000"), "to" => at("10:04:01.000")),
-	array("id" => "fx-rp-5", "job" => "@claude-prompt", "state" => "ok", "parent" => "fx-rp-1", "from" => at("10:05:00.000"), "to" => at("10:05:30.000")),
-	array("id" => "fx-rp-6", "job" => "ghost", "state" => "ok", "from" => at("10:06:00.000"), "to" => at("10:06:01.000")),
-	array("id" => "fx-rp-7", "job" => "build", "state" => "ok", "from" => at("10:09:00.000"), "to" => at("10:09:01.000")),
-	array("id" => "fx-rp-b1", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:07:00.000"), "to" => at("10:07:01.000")),
-	array("id" => "fx-rp-b2", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:08:00.000"), "to" => at("10:08:01.000")),
-);
+$rows = [
+	["id" => "fx-rp-1", "job" => "build", "state" => "ok", "cast" => "casts/fx-rp-1.cast", "args" => '["--verbose","./pkg"]', "from" => at("10:01:00.000"), "to" => at("10:01:02.500")],
+	["id" => "fx-rp-2", "job" => "deploy", "state" => "running", "dir" => "docker", "from" => Task\Clock::stamp()],
+	["id" => "fx-rp-3", "job" => "test", "state" => "queued"],
+	["id" => "fx-rp-4", "job" => "build", "state" => "failed", "code" => 2, "cast" => "casts/fx-rp-4.cast", "reason" => "the window of the job is closed", "forced" => 1, "scheduled" => 1, "from" => at("10:04:00.000"), "to" => at("10:04:01.000")],
+	["id" => "fx-rp-5", "job" => "@claude-prompt", "state" => "ok", "parent" => "fx-rp-1", "from" => at("10:05:00.000"), "to" => at("10:05:30.000")],
+	["id" => "fx-rp-6", "job" => "ghost", "state" => "ok", "from" => at("10:06:00.000"), "to" => at("10:06:01.000")],
+	["id" => "fx-rp-7", "job" => "build", "state" => "ok", "from" => at("10:09:00.000"), "to" => at("10:09:01.000")],
+	["id" => "fx-rp-b1", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:07:00.000"), "to" => at("10:07:01.000")],
+	["id" => "fx-rp-b2", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:08:00.000"), "to" => at("10:08:01.000")],
+];
 
 foreach ($rows as $row) {
-	$db->replace("run", array(
+	$db->replace("run", [
 		"id" => $row["id"],
 		"folder" => "fx-rp",
 		"job" => $row["job"],
@@ -59,11 +59,11 @@ foreach ($rows as $row) {
 		"parent_kind" => isset($row["parent"]) ? "run" : "",
 		"started_at" => isset($row["from"]) ? $row["from"] : null,
 		"finished_at" => isset($row["to"]) ? $row["to"] : null,
-	));
+	]);
 }
 
 // The files the run left, newest first.
-$db->replace("artifact", array(
+$db->replace("artifact", [
 	"id" => "fx-rp-a1",
 	"run_id" => "fx-rp-1",
 	"folder" => "fx-rp",
@@ -73,8 +73,8 @@ $db->replace("artifact", array(
 	"byte_size" => 2048,
 	"content_type" => "text/html",
 	"created_at" => at("10:01:01.000"),
-));
-$db->replace("artifact", array(
+]);
+$db->replace("artifact", [
 	"id" => "fx-rp-a2",
 	"run_id" => "fx-rp-1",
 	"folder" => "fx-rp",
@@ -84,20 +84,20 @@ $db->replace("artifact", array(
 	"byte_size" => 300,
 	"content_type" => "text/plain",
 	"created_at" => at("10:01:00.500"),
-));
+]);
 
 // The summary the runs page kept for the run that ended, which is the report
 // its head links.
-$db->replace("run_summary", array(
+$db->replace("run_summary", [
 	"run_id" => "fx-rp-1",
 	"summary" => "the build was clean",
 	"user_name" => "claude",
 	"created_at" => at("11:02:00.000"),
-));
+]);
 
 // A prompt thread about the run that ended, with Claude's answer under it. A
 // prompt holds a workspace, so the board's own notes are not these.
-$db->replace("note", array(
+$db->replace("note", [
 	"id" => "fx-rp-n1",
 	"channel" => "notes",
 	"parent_id" => "",
@@ -110,8 +110,8 @@ $db->replace("note", array(
 	"workspace_id" => "fx-rp-ws",
 	"created_at" => at("11:00:00.000"),
 	"updated_at" => at("11:00:00.000"),
-));
-$db->replace("note", array(
+]);
+$db->replace("note", [
 	"id" => "fx-rp-n2",
 	"channel" => "notes",
 	"parent_id" => "fx-rp-n1",
@@ -124,11 +124,11 @@ $db->replace("note", array(
 	"workspace_id" => "fx-rp-ws",
 	"created_at" => at("11:01:00.000"),
 	"updated_at" => at("11:01:00.000"),
-));
+]);
 
 // A summary thread Claude has not answered yet is a pending report: the head
 // says so where Summarize stood, and offers no button to ask it again.
-$db->replace("note", array(
+$db->replace("note", [
 	"id" => "fx-rp-n3",
 	"channel" => "notes",
 	"parent_id" => "",
@@ -141,7 +141,7 @@ $db->replace("note", array(
 	"workspace_id" => "fx-rp-ws",
 	"created_at" => at("11:03:00.000"),
 	"updated_at" => at("11:03:00.000"),
-));
+]);
 
 // The catalogue the reader sees, the runner's own sessions, the recording the
 // sweep removed and the token a prompt needs.
@@ -150,18 +150,18 @@ Task\Host::$claude = true;
 $build = Task\Fixture::job("build");
 $deploy = Task\Fixture::job("deploy");
 $test = Task\Fixture::job("test");
-$catalogue = Task\Fixture::folder("fx-rp", array($build, $deploy, $test));
+$catalogue = Task\Fixture::folder("fx-rp", [$build, $deploy, $test]);
 
-Task\Host::$folders = array(Task\Fixture::declared($catalogue));
+Task\Host::$folders = [Task\Fixture::declared($catalogue)];
 
 // The run of a directory inside the folder ran a job of that directory's own
 // Taskfile, which the catalogue listing does not hold: the host reads the
 // directory, so a fixture answers for it the same way.
 Task\Fixture::resolves("fx-rp", "docker", $deploy);
-Task\Host::$frames = array("fx-rp-2" => "<svg></svg>");
-Task\Host::$expired = array("casts/fx-rp-4.cast" => true);
-Task\Host::$sessions = array(
-	"fx-rp-2" => array(
+Task\Host::$frames = ["fx-rp-2" => "<svg></svg>"];
+Task\Host::$expired = ["casts/fx-rp-4.cast" => true];
+Task\Host::$sessions = [
+	"fx-rp-2" => [
 		"live" => true,
 		"attached" => 2,
 		"message" => "",
@@ -169,8 +169,8 @@ Task\Host::$sessions = array(
 		"exit_code" => 0,
 		"title" => "pulling the image",
 		"finished_at" => "",
-	),
-	"fx-rp-3" => array(
+	],
+	"fx-rp-3" => [
 		"live" => true,
 		"attached" => 0,
 		"message" => "waits for a free slot, number 1 in line",
@@ -178,8 +178,8 @@ Task\Host::$sessions = array(
 		"exit_code" => 0,
 		"title" => "",
 		"finished_at" => "",
-	),
-);
+	],
+];
 
 $runs = new Task\Runs\Runs;
 $chrome = new Task\Chrome;
@@ -187,8 +187,8 @@ $seen = new Task\Seen($chrome);
 
 // labels names the buttons of a head, or the items of a menu, in order.
 function labels($data) {
-	$out = array();
-	$groups = isset($data["groups"]) ? $data["groups"] : array($data["items"]);
+	$out = [];
+	$groups = isset($data["groups"]) ? $data["groups"] : [$data["items"]];
 
 	foreach ($groups as $group) {
 		foreach ($group as $item) {
@@ -213,7 +213,7 @@ function attrs($data, $label) {
 
 // faints are the sentences a head draws where a button would be, in order.
 function faints($data) {
-	$out = array();
+	$out = [];
 
 	foreach ($data["items"] as $item) {
 		if ($item["faint"] !== "") {
@@ -232,12 +232,12 @@ function cell($rows, $label) {
 		}
 	}
 
-	return array();
+	return [];
 }
 
 // rowLabels names the details the table draws, in the order it draws them.
 function rowLabels($rows) {
-	$out = array();
+	$out = [];
 
 	foreach ($rows as $row) {
 		$out[] = $row["label"];
@@ -287,7 +287,7 @@ echo attrs($ended->data(), "Run again"), "\n";
 
 // Summarize asks Claude the question a summary asks, over the window the page
 // is read in. A run that was given no arguments carries none.
-$asks = mod_run::buttons($runs->get("fx-rp-6"), null, false, true, array(), true, false);
+$asks = mod_run::buttons($runs->get("fx-rp-6"), null, false, true, [], true, false);
 
 echo labels($asks->data()), "\n";
 echo attrs($asks->data(), "Run again"), "\n";
@@ -295,7 +295,7 @@ echo attrs($asks->data(), "Summarize"), "\n";
 
 // A summary Claude is still writing stands where Summarize would, as a faint
 // sentence and no button: the row keeps its order and nothing asks twice.
-$waits = mod_run::buttons($runs->get("fx-rp-7"), null, false, true, array(), false, true);
+$waits = mod_run::buttons($runs->get("fx-rp-7"), null, false, true, [], false, true);
 
 echo labels($waits->data()), " [", faints($waits->data()), "]\n";
 echo "[", attrs($waits->data(), "Summarize"), "]\n";
@@ -413,10 +413,10 @@ echo var_export($mod->can($chrome, $runs->get("fx-rp-6")), true), " ", var_expor
 // The two gates that are not an allow list: a terminal needs the shell
 // permission and a job on a host needs the hosts one, whatever either allow
 // list says.
-$shell = new Task\Model\Run(array("id" => "fx-rp-sh", "folder" => "fx-rp", "dir" => "", "job" => "@shell", "user_name" => "fx-rp-ann", "state" => "running"));
-$onhost = new Task\Model\Run(array("id" => "fx-rp-ho", "folder" => "fx-rp", "dir" => "", "job" => "@host:db1", "user_name" => "fx-rp-ann", "state" => "running"));
-$term = Task\Fixture::job("@shell", "shell", array(), "shell");
-$remote = Task\Fixture::job("@host:db1", "host db1", array(), "host");
+$shell = new Task\Model\Run(["id" => "fx-rp-sh", "folder" => "fx-rp", "dir" => "", "job" => "@shell", "user_name" => "fx-rp-ann", "state" => "running"]);
+$onhost = new Task\Model\Run(["id" => "fx-rp-ho", "folder" => "fx-rp", "dir" => "", "job" => "@host:db1", "user_name" => "fx-rp-ann", "state" => "running"]);
+$term = Task\Fixture::job("@shell", "shell", [], "shell");
+$remote = Task\Fixture::job("@host:db1", "host db1", [], "host");
 
 Task\Fixture::resolves("fx-rp", "", $term);
 Task\Fixture::resolves("fx-rp", "", $remote);
@@ -428,26 +428,26 @@ echo var_export($mod->can($chrome, $shell), true), " ", var_export($mod->can($ch
 // come with the job, because the page holds neither the folder nor the
 // directory inside it. The reader here is a runner: an admin runs everything
 // they see, whatever either list says.
-$runner = new Task\Policy(array("run" => Task\Policy::ALLOW));
-$bob = new Task\Model\User(array("id" => "fx-rp-u2", "name" => "fx-rp-bob", "role" => "runner"));
+$runner = new Task\Policy(["run" => Task\Policy::ALLOW]);
+$bob = new Task\Model\User(["id" => "fx-rp-u2", "name" => "fx-rp-bob", "role" => "runner"]);
 $plain = new Task\Chrome;
 $plain->user = $bob;
 $plain->access = new Task\Access($bob, $runner);
-$mine = Task\Fixture::job("build", "build", array("fx-rp-bob"));
+$mine = Task\Fixture::job("build", "build", ["fx-rp-bob"]);
 
 Task\Fixture::resolves("fx-rp", "", $mine);
 
 echo var_export($mod->can($plain, $one), true), " ", var_export($mod->can($chrome, $one), true), "\n";
 
-$theirs = Task\Fixture::job("build", "build", array("fx-rp-ann"));
+$theirs = Task\Fixture::job("build", "build", ["fx-rp-ann"]);
 
 Task\Fixture::resolves("fx-rp", "", $theirs);
 
 echo var_export($mod->can($plain, $one), true), " ";
 
-$shut = Task\Fixture::job("build", "build", array("fx-rp-bob"));
+$shut = Task\Fixture::job("build", "build", ["fx-rp-bob"]);
 
-Task\Fixture::resolves("fx-rp", "", $shut, array("fx-rp-ann"));
+Task\Fixture::resolves("fx-rp", "", $shut, ["fx-rp-ann"]);
 
 echo var_export($mod->can($plain, $one), true), "\n";
 

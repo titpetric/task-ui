@@ -40,7 +40,7 @@ class mod_secret_reads implements Module {
 	}
 
 	function tables() {
-		return array("secret", "secret_read");
+		return ["secret", "secret_read"];
 	}
 
 	function serve() {
@@ -66,11 +66,11 @@ class mod_secret_reads implements Module {
 		$name = $secret->getName();
 		$title = "Reads of " . $name;
 
-		$chrome->heading($title, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE),
-			array("text" => $name, "href" => ""),
-		));
+		$chrome->heading($title, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE],
+			["text" => $name, "href" => ""],
+		]);
 
 		// One row more than the page holds: the row that tells whether the log
 		// goes on, which paging drops again.
@@ -79,7 +79,7 @@ class mod_secret_reads implements Module {
 		$found = $secrets->reads($id, $before, $after, Task\Secret::READS + 1);
 		$page = Task\Pager::paged($found, Task\Secret::READS, $before, $after);
 		$who = $chrome->who();
-		$rows = array();
+		$rows = [];
 
 		foreach ($page["rows"] as $read) {
 			$rows[] = $this->row($read, $who);
@@ -90,13 +90,13 @@ class mod_secret_reads implements Module {
 
 		$head->badge($secret->getScope());
 		$head->said(self::said($name));
-		$buttons->item("", self::BACK, array("href" => Task\Route::href(Task\Secret::PAGE)));
+		$buttons->item("", self::BACK, ["href" => Task\Route::href(Task\Secret::PAGE)]);
 		$head->buttons($buttons->data());
 
 		$steps = Task\Setup::steps($chrome, Task\Setup::SECRETS);
 		$path = Task\Secret::PAGE . "/" . $id . "/reads";
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"heading" => self::HEADING,
 			"order" => self::ORDER,
@@ -104,7 +104,7 @@ class mod_secret_reads implements Module {
 			"rows" => $rows,
 			"pager" => Task\Pager::of($path, $page["prev"], $page["next"]),
 			"trail" => Task\Setup::trail($steps),
-		), "secret_reads.tpl");
+		], "secret_reads.tpl");
 	}
 
 	/**
@@ -130,7 +130,7 @@ class mod_secret_reads implements Module {
 		$run = $read->getRunId();
 		$at = $read->getCreatedAt();
 
-		return array(
+		return [
 			"ago" => Task\Clock::ago($at),
 			"stamp" => Task\Clock::read($at),
 			"run" => $run,
@@ -138,7 +138,7 @@ class mod_secret_reads implements Module {
 			"short" => substr($run, 0, self::SHORT),
 			"key" => self::key($read),
 			"user" => $who->of($read->getUserName()),
-		);
+		];
 	}
 
 	/**

@@ -11,6 +11,6 @@ $module->setIcon("box");
 $module->enableSideBar();
 $module->setSideBarHref("/artifacts");
 $module->setSideBarRule("");
-$module->setTables(array("artifact"));
+$module->setTables(["artifact"]);
 
 return $module;

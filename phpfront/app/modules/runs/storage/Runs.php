@@ -72,7 +72,7 @@ class Runs {
 			return $run->getId();
 		}
 
-		$rows = $this->find(array("batch" => $batch, "limit" => self::BATCH_LIMIT));
+		$rows = $this->find(["batch" => $batch, "limit" => self::BATCH_LIMIT]);
 
 		return count($rows) === 0 ? $run->getId() : $rows[count($rows) - 1]->getId();
 	}
@@ -87,12 +87,12 @@ class Runs {
 	 * name, and `folders` is the list a reader may see, which keeps the page
 	 * from being filled with rows the reader is about to be denied.
 	 */
-	function find($filter = array()) {
+	function find($filter = []) {
 		$before = \Task\Run::pick($filter, "before");
 		$after = \Task\Run::pick($filter, "after");
 		$limit = isset($filter["limit"]) ? (int)$filter["limit"] : 15;
-		$where = array();
-		$args = array();
+		$where = [];
+		$args = [];
 
 		self::narrowed($filter, $where, $args);
 
@@ -136,12 +136,12 @@ class Runs {
 	/** children is the runs one run dispatched, oldest first. */
 	function children($id) {
 		if ($id === "") {
-			return array();
+			return [];
 		}
 
 		$sql = "SELECT " . self::COLUMNS . " FROM run WHERE parent_id = ? ORDER BY started_at ASC, id ASC";
 
-		return self::rows(\Task\DB::all($this->db, $sql, array($id)));
+		return self::rows(\Task\DB::all($this->db, $sql, [$id]));
 	}
 
 	/**
@@ -153,13 +153,13 @@ class Runs {
 	 */
 	function childrenOf($ids) {
 		if (count($ids) === 0) {
-			return array();
+			return [];
 		}
 
 		$sql = "SELECT " . self::CHILD_COLUMNS . " FROM run WHERE parent_id IN (" . \Task\Row::placeholders($ids) . ")";
 		$found = \Task\DB::all($this->db, $sql, $ids);
 
-		return is_array($found) ? $found : array();
+		return is_array($found) ? $found : [];
 	}
 
 	/**
@@ -171,9 +171,9 @@ class Runs {
 	 * the reader may see is not asked here, as the Go page does not ask it
 	 * either: the colour of a dot is not a permission.
 	 */
-	function latest($folders = array()) {
+	function latest($folders = []) {
 		$where = "state != ?";
-		$args = array(\Task\Run::RUNNING);
+		$args = [\Task\Run::RUNNING];
 
 		if (count($folders) > 0) {
 			$where .= " AND folder IN (" . \Task\Row::placeholders($folders) . ")";
@@ -185,7 +185,7 @@ class Runs {
 
 		$ranked = "SELECT id, ROW_NUMBER() OVER (PARTITION BY folder, dir, job ORDER BY started_at DESC, id DESC) AS latest FROM run WHERE " . $where;
 		$sql = "SELECT " . self::COLUMNS . " FROM run WHERE id IN (SELECT id FROM (" . $ranked . ") WHERE latest = 1) ORDER BY folder, dir, job";
-		$out = array();
+		$out = [];
 
 		foreach (self::rows(\Task\DB::all($this->db, $sql, $args)) as $run) {
 			$out[\Task\Folders::key($run->getFolder(), $run->getDir(), $run->getJob())] = $run;
@@ -205,8 +205,8 @@ class Runs {
 	 * carry seven columns and a page reads a run.
 	 */
 	function charted($filter) {
-		$where = array();
-		$args = array();
+		$where = [];
+		$args = [];
 
 		self::narrowed($filter, $where, $args);
 
@@ -226,7 +226,7 @@ class Runs {
 
 		$found = \Task\DB::all($this->db, $sql, $args);
 
-		return is_array($found) ? $found : array();
+		return is_array($found) ? $found : [];
 	}
 
 	/**
@@ -264,7 +264,7 @@ class Runs {
 			$where[] = "parent_id = ''";
 		}
 
-		$folders = isset($filter["folders"]) && is_array($filter["folders"]) ? $filter["folders"] : array();
+		$folders = isset($filter["folders"]) && is_array($filter["folders"]) ? $filter["folders"] : [];
 
 		if (count($folders) > 0) {
 			$where[] = "folder IN (" . \Task\Row::placeholders($folders) . ")";
@@ -287,7 +287,7 @@ class Runs {
 
 	/** rows turns what the database answered into runs. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

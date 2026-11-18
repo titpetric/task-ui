@@ -23,22 +23,22 @@ class Catalogue {
 	 * jobs are the root's.
 	 */
 	static function of($chrome, $pickFolder = "", $pickJob = "") {
-		$folders = array();
-		$jobs = array();
+		$folders = [];
+		$jobs = [];
 		$hosts = \Task\HostJobs::of($chrome, $pickJob);
 
 		foreach ($chrome->folders() as $folder) {
 			$id = \Task\Row::text($folder, "id");
 			$allow = \Task\Row::items($folder, "allow");
-			$runnable = array();
+			$runnable = [];
 
 			foreach (\Task\Row::items($folder, "jobs") as $job) {
 				if ($chrome->access->run($id, $allow, \Task\Row::items($job, "allow"))) {
-					$runnable[] = array(
+					$runnable[] = [
 						"id" => \Task\Row::text($job, "id"),
 						"name" => \Task\Row::text($job, "name"),
 						"folder" => $id,
-					);
+					];
 				}
 			}
 
@@ -46,13 +46,13 @@ class Catalogue {
 				continue;
 			}
 
-			$folders[] = array("id" => $id);
+			$folders[] = ["id" => $id];
 			$jobs = array_merge($jobs, $runnable);
 		}
 
 		if (count($hosts) > 0) {
 			$internal = \Task\Route::INTERNAL;
-			$folders[] = array("id" => $internal);
+			$folders[] = ["id" => $internal];
 		}
 
 		$pick = self::picked($pickFolder, $pickJob, $jobs);
@@ -65,11 +65,11 @@ class Catalogue {
 			$jobs[$at]["selected"] = $job["folder"] === $pick && $job["id"] === $pickJob;
 		}
 
-		return array(
+		return [
 			"folders" => $folders,
 			"jobs" => $jobs,
 			"hosts" => $hosts,
-		);
+		];
 	}
 
 	/**
@@ -100,10 +100,10 @@ class Catalogue {
 	 */
 	static function workflows($chrome) {
 		$lookup = new Lookup;
-		$out = array();
+		$out = [];
 
 		foreach (self::visible($chrome, $lookup->workflows()) as $id => $workflow) {
-			$out[] = array("id" => $id, "name" => $workflow["name"] === "" ? $id : $workflow["name"]);
+			$out[] = ["id" => $id, "name" => $workflow["name"] === "" ? $id : $workflow["name"]];
 		}
 
 		return $out;
@@ -114,7 +114,7 @@ class Catalogue {
 	 * steps they see, the steps of a workflow a step runs included.
 	 */
 	static function visible($chrome, $workflows) {
-		$out = array();
+		$out = [];
 
 		foreach ($workflows as $id => $workflow) {
 			$seen = true;

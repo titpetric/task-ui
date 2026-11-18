@@ -31,7 +31,7 @@ class mod_user_by_id implements Module {
 	}
 
 	function tables() {
-		return array("user");
+		return ["user"];
 	}
 
 	function serve() {

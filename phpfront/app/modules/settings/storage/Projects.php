@@ -17,7 +17,7 @@ class Projects {
 
 	/** hidden is the folder of every project set not to show in the sidebar. */
 	function hidden() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT folder FROM project WHERE sidebar_hidden = 1") as $row) {
 			$out[] = \Task\Row::text($row, "folder");
@@ -34,7 +34,7 @@ class Projects {
 	 * the same: the clone failed and the page lists it with git's output.
 	 */
 	function folders() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT folder FROM project ORDER BY folder") as $row) {
 			$out[] = \Task\Row::text($row, "folder");

@@ -38,7 +38,7 @@ class mod_keys implements Module {
 	}
 
 	function tables() {
-		return array("user", "workspace", "secret");
+		return ["user", "workspace", "secret"];
 	}
 
 	function serve() {
@@ -51,10 +51,10 @@ class mod_keys implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::KEYS, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::KEYS, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::KEYS, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::KEYS, "href" => ""],
+		]);
 
 		$folder = Task\Key::folder();
 		$keys = $folder["keys"];
@@ -62,7 +62,7 @@ class mod_keys implements Module {
 		$users = new Task\User($chrome->db);
 		$everyone = $users->all();
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($chrome),
 			"scopes" => $this->scopes($chrome, $folder),
 			"block" => $this->block($folder, $keys),
@@ -70,7 +70,7 @@ class mod_keys implements Module {
 			"holders" => $this->holders($chrome, $keys, $everyone),
 			"folders" => $this->folders(),
 			"trail" => Task\Setup::trail($steps),
-		), "keys.tpl");
+		], "keys.tpl");
 	}
 
 	/** head is the page head: the heading, the lead and the two add buttons. */
@@ -79,8 +79,8 @@ class mod_keys implements Module {
 		$head = new Task\Head(Task\Setup::KEYS, self::LEAD);
 
 		if ($chrome->allowed("key/edit")) {
-			$buttons->item("upload", "Upload key", array("href" => Task\Route::href("/settings/keys/upload")));
-			$buttons->primary("key", "Generate key", array("href" => Task\Route::href("/settings/keys/generate")));
+			$buttons->item("upload", "Upload key", ["href" => Task\Route::href("/settings/keys/upload")]);
+			$buttons->primary("key", "Generate key", ["href" => Task\Route::href("/settings/keys/generate")]);
 		}
 
 		$head->buttons($buttons->data());
@@ -94,12 +94,12 @@ class mod_keys implements Module {
 	 * a table.
 	 */
 	function block($folder, $keys) {
-		return array(
+		return [
 			"title" => "Every key",
 			"note" => Task\Row::text($folder, "dir"),
 			"empty" => count($keys) === 0 ? self::EMPTY_LINE : "",
-			"buttons" => array(),
-		);
+			"buttons" => [],
+		];
 	}
 
 	/**
@@ -113,14 +113,14 @@ class mod_keys implements Module {
 		$keys = $folder["keys"];
 		$workspaces = new Task\Workspace($chrome->db);
 		$rows = $workspaces->all();
-		$folders = array();
+		$folders = [];
 
 		foreach ($rows as $row) {
 			$folders[] = $row->getFolder();
 		}
 
-		$out = array();
-		$index = array();
+		$out = [];
+		$index = [];
 
 		foreach ($rows as $at => $row) {
 			$index[$row->getFolder()] = $at;
@@ -130,7 +130,7 @@ class mod_keys implements Module {
 		$out = $this->projects($chrome, $out, $index, $folders);
 		$out = $this->variables($chrome, $out, $index, $folders);
 
-		return array("instance" => $this->instance($folder), "workspaces" => $out);
+		return ["instance" => $this->instance($folder), "workspaces" => $out];
 	}
 
 	/**
@@ -143,8 +143,8 @@ class mod_keys implements Module {
 	 */
 	function instance($folder) {
 		$named = Task\Row::text($folder, "instance");
-		$chips = array();
-		$found = array();
+		$chips = [];
+		$found = [];
 
 		foreach ($folder["keys"] as $key) {
 			if ($key["name"] === $named) {
@@ -156,16 +156,16 @@ class mod_keys implements Module {
 			}
 
 			$name = $key["name"];
-			$chips[] = array(
+			$chips[] = [
 				"name" => $name,
 				"href" => Task\Route::href("/settings/keys/" . $name),
 				"title" => "Links of " . $name,
-			);
+			];
 		}
 
 		$set = count($found) > 0;
 
-		return array(
+		return [
 			"set" => $set,
 			"name" => $set ? $found["name"] : "",
 			"fingerprint" => $set ? $found["fingerprint"] : "",
@@ -173,7 +173,7 @@ class mod_keys implements Module {
 			"anchor" => "#key-" . $named,
 			"chips" => $chips,
 			"count" => count($chips),
-		);
+		];
 	}
 
 	/** workspace is one workspace's row, before its projects and variables. */
@@ -182,7 +182,7 @@ class mod_keys implements Module {
 		$title = $row->getTitle();
 		$base = "/settings/workspaces/" . $folder;
 		$scope = Task\Workspace::SCOPE . $row->getId();
-		$ssh = array();
+		$ssh = [];
 
 		foreach ($keys as $key) {
 			if ($key["purpose"] !== Task\Key::SSH || $key["scope"] !== $scope) {
@@ -190,14 +190,14 @@ class mod_keys implements Module {
 			}
 
 			$name = $key["name"];
-			$ssh[] = array(
+			$ssh[] = [
 				"name" => $name,
 				"href" => Task\Route::href($base . "/keys#key-" . $name),
 				"title" => $name . ", to every run of " . $folder,
-			);
+			];
 		}
 
-		return array(
+		return [
 			"folder" => $folder,
 			"title" => $title === "" ? $folder : $title,
 			"badge" => $title !== "" && $title !== $folder ? $folder : "",
@@ -208,7 +208,7 @@ class mod_keys implements Module {
 			"secrets" => 0,
 			"ssh" => $ssh,
 			"count" => count($ssh),
-		);
+		];
 	}
 
 	/**
@@ -217,7 +217,7 @@ class mod_keys implements Module {
 	 * workspace of their own for the default workspace. frontend/key.go:96.
 	 */
 	function projects($chrome, $rows, $index, $folders) {
-		$held = array();
+		$held = [];
 
 		foreach ($chrome->folders() as $folder) {
 			$id = Task\Row::text($folder, "id");
@@ -231,7 +231,7 @@ class mod_keys implements Module {
 			$at = $index[$name];
 
 			if (!isset($held[$at])) {
-				$held[$at] = array();
+				$held[$at] = [];
 			}
 
 			$held[$at][] = $id;
@@ -291,17 +291,17 @@ class mod_keys implements Module {
 	 */
 	function holders($chrome, $keys, $users) {
 		$who = $chrome->who();
-		$out = array();
+		$out = [];
 
 		foreach (Task\User::ROLES as $role) {
 			$brought = self::ofRole($keys, $role);
 
-			$out[] = array(
-				"user" => array(),
+			$out[] = [
+				"user" => [],
 				"role" => $role,
 				"direct" => self::chips($brought, $role, false),
-				"viaRole" => array(),
-			);
+				"viaRole" => [],
+			];
 		}
 
 		foreach ($users as $user) {
@@ -310,12 +310,12 @@ class mod_keys implements Module {
 			$linked = self::ofUser($keys, $name);
 			$brought = self::ofRole($keys, $role);
 
-			$out[] = array(
+			$out[] = [
 				"user" => $who->of($name),
 				"role" => $role,
 				"direct" => self::chips($linked, $role, false),
 				"viaRole" => self::chips($brought, $role, true),
-			);
+			];
 		}
 
 		return $out;
@@ -323,7 +323,7 @@ class mod_keys implements Module {
 
 	/** ofRole is the instance SSH keys a role brings, in the folder's order. */
 	static function ofRole($keys, $role) {
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			if ($key["purpose"] === Task\Key::SSH && $key["workspace"] === "" && in_array($role, $key["roles"], true)) {
@@ -336,7 +336,7 @@ class mod_keys implements Module {
 
 	/** ofUser is the instance SSH keys linked to one user by name. */
 	static function ofUser($keys, $name) {
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			if ($key["purpose"] === Task\Key::SSH && $key["workspace"] === "" && in_array($name, $key["users"], true)) {
@@ -352,15 +352,15 @@ class mod_keys implements Module {
 	 * own says its fingerprint, and one their role brings says the role.
 	 */
 	static function chips($keys, $role, $via) {
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			$name = $key["name"];
-			$out[] = array(
+			$out[] = [
 				"name" => $name,
 				"href" => Task\Route::href("/settings/keys/" . $name),
 				"title" => $via ? $name . ", from the " . $role . " role" : $name . ", " . $key["fingerprint"],
-			);
+			];
 		}
 
 		return $out;
@@ -372,14 +372,14 @@ class mod_keys implements Module {
 	 * them. frontend/key.go:143.
 	 */
 	function folders() {
-		$out = array();
+		$out = [];
 
 		foreach (Task\Host::keyFolders() as $found) {
-			$out[] = array(
+			$out[] = [
 				"project" => Task\Row::text($found, "project"),
 				"dir" => Task\Row::text($found, "dir"),
 				"keys" => implode(", ", Task\Row::items($found, "keys")),
-			);
+			];
 		}
 
 		return $out;

@@ -15,7 +15,7 @@ require "ext/autoload.php";
 
 /** roots are the template directories, the theme's last so an include resolves into it. */
 function roots() {
-	$out = array();
+	$out = [];
 
 	foreach (glob("modules/*/templates") as $dir) {
 		$out[] = $dir . "/";
@@ -45,7 +45,7 @@ $count = 0;
 foreach (roots() as $root) {
 	// Every root searches itself and the theme, the way Task\View does, so an
 	// include compiles against the same paths a request resolves.
-	$paths = array($root, "theme/templates/");
+	$paths = [$root, "theme/templates/"];
 	$tpl = new MiniTPL\Template($paths);
 
 	foreach (sources($root) as $source) {

@@ -44,7 +44,7 @@ class mod_secret_new implements Module {
 	}
 
 	function tables() {
-		return array("workspace");
+		return ["workspace"];
 	}
 
 	function serve() {
@@ -57,11 +57,11 @@ class mod_secret_new implements Module {
 			return;
 		}
 
-		$chrome->heading(self::TITLE, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE),
-			array("text" => self::TITLE, "href" => ""),
-		));
+		$chrome->heading(self::TITLE, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE],
+			["text" => self::TITLE, "href" => ""],
+		]);
 
 		// ?scope= opens the form on one workspace, which the Secrets page
 		// links with while it is filtered to that workspace. A scope that
@@ -81,7 +81,7 @@ class mod_secret_new implements Module {
 		// opens are answered empty here: no ID to post back, no name to start
 		// from, no value to draw, and Secret checked, which is what a variable
 		// a reader adds is.
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"id" => "",
 			"name" => "",
@@ -94,7 +94,7 @@ class mod_secret_new implements Module {
 			"options" => Task\Secret::options($scope, $workspaces->all()),
 			"cancel" => Task\Route::href(Task\Secret::PAGE),
 			"trail" => Task\Setup::trail($steps),
-		), "secret_form.tpl");
+		], "secret_form.tpl");
 	}
 }
 

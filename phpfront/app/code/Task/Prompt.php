@@ -19,13 +19,13 @@ class Prompt {
 
 	/** root is where the prompt asks on a page of no folder, which is the root's. */
 	static function root() {
-		return array(
+		return [
 			"folder" => Route::INTERNAL,
 			"dir" => "",
 			"run" => "",
 			"label" => Route::INTERNAL,
 			"href" => Route::href("/f/" . Route::INTERNAL),
-		);
+		];
 	}
 
 	/**
@@ -46,13 +46,13 @@ class Prompt {
 		$held = Route::heldHref($where, $folders, $workspaces);
 		$href = $held === "" ? "/f/" . Route::INTERNAL : $held;
 
-		return array(
+		return [
 			"folder" => $folder,
 			"dir" => $dir,
 			"run" => "",
 			"label" => $where,
 			"href" => Route::href($href),
-		);
+		];
 	}
 
 	/**
@@ -87,14 +87,14 @@ class Prompt {
 	 * mentions are the board's, where a note is written to someone.
 	 */
 	static function field($placeholder) {
-		return array(
+		return [
 			"name" => "prompt",
 			"rows" => 3,
 			"label" => "The prompt",
 			"placeholder" => $placeholder,
 			"mentions" => false,
 			"toolbar" => "full",
-		);
+		];
 	}
 
 	/** short is the start of a run's ID, which is what the panel's line names it by. */
@@ -121,10 +121,10 @@ class Prompt {
 		}
 
 		$place = Route::place($folder, $dir);
-		$fields = array(
-			array("name" => "folder", "value" => $folder),
-			array("name" => "dir", "value" => $dir),
-		);
+		$fields = [
+			["name" => "folder", "value" => $folder],
+			["name" => "dir", "value" => $dir],
+		];
 
 		return self::asked($chrome, self::API, $place, $place . "/", $fields, $open, $seen);
 	}
@@ -145,7 +145,7 @@ class Prompt {
 
 		$api = "/api/workspaces/" . Route::INTERNAL . "/prompt";
 
-		return self::asked($chrome, $api, Route::INTERNAL, "the root", array(), true, $seen);
+		return self::asked($chrome, $api, Route::INTERNAL, "the root", [], true, $seen);
 	}
 
 	/**
@@ -160,13 +160,13 @@ class Prompt {
 		$notes = new Threads\Notes($chrome->db);
 		$roots = $notes->inPlace($place);
 		$replies = $notes->replies(Note::ids($roots));
-		$threads = array();
+		$threads = [];
 
 		foreach ($roots as $note) {
 			$threads[] = Note::thread($note, $replies, $chrome, $seen);
 		}
 
-		return array(
+		return [
 			"title" => "Prompt",
 			"note" => "ask Claude Code in " . $where . "; it reads the CLAUDE.md and .claude/ there, in the folders above and in the workspace's home",
 			"open" => $open || count($threads) > 0,
@@ -177,13 +177,13 @@ class Prompt {
 			"editor" => self::field("what does this directory build, and how"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in " . $where . ", one prompt at a time. Claude replies under your question.",
-			"picks" => array(),
+			"picks" => [],
 			"after" => "",
 			"options" => $chrome->runAs(),
 			"place" => $place,
 			"area" => "",
 			"threads" => $threads,
-		);
+		];
 	}
 
 	/**
@@ -223,30 +223,30 @@ class Prompt {
 		$users = new User;
 		$replies = $notes->replies(Note::ids($roots));
 		$agents = $users->agents();
-		$threads = array();
+		$threads = [];
 
 		foreach ($roots as $note) {
 			$threads[] = Note::thread($note, $replies, $chrome, $seen);
 		}
 
-		return array(
+		return [
 			"title" => "Prompt",
 			"note" => "ask Claude Code about this run and its output, in " . $where . "/",
 			"open" => true,
 			"hidden" => !$asks && count($threads) === 0,
 			"watch" => !$asks,
 			"api" => self::API,
-			"fields" => array(array("name" => "run", "value" => $about)),
+			"fields" => [["name" => "run", "value" => $about]],
 			"editor" => self::field("why did this run end the way it did"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in " . $where . "/, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.",
-			"picks" => array(),
+			"picks" => [],
 			"after" => "",
 			"options" => $chrome->runAs(),
 			"place" => $where,
 			"area" => "",
 			"threads" => $threads,
-		);
+		];
 	}
 
 	/**
@@ -280,29 +280,29 @@ class Prompt {
 		$replies = $notes->replies(Note::ids($roots));
 		$agents = $users->agents();
 		$place = count($roots) === 0 ? $flow["promptPlace"] : $roots[0]->getDir();
-		$threads = array();
+		$threads = [];
 
 		foreach ($roots as $note) {
 			$threads[] = Note::thread($note, $replies, $chrome, null);
 		}
 
-		return array(
+		return [
 			"title" => "Prompts",
 			"note" => "the run's prompt and summary steps, each with the output of the steps before it",
 			"open" => $running,
 			"hidden" => count($threads) === 0,
 			"watch" => true,
 			"api" => "",
-			"fields" => array(),
+			"fields" => [],
 			"editor" => self::field(""),
 			"lead" => "",
 			"tail" => "",
-			"picks" => array(),
+			"picks" => [],
 			"after" => "",
-			"options" => array("users" => array()),
+			"options" => ["users" => []],
 			"place" => $place,
 			"area" => "",
 			"threads" => $threads,
-		);
+		];
 	}
 }

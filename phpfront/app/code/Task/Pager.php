@@ -21,7 +21,7 @@ class Pager {
 	 * size() is the number behind the pick. Go holds one pageSizes for every
 	 * list that pages, so this is one list and not one per module.
 	 */
-	const SIZES = array("15", "50", "100");
+	const SIZES = ["15", "50", "100"];
 
 	/**
 	 * size is the rows a page holds: ?n= when it names one, else the first.
@@ -66,18 +66,18 @@ class Pager {
 		}
 
 		if (count($rows) === 0) {
-			return array(
+			return [
 				"rows" => $rows,
 				"prev" => "",
 				"next" => "",
-			);
+			];
 		}
 
-		return array(
+		return [
 			"rows" => $rows,
 			"prev" => $newer ? $rows[0]->getId() : "",
 			"next" => $older ? $rows[count($rows) - 1]->getId() : "",
-		);
+		];
 	}
 
 	/**
@@ -88,10 +88,10 @@ class Pager {
 	 * list that fits on one page needs no test of its own here.
 	 */
 	static function of($path, $prev, $next) {
-		return array(
+		return [
 			"prev" => self::link($path, "after", $prev),
 			"next" => self::link($path, "before", $next),
-		);
+		];
 	}
 
 	/**
@@ -116,7 +116,7 @@ class Pager {
 
 		ksort($fields);
 
-		$query = array();
+		$query = [];
 
 		foreach ($fields as $name => $value) {
 			$query[] = Route::queryEscape($name) . "=" . Route::queryEscape($value);
@@ -127,7 +127,7 @@ class Pager {
 
 	/** query is the request's query, less the cursor of either direction. */
 	static function query() {
-		$out = array();
+		$out = [];
 
 		if (!isset($_GET) || !is_array($_GET)) {
 			return $out;

@@ -10,7 +10,7 @@ class SearchDocument {
 	const TABLE = "search_document";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"kind",
 		"path",
@@ -26,13 +26,13 @@ class SearchDocument {
 		"size",
 		"modified_at",
 		"indexed_at",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("modified_at", "indexed_at");
+	public static $stamps = ["modified_at", "indexed_at"];
 	/** ID */
 	var $id = "";
 	/** Kind */
@@ -64,7 +64,7 @@ class SearchDocument {
 	/** Indexed At */
 	var $indexed_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->kind = \Task\Row::text($row, "kind");
 		$this->path = \Task\Row::text($row, "path");
@@ -254,7 +254,7 @@ class SearchDocument {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

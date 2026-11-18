@@ -54,7 +54,7 @@ class mod_profile implements Module {
 	}
 
 	function tables() {
-		return array("user", "run", "workflow_run", "workflow_run_step", "note", "workspace");
+		return ["user", "run", "workflow_run", "workflow_run_step", "note", "workspace"];
 	}
 
 	function serve() {
@@ -84,7 +84,7 @@ class mod_profile implements Module {
 		$workspaces = $chrome->workspaces();
 		$edits = $own || $chrome->allowed("user/edit");
 
-		$view->page(array(
+		$view->page([
 			"who" => $this->who($chrome, $user, $own),
 			"buttons" => $this->buttons($chrome, $user, $own, $edits),
 			"menu" => $this->menu($chrome, $user),
@@ -93,7 +93,7 @@ class mod_profile implements Module {
 			"notes" => $this->notes($chrome, $name),
 			"prompts" => $this->prompts($chrome, $name, $workspaces),
 			"keys" => $this->keys($chrome, $name, $own),
-		), "profile.tpl");
+		], "profile.tpl");
 	}
 
 	/**
@@ -103,14 +103,14 @@ class mod_profile implements Module {
 	 */
 	function crumbs($chrome, $name) {
 		if (!$chrome->allowed("user/view")) {
-			return array(array("text" => $name, "href" => ""));
+			return [["text" => $name, "href" => ""]];
 		}
 
-		return array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => "Users", "href" => "/settings/users"),
-			array("text" => $name, "href" => ""),
-		);
+		return [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => "Users", "href" => "/settings/users"],
+			["text" => $name, "href" => ""],
+		];
 	}
 
 	/** who is the head of the page: the avatar, the name and the lead under it. */
@@ -123,12 +123,12 @@ class mod_profile implements Module {
 			$lead .= " Joined " . Task\Clock::ago($created) . ".";
 		}
 
-		return array(
+		return [
 			"name" => $name,
 			"role" => Task\User::role($user),
 			"initials" => Task\User::initials($user),
 			"lead" => $lead,
-		);
+		];
 	}
 
 	/**
@@ -144,17 +144,17 @@ class mod_profile implements Module {
 		$name = $user->getName();
 
 		if ($this->manages($chrome, $user, $own)) {
-			$buttons->item("copy", "New MCP token", array(
+			$buttons->item("copy", "New MCP token", [
 				"data-api" => "/api/users/" . $user->getId() . "/mcp",
 				"data-method" => "POST",
 				"data-copy-fill" => Task\User\Connect::add(Task\Route::site()),
 				"data-notice" => "MCP token copied as the claude mcp add command",
 				"title" => "Make an MCP token for " . $name . " and copy the claude mcp add command",
-			));
+			]);
 		}
 
 		if ($edits) {
-			$buttons->primary("edit", "Edit", array("href" => Task\Route::href("/users/" . $name . "/edit")));
+			$buttons->primary("edit", "Edit", ["href" => Task\Route::href("/users/" . $name . "/edit")]);
 		}
 
 		return $buttons->data();
@@ -200,13 +200,13 @@ class mod_profile implements Module {
 		$id = $user->getId();
 		$menu = new Task\Menu("Actions on " . $name);
 
-		$menu->item("list", "Runs by this user", array("href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))));
-		$menu->whenDanger($this->deletes($chrome, $user), "trash", "Delete", array(
+		$menu->item("list", "Runs by this user", ["href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))]);
+		$menu->whenDanger($this->deletes($chrome, $user), "trash", "Delete", [
 			"data-delete" => "/api/users/" . $id,
 			"data-confirm" => "Delete the user " . $name . self::DROPS,
 			"data-confirm-ok" => "Delete",
 			"data-next" => "/settings/users?notice=User+deleted",
-		));
+		]);
 
 		return $menu->data();
 	}
@@ -235,26 +235,26 @@ class mod_profile implements Module {
 	 */
 	function runs($chrome, $seen, $name, $workspaces) {
 		$store = new Task\Runs\Runs($chrome->db);
-		$filter = array(
+		$filter = [
 			"user" => $name,
 			"folders" => Task\User::folders($chrome->user),
 			"limit" => self::COUNT,
-		);
+		];
 		$found = $seen->of($store->find($filter));
-		$rows = array();
+		$rows = [];
 
 		foreach ($found as $run) {
 			$rows[] = $this->run($run, $workspaces);
 		}
 
-		return array(
+		return [
 			"block" => self::block("Runs", "the latest, in folders you can see", count($rows) === 0 ? "No runs yet." : ""),
 			"rows" => $rows,
-			"more" => array(
+			"more" => [
 				"href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name)),
 				"label" => "Every run by " . $name,
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -283,14 +283,14 @@ class mod_profile implements Module {
 
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Task\Clock::read($run->getStartedAt()));
-		$menu->item("file", "Open the run's page", array("href" => Task\Route::href("/runs/" . $id)));
-		$menu->when($run->getCastPath() !== "" && $ended, "play", "Replay the recording", array(
+		$menu->item("file", "Open the run's page", ["href" => Task\Route::href("/runs/" . $id)]);
+		$menu->when($run->getCastPath() !== "" && $ended, "play", "Replay the recording", [
 			"data-replay" => $id,
 			"data-replay-title" => $label,
 			"data-replay-who" => $run->getUserName(),
-		));
+		]);
 
-		return array(
+		return [
 			"id" => $id,
 			"ago" => Task\Clock::ago($run->getStartedAt()),
 			"stamp" => Task\Clock::read($run->getStartedAt()),
@@ -300,7 +300,7 @@ class mod_profile implements Module {
 			"state" => Task\Run::label($run),
 			"attach" => $ended ? "View" : "Attach",
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -313,25 +313,25 @@ class mod_profile implements Module {
 	 */
 	function flows($chrome, $name) {
 		$store = new Task\Workflows\Runs($chrome->db);
-		$rows = array();
+		$rows = [];
 
 		foreach ($store->byUser($chrome->user, $name, self::COUNT) as $run) {
 			$flow = $run->getWorkflowId();
 
-			$rows[] = array(
+			$rows[] = [
 				"ago" => Task\Clock::ago($run->getStartedAt()),
 				"stamp" => Task\Clock::read($run->getStartedAt()),
 				"name" => $run->getName(),
 				"href" => "/workflows/" . $flow,
 				"state" => $run->getState(),
 				"view" => "/workflows/" . $flow . "/runs/" . $run->getId(),
-			);
+			];
 		}
 
-		return array(
+		return [
 			"block" => self::block("Workflow runs", "the latest you can see", count($rows) === 0 ? "No workflow runs yet." : ""),
 			"rows" => $rows,
-		);
+		];
 	}
 
 	/**
@@ -343,7 +343,7 @@ class mod_profile implements Module {
 	 * what the reader may read.
 	 */
 	function notes($chrome, $name) {
-		$rows = array();
+		$rows = [];
 
 		if ($chrome->allowed("note/view")) {
 			$store = new Task\Threads\Notes($chrome->db);
@@ -353,10 +353,10 @@ class mod_profile implements Module {
 			}
 		}
 
-		return array(
+		return [
 			"block" => self::block("Notes", "the latest " . $name . " wrote", count($rows) === 0 ? "No notes yet." : ""),
 			"rows" => $rows,
-		);
+		];
 	}
 
 	/**
@@ -368,16 +368,16 @@ class mod_profile implements Module {
 	 * link is the note's anchor alone.
 	 */
 	function prompts($chrome, $name, $workspaces) {
-		$rows = array();
+		$rows = [];
 
 		if ($chrome->allowed("prompt/view")) {
 			$rows = $this->asked($chrome, $name, $workspaces);
 		}
 
-		return array(
+		return [
 			"block" => self::block("Prompts", "the latest " . $name . " asked, in places you can see", count($rows) === 0 ? "No prompts yet." : ""),
 			"rows" => $rows,
-		);
+		];
 	}
 
 	/**
@@ -387,7 +387,7 @@ class mod_profile implements Module {
 	function asked($chrome, $name, $workspaces) {
 		$store = new Task\Threads\Notes($chrome->db);
 		$folders = $chrome->folders();
-		$rows = array();
+		$rows = [];
 
 		foreach ($store->promptsByUser($name, self::WINDOW * self::COUNT) as $note) {
 			if (count($rows) === self::COUNT) {
@@ -422,7 +422,7 @@ class mod_profile implements Module {
 	function note($note, $page, $dir = "") {
 		$id = $note->getId();
 
-		return array(
+		return [
 			"id" => $id,
 			"href" => $page . "#note-" . $id,
 			"excerpt" => Task\Note::excerpt($note->getBody()),
@@ -430,7 +430,7 @@ class mod_profile implements Module {
 			"ago" => Task\Clock::ago($note->getCreatedAt()),
 			"stamp" => Task\Clock::read($note->getCreatedAt()),
 			"dir" => $dir,
-		);
+		];
 	}
 
 	/**
@@ -485,12 +485,12 @@ class mod_profile implements Module {
 	static function block($title, $note, $empty) {
 		$buttons = new Task\Buttons(true);
 
-		return array(
+		return [
 			"title" => $title,
 			"note" => $note,
 			"empty" => $empty,
 			"buttons" => $buttons->data(),
-		);
+		];
 	}
 }
 

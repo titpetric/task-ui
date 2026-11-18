@@ -9,18 +9,18 @@ require "ext/autoload.php";
 // holds both a run they see and a run they do not.
 $db = Task\DB::writer();
 
-$db->replace("user", array(
+$db->replace("user", [
 	"id" => "fx-seen-u1",
 	"name" => "fx-seen-bob",
 	"role" => "runner",
 	"folders" => '["fx-seen"]',
-));
+]);
 
 // run writes one run of a folder, in the shape a write leaves.
 function run($id, $folder) {
 	$db = Task\DB::writer();
 
-	$db->replace("run", array(
+	$db->replace("run", [
 		"id" => $id,
 		"folder" => $folder,
 		"job" => "build",
@@ -29,7 +29,7 @@ function run($id, $folder) {
 		"state" => "ok",
 		"started_at" => "2026-11-02 10:01:00.000 +0000 UTC",
 		"finished_at" => "2026-11-02 10:01:02.500 +0000 UTC",
-	));
+	]);
 }
 
 run("fx-seen-1", "fx-seen");
@@ -44,7 +44,7 @@ $seen = new Task\Seen($chrome);
 
 // ids names the runs of a list, in the order it holds them.
 function ids($rows) {
-	$out = array();
+	$out = [];
 
 	foreach ($rows as $row) {
 		$out[] = $row->getId();
@@ -55,7 +55,7 @@ function ids($rows) {
 
 // The rows are read by their own IDs, because the suite shares a connection
 // and a filter of a folder reads whatever another fixture left in it.
-$list = array($runs->get("fx-seen-1"), $runs->get("fx-seen-2"), $runs->get("fx-seen-3"));
+$list = [$runs->get("fx-seen-1"), $runs->get("fx-seen-2"), $runs->get("fx-seen-3")];
 
 // Of the list, the runs of the folder the row names, in the order they
 // arrived.
@@ -72,8 +72,8 @@ echo var_export($seen->run(""), true), "\n";
 // rows() is the same rule over the rows themselves, for the charts of a window
 // that hydrates none of it: the rule is one sentence in Task\Run::allowed and
 // both paths ask it, so the filter of a chart cannot drift from the list's.
-$charted = $runs->charted(array("limit" => 0));
-$mine = array();
+$charted = $runs->charted(["limit" => 0]);
+$mine = [];
 
 foreach ($charted as $row) {
 	if (strpos(Task\Row::text($row, "id"), "fx-seen-") === 0) {
@@ -82,7 +82,7 @@ foreach ($charted as $row) {
 }
 
 $rows = new Task\Seen($chrome);
-$kept = array();
+$kept = [];
 
 foreach ($rows->rows($mine) as $row) {
 	$kept[] = Task\Row::text($row, "id");

@@ -33,7 +33,7 @@ echo $named["name"], "\n";
 
 // names is what the binding folds the hub into: the name of each host by the
 // address it answers on.
-$held = array();
+$held = [];
 
 foreach ($store->all() as $host) {
 	if (substr($host->name, 0, 7) === "fx-inv-" || $host->address === "10.77.0.4") {
@@ -49,11 +49,11 @@ echo $names["10.77.0.2"], " ", $names["10.77.0.3"], " ", $names["10.77.0.4"], "\
 // leaves a row that is there as it is: the name a person gave a host outlives
 // the hub renaming it.
 $mod = new mod_inventory;
-$systems = array(
-	array("name" => "fx-inv-hub-name", "host" => "10.77.0.2"),
-	array("name" => "fx-inv-fresh", "host" => "10.77.0.5"),
-	array("name" => "no address", "host" => ""),
-);
+$systems = [
+	["name" => "fx-inv-hub-name", "host" => "10.77.0.2"],
+	["name" => "fx-inv-fresh", "host" => "10.77.0.5"],
+	["name" => "no address", "host" => ""],
+];
 $by = $mod->sync($store, $held, $systems);
 
 echo $by["10.77.0.2"]->name, " ", $by["10.77.0.5"]->name, " ", $by["10.77.0.5"]->source, "\n";
@@ -62,17 +62,17 @@ echo var_export(isset($by[""]), true), "\n";
 // A row of the table draws whether the hub says anything of it or not: a
 // system with no status reads as no measures, and the menu says where the row
 // came from.
-$measured = array(
+$measured = [
 	"id" => "sys-fx-inv", "name" => "fx-inv-box", "host" => "10.77.0.2", "status" => "up", "up" => true,
 	"cpus" => 8, "cpu" => 12.5, "memory" => 48, "disk" => 71, "measured" => true,
 	"memory_used" => 15.5, "memory_total" => 32, "disk_used" => 355, "disk_total" => 500,
-);
-$quiet = array(
+];
+$quiet = [
 	"id" => "", "name" => "fx-inv-box", "host" => "10.77.0.2", "status" => "", "up" => false,
 	"cpus" => 0, "cpu" => 0, "memory" => 0, "disk" => 0, "measured" => false,
 	"memory_used" => 0, "memory_total" => 0, "disk_used" => 0, "disk_total" => 0,
-);
-$logins = array("10.77.0.2" => "debian@10.77.0.2");
+];
+$logins = ["10.77.0.2" => "debian@10.77.0.2"];
 $entry = $by["10.77.0.2"];
 
 $line = $mod->row($measured, $logins, true, $entry, true);
@@ -80,7 +80,7 @@ $line = $mod->row($measured, $logins, true, $entry, true);
 echo $line["status"], " ", var_export($line["drop"] !== "", true), " ", $line["login"], "\n";
 echo var_export(strpos($line["drop"], $entry->id) !== false, true), "\n";
 
-$line = $mod->row($quiet, array(), false, $entry, false);
+$line = $mod->row($quiet, [], false, $entry, false);
 
 echo $line["status"], " ", var_export($line["drop"], true), " ", var_export($line["measured"], true), "\n";
 

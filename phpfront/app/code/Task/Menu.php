@@ -13,8 +13,8 @@ class Menu {
 	const ATTRS = '/^(data-[a-z0-9-]+|aria-[a-z]+|title)$/';
 
 	var $label = "";
-	var $details = array();
-	var $items = array();
+	var $details = [];
+	var $items = [];
 
 	function __construct($label) {
 		$this->label = $label;
@@ -25,12 +25,12 @@ class Menu {
 	 * columns leave out.
 	 */
 	function detail($label, $value, $mono = false, $title = "") {
-		$this->details[] = array(
+		$this->details[] = [
 			"label" => $label,
 			"value" => $value,
 			"mono" => $mono,
 			"title" => $title,
-		);
+		];
 
 		return $this;
 	}
@@ -45,14 +45,14 @@ class Menu {
 	 * A null value is the attribute on its own, with no `=""` after it: what
 	 * the script reads of `data-run` is whether it is there.
 	 */
-	function item($icon, $label, $attrs = array()) {
+	function item($icon, $label, $attrs = []) {
 		$this->items[] = $this->build($icon, $label, $attrs, false);
 
 		return $this;
 	}
 
 	/** danger adds an entry of the last group, in the bad colour. */
-	function danger($icon, $label, $attrs = array()) {
+	function danger($icon, $label, $attrs = []) {
 		$this->items[] = $this->build($icon, $label, $attrs, true);
 
 		return $this;
@@ -60,13 +60,13 @@ class Menu {
 
 	/** sep ends a group: the component draws a line before the next item. */
 	function sep() {
-		$this->items[] = array("sep" => true);
+		$this->items[] = ["sep" => true];
 
 		return $this;
 	}
 
 	/** when adds an entry only where the condition holds. */
-	function when($condition, $icon, $label, $attrs = array()) {
+	function when($condition, $icon, $label, $attrs = []) {
 		if ($condition) {
 			$this->item($icon, $label, $attrs);
 		}
@@ -75,7 +75,7 @@ class Menu {
 	}
 
 	/** whenDanger adds a danger entry only where the condition holds. */
-	function whenDanger($condition, $icon, $label, $attrs = array()) {
+	function whenDanger($condition, $icon, $label, $attrs = []) {
 		if ($condition) {
 			$this->danger($icon, $label, $attrs);
 		}
@@ -100,12 +100,12 @@ class Menu {
 
 	/** data is the scope the component reads. */
 	function data() {
-		return array(
+		return [
 			"label" => $this->label,
 			"empty" => $this->empty(),
 			"details" => $this->details,
 			"groups" => $this->groups(),
-		);
+		];
 	}
 
 	/**
@@ -113,9 +113,9 @@ class Menu {
 	 * danger items as the last group.
 	 */
 	function groups() {
-		$groups = array();
-		$group = array();
-		$danger = array();
+		$groups = [];
+		$group = [];
+		$danger = [];
 
 		foreach ($this->items as $item) {
 			if (isset($item["sep"])) {
@@ -123,7 +123,7 @@ class Menu {
 					$groups[] = $group;
 				}
 
-				$group = array();
+				$group = [];
 
 				continue;
 			}
@@ -157,7 +157,7 @@ class Menu {
 	 * with an empty value, which is a different thing and still written.
 	 */
 	function build($icon, $label, $attrs, $danger) {
-		$item = array(
+		$item = [
 			"icon" => $icon,
 			"label" => $label,
 			"note" => "",
@@ -166,8 +166,8 @@ class Menu {
 			"disabled" => false,
 			"danger" => $danger,
 			"attrs" => "",
-		);
-		$written = array();
+		];
+		$written = [];
 
 		foreach ($attrs as $name => $value) {
 			switch ($name) {

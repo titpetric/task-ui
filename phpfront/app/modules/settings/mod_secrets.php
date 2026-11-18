@@ -67,7 +67,7 @@ class mod_secrets implements Module {
 	}
 
 	function tables() {
-		return array("secret", "secret_read", "workspace");
+		return ["secret", "secret_read", "workspace"];
 	}
 
 	function serve() {
@@ -80,10 +80,10 @@ class mod_secrets implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::SECRETS, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::SECRETS, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::SECRETS, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::SECRETS, "href" => ""],
+		]);
 
 		$secrets = new Task\Secret($chrome->db);
 		$workspaces = new Task\Workspace($chrome->db);
@@ -103,7 +103,7 @@ class mod_secrets implements Module {
 		}
 
 		$vault = Task\Host::variables();
-		$values = isset($vault["values"]) ? $vault["values"] : array();
+		$values = isset($vault["values"]) ? $vault["values"] : [];
 		$counts = $secrets->counts();
 		$last = $secrets->last();
 		$key = Task\Key::folder();
@@ -114,13 +114,13 @@ class mod_secrets implements Module {
 		$buttons->primary("plus", self::ADD, self::action($key["instance"], $only));
 		$head->buttons($buttons->data());
 
-		$drawn = array();
+		$drawn = [];
 
 		foreach ($found as $secret) {
 			$drawn[] = $this->row($secret, $chrome, $titles, $values, $counts, $last);
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"workspace" => $only,
 			"every" => Task\Route::href(Task\Secret::PAGE),
@@ -128,14 +128,14 @@ class mod_secrets implements Module {
 			"error" => isset($vault["error"]) ? $vault["error"] : "",
 			"rows" => $drawn,
 			"env" => self::env(),
-			"envBlock" => array(
+			"envBlock" => [
 				"title" => self::ENV_HEADING,
 				"note" => self::ENV_NOTE,
 				"empty" => "",
-				"buttons" => array(),
-			),
+				"buttons" => [],
+			],
 			"trail" => Task\Setup::trail($steps),
-		), "secrets.tpl");
+		], "secrets.tpl");
 	}
 
 	/**
@@ -149,7 +149,7 @@ class mod_secrets implements Module {
 	 */
 	static function action($instance, $workspace) {
 		if ($instance === "") {
-			return array("disabled" => self::NO_KEY);
+			return ["disabled" => self::NO_KEY];
 		}
 
 		$href = Task\Secret::PAGE . "/new";
@@ -158,17 +158,17 @@ class mod_secrets implements Module {
 			$href .= "?scope=" . Task\Workspace::SCOPE . Task\Route::urlEscape($workspace);
 		}
 
-		return array("href" => Task\Route::href($href));
+		return ["href" => Task\Route::href($href)];
 	}
 
 	/** block is the head of the Variables section: how many there are, and the line for none. */
 	static function block($found) {
-		return array(
+		return [
 			"title" => self::HEADING,
 			"note" => Task\Setup::says($found, "variable", "variables"),
 			"empty" => $found === 0 ? self::EMPTY_LINE : "",
-			"buttons" => array(),
-		);
+			"buttons" => [],
+		];
 	}
 
 	/**
@@ -189,7 +189,7 @@ class mod_secrets implements Module {
 		$value = isset($values[$id]) ? $values[$id] : "";
 		$menu = $this->menu($secret, $chrome, $applies);
 
-		return array(
+		return [
 			"name" => $name,
 			"secret" => $secret_value,
 			"value" => $secret_value ? "" : $value,
@@ -199,7 +199,7 @@ class mod_secrets implements Module {
 			"readsHref" => Task\Route::href(Task\Secret::PAGE . "/" . $id . "/reads"),
 			"read" => self::read($id, $last),
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -208,12 +208,12 @@ class mod_secrets implements Module {
 	 */
 	static function read($id, $last) {
 		if (!isset($last[$id])) {
-			return array(
+			return [
 				"run" => "",
 				"href" => "",
 				"ago" => "",
 				"title" => "",
-			);
+			];
 		}
 
 		$row = $last[$id];
@@ -223,12 +223,12 @@ class mod_secrets implements Module {
 		$inside = $dir === "" ? "" : $dir . "/";
 		$job = $row->getFolder() . "/" . $inside . $row->getJob();
 
-		return array(
+		return [
 			"run" => $run,
 			"href" => Task\Route::href("/runs/" . $run),
 			"ago" => Task\Clock::ago($at),
 			"title" => "Last read " . Task\Clock::read($at) . ": " . $job,
-		);
+		];
 	}
 
 	/**
@@ -245,14 +245,14 @@ class mod_secrets implements Module {
 		$edit = Task\Secret::PAGE . "/edit?id=" . Task\Route::queryEscape($id);
 
 		$menu->detail("Changed", Task\Clock::read($secret->getUpdatedAt()));
-		$menu->when($chrome->allowed("secret/edit"), "edit", "Edit", array("href" => Task\Route::href($edit)));
-		$menu->item("list", "Reads", array("href" => Task\Route::href(Task\Secret::PAGE . "/" . $id . "/reads")));
-		$menu->whenDanger($chrome->allowed("secret/delete"), "trash", "Delete", array(
+		$menu->when($chrome->allowed("secret/edit"), "edit", "Edit", ["href" => Task\Route::href($edit)]);
+		$menu->item("list", "Reads", ["href" => Task\Route::href(Task\Secret::PAGE . "/" . $id . "/reads")]);
+		$menu->whenDanger($chrome->allowed("secret/delete"), "trash", "Delete", [
 			"data-delete" => "/api/secrets/" . $id,
 			"data-confirm" => "Delete " . $name . " from " . $applies . "? Runs stop getting it.",
 			"data-confirm-ok" => "Delete",
 			"data-next" => "reload",
-		));
+		]);
 
 		return $menu;
 	}
@@ -266,14 +266,14 @@ class mod_secrets implements Module {
 	 * names the readers a service reaches.
 	 */
 	static function env() {
-		$out = array();
+		$out = [];
 
 		foreach (Task\Host::integrationEnv() as $var) {
-			$out[] = array(
+			$out[] = [
 				"name" => Task\Row::text($var, "name"),
 				"value" => Task\Row::text($var, "value"),
 				"redacted" => Task\Row::flag($var, "redacted"),
-			);
+			];
 		}
 
 		return $out;

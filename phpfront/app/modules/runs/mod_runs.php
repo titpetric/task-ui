@@ -28,24 +28,24 @@ class mod_runs implements Module {
 	}
 
 	function tables() {
-		return array("run", "user", "workspace");
+		return ["run", "user", "workspace"];
 	}
 
 	function serve() {
 		$chrome = new Task\Chrome;
 
-		$chrome->heading("Runs", array(array("text" => "Runs", "href" => "")));
+		$chrome->heading("Runs", [["text" => "Runs", "href" => ""]]);
 
 		$runs = new Task\Runs\Runs;
 		$size = Task\Pager::size();
-		$form = array(
+		$form = [
 			"folder" => Task\Route::input("folder"),
 			"job" => Task\Route::input("job"),
 			"state" => Task\Route::input("state"),
 			"user" => Task\Route::input("user"),
 			"n" => (string)$size,
 			"batch" => Task\Route::input("batch"),
-		);
+		];
 		$before = Task\Route::input("before");
 		$after = Task\Route::input("after");
 		// One row more than the page holds: the row that tells whether the
@@ -56,7 +56,7 @@ class mod_runs implements Module {
 		// The comments sit here and not among the keys: `phpscript fmt`
 		// moves a comment out of an array literal and leaves it after the
 		// statement. See docs/todo-correction.md.
-		$filter = array(
+		$filter = [
 			"folder" => $form["folder"],
 			"folders" => Task\User::folders($chrome->user),
 			"job" => $form["job"],
@@ -67,14 +67,14 @@ class mod_runs implements Module {
 			"before" => $before,
 			"after" => $after,
 			"limit" => $size + 1,
-		);
+		];
 		$matched = $runs->find($filter);
 		$seen = new Task\Seen($chrome);
 		$found = $seen->of($matched);
 		$page = Task\Pager::paged($found, $size, $before, $after);
 		$workspaces = $chrome->workspaces();
 		$summarize = Task\Host::claude();
-		$rows = array();
+		$rows = [];
 
 		foreach ($page["rows"] as $run) {
 			$rows[] = $this->row($run, $chrome, $workspaces, $summarize);
@@ -83,21 +83,21 @@ class mod_runs implements Module {
 		$view = new Task\View($this, $chrome);
 		$head = new Task\Head("Runs", self::LEAD);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"form" => $form,
 			"folders" => $this->folders($chrome),
 			"states" => Task\Run::states(),
 			"users" => $this->users($chrome),
 			"sizes" => Task\Pager::SIZES,
-			"fold" => array("id" => "runs-activity", "label" => "Activity"),
+			"fold" => ["id" => "runs-activity", "label" => "Activity"],
 			"activity" => $this->activity($seen, $runs, $filter),
-			"toolFold" => array("id" => "runs-tooling", "label" => "Tooling"),
+			"toolFold" => ["id" => "runs-tooling", "label" => "Tooling"],
 			"tooling" => $this->tooling(),
 			"summarize" => $summarize,
 			"rows" => $rows,
 			"pager" => Task\Pager::of("/runs", $page["prev"], $page["next"]),
-		));
+		]);
 	}
 
 	/**
@@ -171,24 +171,24 @@ class mod_runs implements Module {
 
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Task\Clock::read($run->getStartedAt()));
-		$menu->item("file", "Open the run's page", array("href" => Task\Route::href("/runs/" . $id)));
-		$menu->when($run->getCastPath() !== "" && $ended, "play", "Replay the recording", array(
+		$menu->item("file", "Open the run's page", ["href" => Task\Route::href("/runs/" . $id)]);
+		$menu->when($run->getCastPath() !== "" && $ended, "play", "Replay the recording", [
 			"data-replay" => $id,
 			"data-replay-title" => Task\Run::name($run),
 			"data-replay-who" => $run->getUserName(),
-		));
+		]);
 		// The summary is read from the API at the root and not under the
 		// theme's mount, as every data-* endpoint of a page is.
-		$menu->when($summarize && $ended, "note", "Summary", array(
+		$menu->when($summarize && $ended, "note", "Summary", [
 			"data-summary" => "/api/runs/" . $id . "/summary",
 			"data-summary-page" => Task\Route::href("/runs/" . $id),
 			"data-summary-title" => Task\Run::name($run),
 			"title" => "Claude's summary of the output",
-		));
-		$menu->when($live && !$ended, "stop", "Stop", array("data-stop" => $id));
-		$menu->whenDanger($live && !$ended, "trash", "Kill", array("data-kill" => $id));
+		]);
+		$menu->when($live && !$ended, "stop", "Stop", ["data-stop" => $id]);
+		$menu->whenDanger($live && !$ended, "trash", "Kill", ["data-kill" => $id]);
 
-		return array(
+		return [
 			"id" => $id,
 			"ago" => Task\Clock::ago($run->getStartedAt()),
 			"stamp" => Task\Clock::read($run->getStartedAt()),
@@ -205,12 +205,12 @@ class mod_runs implements Module {
 			"watching" => Task\Row::number($session, "attached"),
 			"attach" => $ended ? "View" : "Attach",
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/** folders is the folders of the catalogue the reader sees, for the filter. */
 	function folders($chrome) {
-		$out = array();
+		$out = [];
 
 		foreach ($chrome->folders() as $folder) {
 			$out[] = Task\Row::text($folder, "id");

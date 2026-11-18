@@ -22,21 +22,21 @@ class Permission {
 	static function titles($which) {
 		$file = self::file();
 
-		return isset($file[$which]) ? $file[$which] : array();
+		return isset($file[$which]) ? $file[$which] : [];
 	}
 
 	/** paths is every path a policy may set, in file order, the all rules included. */
 	static function paths() {
 		$file = self::file();
 
-		return isset($file["paths"]) ? $file["paths"] : array();
+		return isset($file["paths"]) ? $file["paths"] : [];
 	}
 
 	/** checks is the paths a check may name: paths without the all rules. */
 	static function checks() {
 		$file = self::file();
 
-		return isset($file["checks"]) ? $file["checks"] : array();
+		return isset($file["checks"]) ? $file["checks"] : [];
 	}
 
 	/**
@@ -47,7 +47,7 @@ class Permission {
 	static function extras() {
 		$file = self::file();
 
-		return isset($file["extras"]) ? $file["extras"] : array();
+		return isset($file["extras"]) ? $file["extras"] : [];
 	}
 
 	/** extra reports whether a path is a rule a section added of its own. */

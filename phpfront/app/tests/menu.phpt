@@ -8,10 +8,10 @@ $menu = new Task\Menu("Actions on deploy");
 echo var_export($menu->empty(), true), "\n";
 
 $menu->detail("Last run", "3m ago", true, "2026-11-02");
-$menu->item("play", "Run", array("data-run" => "deploy"));
+$menu->item("play", "Run", ["data-run" => "deploy"]);
 $menu->sep();
-$menu->item("edit", "Edit", array("href" => "/f/a/deploy/edit"));
-$menu->danger("trash", "Delete", array("data-delete" => "/api/x", "data-confirm" => 'Delete "deploy"?'));
+$menu->item("edit", "Edit", ["href" => "/f/a/deploy/edit"]);
+$menu->danger("trash", "Delete", ["data-delete" => "/api/x", "data-confirm" => 'Delete "deploy"?']);
 
 $data = $menu->data();
 
@@ -45,7 +45,7 @@ echo var_export($some->empty(), true), "\n";
 // note and disabled set the fields rather than reaching the markup.
 $off = new Task\Menu("Off");
 
-$off->item("play", "Run", array("disabled" => "no permission"));
+$off->item("play", "Run", ["disabled" => "no permission"]);
 
 $item = $off->data()["groups"][0][0];
 
@@ -56,7 +56,7 @@ echo var_export($item["disabled"], true), " ", $item["note"], " [", $item["attrs
 try {
 	$bad = new Task\Menu("Bad");
 
-	$bad->item("play", "Run", array("onclick" => "x()"));
+	$bad->item("play", "Run", ["onclick" => "x()"]);
 
 	echo "not refused\n";
 } catch (Exception $e) {

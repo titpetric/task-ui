@@ -3,7 +3,7 @@ description: Row reads a column of a database row, coercing what a driver answer
 ---
 <?php
 
-$row = array(
+$row = [
 	"id" => "01HZ",
 	"count" => "7",
 	"on" => 1,
@@ -11,7 +11,7 @@ $row = array(
 	"word" => "false",
 	"at" => "2026-11-02 10:00:00",
 	"blank" => "",
-);
+];
 
 echo Task\Row::text($row, "id"), "\n";
 echo Task\Row::text($row, "count"), "\n";
@@ -29,7 +29,7 @@ echo Task\Row::stamp($row, "at"), "|", Task\Row::stamp($row, "missing"), "\n";
 // row is read by its own ID, because the table is the whole instance's.
 $db = Task\DB::writer();
 
-$db->replace("run", array("id" => "fx-row-1", "folder" => "fx-row", "job" => "plan", "started_at" => "2026-11-02 10:00:00.522 +0000 UTC"));
+$db->replace("run", ["id" => "fx-row-1", "folder" => "fx-row", "job" => "plan", "started_at" => "2026-11-02 10:00:00.522 +0000 UTC"]);
 
 $read = $db->get("SELECT started_at FROM run WHERE id = ?", "fx-row-1");
 
@@ -39,11 +39,11 @@ echo Task\Clock::nanos(Task\Row::stamp($read, "started_at")), " ", Task\Clock::s
 // Nothing is a row either, and a reader answers its fallback rather than throwing.
 echo var_export(Task\Row::text(false, "id"), true), var_export(Task\Row::number(false, "id"), true), "\n";
 
-$ws = new Task\Model\Workspace(array("id" => "01", "folder" => "internal"));
+$ws = new Task\Model\Workspace(["id" => "01", "folder" => "internal"]);
 
 echo count(Task\Row::values($ws)), "\n";
-echo json_encode(Task\Row::only($ws, array("id", "folder"))), "\n";
-echo Task\Row::placeholders(array("a", "b", "c")), "|", Task\Row::placeholders(array()), "|\n";
+echo json_encode(Task\Row::only($ws, ["id", "folder"])), "\n";
+echo Task\Row::placeholders(["a", "b", "c"]), "|", Task\Row::placeholders([]), "|\n";
 ---
 01HZ
 7

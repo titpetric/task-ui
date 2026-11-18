@@ -34,7 +34,7 @@ class mod_key_upload implements Module {
 	}
 
 	function tables() {
-		return array("user");
+		return ["user"];
 	}
 
 	function serve() {
@@ -47,11 +47,11 @@ class mod_key_upload implements Module {
 			return;
 		}
 
-		$chrome->heading(self::TITLE, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::KEYS, "href" => self::PAGE),
-			array("text" => self::TITLE, "href" => ""),
-		));
+		$chrome->heading(self::TITLE, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::KEYS, "href" => self::PAGE],
+			["text" => self::TITLE, "href" => ""],
+		]);
 
 		$folder = Task\Key::folder();
 		$dir = Task\Row::text($folder, "dir");
@@ -60,16 +60,16 @@ class mod_key_upload implements Module {
 		$users = new Task\User($chrome->db);
 		$everyone = $users->all();
 		$for = Task\Key::forUser();
-		$field = Task\Key::policies(array(), array($for), $everyone);
+		$field = Task\Key::policies([], [$for], $everyone);
 		$open = Task\Key::openName($for);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"name" => Task\Key::nameField($open),
 			"who" => $field->data(),
 			"cancel" => Task\Route::href(self::PAGE),
 			"trail" => Task\Setup::trail($steps),
-		), "key_upload.tpl");
+		], "key_upload.tpl");
 	}
 
 	/**

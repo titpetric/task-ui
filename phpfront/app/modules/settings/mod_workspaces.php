@@ -38,7 +38,7 @@ class mod_workspaces implements Module {
 	}
 
 	function tables() {
-		return array("workspace", "project", "secret");
+		return ["workspace", "project", "secret"];
 	}
 
 	function serve() {
@@ -51,10 +51,10 @@ class mod_workspaces implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::WORKSPACES, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::WORKSPACES, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::WORKSPACES, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::WORKSPACES, "href" => ""],
+		]);
 
 		$workspaces = new Task\Workspace($chrome->db);
 		$rows = $workspaces->all();
@@ -69,13 +69,13 @@ class mod_workspaces implements Module {
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 		$admin = Task\User::admin($chrome->user);
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($admin),
 			"rows" => $this->rows($chrome, $rows, $nested, $counts, $homes, $named),
 			"root" => Task\Row::text($instance, "root"),
 			"imports" => $admin,
 			"trail" => Task\Setup::trail($steps),
-		), "workspaces.tpl");
+		], "workspaces.tpl");
 	}
 
 	/**
@@ -90,8 +90,8 @@ class mod_workspaces implements Module {
 		$buttons = new Task\Buttons;
 		$head = new Task\Head(Task\Setup::WORKSPACES, self::LEAD);
 
-		$buttons->when($admin, "upload", "Import", array("data-dialog-open" => "import-dialog"));
-		$buttons->primary("plus", "Add workspace", array("href" => Task\Route::href(Task\Workspace::PAGE . "/new")));
+		$buttons->when($admin, "upload", "Import", ["data-dialog-open" => "import-dialog"]);
+		$buttons->primary("plus", "Add workspace", ["href" => Task\Route::href(Task\Workspace::PAGE . "/new")]);
 		$head->buttons($buttons->data());
 
 		return $head->data();
@@ -108,7 +108,7 @@ class mod_workspaces implements Module {
 	function rows($chrome, $rows, $nested, $counts, $homes, $named) {
 		$last = count($rows);
 		$first = 0;
-		$out = array();
+		$out = [];
 
 		if ($last > 0 && $rows[0]->getFolder() === Task\Route::INTERNAL) {
 			$first = 1;
@@ -124,12 +124,12 @@ class mod_workspaces implements Module {
 	/** row is one workspace: the cells the table draws and the menu beside them. */
 	function row($chrome, $row, $nested, $counts, $homes, $named, $at, $first, $last) {
 		$folder = $row->getFolder();
-		$ids = isset($nested[$folder]) ? $nested[$folder] : array();
+		$ids = isset($nested[$folder]) ? $nested[$folder] : [];
 		$found = isset($counts[$folder]) ? $counts[$folder] : 0;
 		$links = $this->links($folder, $named);
 		$menu = $this->menu($chrome, $folder, $ids, $found, $links, $at, $first, $last);
 
-		return array(
+		return [
 			"folder" => $folder,
 			"href" => $links["href"],
 			"edit" => $links["edit"],
@@ -145,7 +145,7 @@ class mod_workspaces implements Module {
 			"adds" => $chrome->allowed("project/edit"),
 			"addsSecret" => $chrome->allowed("secret/edit"),
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -157,13 +157,13 @@ class mod_workspaces implements Module {
 		$page = Task\Workspace::PAGE . "/" . $folder;
 		$escaped = Task\Route::queryEscape($folder);
 
-		return array(
+		return [
 			"href" => Task\Route::href(Task\Route::folderHref($folder, $named)),
 			"edit" => Task\Route::href($page),
 			"keys" => Task\Route::href($page . "/keys"),
 			"add" => Task\Route::href(Task\Place::PROJECTS . "/new") . "?workspace=" . $escaped,
 			"secrets" => Task\Route::href(Task\Place::SECRETS) . "?workspace=" . $escaped,
-		);
+		];
 	}
 
 	/**
@@ -180,21 +180,21 @@ class mod_workspaces implements Module {
 		$default = $folder === Task\Route::INTERNAL;
 		$deletes = $chrome->allowed("workspace/delete");
 
-		$menu->item("folder-open", "Open", array("href" => $links["href"]));
-		$menu->item("settings", "Edit workspace", array("href" => $links["edit"]));
-		$menu->when($chrome->allowed("project/edit"), "plus", "Add project", array("href" => $links["add"]));
-		$menu->when($chrome->allowed("workspace/view"), "key", "SSH keys", array("href" => $links["keys"]));
-		$menu->when($chrome->allowed("secret/view"), "secret", "Secrets", array("href" => $links["secrets"]));
+		$menu->item("folder-open", "Open", ["href" => $links["href"]]);
+		$menu->item("settings", "Edit workspace", ["href" => $links["edit"]]);
+		$menu->when($chrome->allowed("project/edit"), "plus", "Add project", ["href" => $links["add"]]);
+		$menu->when($chrome->allowed("workspace/view"), "key", "SSH keys", ["href" => $links["keys"]]);
+		$menu->when($chrome->allowed("secret/view"), "secret", "Secrets", ["href" => $links["secrets"]]);
 		$menu->sep();
-		$menu->when(!$default && $at !== $first, "up", "Move up", array("data-workspace-move" => "up", "data-folder" => $folder));
-		$menu->when(!$default && $at + 1 !== $last, "down", "Move down", array("data-workspace-move" => "down", "data-folder" => $folder));
-		$menu->when($deletes && $found > 0, "secret", Task\Workspace::blocked($found), array("href" => $links["secrets"]));
-		$menu->whenDanger($deletes && $found === 0, "trash", "Delete", array(
+		$menu->when(!$default && $at !== $first, "up", "Move up", ["data-workspace-move" => "up", "data-folder" => $folder]);
+		$menu->when(!$default && $at + 1 !== $last, "down", "Move down", ["data-workspace-move" => "down", "data-folder" => $folder]);
+		$menu->when($deletes && $found > 0, "secret", Task\Workspace::blocked($found), ["href" => $links["secrets"]]);
+		$menu->whenDanger($deletes && $found === 0, "trash", "Delete", [
 			"data-delete" => "/api/workspaces/" . $folder,
 			"data-confirm" => Task\Workspace::confirm($folder, $ids),
 			"data-confirm-ok" => "Delete",
 			"data-next" => self::RELOAD,
-		));
+		]);
 
 		return $menu;
 	}

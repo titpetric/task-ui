@@ -62,7 +62,7 @@ class mod_project_edit implements Module {
 	}
 
 	function tables() {
-		return array("project", "workspace", "schedule", "secret", "env_file", "workflow", "workflow_step");
+		return ["project", "workspace", "schedule", "secret", "env_file", "workflow", "workflow_step"];
 	}
 
 	function serve() {
@@ -99,7 +99,7 @@ class mod_project_edit implements Module {
 		$jobs = Task\Text::map(Task\Row::text($row, "job_allow"));
 		$steps = Task\Setup::steps($chrome, Task\Setup::PROJECTS);
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($chrome, $id, $checkout),
 			"api" => "/api/projects/" . $id,
 			"next" => Task\Route::href(Task\Project::PAGE) . self::SAVED,
@@ -107,11 +107,11 @@ class mod_project_edit implements Module {
 			"form" => self::form($row),
 			"allow" => self::who("allow", $allow, $users, self::ALLOW),
 			"move" => $this->move($projects, $workspaces, $id, $named),
-			"recursive" => array("id" => self::FIELD, "checked" => !Task\Row::flag($row, "shallow")),
+			"recursive" => ["id" => self::FIELD, "checked" => !Task\Row::flag($row, "shallow")],
 			"sidebar" => !Task\Row::flag($row, "sidebar_hidden"),
 			"jobs" => self::perJob($found, $jobs, $users),
 			"trail" => Task\Setup::trail($steps),
-		), "project_edit.tpl");
+		], "project_edit.tpl");
 	}
 
 	/**
@@ -181,12 +181,12 @@ class mod_project_edit implements Module {
 		$notice = Task\Route::queryEscape(self::REMOVED . $id);
 		$page = Task\Route::href(Task\Project::PAGE);
 
-		return array(
+		return [
 			"data-delete" => "/api/projects/" . $id,
 			"data-confirm" => Task\Place::removeConfirm($id, Task\Row::text($checkout, "remote")),
 			"data-confirm-ok" => "Remove checkout",
 			"data-next" => $page . self::NOTICE . $notice,
-		);
+		];
 	}
 
 	/**
@@ -199,11 +199,11 @@ class mod_project_edit implements Module {
 	static function form($row) {
 		$sources = Task\Text::items(Task\Row::text($row, "sources"));
 
-		return array(
+		return [
 			"title" => Task\Row::text($row, "title"),
 			"description" => Task\Row::text($row, "description"),
 			"sources" => implode(", ", $sources),
-		);
+		];
 	}
 
 	/** who is the Who can run element: the names checked, over the users listed. */
@@ -221,16 +221,16 @@ class mod_project_edit implements Module {
 	 * table at all.
 	 */
 	static function perJob($found, $allow, $users) {
-		$out = array();
+		$out = [];
 
 		foreach (Task\Row::items($found, "jobs") as $job) {
 			$id = Task\Row::text($job, "id");
-			$named = isset($allow[$id]) ? $allow[$id] : array();
+			$named = isset($allow[$id]) ? $allow[$id] : [];
 			$who = new Task\WhoField("job_allow." . $id, "set", $named, $named, $users, self::JOBS);
 
 			$who->tight();
 
-			$out[] = array("name" => Task\Row::text($job, "name"), "who" => $who->data());
+			$out[] = ["name" => Task\Row::text($job, "name"), "who" => $who->data()];
 		}
 
 		return $out;
@@ -247,18 +247,18 @@ class mod_project_edit implements Module {
 		$from = Task\Project::moves($id, $named);
 
 		if ($from === "") {
-			return array();
+			return [];
 		}
 
 		$rows = $workspaces->all();
 		$left = $projects->refs($id);
 
-		return array(
+		return [
 			"id" => $id,
 			"from" => $from,
 			"left" => implode("; ", $left),
 			"options" => self::options($rows, $from),
-		);
+		];
 	}
 
 	/**
@@ -270,13 +270,13 @@ class mod_project_edit implements Module {
 	 */
 	static function options($rows, $from) {
 		$root = Task\Route::INTERNAL;
-		$out = array();
+		$out = [];
 
-		$out[] = array(
+		$out[] = [
 			"value" => $root,
 			"label" => $root . self::DOT . self::ROOT,
 			"selected" => $from === $root,
-		);
+		];
 
 		foreach ($rows as $row) {
 			$folder = $row->getFolder();
@@ -287,11 +287,11 @@ class mod_project_edit implements Module {
 
 			$title = $row->getTitle();
 
-			$out[] = array(
+			$out[] = [
 				"value" => $folder,
 				"label" => $title === "" ? $folder : $folder . self::DOT . $title,
 				"selected" => $folder === $from,
-			);
+			];
 		}
 
 		return $out;

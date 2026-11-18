@@ -25,7 +25,7 @@ $_SERVER["REQUEST_URI"] = "/";
 echo count(Task\Route::segments()), "\n";
 
 $_SERVER["REQUEST_METHOD"] = "POST";
-$_REQUEST = array("id" => "01HZ", "title" => "  spaced  ");
+$_REQUEST = ["id" => "01HZ", "title" => "  spaced  "];
 
 echo var_export(Task\Route::posted(), true), "\n";
 echo Task\Route::param("id"), "|", Task\Route::param("none", "fallback"), "\n";

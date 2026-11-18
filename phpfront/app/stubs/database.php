@@ -23,7 +23,7 @@ class Database {
 
 	/** Returns every row. */
 	function get_all($sql) {
-		return array();
+		return [];
 	}
 
 	/** Writes a row, the array keyed by column. */

@@ -16,7 +16,7 @@ echo var_export($mod instanceof Module, true), "\n";
 // at this moment and would leave a window of days as the fixture ages.
 $db = Task\DB::writer();
 
-$db->replace("user", array("id" => "fx-runs-u1", "name" => "fx-runs-ann", "role" => "admin", "admin" => 1));
+$db->replace("user", ["id" => "fx-runs-u1", "name" => "fx-runs-ann", "role" => "admin", "admin" => 1]);
 
 // at is a moment of the day the rows record, in the shape a write leaves.
 function at($time) {
@@ -26,7 +26,7 @@ function at($time) {
 // A run that ended, with a recording; one that waits for a slot; one in
 // progress whose column holds the title it started under; and one the table
 // still reads as running.
-$db->replace("run", array(
+$db->replace("run", [
 	"id" => "fx-runs-1",
 	"folder" => "fx-runs",
 	"job" => "build",
@@ -35,15 +35,15 @@ $db->replace("run", array(
 	"cast_path" => "casts/fx-runs-1.cast",
 	"started_at" => at("10:01:00.000"),
 	"finished_at" => at("10:01:02.500"),
-));
-$db->replace("run", array(
+]);
+$db->replace("run", [
 	"id" => "fx-runs-2",
 	"folder" => "fx-runs",
 	"job" => "deploy",
 	"user_name" => "fx-runs-ann",
 	"state" => "queued",
-));
-$db->replace("run", array(
+]);
+$db->replace("run", [
 	"id" => "fx-runs-3",
 	"folder" => "fx-runs",
 	"job" => "test",
@@ -51,22 +51,22 @@ $db->replace("run", array(
 	"state" => "running",
 	"title" => "the title the row holds",
 	"started_at" => at("10:03:00.000"),
-));
-$db->replace("run", array(
+]);
+$db->replace("run", [
 	"id" => "fx-runs-4",
 	"folder" => "fx-runs",
 	"job" => "plan",
 	"user_name" => "fx-runs-ann",
 	"state" => "running",
 	"started_at" => at("10:05:00.000"),
-));
+]);
 
 // The runner holds three of the four: the queued run waits for a slot, the
 // running one has two windows watching it, and the fourth broke while the
 // table still reads it as running.
 Task\Host::$whoami = "fx-runs-ann";
-Task\Host::$sessions = array(
-	"fx-runs-2" => array(
+Task\Host::$sessions = [
+	"fx-runs-2" => [
 		"live" => true,
 		"attached" => 0,
 		"message" => "waits for a free slot, number 1 in line",
@@ -74,8 +74,8 @@ Task\Host::$sessions = array(
 		"exit_code" => 0,
 		"title" => "",
 		"finished_at" => "",
-	),
-	"fx-runs-3" => array(
+	],
+	"fx-runs-3" => [
 		"live" => true,
 		"attached" => 2,
 		"message" => "",
@@ -83,8 +83,8 @@ Task\Host::$sessions = array(
 		"exit_code" => 0,
 		"title" => "build the image",
 		"finished_at" => "",
-	),
-	"fx-runs-4" => array(
+	],
+	"fx-runs-4" => [
 		"live" => true,
 		"attached" => 1,
 		"message" => "",
@@ -92,8 +92,8 @@ Task\Host::$sessions = array(
 		"exit_code" => 2,
 		"title" => "",
 		"finished_at" => at("10:05:04.500"),
-	),
-);
+	],
+];
 
 $runs = new Task\Runs\Runs;
 $chrome = new Task\Chrome;
@@ -102,7 +102,7 @@ $workspaces = $chrome->workspaces();
 // labels names the items a menu offers, in the order it offers them. The
 // details on top are not items, so they are not here.
 function labels($menu) {
-	$out = array();
+	$out = [];
 
 	foreach ($menu["groups"] as $group) {
 		foreach ($group as $item) {
@@ -168,29 +168,29 @@ echo labels($done["menu"]), "\n";
 // the limit becomes the charts' own, so both rows count where the filter
 // named one page of one row after a cursor. The clock is the server's and the
 // rows start now, so each lands in the last slot of every chart.
-$db->replace("run", array(
+$db->replace("run", [
 	"id" => "fx-runs-now-1",
 	"folder" => "fx-runs-now",
 	"job" => "build",
 	"user_name" => "fx-runs-ann",
 	"state" => "running",
 	"started_at" => Task\Clock::stamp(),
-));
-$db->replace("run", array(
+]);
+$db->replace("run", [
 	"id" => "fx-runs-now-2",
 	"folder" => "fx-runs-now",
 	"job" => "build",
 	"user_name" => "fx-runs-ann",
 	"state" => "running",
 	"started_at" => Task\Clock::stamp(),
-));
+]);
 
 $seen = new Task\Seen($chrome);
-$charts = $mod->activity($seen, $runs, array(
+$charts = $mod->activity($seen, $runs, [
 	"folder" => "fx-runs-now",
 	"before" => "fx-runs-now-2",
 	"limit" => 1,
-));
+]);
 
 echo implode(",", array_keys($charts)), "\n";
 echo $charts["sum"], " [", $charts["failed"], "] [", $charts["median"], "] ", count($charts["charts"]), "\n";

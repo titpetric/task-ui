@@ -61,9 +61,9 @@ class Runs {
 	 * back over here: the rows either side of a cursor are the newer ones, and
 	 * LIMIT takes from the top. A cursor on a row that is gone keeps none.
 	 */
-	function listByWorkflow($id, $filter = array()) {
+	function listByWorkflow($id, $filter = []) {
 		if ($id === "") {
-			return array();
+			return [];
 		}
 
 		$limit = isset($filter["limit"]) ? (int)$filter["limit"] : 20;
@@ -75,7 +75,7 @@ class Runs {
 		$before = \Task\Run::pick($filter, "before");
 		$after = \Task\Run::pick($filter, "after");
 		$sql = "SELECT " . self::COLUMNS . " FROM workflow_run WHERE workflow_id = ?";
-		$args = array($id);
+		$args = [$id];
 		$order = "started_at DESC, id DESC";
 
 		if ($before !== "") {
@@ -96,7 +96,7 @@ class Runs {
 	/** steps is a workflow run's steps, in order. */
 	function steps($id) {
 		if ($id === "") {
-			return array();
+			return [];
 		}
 
 		return \Task\Model\WorkflowRunStep::rows($this->db->get_all("SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", $id));
@@ -133,7 +133,7 @@ class Runs {
 
 	/** visible is the latest runs a user sees, newest first, at most limit of them. */
 	function visible($user, $limit) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->latest(5 * $limit) as $run) {
 			if (count($out) < $limit && $this->sees($user, $run->getId())) {
@@ -154,7 +154,7 @@ class Runs {
 	 * of theirs.
 	 */
 	function byUser($viewer, $name, $limit) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->latest(self::SCAN * $limit) as $run) {
 			if (count($out) === $limit) {
@@ -171,7 +171,7 @@ class Runs {
 
 	/** rows turns what the database answered into workflow runs. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

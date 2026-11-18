@@ -11,6 +11,6 @@ $module->setIcon("server");
 $module->enableSideBar();
 $module->setSideBarHref("/inventory");
 $module->setSideBarRule("");
-$module->setTables(array("host"));
+$module->setTables(["host"]);
 
 return $module;

@@ -38,7 +38,7 @@ class mod_workflow implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"workflow",
 			"workflow_step",
 			"workflow_run",
@@ -46,7 +46,7 @@ class mod_workflow implements Module {
 			"run",
 			"user",
 			"workspace",
-		);
+		];
 	}
 
 	function serve() {
@@ -78,10 +78,10 @@ class mod_workflow implements Module {
 			return;
 		}
 
-		$chrome->heading($flow["name"], array(
-			array("text" => "Workflows", "href" => "/workflows"),
-			array("text" => $flow["name"], "href" => ""),
-		));
+		$chrome->heading($flow["name"], [
+			["text" => "Workflows", "href" => "/workflows"],
+			["text" => $flow["name"], "href" => ""],
+		]);
 
 		$workspaces = $chrome->workspaces();
 		$runs = new Task\Workflows\Runs($chrome->db);
@@ -90,18 +90,18 @@ class mod_workflow implements Module {
 		$after = Task\Route::input("after");
 		// One run more than the page holds: the row that says whether the
 		// list goes on, which paging drops again.
-		$filter = array(
+		$filter = [
 			"limit" => $size + 1,
 			"before" => $before,
 			"after" => $after,
-		);
+		];
 		$found = $runs->listByWorkflow($id, $filter);
 		$page = Task\Pager::paged($found, $size, $before, $after);
 		$summarize = Task\Host::claude();
 		// One reader of the runs for the whole page: the chain of a row, the
 		// pipeline over them and the run going all name the same few runs.
 		$seen = new Task\Seen($chrome);
-		$rows = array();
+		$rows = [];
 
 		foreach ($page["rows"] as $run) {
 			$rows[] = $this->row($chrome, $flow, $run, $runs, $names, $workspaces, $summarize, $seen);
@@ -116,7 +116,7 @@ class mod_workflow implements Module {
 			$thread = Task\Pipeline::thread($chrome, $flow["last"], Task\Step::seen($seen, $ran));
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($flow),
 			"id" => $flow["id"],
 			"user" => $chrome->name(),
@@ -124,12 +124,12 @@ class mod_workflow implements Module {
 			"thread" => $thread,
 			"pipeline" => $this->pipeline($chrome, $flow, $runs, $names, $workspaces, $seen),
 			"activity" => $this->activity($id, $runs),
-			"form" => array("n" => (string)$size),
+			"form" => ["n" => (string)$size],
 			"sizes" => Task\Pager::SIZES,
 			"summarize" => $summarize,
 			"rows" => $rows,
 			"pager" => Task\Pager::of("/workflows/" . $id, $page["prev"], $page["next"]),
-		), "workflow.tpl");
+		], "workflow.tpl");
 	}
 
 	/**
@@ -163,12 +163,12 @@ class mod_workflow implements Module {
 
 		// The prompt rides on Stop too: the script turns it back into Run
 		// when the run ends, and a Run without it asks nothing.
-		$asked = $flow["prompted"] ? array("data-workflow-prompt" => $flow["name"]) : array();
+		$asked = $flow["prompted"] ? ["data-workflow-prompt" => $flow["name"]] : [];
 
 		if ($flow["canRun"] && $flow["running"] !== "") {
-			$buttons->item("stop", "Stop", array("data-workflow-stop" => $flow["running"]) + $asked);
+			$buttons->item("stop", "Stop", ["data-workflow-stop" => $flow["running"]] + $asked);
 		} elseif ($flow["canRun"]) {
-			$buttons->primary("play", "Run", array("data-workflow-run" => $flow["id"]) + $asked);
+			$buttons->primary("play", "Run", ["data-workflow-run" => $flow["id"]] + $asked);
 		} elseif ($flow["runDenied"] !== "") {
 			$buttons->faint($flow["runDenied"]);
 		}
@@ -176,7 +176,7 @@ class mod_workflow implements Module {
 		if ($flow["canChange"]) {
 			$edit = Task\Route::href("/workflows/" . $flow["id"] . "/edit");
 
-			$buttons->item("edit", "Edit", array("href" => $edit));
+			$buttons->item("edit", "Edit", ["href" => $edit]);
 		}
 
 		$head->buttons($buttons->data());
@@ -193,13 +193,13 @@ class mod_workflow implements Module {
 			return null;
 		}
 
-		return array(
+		return [
 			"state" => $last->getState(),
 			"message" => $last->getMessage(),
 			"ago" => Task\Clock::ago($last->getStartedAt()),
 			"stamp" => Task\Clock::read($last->getStartedAt()),
 			"userName" => $last->getUserName(),
-		);
+		];
 	}
 
 	/**
@@ -212,7 +212,7 @@ class mod_workflow implements Module {
 	 */
 	function pipeline($chrome, $flow, $runs, $names, $workspaces, $seen) {
 		$last = $flow["last"];
-		$latest = array();
+		$latest = [];
 
 		if ($last !== null && $last->getState() === Task\Run::RUNNING) {
 			$steps = Task\Step::ofRun($runs->steps($last->getId()), $names);
@@ -234,7 +234,7 @@ class mod_workflow implements Module {
 	 * are of one workflow, so their durations are of the same work.
 	 */
 	function activity($id, $runs) {
-		$found = $runs->listByWorkflow($id, array("limit" => Task\Activity::LIMIT));
+		$found = $runs->listByWorkflow($id, ["limit" => Task\Activity::LIMIT]);
 		$days = Task\Activity::of($found);
 		$now = Task\Clock::now();
 		$charts = new Task\Activity($days, $now, Task\Activity::DAYS);
@@ -262,19 +262,19 @@ class mod_workflow implements Module {
 
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Task\Clock::read($run->getStartedAt()));
-		$menu->item("file", "Open the run's page", array("href" => Task\Route::href($href)));
+		$menu->item("file", "Open the run's page", ["href" => Task\Route::href($href)]);
 		// The summary is read from the API at the root and not under the
 		// theme's mount, as every data-* endpoint of a page is.
-		$menu->when($summarize && $state !== Task\Run::RUNNING, "note", "Summary", array(
+		$menu->when($summarize && $state !== Task\Run::RUNNING, "note", "Summary", [
 			"data-summary" => "/api/workflow-runs/" . $id . "/summary",
 			"data-summary-page" => Task\Route::href($href),
 			"data-summary-title" => $flow["name"],
 			"title" => self::SUMMARY,
-		));
+		]);
 
 		$chain = Task\Chain::of($steps, $workspaces);
 
-		return array(
+		return [
 			"id" => $id,
 			"href" => $href,
 			"state" => $state,
@@ -283,19 +283,19 @@ class mod_workflow implements Module {
 			"stamp" => Task\Clock::read($run->getStartedAt()),
 			"user" => $chrome->who()->of($run->getUserName()),
 			"chain" => Task\Pipeline::nodes($chain),
-			"fold" => array(
+			"fold" => [
 				"id" => $id,
 				"answer" => $answer !== "",
 				"open" => false,
-			),
-			"answer" => array(
+			],
+			"answer" => [
 				"id" => $id,
 				"body" => $answer === "" ? "" : $chrome->message($answer),
 				"cols" => self::COLUMNS,
 				"open" => false,
-			),
+			],
 			"menu" => $menu->data(),
-		);
+		];
 	}
 }
 

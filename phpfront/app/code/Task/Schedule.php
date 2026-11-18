@@ -42,7 +42,7 @@ class Schedule {
 	 * what names what the schedules are for, which a Delete asks about.
 	 */
 	static function table($chrome, $schedules, $users, $can, $what) {
-		$rows = array();
+		$rows = [];
 
 		foreach ($schedules as $schedule) {
 			$row = self::cells($chrome, $schedule, "", $users);
@@ -50,7 +50,7 @@ class Schedule {
 			$rows[] = $row;
 		}
 
-		return array("can" => $can, "rows" => $rows);
+		return ["can" => $can, "rows" => $rows];
 	}
 
 	/**
@@ -70,21 +70,21 @@ class Schedule {
 		$on = self::enabled($schedule);
 		$last = $schedule->getLastRunAt();
 
-		return array(
+		return [
 			"expression" => $schedule->getExpression(),
 			"on" => $on,
-			"next" => $on ? explode(" ", Clock::read($schedule->getNextRunAt())) : array(),
+			"next" => $on ? explode(" ", Clock::read($schedule->getNextRunAt())) : [],
 			"last" => $last === "" ? "" : Clock::ago($last),
 			"user" => $chrome->who()->of($name),
 			"pick" => $fixed === "" && count($users) > 0,
-			"options" => array(
+			"options" => [
 				"users" => $users,
 				"selected" => $name,
 				"short" => true,
-			),
+			],
 			"api" => "/api/schedules/" . $schedule->getId(),
 			"triage" => self::triages($schedule),
-		);
+		];
 	}
 
 	/**
@@ -104,21 +104,21 @@ class Schedule {
 		$expression = $schedule->getExpression();
 		$menu = new Menu("Actions on the schedule " . $expression);
 
-		$menu->when($edits, "edit", "Edit", array("href" => Route::href("/schedules/edit/" . Route::pathEscape($id))));
-		$menu->item($on ? "stop" : "play", $on ? "Disable" : "Enable", array(
+		$menu->when($edits, "edit", "Edit", ["href" => Route::href("/schedules/edit/" . Route::pathEscape($id))]);
+		$menu->item($on ? "stop" : "play", $on ? "Disable" : "Enable", [
 			"data-api" => "/api/schedules/" . $id,
 			"data-method" => "PUT",
 			"data-body" => $on ? '{"enabled":false}' : '{"enabled":true}',
 			"data-next" => "reload",
 			"data-notice" => $on ? "Schedule disabled" : "Schedule enabled",
-		));
-		$menu->danger("trash", "Delete", array(
+		]);
+		$menu->danger("trash", "Delete", [
 			"data-delete" => "/api/schedules/" . $id,
 			"data-confirm" => "Delete the schedule " . $expression . " for " . $what . "?",
 			"data-confirm-ok" => "Delete",
 			"data-next" => "reload",
 			"data-notice" => "Schedule deleted",
-		));
+		]);
 
 		return $menu->data();
 	}
@@ -135,7 +135,7 @@ class Schedule {
 			return implode(" ", $list);
 		}
 
-		$words = array();
+		$words = [];
 
 		foreach ($list as $word) {
 			$words[] = self::quotes($word) ? "'" . str_replace("'", "'\\''", $word) . "'" : $word;
@@ -155,7 +155,7 @@ class Schedule {
 			return true;
 		}
 
-		foreach (array(" ", "\t", "'", '"', "\\") as $char) {
+		foreach ([" ", "\t", "'", '"', "\\"] as $char) {
 			if (str_contains($word, $char)) {
 				return true;
 			}

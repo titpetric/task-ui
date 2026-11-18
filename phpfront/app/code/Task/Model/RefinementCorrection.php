@@ -10,13 +10,13 @@ class RefinementCorrection {
 	const TABLE = "refinement_correction";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "thread_id", "comment_id", "corrects_id", "created_at");
+	public static $fields = ["id", "thread_id", "comment_id", "corrects_id", "created_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at");
+	public static $stamps = ["created_at"];
 	/** ID */
 	var $id = "";
 	/** Thread ID */
@@ -28,7 +28,7 @@ class RefinementCorrection {
 	/** Created At */
 	var $created_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->thread_id = \Task\Row::text($row, "thread_id");
 		$this->comment_id = \Task\Row::text($row, "comment_id");
@@ -98,7 +98,7 @@ class RefinementCorrection {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

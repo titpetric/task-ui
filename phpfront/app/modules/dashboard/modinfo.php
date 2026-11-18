@@ -11,6 +11,6 @@ $module->setIcon("grid");
 $module->enableSideBar();
 $module->setSideBarHref("/");
 $module->setSideBarRule("");
-$module->setTables(array());
+$module->setTables([]);
 
 return $module;

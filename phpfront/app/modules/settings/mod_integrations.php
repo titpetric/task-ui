@@ -89,7 +89,7 @@ class mod_integrations implements Module {
 	}
 
 	function tables() {
-		return array("user", "run");
+		return ["user", "run"];
 	}
 
 	function serve() {
@@ -102,10 +102,10 @@ class mod_integrations implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::INTEGRATIONS, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::INTEGRATIONS, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::INTEGRATIONS, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::INTEGRATIONS, "href" => ""],
+		]);
 
 		$users = new Task\User($chrome->db);
 		$everyone = $users->all();
@@ -114,17 +114,17 @@ class mod_integrations implements Module {
 		$admin = Task\User::admin($chrome->user);
 		$last = $this->sync($chrome);
 		$steps = Task\Setup::steps($chrome, Task\Setup::INTEGRATIONS);
-		$cards = array();
+		$cards = [];
 
 		foreach (Task\Host::integrations() as $at => $service) {
 			$cards[] = $this->card($service, $at + 1, $everyone, $url, $admin, $last);
 		}
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head(),
 			"cards" => $cards,
 			"trail" => Task\Setup::trail($steps),
-		), "integrations.tpl");
+		], "integrations.tpl");
 	}
 
 	/** head is the page head: the heading and the key the settings are stored on. */
@@ -167,7 +167,7 @@ class mod_integrations implements Module {
 		$sync = $id === self::FORGEJO;
 		$gateway = $id === self::GATEWAY;
 
-		return array(
+		return [
 			"id" => $id,
 			"number" => $number,
 			"title" => $title,
@@ -177,7 +177,7 @@ class mod_integrations implements Module {
 			"api" => "/api/integrations/" . $id,
 			"next" => "/settings/integrations?notice=" . $title . "+saved",
 			"fields" => $this->fields($service, $everyone),
-			"env" => $gateway ? $this->env($service) : array(),
+			"env" => $gateway ? $this->env($service) : [],
 			"credential" => $service["credential"],
 			"steps" => self::steps($service),
 			"hook" => $sync ? self::hook($url) : "",
@@ -185,7 +185,7 @@ class mod_integrations implements Module {
 			"links" => $id === self::SPOTIFY && $service["configured"],
 			"sync" => $sync,
 			"last" => $last,
-		);
+		];
 	}
 
 	/** menu is the card's own actions: the Clear that takes every setting out. */
@@ -193,12 +193,12 @@ class mod_integrations implements Module {
 		$title = $service["title"];
 		$menu = new Task\Menu("Actions on " . $title);
 
-		$menu->danger("trash", "Clear", array(
+		$menu->danger("trash", "Clear", [
 			"data-delete" => "/api/integrations/" . $service["id"],
 			"data-confirm" => "Clear every setting of " . $title . "?",
 			"data-confirm-ok" => "Clear",
 			"data-next" => "reload",
-		));
+		]);
 
 		return $menu;
 	}
@@ -211,7 +211,7 @@ class mod_integrations implements Module {
 	 */
 	function fields($service, $everyone) {
 		$gateway = $service["id"] === self::GATEWAY;
-		$out = array();
+		$out = [];
 
 		foreach ($service["fields"] as $field) {
 			if ($gateway && $field["name"] !== self::TOKEN) {
@@ -243,7 +243,7 @@ class mod_integrations implements Module {
 		$value = self::value($service, $field);
 		$secret = $kind === self::SECRET;
 
-		return array(
+		return [
 			"kind" => $kind,
 			"id" => $service["id"] . "-" . $name,
 			"name" => "values." . $name,
@@ -259,8 +259,8 @@ class mod_integrations implements Module {
 			"options" => self::options($field, $value),
 			"toggle" => $field["toggle"],
 			"switch" => $this->flag($service, $field),
-			"who" => $kind === self::WHO ? $this->whose($service, $field, $everyone) : array(),
-		);
+			"who" => $kind === self::WHO ? $this->whose($service, $field, $everyone) : [],
+		];
 	}
 
 	/** kind is which branch of the form draws the field. */
@@ -305,10 +305,10 @@ class mod_integrations implements Module {
 
 	/** options are the values the setting takes, the one it holds selected. */
 	static function options($field, $value) {
-		$out = array();
+		$out = [];
 
 		foreach ($field["options"] as $option) {
-			$out[] = array("value" => $option, "selected" => $option === $value);
+			$out[] = ["value" => $option, "selected" => $option === $value];
 		}
 
 		return $out;
@@ -323,14 +323,14 @@ class mod_integrations implements Module {
 		$kind = self::kind($field);
 
 		if ($kind !== self::ENV && !$field["toggle"]) {
-			return array();
+			return [];
 		}
 
-		return array(
+		return [
 			"name" => "values." . $name . ".enabled",
 			"env" => $field["env"],
 			"on" => isset($service["enabled"][$name]) && $service["enabled"][$name],
-		);
+		];
 	}
 
 	/** whose is the Who boxes of the setting: the roles and users its runs go to. */
@@ -348,14 +348,14 @@ class mod_integrations implements Module {
 	 * the fields they are.
 	 */
 	function env($service) {
-		$out = array();
+		$out = [];
 
 		foreach ($service["fields"] as $field) {
 			if ($field["name"] === self::TOKEN || $field["env"] === "") {
 				continue;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"env" => $field["env"],
 				"help" => $field["help"],
 				"source" => $field["source"] !== "",
@@ -363,7 +363,7 @@ class mod_integrations implements Module {
 				"id" => $service["id"] . "-" . $field["name"],
 				"name" => "values." . $field["name"],
 				"value" => self::value($service, $field),
-			);
+			];
 		}
 
 		return $out;
@@ -378,7 +378,7 @@ class mod_integrations implements Module {
 	 * with `code` in it and no smart quotes, and no name in it is a mention.
 	 */
 	static function steps($service) {
-		$out = array();
+		$out = [];
 
 		foreach ($service["steps"] as $step) {
 			$out[] = Task\Host::message($step);
@@ -410,14 +410,14 @@ class mod_integrations implements Module {
 	 */
 	function sync($chrome) {
 		$runs = new Task\Runs\Runs($chrome->db);
-		$found = $runs->find(array(
+		$found = $runs->find([
 			"folder" => Task\Route::INTERNAL,
 			"job" => self::SYNC,
 			"limit" => 1,
-		));
+		]);
 
 		if (count($found) === 0) {
-			return array();
+			return [];
 		}
 
 		$run = $found[0];
@@ -425,12 +425,12 @@ class mod_integrations implements Module {
 
 		Task\Run::overlay($run, $session);
 
-		return array(
+		return [
 			"state" => Task\Run::label($run),
 			"ago" => Task\Clock::ago($run->getStartedAt()),
 			"who" => $run->getUserName(),
 			"href" => Task\Route::href("/runs/" . $run->getId()),
-		);
+		];
 	}
 }
 

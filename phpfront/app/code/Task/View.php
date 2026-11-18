@@ -46,7 +46,7 @@ class View {
 	 * every workspace, which a trace of /runs put at 110ms of a 2s page.
 	 */
 	function body($template, $data, $chrome) {
-		$paths = array($this->templates(), self::THEME);
+		$paths = [$this->templates(), self::THEME];
 		$tpl = new \MiniTPL\Template($paths);
 
 		$tpl->load($template);
@@ -69,9 +69,9 @@ class View {
 		$head = new Head("Not found", self::MISSING);
 
 		Route::missing();
-		$this->chrome->heading("Not found", array(array("text" => "Not found", "href" => "")));
+		$this->chrome->heading("Not found", [["text" => "Not found", "href" => ""]]);
 		$this->chrome->reports($why);
-		$this->page(array("head" => $head->data()), "notfound.tpl");
+		$this->page(["head" => $head->data()], "notfound.tpl");
 	}
 
 	/**
@@ -88,7 +88,7 @@ class View {
 		Route::refused();
 		$this->chrome->heading("Not allowed");
 		$this->chrome->reports(self::REFUSED);
-		$this->page(array("head" => $head->data()), "forbidden.tpl");
+		$this->page(["head" => $head->data()], "forbidden.tpl");
 	}
 
 	/**
@@ -111,8 +111,8 @@ class View {
 		$dir = "modules/" . $name . "/assets/" . $name;
 		$href = $chrome["assets"] . "/modules/" . $name . "/" . $name;
 		$version = "?v=" . $chrome["assetVersion"];
-		$styles = array();
-		$scripts = array();
+		$styles = [];
+		$scripts = [];
 
 		if (file_exists($dir . ".css")) {
 			$styles[] = $href . ".css" . $version;
@@ -122,7 +122,7 @@ class View {
 			$scripts[] = $href . ".js" . $version;
 		}
 
-		return array("styles" => $styles, "scripts" => $scripts);
+		return ["styles" => $styles, "scripts" => $scripts];
 	}
 
 	/** page renders the module's body inside the theme's shell and echoes it. */
@@ -134,7 +134,7 @@ class View {
 		$chrome["styles"] = $assets["styles"];
 		$chrome["scripts"] = $assets["scripts"];
 
-		$paths = array(self::THEME);
+		$paths = [self::THEME];
 		$shell = new \MiniTPL\Template($paths);
 
 		$shell->load("index.tpl");

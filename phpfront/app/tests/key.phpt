@@ -16,20 +16,20 @@ $db = Task\DB::writer();
 //
 // Three keys, of which one is a run's: the encryption key is no run's, and a
 // key scoped to one workspace is no run of another's.
-$db->replace("key_info", array("name" => "fx-key-deploy", "purpose" => "ssh", "algo" => "ed25519", "fingerprint" => "fx:key:1", "scope" => "instance"));
-$db->replace("key_info", array("name" => "fx-key-scoped", "purpose" => "ssh", "algo" => "ed25519", "fingerprint" => "fx:key:2", "scope" => "workspace:fx-key-alpha"));
-$db->replace("key_info", array("name" => "fx-key-age", "purpose" => "encrypt", "algo" => "age", "fingerprint" => "fx:key:3", "scope" => "instance"));
+$db->replace("key_info", ["name" => "fx-key-deploy", "purpose" => "ssh", "algo" => "ed25519", "fingerprint" => "fx:key:1", "scope" => "instance"]);
+$db->replace("key_info", ["name" => "fx-key-scoped", "purpose" => "ssh", "algo" => "ed25519", "fingerprint" => "fx:key:2", "scope" => "workspace:fx-key-alpha"]);
+$db->replace("key_info", ["name" => "fx-key-age", "purpose" => "encrypt", "algo" => "age", "fingerprint" => "fx:key:3", "scope" => "instance"]);
 
 // The one key reaches a role and a name, which are the two ways a run gets one.
-$db->replace("key_role", array("id" => "fx-key-kr1", "key_name" => "fx-key-deploy", "role" => "runner"));
-$db->replace("key_user", array("id" => "fx-key-ku1", "key_name" => "fx-key-deploy", "user_name" => "fx-key-bob"));
+$db->replace("key_role", ["id" => "fx-key-kr1", "key_name" => "fx-key-deploy", "role" => "runner"]);
+$db->replace("key_user", ["id" => "fx-key-ku1", "key_name" => "fx-key-deploy", "user_name" => "fx-key-bob"]);
 
 $keys = new Task\Key;
 
 // mine is the entries of a list this fixture wrote, in the order the statement
 // answered them.
 function mine($values) {
-	$out = array();
+	$out = [];
 
 	foreach ($values as $value) {
 		if (strpos($value, "fx-key-") === 0) {
@@ -61,13 +61,13 @@ echo var_export(Task\Key::grants($links, "fx-key-gone", "runner"), true), "\n";
 // The keys each user's runs get, which is what reads both link tables: ann by
 // her role, bob by his name, and carol by neither, so the picker says she has
 // none.
-$ann = new Task\Model\User(array("id" => "fx-key-u1", "name" => "fx-key-ann", "role" => "runner"));
-$bob = new Task\Model\User(array("id" => "fx-key-u2", "name" => "fx-key-bob", "role" => "viewer"));
-$carol = new Task\Model\User(array("id" => "fx-key-u3", "name" => "fx-key-carol", "role" => "viewer"));
-$held = $keys->ofUsers(array($ann, $bob, $carol));
+$ann = new Task\Model\User(["id" => "fx-key-u1", "name" => "fx-key-ann", "role" => "runner"]);
+$bob = new Task\Model\User(["id" => "fx-key-u2", "name" => "fx-key-bob", "role" => "viewer"]);
+$carol = new Task\Model\User(["id" => "fx-key-u3", "name" => "fx-key-carol", "role" => "viewer"]);
+$held = $keys->ofUsers([$ann, $bob, $carol]);
 
-foreach (array("fx-key-ann", "fx-key-bob", "fx-key-carol") as $name) {
-	$got = isset($held[$name]) ? mine($held[$name]) : array();
+foreach (["fx-key-ann", "fx-key-bob", "fx-key-carol"] as $name) {
+	$got = isset($held[$name]) ? mine($held[$name]) : [];
 
 	echo $name, ": [", implode(",", $got), "]\n";
 }

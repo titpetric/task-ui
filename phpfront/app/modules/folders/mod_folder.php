@@ -47,7 +47,7 @@ class mod_folder implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"workspace",
 			"schedule",
 			"pin",
@@ -58,7 +58,7 @@ class mod_folder implements Module {
 			"key_info",
 			"key_role",
 			"key_user",
-		);
+		];
 	}
 
 	/**
@@ -165,7 +165,7 @@ class mod_folder implements Module {
 		}
 
 		$bare = strpos($rest, "/") === false;
-		$own = $bare ? Task\Host::job($id, "", $rest) : array();
+		$own = $bare ? Task\Host::job($id, "", $rest) : [];
 
 		if ($bare && Task\Row::flag($own, "found")) {
 			$this->job($id, "", $rest, $own);
@@ -251,10 +251,10 @@ class mod_folder implements Module {
 			$place->projects = count($subs);
 
 			$head->buttons($place->buttons($this->chrome));
-			$head->menu($place->menu($this->chrome, $title, array(), array(), true));
+			$head->menu($place->menu($this->chrome, $title, [], [], true));
 		}
 
-		$tree = $this->chrome->allowed("project/view") ? Task\Host::rootTree($named, Task\Folders::ids($folders)) : array();
+		$tree = $this->chrome->allowed("project/view") ? Task\Host::rootTree($named, Task\Folders::ids($folders)) : [];
 		$files = Task\Files::root($tree, $this->workspaces, $subs, $this->named($subs));
 		$home = $named ? $this->home($id, $folders) : null;
 		$prompt = null;
@@ -264,18 +264,18 @@ class mod_folder implements Module {
 			$prompt = Task\Prompt::ofRoot($this->chrome, $notes);
 		}
 
-		$scope = array(
+		$scope = [
 			"head" => $head->data(),
 			"findings" => Task\Findings::alert($folders, $id, $this->workspaces),
 			"git" => null,
 			"error" => "",
-			"control" => array(),
+			"control" => [],
 			"nothing" => false,
 			"prompt" => $prompt,
-			"files" => count($files["rows"]) === 0 ? null : array("note" => self::ROOT, "panel" => $files),
+			"files" => count($files["rows"]) === 0 ? null : ["note" => self::ROOT, "panel" => $files],
 			"home" => $home,
 			"detail" => null,
-		);
+		];
 
 		$this->view->page($scope, "folder.tpl");
 	}
@@ -288,7 +288,7 @@ class mod_folder implements Module {
 	 * and the page lists one row per project.
 	 */
 	function projects($folders) {
-		$out = array();
+		$out = [];
 
 		foreach ($folders as $folder) {
 			$id = Task\Row::text($folder, "id");
@@ -316,7 +316,7 @@ class mod_folder implements Module {
 	 * the workspace is no folder inside the root.
 	 */
 	function named($subs) {
-		$out = array();
+		$out = [];
 
 		foreach ($subs as $sub) {
 			$out[Task\Row::text($sub, "id")] = true;
@@ -352,14 +352,14 @@ class mod_folder implements Module {
 			return null;
 		}
 
-		$entries = Task\Host::listing($id, "", array());
+		$entries = Task\Host::listing($id, "", []);
 		$panel = Task\Files::home($entries, $id, $this->workspaces);
 
-		return array(
+		return [
 			"folder" => $id,
 			"note" => $id . self::HOME,
 			"panel" => $panel,
-		);
+		];
 	}
 
 	/**
@@ -390,7 +390,7 @@ class mod_folder implements Module {
 		$where->pull = Task\Place::pull($groups);
 		$where->projects = count($subs);
 
-		$pins = $this->chrome->user === null ? array() : $this->chrome->pins();
+		$pins = $this->chrome->user === null ? [] : $this->chrome->pins();
 		$head = new Task\Head($title);
 
 		$head->said(Task\Row::text($place, "description"));
@@ -410,7 +410,7 @@ class mod_folder implements Module {
 		$errors = Task\Row::items($place, "errors");
 		$error = count($errors) === 0 ? Task\Row::text($place, "error") : "";
 
-		$scope = array(
+		$scope = [
 			"head" => $head->data(),
 			"findings" => Task\Findings::alert($folders, $id, $this->workspaces),
 			"git" => Task\Place::git($status),
@@ -418,10 +418,10 @@ class mod_folder implements Module {
 			"control" => $rows,
 			"nothing" => count($groups) === 0 && count($subs) === 0,
 			"prompt" => Task\Prompt::inPlace($this->chrome, $id, "", $open, $notes),
-			"files" => array("note" => $id . "/", "panel" => $files),
+			"files" => ["note" => $id . "/", "panel" => $files],
 			"home" => $home,
 			"detail" => $this->detail($id, $place, $checkout),
-		);
+		];
 
 		$this->view->page($scope, "folder.tpl");
 	}
@@ -469,10 +469,10 @@ class mod_folder implements Module {
 		$control = new Task\Control($this->chrome);
 		$rows = $control->of($groups);
 		$tree = Task\Host::listing($id, $rel, Task\Folders::ids($folders));
-		$files = Task\Files::panel($tree, $id, $this->workspaces, $this->above($id, $rel), array());
+		$files = Task\Files::panel($tree, $id, $this->workspaces, $this->above($id, $rel), []);
 		$notes = new Task\Seen($this->chrome);
 
-		$scope = array(
+		$scope = [
 			"head" => $head->data(),
 			"findings" => null,
 			"git" => Task\Place::git($status),
@@ -480,10 +480,10 @@ class mod_folder implements Module {
 			"control" => $rows,
 			"nothing" => false,
 			"prompt" => Task\Prompt::inPlace($this->chrome, $id, $rel, false, $notes),
-			"files" => array("note" => $where . "/", "panel" => $files),
+			"files" => ["note" => $where . "/", "panel" => $files],
 			"home" => null,
 			"detail" => null,
-		);
+		];
 
 		$this->view->page($scope, "folder.tpl");
 	}
@@ -538,7 +538,7 @@ class mod_folder implements Module {
 	function children($folders, $id) {
 		$prefix = $id . "/";
 		$workspace = in_array($id, $this->workspaces, true);
-		$out = array();
+		$out = [];
 
 		foreach ($folders as $folder) {
 			$child = Task\Row::text($folder, "id");
@@ -595,7 +595,7 @@ class mod_folder implements Module {
 	function detail($id, $place, $checkout) {
 		$schedules = new Task\Schedules\Schedules($this->chrome->db);
 		$count = count($schedules->byFolder($id));
-		$sources = array();
+		$sources = [];
 
 		foreach (Task\Row::items($place, "sources") as $source) {
 			$kind = Task\Row::text($source, "kind");
@@ -607,25 +607,25 @@ class mod_folder implements Module {
 				$shows = Task\Place::source($id, $file, Task\Row::number($source, "lines"));
 			}
 
-			$sources[] = array(
+			$sources[] = [
 				"kind" => $kind,
 				"file" => $file,
 				"command" => count($command) === 0 ? "" : implode(" ", $command),
 				"shows" => $shows,
-			);
+			];
 		}
 
-		$includes = array();
+		$includes = [];
 
 		foreach (Task\Row::items($place, "includes") as $include) {
 			$file = Task\Row::text($include, "name");
-			$includes[] = array(
+			$includes[] = [
 				"file" => $file,
 				"shows" => Task\Place::source($id, $file, Task\Row::number($include, "lines")),
-			);
+			];
 		}
 
-		return array(
+		return [
 			"path" => $id . "/",
 			"sources" => $sources,
 			"checkout" => $this->cloned($checkout),
@@ -636,7 +636,7 @@ class mod_folder implements Module {
 			"count" => $count,
 			"schedules" => $count === 1 ? "schedule" : "schedules",
 			"page" => Task\Route::href(Task\Place::SCHEDULES) . "?folder=" . Task\Route::urlEscape($id),
-		);
+		];
 	}
 
 	/**
@@ -651,13 +651,13 @@ class mod_folder implements Module {
 
 		$when = Task\Row::text($checkout, "when");
 
-		return array(
+		return [
 			"remote" => Task\Row::text($checkout, "remote"),
 			"branch" => Task\Row::text($checkout, "branch"),
 			"commit" => Task\Row::text($checkout, "commit"),
 			"subject" => Task\Row::text($checkout, "subject"),
 			"ago" => $when === "" ? "" : Task\Clock::ago($when),
-		);
+		];
 	}
 
 	/**

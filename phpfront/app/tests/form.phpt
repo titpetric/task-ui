@@ -48,7 +48,7 @@ echo count(Task\Form::blocks("plain text and a ```yaml\nkey: value\n``` fence th
 
 // A fence the dialect refuses carries the message and no form, which the
 // renderer draws in the form's place. Every message names the field.
-$refused = array(
+$refused = [
 	"",
 	"fields:\n  - key: env\n",
 	"fields:\n  - {component: text}\n",
@@ -65,7 +65,7 @@ $refused = array(
 	"fields:\n  - {key: a, component: text, when: nope=1}\n",
 	"fields:\n  - {key: a, component: choice, options: [{value: x}]}\n  - {key: b, component: text, when: a=y}\n",
 	"fields:\n  - {key: a, component: text}\nsubmit: {prompt: \"{{nope}}\"}\n",
-);
+];
 
 foreach ($refused as $yaml) {
 	$read = Task\Form::parse($yaml);
@@ -78,14 +78,14 @@ foreach ($refused as $yaml) {
 $chain = Task\Form::parse("fields:\n  - {key: a, component: choice, options: [{value: \"1\"}, {value: \"2\"}]}\n  - {key: b, component: choice, when: a=1, options: [{value: \"9\"}]}\n  - {key: c, component: text, when: b=9}\nsubmit: {prompt: \"{{a}}{{b}}{{c}}\"}\n");
 $form = $chain["form"];
 
-echo implode(",", array_keys(Task\Form::visible($form, array()))), "\n";
-echo implode(",", array_keys(Task\Form::visible($form, array("a" => "1")))), "\n";
-echo implode(",", array_keys(Task\Form::visible($form, array("a" => "1", "b" => "9")))), "\n";
-echo implode(",", array_keys(Task\Form::visible($form, array("a" => "2", "b" => "9")))), "\n";
+echo implode(",", array_keys(Task\Form::visible($form, []))), "\n";
+echo implode(",", array_keys(Task\Form::visible($form, ["a" => "1"]))), "\n";
+echo implode(",", array_keys(Task\Form::visible($form, ["a" => "1", "b" => "9"]))), "\n";
+echo implode(",", array_keys(Task\Form::visible($form, ["a" => "2", "b" => "9"]))), "\n";
 
 // The prompt takes the submitted values, "" for a field with none.
-echo "[", Task\Form::render($form, array("a" => "1", "b" => "9", "c" => "go")), "]\n";
-echo "[", Task\Form::render($form, array()), "]\n";
+echo "[", Task\Form::render($form, ["a" => "1", "b" => "9", "c" => "go"]), "]\n";
+echo "[", Task\Form::render($form, []), "]\n";
 
 // The markup of the fence: one form, the button that starts it, and a
 // field carrying its key, its component and its when.
@@ -122,9 +122,9 @@ echo Task\Form::html($all[0], null), "\n";
 // A source names where a field's options come from: the one it declares,
 // else the picker component it is. The roles are the theme's own and need
 // no reader; the rest are the page's, and job and key are wired nowhere.
-echo Task\Form::sourceOf(array("source" => "role", "component" => "choice")), "\n";
-echo Task\Form::sourceOf(array("source" => "", "component" => "workspace")), "\n";
-echo "[", Task\Form::sourceOf(array("source" => "", "component" => "text")), "]\n";
+echo Task\Form::sourceOf(["source" => "role", "component" => "choice"]), "\n";
+echo Task\Form::sourceOf(["source" => "", "component" => "workspace"]), "\n";
+echo "[", Task\Form::sourceOf(["source" => "", "component" => "text"]), "]\n";
 echo implode(",", Task\Form::source("role", null)), "\n";
 echo count(Task\Form::source("job", null)), count(Task\Form::source("key", null)), count(Task\Form::source("", null)), "\n";
 ---

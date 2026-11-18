@@ -34,7 +34,7 @@ class Prompt {
 	 * the comment rows of a thread's corrections.
 	 */
 	static function rules($comments) {
-		$rules = array();
+		$rules = [];
 
 		foreach ($comments as $comment) {
 			$body = trim($comment["body"]);
@@ -59,16 +59,16 @@ class Prompt {
 	 * thread opened with.
 	 */
 	static function flatten($design, $rules) {
-		$parts = array("## The design\n\n" . trim($design));
+		$parts = ["## The design\n\n" . trim($design)];
 
 		if ($rules) {
-			$lines = array(
+			$lines = [
 				"## The rules",
 				"",
 				"Every correction this thread has made, as a rule the artifacts have to",
 				"satisfy at once. A later rule wins where two disagree.",
 				"",
-			);
+			];
 
 			$n = 0;
 
@@ -80,7 +80,7 @@ class Prompt {
 			$parts[] = implode("\n", $lines);
 		}
 
-		$parts[] = implode("\n", array(
+		$parts[] = implode("\n", [
 			"## Where this starts",
 			"",
 			"The thread's folder already holds the artifacts, and your scratch pad,",
@@ -89,7 +89,7 @@ class Prompt {
 			"the scratch pad names rather than starting over, and produce artifacts",
 			"that satisfy every rule together rather than applying them one after",
 			"another.",
-		));
+		]);
 
 		return implode("\n\n", $parts);
 	}

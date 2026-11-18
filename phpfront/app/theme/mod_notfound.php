@@ -28,7 +28,7 @@ class mod_notfound implements Module {
 	}
 
 	function tables() {
-		return array();
+		return [];
 	}
 
 	function serve() {

@@ -39,7 +39,7 @@ class mod_host_add implements Module {
 	}
 
 	function tables() {
-		return array("host");
+		return ["host"];
 	}
 
 	function serve() {

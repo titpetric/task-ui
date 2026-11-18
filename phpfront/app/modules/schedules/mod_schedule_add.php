@@ -37,7 +37,7 @@ class mod_schedule_add implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"schedule",
 			"workflow",
 			"workflow_step",
@@ -46,7 +46,7 @@ class mod_schedule_add implements Module {
 			"key_info",
 			"key_role",
 			"key_user",
-		);
+		];
 	}
 
 	function serve() {
@@ -66,14 +66,14 @@ class mod_schedule_add implements Module {
 		$workflows = Task\Schedules\Catalogue::workflows($chrome);
 		$users = $chrome->runAsUsers();
 
-		$chrome->heading(self::TITLE, array(
-			array("text" => "Scheduled", "href" => "/schedules"),
-			array("text" => self::TITLE, "href" => ""),
-		));
+		$chrome->heading(self::TITLE, [
+			["text" => "Scheduled", "href" => "/schedules"],
+			["text" => self::TITLE, "href" => ""],
+		]);
 
 		$head = new Task\Head(self::TITLE, self::LEAD);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"edit" => false,
 			"target" => "",
@@ -94,18 +94,18 @@ class mod_schedule_add implements Module {
 			"triage" => false,
 			"enabled" => true,
 			"pickUser" => count($users) > 0,
-			"runAs" => array(
+			"runAs" => [
 				"id" => "sch-user",
-				"options" => array(
+				"options" => [
 					"users" => $users,
 					"selected" => $chrome->name(),
 					"short" => false,
-				),
-			),
+				],
+			],
 			"workflowName" => "",
 			"workflowHref" => "",
 			"targetHref" => "",
-		), "add.tpl");
+		], "add.tpl");
 	}
 }
 

@@ -50,7 +50,7 @@ class Report {
 
 		$runs = new Runs\Runs($this->db);
 		$about = $runs->root($run);
-		$found = $this->summaries(array($about));
+		$found = $this->summaries([$about]);
 
 		if (!isset($found[$about]) || $found[$about]["pending"]) {
 			return null;
@@ -77,8 +77,8 @@ class Report {
 			return null;
 		}
 
-		$replies = $this->notes->replies(array($thread->getId()));
-		$under = isset($replies[$thread->getId()]) ? $replies[$thread->getId()] : array();
+		$replies = $this->notes->replies([$thread->getId()]);
+		$under = isset($replies[$thread->getId()]) ? $replies[$thread->getId()] : [];
 		$answer = self::answer($under, $run->getId());
 
 		if ($answer === null) {
@@ -87,7 +87,7 @@ class Report {
 
 		$asked = self::question($thread, $under, $answer);
 
-		return array(
+		return [
 			"run" => $run->getId(),
 			"about" => $thread->getAboutRunId(),
 			"thread" => $thread->getId(),
@@ -96,7 +96,7 @@ class Report {
 			"body" => $answer->getBody(),
 			"at" => $answer->getCreatedAt(),
 			"pending" => false,
-		);
+		];
 	}
 
 	/**
@@ -107,14 +107,14 @@ class Report {
 	 * and where there is none, the summary the runs page kept.
 	 */
 	function summaries($runIDs) {
-		$out = array();
+		$out = [];
 
 		if (count($runIDs) === 0) {
 			return $out;
 		}
 
 		$threads = $this->notes->promptsAbout($runIDs);
-		$ids = array();
+		$ids = [];
 
 		foreach ($threads as $thread) {
 			if (self::asks($thread)) {
@@ -128,7 +128,7 @@ class Report {
 		// and stays. A pending report gives way to one that holds an answer.
 		foreach ($threads as $thread) {
 			$id = $thread->getId();
-			$report = self::summaryOf($thread, isset($replies[$id]) ? $replies[$id] : array());
+			$report = self::summaryOf($thread, isset($replies[$id]) ? $replies[$id] : []);
 
 			if ($report === null) {
 				continue;
@@ -169,14 +169,14 @@ class Report {
 	 * stays, which is the thread summaries() keeps as well.
 	 */
 	function jobSummaries($runIDs) {
-		$out = array();
+		$out = [];
 
 		if (count($runIDs) === 0) {
 			return $out;
 		}
 
-		$threads = array();
-		$ids = array();
+		$threads = [];
+		$ids = [];
 
 		foreach ($this->notes->promptsAbout($runIDs) as $thread) {
 			if (!self::asks($thread)) {
@@ -191,7 +191,7 @@ class Report {
 
 		foreach ($threads as $thread) {
 			$id = $thread->getId();
-			$under = isset($replies[$id]) ? $replies[$id] : array();
+			$under = isset($replies[$id]) ? $replies[$id] : [];
 			$body = count($under) === 0 ? "" : $under[0]->getBody();
 			$out[$thread->getAboutRunId()] = self::link($thread->getAboutRunId(), $body);
 		}
@@ -211,7 +211,7 @@ class Report {
 			$preview = mb_substr($preview, 0, self::PREVIEW) . "…";
 		}
 
-		return array("href" => "/runs/" . $runID . "/report", "preview" => $preview);
+		return ["href" => "/runs/" . $runID . "/report", "preview" => $preview];
 	}
 
 	/**
@@ -226,7 +226,7 @@ class Report {
 			return null;
 		}
 
-		return array(
+		return [
 			"run" => $runID,
 			"about" => $runID,
 			"thread" => "",
@@ -235,7 +235,7 @@ class Report {
 			"body" => Row::text($row, "summary"),
 			"at" => Row::stamp($row, "created_at"),
 			"pending" => false,
-		);
+		];
 	}
 
 	/**
@@ -248,7 +248,7 @@ class Report {
 			return null;
 		}
 
-		$report = array(
+		$report = [
 			"run" => $thread->getAboutRunId(),
 			"about" => $thread->getAboutRunId(),
 			"thread" => $thread->getId(),
@@ -257,7 +257,7 @@ class Report {
 			"body" => "",
 			"at" => "",
 			"pending" => false,
-		);
+		];
 		$answer = self::answer($replies, self::summaryRun($thread, $replies));
 
 		if ($answer !== null) {

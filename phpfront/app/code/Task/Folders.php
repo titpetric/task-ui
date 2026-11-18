@@ -22,29 +22,29 @@ class Folders {
 	var $access;
 
 	/** workspaces is the folder of every named workspace, in the sidebar's order. */
-	var $workspaces = array();
+	var $workspaces = [];
 
 	/** here is the folder of the page being read. */
 	var $here = "";
 
 	/** running is the ID of the run in progress of a job, by the job's key. */
-	var $running = array();
+	var $running = [];
 
 	/**
 	 * rows is the run in progress of a job as its row, by the job's key: the
 	 * Jobs table draws the title of the run its button attaches to, which the
 	 * ID alone does not say, and the tree read the rows already.
 	 */
-	var $rows = array();
+	var $rows = [];
 
 	/**
 	 * held is the reader's pins as they were read, which a Jobs row's [...]
 	 * reads to know whether its Pin unpins.
 	 */
-	var $held = array();
+	var $held = [];
 
 	/** dirs is the directory of a folder, asked of the host once for each. */
-	var $dirs = array();
+	var $dirs = [];
 
 	function __construct($db = null, $access = null) {
 		if ($db === null) {
@@ -87,7 +87,7 @@ class Folders {
 		$this->warm($this->places($placed));
 
 		$groups = $this->group($placed, 0, true);
-		$out = array();
+		$out = [];
 
 		foreach ($this->ordered($groups) as $group) {
 			$out[] = $this->scope($group);
@@ -104,8 +104,8 @@ class Folders {
 	 */
 	function defaults($folders) {
 		$hidden = $this->hidden();
-		$listed = array();
-		$side = array();
+		$listed = [];
+		$side = [];
 
 		foreach ($folders as $folder) {
 			$id = Row::text($folder, "id");
@@ -149,7 +149,7 @@ class Folders {
 	 * the tree leaves out and where a pin stays out of it too.
 	 */
 	function homes() {
-		$out = array(self::HOME => true);
+		$out = [self::HOME => true];
 
 		foreach ($this->workspaces as $workspace) {
 			$out[$workspace . "/" . self::HOME] = true;
@@ -160,7 +160,7 @@ class Folders {
 
 	/** checkouts is every directory right inside a named workspace's src. */
 	function checkouts() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->workspaces as $workspace) {
 			foreach (Host::projects($workspace) as $id) {
@@ -178,7 +178,7 @@ class Folders {
 	 */
 	function limited($side) {
 		$limits = $this->limits();
-		$dropped = array();
+		$dropped = [];
 
 		foreach ($limits as $workspace => $limit) {
 			foreach ($this->past($side, $workspace, $limit) as $project) {
@@ -190,7 +190,7 @@ class Folders {
 			return $side;
 		}
 
-		$kept = array();
+		$kept = [];
 
 		foreach ($side as $folder) {
 			$project = $this->projectOf(Row::text($folder, "id"));
@@ -213,11 +213,11 @@ class Folders {
 	/** past is the projects of one workspace that its sidebar limit leaves out. */
 	function past($side, $workspace, $limit) {
 		if ($limit <= 0) {
-			return array();
+			return [];
 		}
 
-		$projects = array();
-		$seen = array();
+		$projects = [];
+		$seen = [];
 
 		foreach ($side as $folder) {
 			$id = Row::text($folder, "id");
@@ -232,10 +232,10 @@ class Folders {
 		}
 
 		if (count($projects) <= $limit) {
-			return array();
+			return [];
 		}
 
-		$at = array();
+		$at = [];
 
 		foreach ($projects as $project) {
 			$at[$project] = Host::commit($this->dirOf($project));
@@ -276,7 +276,7 @@ class Folders {
 	 * folder that is gone, or of one the reader no longer sees, is no pin.
 	 */
 	function pins($folders) {
-		$out = array();
+		$out = [];
 
 		if ($this->access->user === null) {
 			return $out;
@@ -375,7 +375,7 @@ class Folders {
 		$args = Text::items($pin->getArgs());
 		$written = count($args) === 0 ? "" : $pin->getArgs();
 
-		return array(
+		return [
 			"folder" => $folder,
 			"job" => $job,
 			"named" => $pin->getJob(),
@@ -383,7 +383,7 @@ class Folders {
 			"args" => $args,
 			"argsJSON" => $written,
 			"label" => self::label($pin, $args),
-		);
+		];
 	}
 
 	/** label is what a pinned job's row says: its directory before it, the arguments it runs with after. */
@@ -412,14 +412,14 @@ class Folders {
 	 */
 	function placed($side, $pins) {
 		$folders = $side;
-		$at = array();
+		$at = [];
 
 		foreach ($folders as $index => $folder) {
 			$at[Row::text($folder, "id")] = $index;
 		}
 
 		$homes = $this->homes();
-		$kept = array();
+		$kept = [];
 
 		foreach ($pins as $pin) {
 			if (!self::under($homes, Row::text($pin["folder"], "id"))) {
@@ -447,7 +447,7 @@ class Folders {
 
 			if (!isset($at[$id])) {
 				$bare = $pin["folder"];
-				$bare["jobs"] = array();
+				$bare["jobs"] = [];
 				$at[$id] = count($folders);
 				$folders[] = $bare;
 			}
@@ -464,7 +464,7 @@ class Folders {
 			}
 		}
 
-		usort($folders, array("Task\\Folders", "byName"));
+		usort($folders, ["Task\\Folders", "byName"]);
 
 		return $folders;
 	}
@@ -478,7 +478,7 @@ class Folders {
 	static function above($id, $workspaces) {
 		$parts = explode("/", $id);
 		$levels = in_array($parts[0], $workspaces, true) ? 2 : 1;
-		$out = array();
+		$out = [];
 
 		for ($i = 1; $i <= $levels && $i < count($parts); $i++) {
 			$out[] = implode("/", array_slice($parts, 0, $i));
@@ -513,8 +513,8 @@ class Folders {
 	 * project of one is a workspace itself.
 	 */
 	function group($folders, $depth, $named) {
-		$groups = array();
-		$at = array();
+		$groups = [];
+		$at = [];
 
 		foreach ($folders as $folder) {
 			$id = Row::text($folder, "id");
@@ -522,13 +522,13 @@ class Folders {
 
 			if (!isset($at[$top])) {
 				$at[$top] = count($groups);
-				$groups[] = array(
+				$groups[] = [
 					"id" => $top,
 					"workspace" => $named && in_array($top, $this->workspaces, true),
 					"top" => null,
-					"nested" => array(),
-					"projects" => array(),
-				);
+					"nested" => [],
+					"projects" => [],
+				];
 			}
 
 			$index = $at[$top];
@@ -550,7 +550,7 @@ class Folders {
 			}
 
 			$groups[$index]["projects"] = $this->group($group["nested"], $depth + 1, false);
-			$groups[$index]["nested"] = array();
+			$groups[$index]["nested"] = [];
 		}
 
 		return $groups;
@@ -574,8 +574,8 @@ class Folders {
 	 */
 	function ordered($groups) {
 		$ranks = Workspace::ranked($this->workspaces);
-		$roots = array();
-		$named = array();
+		$roots = [];
+		$named = [];
 
 		foreach ($groups as $group) {
 			if ($group["workspace"]) {
@@ -624,7 +624,7 @@ class Folders {
 			$out["top"] = true;
 		}
 
-		$projects = array();
+		$projects = [];
 
 		foreach ($group["projects"] as $project) {
 			$projects[] = $this->scope($project);
@@ -660,7 +660,7 @@ class Folders {
 			$said = Row::text($errors[0], "detail");
 		}
 
-		return array(
+		return [
 			"id" => $id,
 			"name" => self::nameOf($id),
 			"href" => Route::folderHref($id, $this->workspaces),
@@ -677,7 +677,7 @@ class Folders {
 			"badTitle" => $said,
 			"count" => $own,
 			"counted" => $own > 0,
-		);
+		];
 	}
 
 	/**
@@ -710,7 +710,7 @@ class Folders {
 	 * is a permission over its row, so it is asked here and not of the host.
 	 */
 	function runs() {
-		$out = array();
+		$out = [];
 
 		$this->rows = $this->live();
 
@@ -734,7 +734,7 @@ class Folders {
 		$user = $this->access->user;
 		$prompts = $this->access->allowed("prompt/view");
 		$notes = $this->access->allowed("note/view");
-		$out = array();
+		$out = [];
 
 		foreach (Host::running() as $each) {
 			$run = $runs->get(Row::text($each, "id"));
@@ -781,7 +781,7 @@ class Folders {
 	 * nobody sees is a directory of the place above it.
 	 */
 	static function ids($folders) {
-		$out = array();
+		$out = [];
 
 		foreach ($folders as $folder) {
 			$out[] = Row::text($folder, "id");
@@ -804,18 +804,18 @@ class Folders {
 	 * the form says what the user sees and not what the reader does.
 	 */
 	static function choices($folders, $seen) {
-		$out = array();
-		$known = array();
+		$out = [];
+		$known = [];
 
 		foreach ($folders as $folder) {
 			$id = Row::text($folder, "id");
 			$known[$id] = true;
-			$out[] = array("id" => $id, "checked" => in_array($id, $seen, true));
+			$out[] = ["id" => $id, "checked" => in_array($id, $seen, true)];
 		}
 
 		foreach ($seen as $id) {
 			if (!isset($known[$id])) {
-				$out[] = array("id" => $id, "checked" => true);
+				$out[] = ["id" => $id, "checked" => true];
 			}
 		}
 
@@ -919,7 +919,7 @@ class Folders {
 	 * as the empty string dirOf answers, so a miss is not asked twice either.
 	 */
 	function warm($ids) {
-		$ask = array();
+		$ask = [];
 
 		foreach ($ids as $id) {
 			if ($id !== "" && !isset($this->dirs[$id])) {
@@ -944,7 +944,7 @@ class Folders {
 	 * orders by its last commit.
 	 */
 	function places($folders) {
-		$out = array();
+		$out = [];
 
 		foreach ($folders as $folder) {
 			$id = Row::text($folder, "id");
@@ -965,16 +965,16 @@ class Folders {
 	 * its last segment and lists nothing.
 	 */
 	static function bare($id) {
-		return array(
+		return [
 			"id" => $id,
 			"title" => self::nameOf($id),
 			"dir" => "",
-			"allow" => array(),
-			"sources" => array(),
+			"allow" => [],
+			"sources" => [],
 			"error" => "",
-			"errors" => array(),
-			"jobs" => array(),
-		);
+			"errors" => [],
+			"jobs" => [],
+		];
 	}
 
 	/** workspaceOf is the workspace a folder is in, the root's for anything outside a named one. */

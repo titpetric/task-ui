@@ -14,7 +14,7 @@ class Module {
 	public $description = "";
 	public $icon = "";
 	public $version = "";
-	public $tables = array();
+	public $tables = [];
 	public $sidebar = false;
 	public $sidebarHref = "";
 	public $sidebarRule = "module";

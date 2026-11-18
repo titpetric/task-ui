@@ -15,7 +15,7 @@ namespace Task;
 // binding crosses a parsed form: see docs/phpfront.md.
 class Form {
 	/** COMPONENTS are the inputs the dialect names; a field names one of them. */
-	const COMPONENTS = array(
+	const COMPONENTS = [
 		"text",
 		"textarea",
 		"number",
@@ -29,13 +29,13 @@ class Form {
 		"user",
 		"key",
 		"workspace",
-	);
+	];
 
 	/** PICKERS are the components that take their options from a source of their own name. */
-	const PICKERS = array("folder", "job", "role", "user", "key", "workspace");
+	const PICKERS = ["folder", "job", "role", "user", "key", "workspace"];
 
 	/** TRUTHS are the defaults a bool field reads as a yes. */
-	const TRUTHS = array("1", "t", "y", "on", "yes", "true");
+	const TRUTHS = ["1", "t", "y", "on", "yes", "true"];
 
 	/** LABEL is the button's label a form that names none takes. */
 	const LABEL = "Run";
@@ -45,8 +45,8 @@ class Form {
 	const WORD = "form";
 
 	/** KEYS are the keys each level of the dialect takes, and nothing else. */
-	const FORM_KEYS = array("title", "table", "fields", "submit");
-	const FIELD_KEYS = array(
+	const FORM_KEYS = ["title", "table", "fields", "submit"];
+	const FIELD_KEYS = [
 		"key",
 		"label",
 		"component",
@@ -57,9 +57,9 @@ class Form {
 		"when",
 		"required",
 		"options",
-	);
-	const OPTION_KEYS = array("value", "label", "next");
-	const SUBMIT_KEYS = array("label", "job", "folder", "dir", "prompt");
+	];
+	const OPTION_KEYS = ["value", "label", "next"];
+	const SUBMIT_KEYS = ["label", "job", "folder", "dir", "prompt"];
 
 	/** KEY_PATTERN is the word a field's key is, and PROMPT_PATTERN a placeholder of a prompt. */
 	const KEY_PATTERN = '/^[a-z0-9_-]+$/';
@@ -71,7 +71,7 @@ class Form {
 	 * what the dialect refused it for.
 	 */
 	static function blocks($body) {
-		$out = array();
+		$out = [];
 		$length = strlen($body);
 		$pos = 0;
 
@@ -106,63 +106,63 @@ class Form {
 		try {
 			$document = yaml_decode($yaml);
 		} catch (\Throwable $e) {
-			return array("form" => null, "err" => "form: " . $e->getMessage());
+			return ["form" => null, "err" => "form: " . $e->getMessage()];
 		}
 
 		if ($document === null) {
-			return array("form" => null, "err" => "form: it declares nothing");
+			return ["form" => null, "err" => "form: it declares nothing"];
 		}
 
 		if (!is_array($document)) {
-			return array("form" => null, "err" => "form: it declares nothing");
+			return ["form" => null, "err" => "form: it declares nothing"];
 		}
 
 		$form = self::shape($document);
 		$err = self::validate($document, $form);
 
 		if ($err !== "") {
-			return array("form" => null, "err" => $err);
+			return ["form" => null, "err" => $err];
 		}
 
-		return array("form" => $form, "err" => "");
+		return ["form" => $form, "err" => ""];
 	}
 
 	/** shape is the document read into the dialect's own keys, each one filled. */
 	static function shape($document) {
 		$submit = Row::items($document, "submit");
-		$fields = array();
+		$fields = [];
 
 		foreach (Row::items($document, "fields") as $declared) {
 			$fields[] = self::shapeField($declared);
 		}
 
-		return array(
+		return [
 			"title" => self::scalar($document, "title"),
 			"table" => self::scalar($document, "table"),
 			"fields" => $fields,
-			"submit" => array(
+			"submit" => [
 				"label" => self::scalar($submit, "label") === "" ? self::LABEL : self::scalar($submit, "label"),
 				"job" => self::scalar($submit, "job"),
 				"folder" => self::scalar($submit, "folder"),
 				"dir" => self::scalar($submit, "dir"),
 				"prompt" => self::scalar($submit, "prompt"),
-			),
-		);
+			],
+		];
 	}
 
 	/** shapeField is one declared field read into the dialect's own keys. */
 	static function shapeField($declared) {
-		$options = array();
+		$options = [];
 
 		foreach (Row::items($declared, "options") as $option) {
-			$options[] = array(
+			$options[] = [
 				"value" => self::scalar($option, "value"),
 				"label" => self::scalar($option, "label"),
 				"next" => self::scalar($option, "next"),
-			);
+			];
 		}
 
-		return array(
+		return [
 			"key" => self::scalar($declared, "key"),
 			"label" => self::scalar($declared, "label"),
 			"component" => self::scalar($declared, "component"),
@@ -173,7 +173,7 @@ class Form {
 			"when" => self::scalar($declared, "when"),
 			"required" => Row::flag($declared, "required"),
 			"options" => $options,
-		);
+		];
 	}
 
 	/** validate is the first thing the dialect refuses, the references and the prompt last. */
@@ -188,7 +188,7 @@ class Form {
 			return "form: it declares no field";
 		}
 
-		$keys = array();
+		$keys = [];
 
 		foreach ($form["fields"] as $index => $field) {
 			$err = self::validateField($field, $index);
@@ -253,7 +253,7 @@ class Form {
 			return "form: field " . self::quote($field["key"]) . ": a " . $field["component"] . " needs options or a source";
 		}
 
-		$seen = array();
+		$seen = [];
 
 		foreach ($field["options"] as $index => $option) {
 			if ($option["value"] === "") {
@@ -377,7 +377,7 @@ class Form {
 
 	/** visible is the keys the values show; a field whose own when-field is hidden stays hidden. */
 	static function visible($form, $values) {
-		$shown = array();
+		$shown = [];
 
 		foreach ($form["fields"] as $field) {
 			if ($field["when"] !== "") {
@@ -408,7 +408,7 @@ class Form {
 
 	/** placeholders is each placeholder of a prompt as written, by the field it names. */
 	static function placeholders($prompt) {
-		$out = array();
+		$out = [];
 		$count = preg_match_all(self::PROMPT_PATTERN, $prompt, $found);
 
 		if ($count < 1) {
@@ -424,7 +424,7 @@ class Form {
 
 	/** html is a fence as the body holds it: the form it declares, or the error it failed to parse with. */
 	static function html($block, $chrome) {
-		$paths = array(View::THEME);
+		$paths = [View::THEME];
 		$tpl = new \MiniTPL\Template($paths);
 
 		$tpl->load("components/form-block.tpl");
@@ -438,7 +438,7 @@ class Form {
 		$form = isset($block["form"]) ? $block["form"] : null;
 
 		if ($form === null) {
-			return array(
+			return [
 				"err" => Row::text($block, "err"),
 				"title" => "",
 				"label" => "",
@@ -446,24 +446,24 @@ class Form {
 				"dir" => "",
 				"job" => "",
 				"prompt" => "",
-				"fields" => array(),
-			);
+				"fields" => [],
+			];
 		}
 
-		$values = array();
+		$values = [];
 
 		foreach ($form["fields"] as $field) {
 			$values[$field["key"]] = $field["default"];
 		}
 
 		$shown = self::visible($form, $values);
-		$fields = array();
+		$fields = [];
 
 		foreach ($form["fields"] as $field) {
 			$fields[] = self::field($field, !isset($shown[$field["key"]]), $chrome);
 		}
 
-		return array(
+		return [
 			"err" => "",
 			"title" => $form["title"],
 			"label" => $form["submit"]["label"],
@@ -472,27 +472,27 @@ class Form {
 			"job" => $form["submit"]["job"],
 			"prompt" => $form["submit"]["prompt"],
 			"fields" => $fields,
-		);
+		];
 	}
 
 	/** field is one declared field as the template draws it, its options from the source it names. */
 	static function field($field, $hidden, $chrome) {
-		$options = array();
+		$options = [];
 
 		foreach ($field["options"] as $option) {
-			$options[] = array(
+			$options[] = [
 				"value" => $option["value"],
 				"label" => $option["label"] === "" ? $option["value"] : $option["label"],
 				"next" => $option["next"],
 				"selected" => $option["value"] === $field["default"],
-			);
+			];
 		}
 
 		if (count($options) === 0) {
 			$options = self::sourced(self::sourceOf($field), $field["default"], $chrome);
 		}
 
-		return array(
+		return [
 			"key" => $field["key"],
 			"label" => $field["label"] === "" ? $field["key"] : $field["label"],
 			"component" => $field["component"],
@@ -504,7 +504,7 @@ class Form {
 			"hidden" => $hidden,
 			"checked" => in_array(strtolower(trim($field["default"])), self::TRUTHS, true),
 			"options" => $options,
-		);
+		];
 	}
 
 	/** sourceOf names where a field's options come from: the one it declares, else its own picker component. */
@@ -518,15 +518,15 @@ class Form {
 
 	/** sourced is the options of a source, the one the default names selected. */
 	static function sourced($source, $default, $chrome) {
-		$out = array();
+		$out = [];
 
 		foreach (self::source($source, $chrome) as $value) {
-			$out[] = array(
+			$out[] = [
 				"value" => $value,
 				"label" => $value,
 				"next" => "",
 				"selected" => $value === $default,
-			);
+			];
 		}
 
 		return $out;
@@ -547,13 +547,13 @@ class Form {
 		}
 
 		if ($chrome === null) {
-			return array();
+			return [];
 		}
 
 		switch ($source) {
 
 			case "folder":
-				$out = array();
+				$out = [];
 
 				foreach ($chrome->folders() as $folder) {
 					$out[] = Row::text($folder, "id");
@@ -570,7 +570,7 @@ class Form {
 				return $chrome->workspaces();
 		}
 
-		return array();
+		return [];
 	}
 
 	/** hasOption reports whether a value is one of a field's static options. */
@@ -589,18 +589,18 @@ class Form {
 		$at = strpos($when, "=");
 
 		if ($at === false) {
-			return array(
+			return [
 				"key" => $when,
 				"value" => "",
 				"ok" => false,
-			);
+			];
 		}
 
-		return array(
+		return [
 			"key" => substr($when, 0, $at),
 			"value" => substr($when, $at + 1),
 			"ok" => true,
-		);
+		];
 	}
 
 	/** scalar is a key of a mapping as a string, a yaml truth as the word that spells it. */
@@ -624,7 +624,7 @@ class Form {
 
 	/** quote is a value as the Go verb %q writes it, which every message of the dialect names a field with. */
 	static function quote($value) {
-		return '"' . str_replace(array("\\", '"', "\n", "\r", "\t"), array("\\\\", '\\"', '\\n', '\\r', '\\t'), $value) . '"';
+		return '"' . str_replace(["\\", '"', "\n", "\r", "\t"], ["\\\\", '\\"', '\\n', '\\r', '\\t'], $value) . '"';
 	}
 
 	/** lineAt is the line at an offset without its break, and the offset the next one opens at. */
@@ -632,10 +632,10 @@ class Form {
 		$at = strpos($body, "\n", $pos);
 
 		if ($at === false) {
-			return array("text" => rtrim(substr($body, $pos), "\r"), "next" => strlen($body));
+			return ["text" => rtrim(substr($body, $pos), "\r"), "next" => strlen($body)];
 		}
 
-		return array("text" => rtrim(substr($body, $pos, $at - $pos), "\r"), "next" => $at + 1);
+		return ["text" => rtrim(substr($body, $pos, $at - $pos), "\r"), "next" => $at + 1];
 	}
 
 	/** fenceOf reads a line as a fence opener: its indent, its backticks and whether it says form; null for none. */
@@ -646,44 +646,44 @@ class Form {
 			return null;
 		}
 
-		return array(
+		return [
 			"indent" => $parts["indent"],
 			"ticks" => $parts["ticks"],
 			"form" => self::firstWord($parts["rest"]) === self::WORD,
-		);
+		];
 	}
 
 	/** scan is the block a fence opens at start and the offset past its closing line, the body de-indented. */
 	static function scan($body, $fence, $start, $pos) {
-		$lines = array();
+		$lines = [];
 		$length = strlen($body);
 
 		while ($pos < $length) {
 			$line = self::lineAt($body, $pos);
 
 			if (self::closes($fence, $line["text"])) {
-				return array(
+				return [
 					"start" => $start,
 					"end" => $pos + strlen($line["text"]),
 					"body" => self::body($lines),
 					"after" => $line["next"],
 					"form" => null,
 					"err" => "",
-				);
+				];
 			}
 
 			$lines[] = self::deindent($line["text"], $fence["indent"]);
 			$pos = $line["next"];
 		}
 
-		return array(
+		return [
 			"start" => $start,
 			"end" => $length,
 			"body" => self::body($lines),
 			"after" => $length,
 			"form" => null,
 			"err" => "",
-		);
+		];
 	}
 
 	/** closes reports whether a line closes a fence: as many backticks, and nothing after them. */
@@ -698,11 +698,11 @@ class Form {
 		$ticked = ltrim($line, " \t");
 		$rest = ltrim($ticked, "`");
 
-		return array(
+		return [
 			"indent" => substr($line, 0, strlen($line) - strlen($ticked)),
 			"ticks" => strlen($ticked) - strlen($rest),
 			"rest" => trim($rest),
-		);
+		];
 	}
 
 	/** deindent takes a fence's own indent off one of its lines. */

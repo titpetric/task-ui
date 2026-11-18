@@ -14,7 +14,7 @@ echo var_export($mod instanceof Module, true), "\n";
 // writes that shape rather than a workflow table: what is held here is the
 // description, and a row reads the rest of it as it is given.
 function flow($id, $description) {
-	return array(
+	return [
 		"id" => $id,
 		"name" => "fx-workflows-" . $id,
 		"description" => $description,
@@ -26,7 +26,7 @@ function flow($id, $description) {
 		"canChange" => false,
 		"prompted" => false,
 		"runDenied" => "",
-	);
+	];
 }
 
 $chrome = new Task\Chrome;
@@ -34,18 +34,18 @@ $chrome = new Task\Chrome;
 // The description is markdown, so a link to the runbook is a link and the name
 // of a thing in code is code. The renderer is the host's; what the page does is
 // draw the answer as markup, which is why the markup writes it raw.
-$row = $mod->row($chrome, flow("w1", "Deploys **prod**, see [runbook](docs/deploy.md)"), array());
+$row = $mod->row($chrome, flow("w1", "Deploys **prod**, see [runbook](docs/deploy.md)"), []);
 
 echo "[", $row["description"], "]\n";
 
 // Several blocks are a document and not a line, and are drawn as what they are.
-$long = $mod->row($chrome, flow("w2", "what it does\n\nand when"), array());
+$long = $mod->row($chrome, flow("w2", "what it does\n\nand when"), []);
 
 echo "[", str_replace("\n", "|", $long["description"]), "]\n";
 
 // A workflow with no description draws no line: the markup asks whether there
 // is one, and the empty string is no.
-$bare = $mod->row($chrome, flow("w3", ""), array());
+$bare = $mod->row($chrome, flow("w3", ""), []);
 
 echo "[", $bare["description"], "]\n";
 ---

@@ -42,7 +42,7 @@ class mod_project_new implements Module {
 	}
 
 	function tables() {
-		return array("workspace");
+		return ["workspace"];
 	}
 
 	function serve() {
@@ -55,11 +55,11 @@ class mod_project_new implements Module {
 			return;
 		}
 
-		$chrome->heading(self::TITLE, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::PROJECTS, "href" => Task\Project::PAGE),
-			array("text" => self::TITLE, "href" => ""),
-		));
+		$chrome->heading(self::TITLE, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::PROJECTS, "href" => Task\Project::PAGE],
+			["text" => self::TITLE, "href" => ""],
+		]);
 
 		$workspaces = new Task\Workspace($chrome->db);
 		$rows = $workspaces->all();
@@ -67,14 +67,14 @@ class mod_project_new implements Module {
 		$back = self::back($chosen);
 		$steps = Task\Setup::steps($chrome, Task\Setup::PROJECTS);
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head(),
 			"options" => self::options($rows, $chosen),
 			"back" => Task\Route::linked($back),
 			"next" => $back . self::NOTICE,
-			"recursive" => array("id" => self::FIELD, "checked" => true),
+			"recursive" => ["id" => self::FIELD, "checked" => true],
 			"trail" => Task\Setup::trail($steps),
-		), "project_new.tpl");
+		], "project_new.tpl");
 	}
 
 	/** head is the page head: the heading and the lead, and no action beside them. */
@@ -110,7 +110,7 @@ class mod_project_new implements Module {
 	 * first row does, which is the default workspace while there is one.
 	 */
 	static function options($rows, $chosen) {
-		$out = array();
+		$out = [];
 
 		foreach ($rows as $at => $row) {
 			$folder = $row->getFolder();
@@ -120,12 +120,12 @@ class mod_project_new implements Module {
 				$title = self::ROOT;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"value" => $folder,
 				"folder" => $folder,
 				"title" => $title === "" ? $folder : $title,
 				"selected" => $folder === $chosen || ($chosen === "" && $at === 0),
-			);
+			];
 		}
 
 		return $out;

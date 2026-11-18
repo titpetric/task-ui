@@ -10,13 +10,13 @@ class SearchSection {
 	const TABLE = "search_section";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("document_id", "ordinal", "level", "heading", "breadcrumb", "line", "body");
+	public static $fields = ["document_id", "ordinal", "level", "heading", "breadcrumb", "line", "body"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("document_id", "ordinal");
+	public static $primary = ["document_id", "ordinal"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array();
+	public static $stamps = [];
 	/** Document ID */
 	var $document_id = "";
 	/** Ordinal */
@@ -32,7 +32,7 @@ class SearchSection {
 	/** Body */
 	var $body = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->document_id = \Task\Row::text($row, "document_id");
 		$this->ordinal = \Task\Row::number($row, "ordinal");
 		$this->level = \Task\Row::number($row, "level");
@@ -126,7 +126,7 @@ class SearchSection {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

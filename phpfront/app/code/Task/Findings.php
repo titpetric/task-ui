@@ -21,9 +21,9 @@ class Findings {
 	 * sentence counts the files atkins refused and the list the reasons.
 	 */
 	static function alert($folders, $place, $workspaces) {
-		$pipelines = array();
-		$shown = array();
-		$more = array();
+		$pipelines = [];
+		$shown = [];
+		$more = [];
 
 		foreach ($folders as $folder) {
 			$id = Row::text($folder, "id");
@@ -53,13 +53,13 @@ class Findings {
 			return null;
 		}
 
-		return array(
+		return [
 			"pipelines" => $count,
 			"says" => $count === 1 ? "pipeline has" : "pipelines have",
 			"shown" => $shown,
 			"more" => $more,
 			"rest" => count($more),
-		);
+		];
 	}
 
 	/**
@@ -72,9 +72,9 @@ class Findings {
 	 * carry and none of the rows the alert is built out of.
 	 */
 	static function note($folders, $workspaces) {
-		$pipelines = array();
-		$named = array();
-		$out = array();
+		$pipelines = [];
+		$named = [];
+		$out = [];
 
 		foreach ($folders as $folder) {
 			$id = Row::text($folder, "id");
@@ -88,10 +88,10 @@ class Findings {
 
 			if (!isset($named[$workspace])) {
 				$named[$workspace] = true;
-				$out[] = array(
+				$out[] = [
 					"name" => $workspace,
 					"href" => Route::href(Route::folderHref($workspace, $workspaces)),
-				);
+				];
 			}
 
 			foreach ($errors as $finding) {
@@ -105,24 +105,24 @@ class Findings {
 			return null;
 		}
 
-		return array(
+		return [
 			"pipelines" => $count,
 			"says" => $count === 1 ? "pipeline has" : "pipelines have",
 			"lists" => count($out) === 1 ? "Its page lists" : "Their pages list",
 			"workspaces" => $out,
-		);
+		];
 	}
 
 	/** row is one finding as the alert lists it: its folder, its file and its job. */
 	static function row($id, $finding, $workspaces) {
-		return array(
+		return [
 			"folder" => $id,
 			"href" => Route::href(Route::folderHref($id, $workspaces)),
 			"path" => Row::text($finding, "path"),
 			"job" => Row::text($finding, "job"),
 			"issue" => Row::text($finding, "issue"),
 			"detail" => Row::text($finding, "detail"),
-		);
+		];
 	}
 
 	/**

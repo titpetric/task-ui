@@ -24,14 +24,14 @@ class mod_inventory implements Module {
 	const LEAD = "The hosts task-ui keeps, largest first. For each host: whether it's up, the ssh login task-ui uses, its cores, and how busy its CPU, memory and disk are. Add a host by the address ssh signs in to and task-ui proves the login before keeping it; Beszel's hosts come in on their own, and every host stays until someone removes it. With Run on Hosts, you can run a command on many hosts at once, like pssh: each host gets a run of its own, with a recording, in Runs and the recents.";
 
 	/** COMMANDS are the quick commands over the field, which a button fills it with. */
-	const COMMANDS = array(
+	const COMMANDS = [
 		"uptime",
 		"df -h /",
 		"free -h",
 		"docker ps --format '{{.Names}}\t{{.Status}}'",
 		"uname -r",
 		"cat /etc/os-release | grep PRETTY",
-	);
+	];
 
 	function name() {
 		return "inventory";
@@ -46,7 +46,7 @@ class mod_inventory implements Module {
 	}
 
 	function tables() {
-		return array("host", "run", "note", "user", "workspace");
+		return ["host", "run", "note", "user", "workspace"];
 	}
 
 	function serve() {
@@ -59,7 +59,7 @@ class mod_inventory implements Module {
 			return;
 		}
 
-		$chrome->heading("Inventory", array(array("text" => "Inventory", "href" => "")));
+		$chrome->heading("Inventory", [["text" => "Inventory", "href" => ""]]);
 
 		$hosts = $chrome->allowed("hosts");
 		$drops = $chrome->allowed("inventory/delete");
@@ -80,14 +80,14 @@ class mod_inventory implements Module {
 		}
 
 		$logins = $facts["logins"];
-		$last = array("batch" => null, "prompt" => null);
+		$last = ["batch" => null, "prompt" => null];
 
 		if ($hosts) {
 			$last = $this->batch($chrome);
 		}
 
 		$now = Task\Clock::now();
-		$rows = array();
+		$rows = [];
 
 		foreach ($facts["hosts"] as $system) {
 			$rows[] = $this->row($system, $logins, $hosts, isset($held[$system["host"]]) ? $held[$system["host"]] : null, $drops);
@@ -95,7 +95,7 @@ class mod_inventory implements Module {
 
 		$head = new Task\Head("Inventory", self::LEAD);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"off" => $facts["off"],
 			"integrations" => $chrome->allowed("integration/view"),
@@ -107,12 +107,12 @@ class mod_inventory implements Module {
 			"logins" => count($logins) > 0,
 			"rows" => $rows,
 			"now" => $now->format("15:04"),
-		));
+		]);
 	}
 
 	/** names is the name of each held host by the address it answers on, the inventory the binding folds the hub into. */
 	static function names($held) {
-		$out = array();
+		$out = [];
 
 		foreach ($held as $host) {
 			$out[$host->address] = $host->name;
@@ -131,7 +131,7 @@ class mod_inventory implements Module {
 	 * host outlives the hub renaming it.
 	 */
 	function sync($store, $held, $systems) {
-		$by = array();
+		$by = [];
 
 		foreach ($held as $host) {
 			$by[$host->address] = $host;
@@ -176,7 +176,7 @@ class mod_inventory implements Module {
 			return null;
 		}
 
-		$picks = array();
+		$picks = [];
 
 		foreach ($facts["hosts"] as $system) {
 			$host = $system["host"];
@@ -185,14 +185,14 @@ class mod_inventory implements Module {
 				continue;
 			}
 
-			$picks[] = array("host" => $host, "login" => $logins[$host]);
+			$picks[] = ["host" => $host, "login" => $logins[$host]];
 		}
 
-		return array(
+		return [
 			"commands" => self::COMMANDS,
 			"picks" => $picks,
 			"summarize" => Task\Host::claude(),
-		);
+		];
 	}
 
 	/**
@@ -209,21 +209,21 @@ class mod_inventory implements Module {
 	 */
 	function batch($chrome) {
 		$runs = new Task\Runs\Runs;
-		$last = $runs->find(array(
+		$last = $runs->find([
 			"folder" => Task\Route::INTERNAL,
 			"job" => Task\Run::HOST_ALL,
 			"user" => $chrome->name(),
 			"limit" => 1,
-		));
+		]);
 
 		if (count($last) === 0) {
-			return array("batch" => null, "prompt" => null);
+			return ["batch" => null, "prompt" => null];
 		}
 
-		$found = array();
+		$found = [];
 
 		if ($last[0]->getBatchId() !== "") {
-			$of = $runs->find(array("batch" => $last[0]->getBatchId(), "limit" => Task\Runs\Runs::BATCH_LIMIT));
+			$of = $runs->find(["batch" => $last[0]->getBatchId(), "limit" => Task\Runs\Runs::BATCH_LIMIT]);
 			$found = array_reverse($of);
 		}
 
@@ -231,7 +231,7 @@ class mod_inventory implements Module {
 			$found = $last;
 		}
 
-		$rows = array();
+		$rows = [];
 		$live = false;
 
 		foreach ($found as $run) {
@@ -249,17 +249,17 @@ class mod_inventory implements Module {
 		$first = $found[0];
 		$seen = new Task\Seen($chrome);
 
-		return array(
-			"batch" => array(
+		return [
+			"batch" => [
 				"live" => $live,
 				"args" => implode("", Task\Run::argList($first)),
 				"count" => count($found),
 				"ago" => Task\Clock::ago($first->getStartedAt()),
 				"id" => $first->getBatchId(),
 				"rows" => $rows,
-			),
+			],
 			"prompt" => Task\Prompt::panel($chrome, $first, $seen),
-		);
+		];
 	}
 
 	/**
@@ -276,7 +276,7 @@ class mod_inventory implements Module {
 		$ended = Task\Run::ended($state);
 		$running = !$ended && $state !== Task\Run::QUEUED;
 
-		return array(
+		return [
 			"id" => $id,
 			"target" => $run->getTarget(),
 			"state" => Task\Run::label($run),
@@ -288,7 +288,7 @@ class mod_inventory implements Module {
 			"cast" => $run->getCastPath(),
 			"cols" => $run->getTermCols(),
 			"rows" => $run->getTermRows(),
-		);
+		];
 	}
 
 	/**
@@ -305,13 +305,13 @@ class mod_inventory implements Module {
 		}
 
 		$cluster = $facts["cluster"];
-		$pools = array();
+		$pools = [];
 
 		foreach ($cluster["pools"] as $pool) {
 			$pools[] = self::pool($pool);
 		}
 
-		return array(
+		return [
 			"hosts" => $cluster["hosts"],
 			"count" => count($cluster["hosts"]),
 			"up" => $cluster["up"],
@@ -319,7 +319,7 @@ class mod_inventory implements Module {
 			"left" => $cluster["left"],
 			"pools" => $pools,
 			"charts" => $this->charts($facts, $now),
-		);
+		];
 	}
 
 	/**
@@ -331,28 +331,28 @@ class mod_inventory implements Module {
 	 * containers, which are a count and not a part of anything.
 	 */
 	static function pool($pool) {
-		$segments = array();
+		$segments = [];
 
 		foreach ($pool["segments"] as $segment) {
 			if ($segment["width"] <= 0) {
 				continue;
 			}
 
-			$segments[] = array(
+			$segments[] = [
 				"color" => $segment["color"],
 				"width" => sprintf("%.3f", $segment["width"]),
 				"fill" => sprintf("%.1f", $segment["fill"]),
 				"title" => $segment["title"],
-			);
+			];
 		}
 
-		return array(
+		return [
 			"name" => $pool["name"],
 			"figure" => $pool["figure"],
 			"share" => $pool["name"] !== "Containers",
 			"pct" => sprintf("%.0f", $pool["percent"]),
 			"segments" => $segments,
-		);
+		];
 	}
 
 	/**
@@ -367,20 +367,20 @@ class mod_inventory implements Module {
 	 */
 	function charts($facts, $now) {
 		if (count($facts["history"]) === 0) {
-			return array();
+			return [];
 		}
 
 		$records = $facts["history"];
 		$step = Task\Chart::step($records);
-		$systems = array();
+		$systems = [];
 
 		foreach ($facts["hosts"] as $system) {
 			$systems[$system["name"]] = $system;
 		}
 
 		$times = self::times($facts["cluster"]["hosts"], $systems, $records, $step);
-		$cores = array();
-		$memory = array();
+		$cores = [];
+		$memory = [];
 
 		foreach ($facts["cluster"]["hosts"] as $host) {
 			if ($host["left"]) {
@@ -388,8 +388,8 @@ class mod_inventory implements Module {
 			}
 
 			$cpus = isset($systems[$host["name"]]) ? $systems[$host["name"]]["cpus"] : 0;
-			$busy = array();
-			$used = array();
+			$busy = [];
+			$used = [];
 
 			foreach (self::records($host["name"], $systems, $records) as $sample) {
 				$at = Task\Chart::truncate(Task\Clock::seconds($sample["at"]), $step);
@@ -405,7 +405,7 @@ class mod_inventory implements Module {
 		$busiest = new Task\Chart("Busy cores", Task\Chart::cores(), $from, $now, true, $cores);
 		$fullest = new Task\Chart("Memory used", Task\Chart::gib(), $from, $now, true, $memory);
 
-		return array($busiest->data(), $fullest->data());
+		return [$busiest->data(), $fullest->data()];
 	}
 
 	/**
@@ -417,8 +417,8 @@ class mod_inventory implements Module {
 	 * hub was recording.
 	 */
 	static function times($hosts, $systems, $records, $step) {
-		$seen = array();
-		$times = array();
+		$seen = [];
+		$times = [];
 
 		foreach ($hosts as $host) {
 			foreach (self::records($host["name"], $systems, $records) as $sample) {
@@ -442,12 +442,12 @@ class mod_inventory implements Module {
 	static function records($name, $systems, $records) {
 		$id = isset($systems[$name]) ? $systems[$name]["id"] : "";
 
-		return isset($records[$id]) ? $records[$id] : array();
+		return isset($records[$id]) ? $records[$id] : [];
 	}
 
 	/** points is a series over the shared times, a gap at a time the host has no record at. */
 	static function points($times, $values) {
-		$points = array();
+		$points = [];
 
 		foreach ($times as $at) {
 			$v = isset($values[$at]) ? $values[$at] : null;
@@ -491,10 +491,10 @@ class mod_inventory implements Module {
 			$menu->detail("Source", $entry->source === Task\Inventory\Hosts::BESZEL ? "Beszel" : "entered here");
 		}
 
-		$menu->when($open, "server", "Open the host's page", array("href" => $href));
-		$menu->when($login !== "", "copy", "Copy ssh " . $login, array("data-copy" => "ssh " . $login));
+		$menu->when($open, "server", "Open the host's page", ["href" => $href]);
+		$menu->when($login !== "", "copy", "Copy ssh " . $login, ["data-copy" => "ssh " . $login]);
 
-		return array(
+		return [
 			"name" => $name,
 			"host" => $host,
 			"href" => $href,
@@ -515,7 +515,7 @@ class mod_inventory implements Module {
 			"diskUsed" => sprintf("%.0f", $system["disk_used"]),
 			"diskTotal" => sprintf("%.0f", $system["disk_total"]),
 			"menu" => $menu->data(),
-		);
+		];
 	}
 }
 

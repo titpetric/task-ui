@@ -55,21 +55,21 @@ class Sidebar {
 	 */
 	function items($access, $path) {
 		$settings = self::settings($access);
-		$out = array();
+		$out = [];
 
 		foreach (self::listing($this->modules, $this->all()) as $row) {
 			if ($row["hidden"] || !self::sees($row["rule"], $access, $settings)) {
 				continue;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"title" => $row["title"],
 				"href" => $row["link"],
 				"icon" => $row["icon"],
 				"active" => self::active($row["href"], $path),
 				"flows" => $row["href"] === "/workflows",
 				"pulse" => $row["href"] === "/threads",
-			);
+			];
 		}
 
 		return $out;
@@ -78,13 +78,13 @@ class Sidebar {
 	/** seed writes the module rows the table does not hold yet. */
 	function seed() {
 		$items = $this->all();
-		$known = array();
+		$known = [];
 
 		foreach ($items as $item) {
 			$known[$item->getHref()] = true;
 		}
 
-		$rows = array();
+		$rows = [];
 
 		foreach (self::listing($this->modules, $items) as $row) {
 			if (isset($known[$row["href"]])) {
@@ -104,7 +104,7 @@ class Sidebar {
 	 * unhides one, in the order the table holds.
 	 */
 	function rows($items) {
-		$out = array();
+		$out = [];
 
 		foreach (self::listing($this->modules, $items) as $row) {
 			$row["kind"] = self::kind($row["href"]);
@@ -122,14 +122,14 @@ class Sidebar {
 	 * no row, and a second module of a link already listed, are left out.
 	 */
 	static function listing($modules, $items) {
-		$saved = array();
+		$saved = [];
 
 		foreach ($items as $item) {
 			$saved[$item->getHref()] = $item;
 		}
 
-		$seen = array();
-		$out = array();
+		$seen = [];
+		$out = [];
 
 		foreach ($modules as $index => $module) {
 			$href = $module->getSideBarHref();
@@ -140,7 +140,7 @@ class Sidebar {
 
 			$seen[$href] = true;
 			$row = isset($saved[$href]) ? $saved[$href] : null;
-			$out[] = array(
+			$out[] = [
 				"href" => $href,
 				"link" => self::link($href),
 				"title" => $module->getTitle(),
@@ -149,7 +149,7 @@ class Sidebar {
 				"hidden" => $row !== null && $row->getHidden(),
 				"position" => $row === null ? 1000 + $index : $row->getPosition(),
 				"order" => $index,
-			);
+			];
 		}
 
 		usort($out, function($a, $b) {
@@ -223,7 +223,7 @@ class Sidebar {
 			return false;
 		}
 
-		foreach (array("workspace", "project", "key", "secret", "integration", "user") as $section) {
+		foreach (["workspace", "project", "key", "secret", "integration", "user"] as $section) {
 			if ($access->allowed($section . "/view")) {
 				return true;
 			}

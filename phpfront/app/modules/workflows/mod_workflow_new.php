@@ -30,7 +30,7 @@ class mod_workflow_new implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"workflow",
 			"workflow_step",
 			"workflow_run",
@@ -40,7 +40,7 @@ class mod_workflow_new implements Module {
 			"key_role",
 			"key_user",
 			"workspace",
-		);
+		];
 	}
 
 	function serve() {
@@ -53,10 +53,10 @@ class mod_workflow_new implements Module {
 			return;
 		}
 
-		$chrome->heading("Add workflow", array(
-			array("text" => "Workflows", "href" => "/workflows"),
-			array("text" => "Add workflow", "href" => ""),
-		));
+		$chrome->heading("Add workflow", [
+			["text" => "Workflows", "href" => "/workflows"],
+			["text" => "Add workflow", "href" => ""],
+		]);
 
 		$store = new Task\Workflow($chrome->db);
 		$flows = $store->visible($chrome);
@@ -64,10 +64,10 @@ class mod_workflow_new implements Module {
 		$editor = new Task\Editor($chrome, $space, $flows);
 		$head = new Task\Head("Add workflow", self::LEAD);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"editor" => $editor->data(null, "/api/workflows", "POST", "/workflows", "Add workflow"),
-		), "workflow_new.tpl");
+		], "workflow_new.tpl");
 	}
 }
 

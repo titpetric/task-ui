@@ -42,14 +42,14 @@ class mod_my_keys implements Module {
 	}
 
 	function tables() {
-		return array("user");
+		return ["user"];
 	}
 
 	function serve() {
 		$chrome = new Task\Chrome;
 		$view = new Task\View($this, $chrome);
 
-		$chrome->heading("Your SSH keys", array(array("text" => "Your SSH keys", "href" => "")));
+		$chrome->heading("Your SSH keys", [["text" => "Your SSH keys", "href" => ""]]);
 
 		$folder = Task\Key::folder();
 		$keys = Task\Key::mine($folder["keys"], $chrome->user);
@@ -57,11 +57,11 @@ class mod_my_keys implements Module {
 
 		$head->said(sprintf(self::LEAD, self::role($chrome)));
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"block" => $this->block($chrome, count($keys) === 0),
 			"keys" => Task\Key::rows($chrome, $keys, self::NEXT),
-		), "my_keys.tpl");
+		], "my_keys.tpl");
 	}
 
 	/**
@@ -74,16 +74,16 @@ class mod_my_keys implements Module {
 		$buttons = new Task\Buttons(true);
 
 		if ($grants) {
-			$buttons->item("key", "Generate key", array("href" => Task\Key::userHref("generate", $name)));
-			$buttons->item("upload", "Upload key", array("href" => Task\Key::userHref("upload", $name)));
+			$buttons->item("key", "Generate key", ["href" => Task\Key::userHref("generate", $name)]);
+			$buttons->item("upload", "Upload key", ["href" => Task\Key::userHref("upload", $name)]);
 		}
 
-		return array(
+		return [
 			"title" => "Keys",
 			"note" => "",
 			"empty" => self::says($bare, $grants),
 			"buttons" => $buttons->data(),
-		);
+		];
 	}
 
 	/** says is the empty line of the block: "" while the table has rows. */

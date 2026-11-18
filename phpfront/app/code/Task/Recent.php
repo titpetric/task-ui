@@ -28,8 +28,8 @@ class Recent {
 	 * data is the scope the recents component reads: where the label goes,
 	 * and the groups of entries.
 	 */
-	function data($access, $roles = array(), $folders = array(), $workspaces = array()) {
-		return array("href" => "/runs", "groups" => $this->groups($access, $roles, $folders, $workspaces));
+	function data($access, $roles = [], $folders = [], $workspaces = []) {
+		return ["href" => "/runs", "groups" => $this->groups($access, $roles, $folders, $workspaces)];
 	}
 
 	/**
@@ -40,7 +40,7 @@ class Recent {
 	 * calls view.GroupRecents(time.Now(), ...) while the page around it carries
 	 * the instance's Now, so a pinned clock does not move these headings.
 	 */
-	function groups($access, $roles = array(), $folders = array(), $workspaces = array()) {
+	function groups($access, $roles = [], $folders = [], $workspaces = []) {
 		return self::group($this->entries($access, $roles, $folders, $workspaces), Clock::real()->unixnano());
 	}
 
@@ -53,7 +53,7 @@ class Recent {
 	 * the clock said while the list was built.
 	 */
 	static function group($entries, $now) {
-		$out = array();
+		$out = [];
 
 		foreach ($entries as $entry) {
 			$label = self::hoursAgo($now - Clock::nanos($entry["at"]));
@@ -65,7 +65,7 @@ class Recent {
 				continue;
 			}
 
-			$out[] = array("label" => $label, "entries" => array($entry));
+			$out[] = ["label" => $label, "entries" => [$entry]];
 		}
 
 		return $out;
@@ -81,14 +81,14 @@ class Recent {
 	 * read to the nanosecond, because the Go page compares two times and not
 	 * two seconds.
 	 */
-	function entries($access, $roles = array(), $folders = array(), $workspaces = array()) {
+	function entries($access, $roles = [], $folders = [], $workspaces = []) {
 		$user = $access === null ? null : $access->user;
 		$prompts = $access !== null && $access->allowed("prompt/view");
 		$notes = $access !== null && $access->allowed("note/view");
-		$runs = array();
-		$flows = array();
-		$rows = array();
-		$threads = array();
+		$runs = [];
+		$flows = [];
+		$rows = [];
+		$threads = [];
 
 		foreach ($this->notes->recent(2 * self::COUNT) as $note) {
 			if (Note::isPrompt($note)) {
@@ -107,7 +107,7 @@ class Recent {
 		$replies = $this->notes->replies(array_keys($threads));
 		$owned = $this->owned($threads, $replies);
 
-		foreach ($this->runs->find(array("roots" => true, "limit" => 2 * self::COUNT)) as $run) {
+		foreach ($this->runs->find(["roots" => true, "limit" => 2 * self::COUNT]) as $run) {
 			if (Run::isPrompt($run) || Run::isNote($run) || isset($owned[$run->getId()])) {
 				continue;
 			}
@@ -125,7 +125,7 @@ class Recent {
 		}
 
 		foreach ($threads as $id => $note) {
-			$under = isset($replies[$id]) ? $replies[$id] : array();
+			$under = isset($replies[$id]) ? $replies[$id] : [];
 			$runs[] = $this->ofThread($note, $under, $roles);
 		}
 
@@ -142,14 +142,14 @@ class Recent {
 
 	/** owned is the runs a thread and its replies answer, by run ID. */
 	function owned($threads, $replies) {
-		$out = array();
+		$out = [];
 
 		foreach ($threads as $id => $note) {
 			if ($note->getRunId() !== "") {
 				$out[$note->getRunId()] = true;
 			}
 
-			foreach (isset($replies[$id]) ? $replies[$id] : array() as $reply) {
+			foreach (isset($replies[$id]) ? $replies[$id] : [] as $reply) {
 				if ($reply->getRunId() !== "") {
 					$out[$reply->getRunId()] = true;
 				}
@@ -174,7 +174,7 @@ class Recent {
 		$user = $note->getUserName();
 		$said = Threads\Talk::opening($note, $replies);
 
-		return array(
+		return [
 			"at" => self::threadAt($note, $replies),
 			"href" => "/threads/" . rawurlencode($note->getId()),
 			"name" => Note::excerpt($said),
@@ -188,7 +188,7 @@ class Recent {
 			"children" => count($replies),
 			"title" => "Open the thread by " . $user . ", " . ($state === "" ? "a message" : $state),
 			"avatar" => Who::avatar($user, self::role($roles, $user)),
-		);
+		];
 	}
 
 	/** threadState is how a thread's state draws in the rail, as a run's state does. */
@@ -226,14 +226,14 @@ class Recent {
 	 * permission rule reads: a count a page draws fifty of is not fifty reads.
 	 */
 	function children($rows, $user, $prompts, $notes) {
-		$ids = array();
+		$ids = [];
 
 		foreach ($rows as $run) {
 			$ids[] = $run->getId();
 		}
 
 		$found = $this->runs->childrenOf($ids);
-		$counts = array();
+		$counts = [];
 
 		foreach ($found as $child) {
 			if (!Run::seenRow($user, $child, $prompts, $notes)) {
@@ -249,7 +249,7 @@ class Recent {
 
 	/** merge walks two lists that are each newest first and keeps the first n. */
 	static function merge($runs, $flows, $limit) {
-		$out = array();
+		$out = [];
 		$i = 0;
 		$j = 0;
 
@@ -287,7 +287,7 @@ class Recent {
 			$act = "play";
 		}
 
-		return array(
+		return [
 			"at" => $run->getStartedAt(),
 			"href" => "/runs/" . $run->getId(),
 			"name" => Run::lead($run),
@@ -301,7 +301,7 @@ class Recent {
 			"children" => $children,
 			"title" => "Open " . $name . ", " . $user . ", " . $state,
 			"avatar" => Who::avatar($user, self::role($roles, $user)),
-		);
+		];
 	}
 
 	/** ofFlow is one run of a workflow as the component reads it. */
@@ -309,7 +309,7 @@ class Recent {
 		$state = $flow->getState();
 		$user = $flow->getUserName();
 
-		return array(
+		return [
 			"at" => $flow->getStartedAt(),
 			"href" => "/workflows/" . $flow->getWorkflowId(),
 			"name" => $flow->getName(),
@@ -323,7 +323,7 @@ class Recent {
 			"children" => 0,
 			"title" => "Workflow " . $flow->getName() . ", " . $user . ", " . $state,
 			"avatar" => Who::avatar($user, self::role($roles, $user)),
-		);
+		];
 	}
 
 	/** role is the role a user acts with, "" for a name no row holds. */

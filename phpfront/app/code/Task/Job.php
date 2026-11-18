@@ -74,19 +74,19 @@ class Job {
 		$key = Row::text($job, "key");
 		$running = isset($live[$key]) ? $live[$key] : null;
 
-		$filter = array(
+		$filter = [
 			"folder" => $id,
 			"dir" => $jobDir,
 			"job" => $jobID,
-		);
+		];
 		$runs = new Runs\Runs($this->chrome->db);
 		$seen = new Seen($this->chrome);
 		$filter["limit"] = self::HISTORY;
 		$found = $seen->of($runs->find($filter));
 		$reports = $this->reports($found);
-		$users = $jobDir === "" ? $this->chrome->runAsUsers() : array();
+		$users = $jobDir === "" ? $this->chrome->runAsUsers() : [];
 
-		$scope = array(
+		$scope = [
 			"head" => $this->head($place, $job, $running, $can, $control),
 			"running" => $this->alert($running, $can),
 			"denied" => !$can,
@@ -97,7 +97,7 @@ class Job {
 			"runs" => $this->history($found, $reports, $job, $can, $control),
 			"can" => $can,
 			"schedules" => $jobDir === "" ? $this->schedules($id, $job, $can, $users) : null,
-		);
+		];
 
 		$this->view->page($scope, "job.tpl");
 	}
@@ -128,8 +128,8 @@ class Job {
 		if ($running !== null) {
 			$id = $running->getId();
 
-			$buttons->primary("", "Attach", array("href" => Route::href("/runs/" . $id), "data-attach" => $id));
-			$buttons->whenDanger($can, "", "Kill", array("data-kill" => $id));
+			$buttons->primary("", "Attach", ["href" => Route::href("/runs/" . $id), "data-attach" => $id]);
+			$buttons->whenDanger($can, "", "Kill", ["data-kill" => $id]);
 		} elseif ($can) {
 			$head->run($control->runButtons($place, $job));
 		}
@@ -159,12 +159,12 @@ class Job {
 
 		$session = Host::session($running->getId());
 
-		return array(
+		return [
 			"who" => $running->getUserName(),
 			"ago" => Clock::ago($running->getStartedAt()),
 			"watching" => Row::number($session, "attached"),
 			"kills" => $can,
-		);
+		];
 	}
 
 	/**
@@ -192,19 +192,19 @@ class Job {
 			$shows = Place::source($id, $source, Row::number($job, "source_lines"));
 		}
 
-		$includes = array();
+		$includes = [];
 
 		foreach (Row::items($place, "includes") as $read) {
 			$file = Row::text($read, "name");
-			$includes[] = array(
+			$includes[] = [
 				"file" => $file,
 				"shows" => Place::source($id, $file, Row::number($read, "lines")),
-			);
+			];
 		}
 
 		$allow = array_merge(Row::items($place, "allow"), Row::items($job, "allow"));
 
-		return array(
+		return [
 			"folder" => $id,
 			"folderHref" => $href,
 			"title" => Row::text($place, "title"),
@@ -220,7 +220,7 @@ class Job {
 			"who" => Place::who($allow),
 			"hours" => Place::hours(Row::text($place, "hours")),
 			"interactive" => Row::flag($job, "interactive"),
-		);
+		];
 	}
 
 	/**
@@ -232,7 +232,7 @@ class Job {
 	 * directory it is linked under is the one the binding resolved it in.
 	 */
 	function depends($id, $job) {
-		$out = array();
+		$out = [];
 
 		foreach (Row::items($job, "depends") as $dep) {
 			$href = "";
@@ -242,11 +242,11 @@ class Job {
 				$href = Route::href($place) . "/" . Row::text($dep, "id");
 			}
 
-			$out[] = array(
+			$out[] = [
 				"text" => Row::text($dep, "text"),
 				"name" => Row::text($dep, "name"),
 				"href" => $href,
-			);
+			];
 		}
 
 		return $out;
@@ -261,10 +261,10 @@ class Job {
 	 */
 	function reports($found) {
 		if (!$this->chrome->allowed("prompt/view")) {
-			return array();
+			return [];
 		}
 
-		$ids = array();
+		$ids = [];
 
 		foreach ($found as $run) {
 			$ids[] = $run->getId();
@@ -300,7 +300,7 @@ class Job {
 
 	/** history is the listed runs, each as the table draws it, in the order the query read them. */
 	function history($found, $reports, $job, $can, $control) {
-		$out = array();
+		$out = [];
 
 		foreach ($found as $run) {
 			$out[] = $this->row($run, $reports, $job, $can, $control);
@@ -326,7 +326,7 @@ class Job {
 		$ended = Run::ended($run->getState());
 		$report = isset($reports[$id]) ? $reports[$id] : null;
 
-		return array(
+		return [
 			"id" => $id,
 			"href" => Route::href("/runs/" . $id),
 			"ago" => Clock::ago($run->getStartedAt()),
@@ -338,7 +338,7 @@ class Job {
 			"pending" => $report !== null && $report["pending"],
 			"summary" => $this->summary($report),
 			"menu" => $this->menu($run, $report, $job, $can, $control, $ended),
-		);
+		];
 	}
 
 	/**
@@ -354,11 +354,11 @@ class Job {
 			return null;
 		}
 
-		return array(
+		return [
 			"by" => $report["by"],
 			"body" => Host::markdown($report["body"]),
 			"href" => Route::href(Report::href($report)),
-		);
+		];
 	}
 
 	/**
@@ -372,20 +372,20 @@ class Job {
 
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Clock::read($run->getStartedAt()));
-		$menu->item("file", "Open the run's page", array("href" => Route::href("/runs/" . $id)));
-		$menu->when($run->getCastPath() !== "" && $ended, "play", "Replay the recording", array(
+		$menu->item("file", "Open the run's page", ["href" => Route::href("/runs/" . $id)]);
+		$menu->when($run->getCastPath() !== "" && $ended, "play", "Replay the recording", [
 			"data-replay" => $id,
 			"data-replay-title" => Run::name($run),
 			"data-replay-who" => $run->getUserName(),
-		));
+		]);
 		// The summary is asked for over the window the page is read in, so the
 		// question goes on the item and not to an endpoint of its own.
-		$menu->when($this->summarizes($run, $job, $report, $control, $ended), "note", "Summarize", array(
+		$menu->when($this->summarizes($run, $job, $report, $control, $ended), "note", "Summarize", [
 			"data-summarize-run" => $id,
 			"data-question" => Report::SUMMARY,
 			"title" => self::SUMMARIZE,
-		));
-		$menu->whenDanger(!$ended && $can, "stop", "Kill", array("data-kill" => $id));
+		]);
+		$menu->whenDanger(!$ended && $can, "stop", "Kill", ["data-kill" => $id]);
 
 		return $menu->data();
 	}
@@ -422,7 +422,7 @@ class Job {
 	function schedules($id, $job, $can, $users) {
 		$store = new Schedules\Schedules($this->chrome->db);
 		$jobID = Row::text($job, "id");
-		$rows = array();
+		$rows = [];
 		$canSchedule = $can && $this->chrome->allowed("schedule/edit");
 
 		foreach ($store->byFolder($id) as $schedule) {
@@ -435,19 +435,19 @@ class Job {
 		$said = $canSchedule ? self::MORE : self::NONE;
 
 		if ($canSchedule) {
-			$buttons->primary("plus", "Add schedule", array(
+			$buttons->primary("plus", "Add schedule", [
 				"href" => Route::href("/schedules/add") . "?folder=" . Route::queryEscape($id) . "&job=" . Route::queryEscape($jobID),
-			));
+			]);
 		}
 
-		return array(
-			"block" => array(
+		return [
+			"block" => [
 				"title" => "Schedules",
 				"note" => self::NOTE,
 				"empty" => count($rows) === 0 ? $said : "",
 				"buttons" => $buttons->data(),
-			),
+			],
 			"table" => Schedule::table($this->chrome, $rows, $users, $canSchedule, Row::text($job, "name")),
-		);
+		];
 	}
 }

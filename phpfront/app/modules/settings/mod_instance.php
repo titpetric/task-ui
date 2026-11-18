@@ -83,7 +83,7 @@ class mod_instance implements Module {
 	 * host's, and none of the three is a table of this database.
 	 */
 	function tables() {
-		return array("tool");
+		return ["tool"];
 	}
 
 	function serve() {
@@ -96,10 +96,10 @@ class mod_instance implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::INSTANCE, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::INSTANCE, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::INSTANCE, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::INSTANCE, "href" => ""],
+		]);
 
 		$admin = Task\User::admin($chrome->user);
 		$instance = Task\Host::instance($admin);
@@ -107,7 +107,7 @@ class mod_instance implements Module {
 		$steps = Task\Setup::steps($chrome, Task\Setup::INSTANCE);
 		$tools = new Task\Toolset;
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
 			"instance" => $instance,
@@ -128,7 +128,7 @@ class mod_instance implements Module {
 			"tooling" => $tools->groups(),
 			"keys" => $this->keys($chrome),
 			"trail" => Task\Setup::trail($steps),
-		), "instance.tpl");
+		], "instance.tpl");
 	}
 
 	/**
@@ -139,7 +139,7 @@ class mod_instance implements Module {
 		$name = Task\Row::text($instance, "auto_login");
 
 		if ($name === "") {
-			return array();
+			return [];
 		}
 
 		$people = $chrome->who();
@@ -161,8 +161,8 @@ class mod_instance implements Module {
 	 */
 	function keys($chrome) {
 		$shown = $chrome->allowed("key/view");
-		$encrypt = array();
-		$git = array();
+		$encrypt = [];
+		$git = [];
 
 		if ($shown) {
 			$folder = Task\Key::folder();
@@ -179,7 +179,7 @@ class mod_instance implements Module {
 			}
 		}
 
-		return array(
+		return [
 			"shown" => $shown,
 			"edits" => $chrome->allowed("key/edit"),
 			"encrypt" => $encrypt,
@@ -187,7 +187,7 @@ class mod_instance implements Module {
 			"every" => Task\Route::href(self::KEYS),
 			"upload" => Task\Route::href(self::UPLOAD),
 			"next" => Task\Route::href(self::PAGE) . "#keys",
-		);
+		];
 	}
 
 	/**
@@ -218,24 +218,24 @@ class mod_instance implements Module {
 	 * Keep the wording in step with runner/environment.go.
 	 */
 	static function modes($mode) {
-		$forwards = array(
-			array(
+		$forwards = [
+			[
 				"value" => self::NONE,
 				"label" => "None",
 				"note" => "Secure: the base variables alone, less the sensitive ones.",
-			),
-			array(
+			],
+			[
 				"value" => self::AUTO,
 				"label" => "Auto",
 				"note" => "Filtered: every variable but the sensitive ones.",
-			),
-			array(
+			],
+			[
 				"value" => self::ALL,
 				"label" => "All",
 				"note" => "Every variable, sensitive ones too.",
-			),
-		);
-		$out = array();
+			],
+		];
+		$out = [];
 
 		foreach ($forwards as $forward) {
 			$forward["checked"] = $forward["value"] === $mode;
@@ -251,11 +251,11 @@ class mod_instance implements Module {
 	 * template writes the `<code>` around a name and nothing else.
 	 */
 	static function names($items) {
-		$out = array();
+		$out = [];
 
 		foreach ($items as $item) {
 			$sep = count($out) === 0 ? "" : ", ";
-			$out[] = array("sep" => $sep, "name" => $item);
+			$out[] = ["sep" => $sep, "name" => $item];
 		}
 
 		return $out;
@@ -271,16 +271,16 @@ class mod_instance implements Module {
 	 */
 	static function env($instance) {
 		$mode = Task\Row::text($instance, "parent_env");
-		$out = array();
+		$out = [];
 
 		foreach ($instance["env"] as $name) {
-			$out[] = array(
+			$out[] = [
 				"name" => $name["name"],
 				"sensitive" => $name["sensitive"],
 				"none" => self::word($name["none"]),
 				"auto" => self::word($name["auto"]),
 				"forwarded" => self::forwarded($name, $mode),
-			);
+			];
 		}
 
 		return $out;
@@ -322,24 +322,24 @@ class mod_instance implements Module {
 	 */
 	static function storage($instance) {
 		$table = $instance["storage"];
-		$rows = array();
+		$rows = [];
 
 		foreach ($table["rows"] as $row) {
 			$rows[] = self::measure($row);
 		}
 
-		return array("rows" => $rows, "total" => self::measure($table["total"]));
+		return ["rows" => $rows, "total" => self::measure($table["total"])];
 	}
 
 	/** measure is one item of the storage table: where it is and what it takes. */
 	static function measure($row) {
-		return array(
+		return [
 			"name" => $row["name"],
 			"where" => $row["where"],
 			"size" => Task\Size::bytes($row["size"]),
 			"files" => $row["files"],
 			"pending" => $row["pending"],
-		);
+		];
 	}
 }
 

@@ -10,7 +10,7 @@ class Run {
 	const TABLE = "run";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"folder",
 		"job",
@@ -36,13 +36,13 @@ class Run {
 		"title",
 		"parent_id",
 		"parent_kind",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("started_at", "finished_at", "created_at", "updated_at");
+	public static $stamps = ["started_at", "finished_at", "created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Folder */
@@ -94,7 +94,7 @@ class Run {
 	/** Parent Kind */
 	var $parent_kind = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->folder = \Task\Row::text($row, "folder");
 		$this->job = \Task\Row::text($row, "job");
@@ -404,7 +404,7 @@ class Run {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

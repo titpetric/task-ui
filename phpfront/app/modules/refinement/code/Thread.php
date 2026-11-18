@@ -115,35 +115,35 @@ class Thread {
 	 * them behind a disclosure rather than behind nothing.
 	 */
 	static function entries($comments) {
-		$folded = array();
+		$folded = [];
 
 		foreach ($comments as $comment) {
 			$into = $comment["collapsed_into"];
 
 			if ($into !== "") {
 				if (!isset($folded[$into])) {
-					$folded[$into] = array();
+					$folded[$into] = [];
 				}
 
 				$folded[$into][] = $comment;
 			}
 		}
 
-		$entries = array();
+		$entries = [];
 
 		foreach ($comments as $comment) {
 			if ($comment["collapsed_into"] !== "") {
 				continue;
 			}
 
-			$under = isset($folded[$comment["id"]]) ? $folded[$comment["id"]] : array();
+			$under = isset($folded[$comment["id"]]) ? $folded[$comment["id"]] : [];
 
-			$entries[] = array(
+			$entries[] = [
 				"comment" => $comment,
 				"folded" => $under,
 				"folded_count" => count($under),
 				"applied" => $comment["kind"] === "apply",
-			);
+			];
 		}
 
 		return $entries;
@@ -202,7 +202,7 @@ class Thread {
 				continue;
 			}
 
-			$found = array();
+			$found = [];
 
 			if (preg_match('/^#{1,6}\s+(.*)$/', $trimmed, $found)) {
 				$lines[$i] = "###### " . trim($found[1], " #");
@@ -247,8 +247,8 @@ class Thread {
 	 * hiding the only thing it has.
 	 */
 	static function split($markdown) {
-		$images = array();
-		$prose = array();
+		$images = [];
+		$prose = [];
 		$fenced = false;
 
 		foreach (explode("\n", $markdown) as $line) {
@@ -274,6 +274,6 @@ class Thread {
 		// gaps where there was one reads as a missing paragraph.
 		$text = preg_replace('/\n{3,}/', "\n\n", implode("\n", $prose));
 
-		return array("images" => implode("\n\n", $images), "prose" => trim($text));
+		return ["images" => implode("\n\n", $images), "prose" => trim($text)];
 	}
 }

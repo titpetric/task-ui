@@ -54,7 +54,7 @@ class Size {
 	 */
 	static function space($space) {
 		if (!Row::flag($space, "measured")) {
-			return array();
+			return [];
 		}
 
 		$files = Row::number($space, "files");
@@ -63,14 +63,14 @@ class Size {
 		$total = $files + $history;
 		$share = $total === 0 ? 0 : $files * 100 / $total;
 
-		return array(
+		return [
 			"total" => self::bytes($total),
 			"files" => self::bytes($files),
 			"history" => self::bytes($history),
 			"ignored" => $ignored === 0 ? "" : self::bytes($ignored),
 			"filesPercent" => sprintf("%.2f", $share),
 			"historyPercent" => sprintf("%.2f", $total === 0 ? 0 : 100 - $share),
-		);
+		];
 	}
 
 	/**
@@ -86,7 +86,7 @@ class Size {
 		$read = self::space($space);
 
 		if (count($read) === 0) {
-			return array();
+			return [];
 		}
 
 		$title = $read["files"] . " of files, " . $read["history"] . " of history";
@@ -95,12 +95,12 @@ class Size {
 			$title = $title . "; " . $read["ignored"] . " more that git ignores";
 		}
 
-		return array(
+		return [
 			"title" => $title,
 			"total" => $read["total"],
 			"filesPercent" => $read["filesPercent"],
 			"historyPercent" => $read["historyPercent"],
-		);
+		];
 	}
 
 	/** megabytes words a size Beszel reports in megabytes. */

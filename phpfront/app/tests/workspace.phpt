@@ -18,17 +18,17 @@ $db = Task\DB::writer();
 //
 // The sort column runs against the names on purpose, so the two orders tell
 // each other apart, and two rows share a sort so the tie is read too.
-$db->replace("workspace", array("id" => "fx-ws-0", "folder" => Task\Route::INTERNAL, "sort" => 0));
-$db->replace("workspace", array("id" => "fx-ws-1", "folder" => "fx-ws-alpha", "sort" => 3));
-$db->replace("workspace", array("id" => "fx-ws-2", "folder" => "fx-ws-bravo", "sort" => 2));
-$db->replace("workspace", array("id" => "fx-ws-3", "folder" => "fx-ws-charlie", "sort" => 1));
-$db->replace("workspace", array("id" => "fx-ws-4", "folder" => "fx-ws-delta", "sort" => 1));
+$db->replace("workspace", ["id" => "fx-ws-0", "folder" => Task\Route::INTERNAL, "sort" => 0]);
+$db->replace("workspace", ["id" => "fx-ws-1", "folder" => "fx-ws-alpha", "sort" => 3]);
+$db->replace("workspace", ["id" => "fx-ws-2", "folder" => "fx-ws-bravo", "sort" => 2]);
+$db->replace("workspace", ["id" => "fx-ws-3", "folder" => "fx-ws-charlie", "sort" => 1]);
+$db->replace("workspace", ["id" => "fx-ws-4", "folder" => "fx-ws-delta", "sort" => 1]);
 
 $workspaces = new Task\Workspace;
 
 // mine is the entries of a list this fixture wrote, in the order it answered.
 function mine($values) {
-	$out = array();
+	$out = [];
 
 	foreach ($values as $value) {
 		if (strpos($value, "fx-ws-") === 0) {
@@ -67,7 +67,7 @@ echo var_export($rising, true), " ", var_export(isset($ranks[Task\Route::INTERNA
 // Go map marshals to. Only the rows this fixture wrote are ranked here,
 // because the table is the whole instance's.
 echo Task\Text::object(Task\Workspace::ranked($order)), "\n";
-echo Task\Text::object(array()), "\n";
+echo Task\Text::object([]), "\n";
 
 // A folder's page sits under its workspace where the workspace is named, and
 // under the root where it is not. The root itself is its own page.

@@ -8,22 +8,22 @@ require "ext/autoload.php";
 // Nothing here reads a table: a page says where it is and this answers the
 // rest, over the folders the reader sees and the named workspaces.
 
-$folders = array(
-	array("id" => "fx-prompt-malta"),
-	array("id" => "fx-prompt-malta/vhosts"),
-);
-$workspaces = array("fx-prompt-malta");
+$folders = [
+	["id" => "fx-prompt-malta"],
+	["id" => "fx-prompt-malta/vhosts"],
+];
+$workspaces = ["fx-prompt-malta"];
 
 // said is a prompt as the header carries it: the place, the run, the line the
 // panel writes and the page it opens.
 function said($prompt) {
-	return implode(" ", array(
+	return implode(" ", [
 		"[" . $prompt["folder"] . "]",
 		"[" . $prompt["dir"] . "]",
 		"[" . $prompt["run"] . "]",
 		"[" . $prompt["label"] . "]",
 		$prompt["href"],
-	));
+	]);
 }
 
 // The page of a place is the deepest folder the reader sees that holds it,
@@ -53,15 +53,15 @@ echo said(Task\Prompt::at("fx-prompt-gone", "deploy", $folders, $workspaces)), "
 // A run's page asks in the place the run ran in and about the run itself,
 // which the line names by the start of its ID. An ID of four characters or
 // fewer is written whole.
-$run = new Task\Model\Run(array("id" => "06gp9t19", "folder" => "fx-prompt-malta", "dir" => "vhosts", "job" => "build"));
+$run = new Task\Model\Run(["id" => "06gp9t19", "folder" => "fx-prompt-malta", "dir" => "vhosts", "job" => "build"]);
 
 echo said(Task\Prompt::ofRun($run, $folders, $workspaces)), "\n";
 echo Task\Prompt::short("06gp9t19"), " ", Task\Prompt::short("06gp"), " [", Task\Prompt::short(""), "]\n";
 
 // A run of Claude's own is the thread and not something to ask about: a
 // prompt's run asks in its place, and one of the root asks in the root.
-$prompt = new Task\Model\Run(array("id" => "06gp9t19", "folder" => "fx-prompt-malta", "job" => Task\Run::PROMPT_JOB));
-$claude = new Task\Model\Run(array("id" => "06gp9t19", "folder" => Task\Route::INTERNAL, "job" => "claude"));
+$prompt = new Task\Model\Run(["id" => "06gp9t19", "folder" => "fx-prompt-malta", "job" => Task\Run::PROMPT_JOB]);
+$claude = new Task\Model\Run(["id" => "06gp9t19", "folder" => Task\Route::INTERNAL, "job" => "claude"]);
 
 echo said(Task\Prompt::ofRun($prompt, $folders, $workspaces)), "\n";
 echo said(Task\Prompt::ofRun($claude, $folders, $workspaces)), "\n";

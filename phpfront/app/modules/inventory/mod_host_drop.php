@@ -26,7 +26,7 @@ class mod_host_drop implements Module {
 	}
 
 	function tables() {
-		return array("host");
+		return ["host"];
 	}
 
 	function serve() {

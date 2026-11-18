@@ -9,11 +9,11 @@ echo Task\Clock::seconds("2026-11-02 10:32:12"), "\n";
 
 // A write leaves time.Time.String(), which is what the Go side leaves, so one
 // format lives in the column. Both arrive while both writers are live.
-foreach (array(
+foreach ([
 	"2026-11-02 10:32:12.414 +0000 UTC",
 	"2026-11-02 10:32:12.42 +0000 UTC",
 	"2026-11-02 10:32:12 +0000 UTC",
-) as $stamp) {
+] as $stamp) {
 	echo Task\Clock::seconds($stamp), " ", Task\Clock::format($stamp, Task\Clock::READ), "\n";
 }
 
@@ -42,7 +42,7 @@ echo strlen(Task\Clock::read("2026-11-02 23:00:00")), "\n";
 // ago reads against the process clock, which is the one view.Ago reads.
 $now = Task\Clock::real()->unix();
 
-foreach (array(0, 30, 300, 7200, 400000) as $since) {
+foreach ([0, 30, 300, 7200, 400000] as $since) {
 	echo Task\Clock::ago(\DateTime::unix($now - $since, 0)->in(\Time\Location::utc())->format(Task\Clock::READ)), "\n";
 }
 

@@ -26,7 +26,7 @@ class HostJobs {
 	 * where there are none, which is what closes the group.
 	 */
 	static function of($chrome, $selected = "") {
-		$jobs = array();
+		$jobs = [];
 
 		if (!$chrome->allowed("hosts")) {
 			return $jobs;
@@ -56,12 +56,12 @@ class HostJobs {
 			$said = "A command on every host with an ssh login, a run a host";
 		}
 
-		return array(
+		return [
 			"id" => $id,
 			"name" => $id,
 			"folder" => Route::INTERNAL,
 			"title" => $said,
 			"selected" => $id === $selected,
-		);
+		];
 	}
 }

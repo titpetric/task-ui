@@ -18,7 +18,7 @@ class Policies {
 	/** policy is a subject's entries. */
 	function policy($kind, $subject) {
 		$rows = $this->db->get_all("SELECT * FROM permission_policy WHERE subject_kind = ? AND subject = ?", $kind, $subject);
-		$entries = array();
+		$entries = [];
 
 		if (is_array($rows)) {
 			foreach ($rows as $row) {

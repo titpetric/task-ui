@@ -54,7 +54,7 @@ function zero($type) {
 
 /** quoted is a list of names as a PHP array body. */
 function quoted($names) {
-	$out = array();
+	$out = [];
 
 	foreach ($names as $name) {
 		$out[] = "\"" . $name . "\"";
@@ -65,7 +65,7 @@ function quoted($names) {
 
 /** primary is the primary key columns of a table, by the key marker. */
 function primary($table) {
-	$out = array();
+	$out = [];
 
 	foreach ($table["columns"] as $column) {
 		if (isset($column["key"]) && $column["key"] === "PRI") {
@@ -78,7 +78,7 @@ function primary($table) {
 
 /** stamps is the timestamp columns of a table, which are written null when empty. */
 function stamps($table) {
-	$out = array();
+	$out = [];
 
 	foreach ($table["columns"] as $column) {
 		if (strtolower($column["type"]) === "timestamp") {
@@ -91,18 +91,18 @@ function stamps($table) {
 
 /** columns is each column as the template reads it. */
 function columns($table) {
-	$out = array();
+	$out = [];
 
 	foreach ($table["columns"] as $column) {
 		$comment = isset($column["comment"]) && $column["comment"] !== "" ? $column["comment"] : studly($column["name"]);
 
-		$out[] = array(
+		$out[] = [
 			"name" => $column["name"],
 			"studly" => studly($column["name"]),
 			"comment" => $comment,
 			"reader" => reader($column["type"]),
 			"zero" => zero($column["type"]),
-		);
+		];
 	}
 
 	return $out;
@@ -117,11 +117,11 @@ if (!is_array($schema)) {
 
 $templates = TREE . "/tools/templates/";
 $tpl = new MiniTPL\Template($templates);
-$names = array();
+$names = [];
 
 foreach ($schema as $table) {
 	$class = studly($table["name"]);
-	$fields = array();
+	$fields = [];
 
 	foreach ($table["columns"] as $column) {
 		$fields[] = $column["name"];

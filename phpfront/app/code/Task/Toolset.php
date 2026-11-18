@@ -34,11 +34,11 @@ class Toolset {
 	 * tools of the image, then the instance's own.
 	 */
 	static function categories() {
-		return array(
-			array("category" => self::RUNTIME, "title" => "Runtimes"),
-			array("category" => self::TOOLING, "title" => "Tooling"),
-			array("category" => self::CUSTOM, "title" => "Custom tooling"),
-		);
+		return [
+			["category" => self::RUNTIME, "title" => "Runtimes"],
+			["category" => self::TOOLING, "title" => "Tooling"],
+			["category" => self::CUSTOM, "title" => "Custom tooling"],
+		];
 	}
 
 	/**
@@ -50,7 +50,7 @@ class Toolset {
 	 * of the API holds no space.
 	 */
 	static function ids() {
-		return array(
+		return [
 			"node" => "node",
 			"phpscript" => "phpscript",
 			"go" => "go",
@@ -65,7 +65,7 @@ class Toolset {
 			"secretsmanager" => "secretsmanager",
 			"terraform" => "terraform",
 			"jq" => "jq",
-		);
+		];
 	}
 
 	/** tools is every tool the last check recorded, by category and then by name. */
@@ -80,7 +80,7 @@ class Toolset {
 	 */
 	function groups() {
 		$tools = $this->tools();
-		$out = array();
+		$out = [];
 
 		foreach (self::categories() as $category) {
 			$rows = self::of($tools, $category["category"]);
@@ -89,7 +89,7 @@ class Toolset {
 				continue;
 			}
 
-			$out[] = array("title" => $category["title"], "tools" => $rows);
+			$out[] = ["title" => $category["title"], "tools" => $rows];
 		}
 
 		return $out;
@@ -97,7 +97,7 @@ class Toolset {
 
 	/** of is the tools of one category, in the order the query answered them. */
 	static function of($tools, $category) {
-		$out = array();
+		$out = [];
 
 		foreach ($tools as $tool) {
 			if ($tool->getCategory() !== $category) {
@@ -114,13 +114,13 @@ class Toolset {
 	static function row($tool) {
 		$name = $tool->getName();
 
-		return array(
+		return [
 			"id" => self::id($name),
 			"name" => $name,
 			"version" => $tool->getVersion(),
 			"path" => $tool->getPath(),
 			"description" => $tool->getDescription(),
-		);
+		];
 	}
 
 	/** id is what a tool is checked under, "" for a name no probe carries. */

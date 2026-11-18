@@ -23,19 +23,19 @@ class StepSpace {
 	const ROOT = "the root";
 
 	/** folders are the folders with a job the reader sees, which a step picks from. */
-	var $folders = array();
+	var $folders = [];
 
 	/** hostJobs are the root's jobs that run a command on a host. */
-	var $hostJobs = array();
+	var $hostJobs = [];
 
 	/** titles is the title of each workspace, by its folder, the default one too. */
-	var $titles = array();
+	var $titles = [];
 
 	/** workspaces is the folder of each named workspace, in the sidebar's order. */
-	var $workspaces = array();
+	var $workspaces = [];
 
 	/** ranks is the place of each named workspace in that order. */
-	var $ranks = array();
+	var $ranks = [];
 
 	/** none reports whether a step may name no workspace at all. */
 	var $none = false;
@@ -71,7 +71,7 @@ class StepSpace {
 			return $this->spaces;
 		}
 
-		$seen = array();
+		$seen = [];
 
 		foreach ($this->folders as $folder) {
 			$ws = $this->spaceOf(Row::text($folder, "id"));
@@ -88,12 +88,12 @@ class StepSpace {
 			return Folders::byRank($one, $other, $ranks);
 		});
 
-		$out = array(
-			array("id" => Route::INTERNAL, "title" => $this->titleOf(Route::INTERNAL, self::TITLE)),
-		);
+		$out = [
+			["id" => Route::INTERNAL, "title" => $this->titleOf(Route::INTERNAL, self::TITLE)],
+		];
 
 		foreach ($named as $ws) {
-			$out[] = array("id" => $ws, "title" => $this->titleOf($ws, $ws));
+			$out[] = ["id" => $ws, "title" => $this->titleOf($ws, $ws)];
 		}
 
 		$this->spaces = $out;
@@ -248,7 +248,7 @@ class StepSpace {
 	 */
 	function move($steps, $ws) {
 		$title = $this->title($ws);
-		$moved = array();
+		$moved = [];
 		$missed = 0;
 
 		foreach ($steps as $step) {
@@ -293,7 +293,7 @@ class StepSpace {
 			$moved[] = $step;
 		}
 
-		return array("steps" => $moved, "missed" => $missed);
+		return ["steps" => $moved, "missed" => $missed];
 	}
 
 	/**
@@ -313,7 +313,7 @@ class StepSpace {
 		foreach ($spaces as $space) {
 			$href = "/workflows/" . $id . "/edit?workspace=" . Route::queryEscape($space["id"]);
 
-			$menu->item("folder", "Move to " . $space["title"], array("href" => Route::href($href)));
+			$menu->item("folder", "Move to " . $space["title"], ["href" => Route::href($href)]);
 		}
 
 		return $menu->sep();

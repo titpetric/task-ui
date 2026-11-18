@@ -28,7 +28,7 @@ class mod_report implements Module {
 	}
 
 	function tables() {
-		return array("run", "note", "run_summary", "user", "workspace");
+		return ["run", "note", "run_summary", "user", "workspace"];
 	}
 
 	function serve() {
@@ -59,11 +59,11 @@ class mod_report implements Module {
 
 		$name = Task\Run::name($run);
 
-		$chrome->heading($name . " report", array(
-			array("text" => "Runs", "href" => "/runs"),
-			array("text" => $name, "href" => "/runs/" . $run->getId()),
-			array("text" => "Report", "href" => ""),
-		));
+		$chrome->heading($name . " report", [
+			["text" => "Runs", "href" => "/runs"],
+			["text" => $name, "href" => "/runs/" . $run->getId()],
+			["text" => "Report", "href" => ""],
+		]);
 		$chrome->asksOfRun($run);
 
 		$scope = $this->scope($chrome, $runs, $seen, $run, $report);
@@ -85,12 +85,12 @@ class mod_report implements Module {
 		$head->badge("report");
 		$head->buttons($buttons->data());
 
-		return array(
+		return [
 			"head" => $head->data(),
 			"summary" => $summary,
 			"question" => Task\Host::markdown($report["question"]),
 			"body" => Task\Host::markdown($report["body"]),
-		);
+		];
 	}
 
 	/**
@@ -124,9 +124,9 @@ class mod_report implements Module {
 		$jobHref = Task\Run::runJobHref($about, $chrome->workspaces());
 		$buttons = new Task\Buttons;
 
-		$buttons->item("", "Run", array("href" => Task\Route::href("/runs/" . $id)));
-		$buttons->when($id !== $run->getId(), "", "Claude's run", array("href" => Task\Route::href("/runs/" . $run->getId())));
-		$buttons->when($jobHref !== "", "", "Job", array("href" => Task\Route::href($jobHref)));
+		$buttons->item("", "Run", ["href" => Task\Route::href("/runs/" . $id)]);
+		$buttons->when($id !== $run->getId(), "", "Claude's run", ["href" => Task\Route::href("/runs/" . $run->getId())]);
+		$buttons->when($jobHref !== "", "", "Job", ["href" => Task\Route::href($jobHref)]);
 
 		return $buttons;
 	}

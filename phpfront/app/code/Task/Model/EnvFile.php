@@ -10,13 +10,13 @@ class EnvFile {
 	const TABLE = "env_file";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "folder", "path", "content", "created_at", "updated_at");
+	public static $fields = ["id", "folder", "path", "content", "created_at", "updated_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at");
+	public static $stamps = ["created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Folder */
@@ -30,7 +30,7 @@ class EnvFile {
 	/** Updated At */
 	var $updated_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->folder = \Task\Row::text($row, "folder");
 		$this->path = \Task\Row::text($row, "path");
@@ -112,7 +112,7 @@ class EnvFile {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

@@ -9,9 +9,9 @@ namespace Task;
 class Table {
 	var $class;
 	var $wrap;
-	var $header = array();
-	var $body = array();
-	var $footer = array();
+	var $header = [];
+	var $body = [];
+	var $footer = [];
 
 	function __construct($class = "", $wrap = "") {
 		$this->class = $class;
@@ -44,23 +44,23 @@ class Table {
 
 	/** data is the scope the component reads. */
 	function data() {
-		return array(
+		return [
 			"class" => $this->class,
 			"wrap" => $this->wrap,
 			"header" => $this->header,
 			"body" => $this->body,
 			"footer" => $this->footer,
-		);
+		];
 	}
 
 	/** line is one row. */
 	static function line($cells, $id = "", $run = "", $class = "") {
-		return array(
+		return [
 			"id" => $id,
 			"run" => $run,
 			"class" => $class,
 			"cells" => $cells,
-		);
+		];
 	}
 
 	/** cell is a value as a cell, escaped. */
@@ -70,11 +70,11 @@ class Table {
 
 	/** raw is a cell the page built as markup, which it escaped itself. */
 	static function raw($html, $class = "", $span = 0) {
-		return array(
+		return [
 			"html" => $html,
 			"class" => $class,
 			"span" => $span,
-		);
+		];
 	}
 
 	/** link is a cell holding one link, both halves escaped. */

@@ -35,7 +35,7 @@ class mod_workflow_run implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"workflow",
 			"workflow_step",
 			"workflow_run",
@@ -44,7 +44,7 @@ class mod_workflow_run implements Module {
 			"note",
 			"user",
 			"workspace",
-		);
+		];
 	}
 
 	function serve() {
@@ -85,11 +85,11 @@ class mod_workflow_run implements Module {
 			return;
 		}
 
-		$chrome->heading($flow["name"], array(
-			array("text" => "Workflows", "href" => "/workflows"),
-			array("text" => $flow["name"], "href" => "/workflows/" . $id),
-			array("text" => "Run", "href" => ""),
-		));
+		$chrome->heading($flow["name"], [
+			["text" => "Workflows", "href" => "/workflows"],
+			["text" => $flow["name"], "href" => "/workflows/" . $id],
+			["text" => "Run", "href" => ""],
+		]);
 
 		$workspaces = $chrome->workspaces();
 		$seen = new Task\Seen($chrome);
@@ -98,13 +98,13 @@ class mod_workflow_run implements Module {
 		$links = Task\Chain::of($steps, $workspaces);
 		$framed = Task\Chain::frames($links, $chrome->db, $names, $workspaces, true, $seen);
 
-		$view->page(array(
-			"flow" => array("name" => $flow["name"]),
+		$view->page([
+			"flow" => ["name" => $flow["name"]],
 			"run" => self::run($run),
 			"thread" => Task\Pipeline::thread($chrome, $run, $steps),
 			"pipeline" => Task\Pipeline::nodes($framed),
 			"prompt" => Task\Prompt::ofWorkflowRun($chrome, $flow, $run),
-		), "workflow_run.tpl");
+		], "workflow_run.tpl");
 	}
 
 	/**
@@ -117,7 +117,7 @@ class mod_workflow_run implements Module {
 	static function run($run) {
 		$done = $run->getFinishedAt() !== "";
 
-		return array(
+		return [
 			"state" => $run->getState(),
 			"message" => $run->getMessage(),
 			"ago" => Task\Clock::ago($run->getStartedAt()),
@@ -125,7 +125,7 @@ class mod_workflow_run implements Module {
 			"userName" => $run->getUserName(),
 			"finished" => $done,
 			"took" => $done ? Task\Run::duration(Task\Run::elapsed($run)) : "",
-		);
+		];
 	}
 }
 

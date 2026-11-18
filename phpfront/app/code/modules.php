@@ -2,7 +2,7 @@
 
 function task_modules($root = null) {
 	$root = $root === null ? dirname(__DIR__) . "/modules" : $root;
-	$out = array();
+	$out = [];
 
 	foreach (glob($root . "/*/modinfo.php") as $file) {
 		$module = require $file;

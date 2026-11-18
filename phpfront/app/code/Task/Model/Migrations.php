@@ -10,13 +10,13 @@ class Migrations {
 	const TABLE = "migrations";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("project", "filename", "statement_index", "status");
+	public static $fields = ["project", "filename", "statement_index", "status"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("project", "filename");
+	public static $primary = ["project", "filename"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array();
+	public static $stamps = [];
 	/** Project */
 	var $project = "";
 	/** Filename */
@@ -26,7 +26,7 @@ class Migrations {
 	/** Status */
 	var $status = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->project = \Task\Row::text($row, "project");
 		$this->filename = \Task\Row::text($row, "filename");
 		$this->statement_index = \Task\Row::number($row, "statement_index");
@@ -84,7 +84,7 @@ class Migrations {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

@@ -83,7 +83,7 @@ class Route {
 	static function segments() {
 		$path = self::path();
 
-		return $path === "" ? array() : explode("/", $path);
+		return $path === "" ? [] : explode("/", $path);
 	}
 
 	/** param is a path parameter the @route annotation declared. */
@@ -193,13 +193,13 @@ class Route {
 	 * link, as the page it would open is the one being read.
 	 */
 	static function crumbs($id, $last, $workspaces) {
-		$out = array();
+		$out = [];
 
 		if (strpos(self::folderHref($id, $workspaces), "/f/" . self::INTERNAL . "/") === 0) {
-			$out[] = array(
+			$out[] = [
 				"text" => self::crumbName(self::INTERNAL),
 				"href" => self::folderHref(self::INTERNAL, $workspaces),
-			);
+			];
 		}
 
 		$path = "";
@@ -210,14 +210,14 @@ class Route {
 			}
 
 			$path .= $segment;
-			$out[] = array(
+			$out[] = [
 				"text" => self::crumbName($segment),
 				"href" => self::folderHref($path, $workspaces),
-			);
+			];
 		}
 
 		if ($last !== "") {
-			$out[] = array("text" => $last, "href" => "");
+			$out[] = ["text" => $last, "href" => ""];
 
 			return $out;
 		}
@@ -291,8 +291,8 @@ class Route {
 	 * puts it back, so the pairs replaced are the ones this escaped.
 	 */
 	static function pathEscape($step) {
-		$escaped = array("%24", "%26", "%2B", "%3A", "%3D", "%40");
-		$plain = array("$", "&", "+", ":", "=", "@");
+		$escaped = ["%24", "%26", "%2B", "%3A", "%3D", "%40"];
+		$plain = ["$", "&", "+", ":", "=", "@"];
 
 		return str_replace($escaped, $plain, rawurlencode($step));
 	}
@@ -302,7 +302,7 @@ class Route {
 	 * escaped, the slashes between them left as they are.
 	 */
 	static function escapePath($path) {
-		$out = array();
+		$out = [];
 
 		foreach (explode("/", $path) as $step) {
 			$out[] = self::pathEscape($step);

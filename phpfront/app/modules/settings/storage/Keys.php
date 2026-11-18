@@ -24,7 +24,7 @@ class Keys {
 
 	/** ssh is the name of every instance SSH key, by name; a workspace's own is no run's. */
 	function ssh() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all("SELECT name FROM key_info WHERE purpose = ? AND scope NOT LIKE ? ORDER BY name", self::SSH, self::WORKSPACE) as $row) {
 			$out[] = \Task\Row::text($row, "name");
@@ -45,13 +45,13 @@ class Keys {
 
 	/** links reads one of the two grant tables as the values of each key name. */
 	private function links($statement) {
-		$out = array();
+		$out = [];
 
 		foreach ($this->db->get_all($statement) as $row) {
 			$key = \Task\Row::text($row, "key_name");
 
 			if (!isset($out[$key])) {
-				$out[$key] = array();
+				$out[$key] = [];
 			}
 
 			$out[$key][] = \Task\Row::text($row, "value");

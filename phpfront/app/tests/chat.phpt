@@ -10,11 +10,11 @@ $db->query("DELETE FROM note_participant WHERE note_id LIKE 'fx-chat-%'");
 $db->query("DELETE FROM note WHERE id LIKE 'fx-chat-%'");
 $db->query("DELETE FROM user WHERE id LIKE 'fx-chat-%'");
 
-$db->replace("user", array("id" => "fx-chat-u1", "name" => "fx-chat-ann", "role" => "admin", "admin" => 1));
-$db->replace("user", array("id" => "fx-chat-u2", "name" => "fx-chat-bob", "role" => "admin", "admin" => 1));
+$db->replace("user", ["id" => "fx-chat-u1", "name" => "fx-chat-ann", "role" => "admin", "admin" => 1]);
+$db->replace("user", ["id" => "fx-chat-u2", "name" => "fx-chat-bob", "role" => "admin", "admin" => 1]);
 
 $root = "fx-chat-1";
-$note = array(
+$note = [
 	"id" => $root,
 	"channel" => "chat",
 	"parent_id" => "",
@@ -27,9 +27,9 @@ $note = array(
 	"spoken" => "",
 	"created_at" => "2020-01-01 10:00:00.000 +0000 UTC",
 	"updated_at" => "2020-01-01 10:00:00.000 +0000 UTC",
-);
+];
 $db->replace("note", $note);
-$db->replace("note", array_merge($note, array(
+$db->replace("note", array_merge($note, [
 	"id" => "fx-chat-2",
 	"parent_id" => $root,
 	"user_id" => "fx-chat-u2",
@@ -38,9 +38,9 @@ $db->replace("note", array_merge($note, array(
 	"audio_path" => "voice/fx-chat.wav",
 	"created_at" => "2020-01-01 10:01:00.000 +0000 UTC",
 	"updated_at" => "2020-01-01 10:01:00.000 +0000 UTC",
-)));
-$db->replace("note_participant", array("note_id" => $root, "user_id" => "fx-chat-u1", "user_name" => "fx-chat-ann", "created_at" => "2020-01-01 10:00:00.000 +0000 UTC"));
-$db->replace("note_participant", array("note_id" => $root, "user_id" => "fx-chat-u2", "user_name" => "fx-chat-bob", "created_at" => "2020-01-01 10:00:00.000 +0000 UTC"));
+]));
+$db->replace("note_participant", ["note_id" => $root, "user_id" => "fx-chat-u1", "user_name" => "fx-chat-ann", "created_at" => "2020-01-01 10:00:00.000 +0000 UTC"]);
+$db->replace("note_participant", ["note_id" => $root, "user_id" => "fx-chat-u2", "user_name" => "fx-chat-bob", "created_at" => "2020-01-01 10:00:00.000 +0000 UTC"]);
 
 $notes = new Task\Threads\Notes;
 

@@ -31,7 +31,7 @@ class Files {
 		$read = self::listed($entries, $id, $workspaces, true);
 		$rows = self::folders($read["rows"], $read["held"], $subs, $workspaces);
 
-		return array("up" => $up, "rows" => $rows);
+		return ["up" => $up, "rows" => $rows];
 	}
 
 	/**
@@ -43,13 +43,13 @@ class Files {
 	 * the shell's name for it.
 	 */
 	static function home($entries, $id, $workspaces) {
-		$rows = array();
+		$rows = [];
 
 		foreach ($entries as $entry) {
 			$rows[] = self::row($entry, $id, $workspaces, true, false, "~/");
 		}
 
-		return array("up" => "", "rows" => $rows);
+		return ["up" => "", "rows" => $rows];
 	}
 
 	/**
@@ -67,8 +67,8 @@ class Files {
 	 * The folder it is wins, because that page is the one the row is about.
 	 */
 	static function root($entries, $workspaces, $subs, $named) {
-		$rows = array();
-		$held = array();
+		$rows = [];
+		$held = [];
 
 		foreach ($entries as $entry) {
 			$row = self::row($entry, "", $workspaces, false, true, "");
@@ -88,7 +88,7 @@ class Files {
 
 		$rows = self::folders($rows, $held, $subs, $workspaces);
 
-		return array("up" => "", "rows" => $rows);
+		return ["up" => "", "rows" => $rows];
 	}
 
 	/**
@@ -96,8 +96,8 @@ class Files {
 	 * rows link already, which is what decides the rows to add after them.
 	 */
 	static function listed($entries, $id, $workspaces, $linked) {
-		$rows = array();
-		$held = array();
+		$rows = [];
+		$held = [];
 
 		foreach ($entries as $entry) {
 			$rows[] = self::row($entry, $id, $workspaces, $linked, true, "");
@@ -108,7 +108,7 @@ class Files {
 			}
 		}
 
-		return array("rows" => $rows, "held" => $held);
+		return ["rows" => $rows, "held" => $held];
 	}
 
 	/**
@@ -139,7 +139,7 @@ class Files {
 			$href = self::FILES . Route::escapePath($id . "/" . $path);
 		}
 
-		$row = array(
+		$row = [
 			"name" => Row::text($entry, "name"),
 			"dir" => $dir,
 			"sealed" => Row::flag($entry, "sealed"),
@@ -149,8 +149,8 @@ class Files {
 			"size" => $dir ? "" : Size::bytes(Row::number($entry, "size")),
 			"stamp" => Clock::read($stamp),
 			"ago" => Clock::ago($stamp),
-			"menu" => array(),
-		);
+			"menu" => [],
+		];
 
 		if (!$dir && $href !== "") {
 			$row["menu"] = self::menu($row);
@@ -164,7 +164,7 @@ class Files {
 		$menu = new Menu("Actions on " . $row["name"]);
 
 		$menu->detail("Changed", $row["stamp"]);
-		$menu->item("eye", "Preview", array("href" => $row["href"], "data-file" => $row["path"]));
+		$menu->item("eye", "Preview", ["href" => $row["href"], "data-file" => $row["path"]]);
 
 		return $menu->data();
 	}
@@ -186,7 +186,7 @@ class Files {
 			}
 		}
 
-		$missing = array();
+		$missing = [];
 
 		foreach ($subs as $sub) {
 			$id = Row::text($sub, "id");
@@ -215,7 +215,7 @@ class Files {
 	static function folderRow($id, $dir, $workspaces) {
 		$stamp = Host::modTime($dir);
 
-		return array(
+		return [
 			"name" => Folders::nameOf($id),
 			"dir" => true,
 			"sealed" => false,
@@ -225,7 +225,7 @@ class Files {
 			"size" => "",
 			"stamp" => Clock::read($stamp),
 			"ago" => Clock::ago($stamp),
-			"menu" => array(),
-		);
+			"menu" => [],
+		];
 	}
 }

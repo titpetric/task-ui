@@ -37,7 +37,7 @@ class mod_run implements Module {
 	}
 
 	function tables() {
-		return array("run", "artifact", "note", "run_summary", "user", "workspace");
+		return ["run", "artifact", "note", "run_summary", "user", "workspace"];
 	}
 
 	function serve() {
@@ -55,7 +55,7 @@ class mod_run implements Module {
 
 		$name = Task\Run::name($run);
 
-		$chrome->heading($name, array(array("text" => "Runs", "href" => "/runs"), array("text" => $name, "href" => "")));
+		$chrome->heading($name, [["text" => "Runs", "href" => "/runs"], ["text" => $name, "href" => ""]]);
 		$this->at($chrome, $run);
 		$chrome->asksOfRun($run);
 
@@ -129,22 +129,22 @@ class mod_run implements Module {
 		$head->note($run->getTitle());
 		$head->buttons($buttons->data());
 
-		return array(
+		return [
 			"head" => $head->data(),
 			"terminal" => self::terminal($run, $session, $name),
-			"output" => array(
+			"output" => [
 				"expired" => $expired,
 				"recording" => !$expired && $run->getCastPath() !== "" && $ended,
 				"text" => self::EXPIRED,
 				"id" => $run->getId(),
 				"cols" => $run->getTermCols(),
 				"rows" => $run->getTermRows(),
-			),
+			],
 			"prompt" => Task\Prompt::panel($chrome, $run, $seen),
 			"children" => $this->children($run, $seen),
-			"kv" => array("rows" => $this->details($run, $chrome, $message)),
+			"kv" => ["rows" => $this->details($run, $chrome, $message)],
 			"artifacts" => $this->artifacts($chrome, $run),
-		);
+		];
 	}
 
 	/**
@@ -168,28 +168,28 @@ class mod_run implements Module {
 		$href = $report === null ? "" : Task\Route::href(Task\Report::href($report));
 		$buttons = new Task\Buttons;
 
-		$buttons->primary("", $ended ? "View" : "Attach", array("data-attach" => $id));
-		$buttons->when($again, "", "Run again", array("data-rerun" => $id, "data-title" => Task\Run::name($run)));
-		$buttons->when($stops, "", "Stop", array("data-stop" => $id));
-		$buttons->whenDanger($stops, "", "Kill", array("data-kill" => $id));
-		$buttons->when($href !== "", "", "Report", array("href" => $href));
-		$buttons->when($summarizes, "", "Summarize", array(
+		$buttons->primary("", $ended ? "View" : "Attach", ["data-attach" => $id]);
+		$buttons->when($again, "", "Run again", ["data-rerun" => $id, "data-title" => Task\Run::name($run)]);
+		$buttons->when($stops, "", "Stop", ["data-stop" => $id]);
+		$buttons->whenDanger($stops, "", "Kill", ["data-kill" => $id]);
+		$buttons->when($href !== "", "", "Report", ["href" => $href]);
+		$buttons->when($summarizes, "", "Summarize", [
 			"data-summarize-run" => $id,
 			"data-question" => Task\Report::SUMMARY,
 			"title" => Task\Job::SUMMARIZE,
-		));
+		]);
 
 		if ($pending) {
 			$buttons->faint(self::SUMMARIZING);
 		}
 
-		$buttons->when($run->getCastPath() !== "" && $ended && !$expired, "", "|>", array(
+		$buttons->when($run->getCastPath() !== "" && $ended && !$expired, "", "|>", [
 			"data-replay" => $id,
 			"data-replay-title" => Task\Run::name($run),
 			"data-replay-who" => $run->getUserName(),
 			"title" => "Replay the recording",
 			"aria-label" => "Replay the recording",
-		));
+		]);
 
 		return $buttons;
 	}
@@ -235,7 +235,7 @@ class mod_run implements Module {
 
 		$id = $run->getId();
 		$reports = new Task\Report;
-		$found = $reports->summaries(array($id));
+		$found = $reports->summaries([$id]);
 
 		return isset($found[$id]) && $found[$id]["pending"];
 	}
@@ -251,14 +251,14 @@ class mod_run implements Module {
 	function children($run, $seen) {
 		$runs = new Task\Runs\Runs;
 		$found = $runs->children($run->getId());
-		$rows = array();
+		$rows = [];
 
 		foreach ($seen->of($found) as $child) {
-			$rows[] = array(
+			$rows[] = [
 				"href" => Task\Route::href("/runs/" . $child->getId()),
 				"name" => Task\Run::name($child),
 				"state" => Task\Run::label($child),
-			);
+			];
 		}
 
 		return $rows;
@@ -270,12 +270,12 @@ class mod_run implements Module {
 			return null;
 		}
 
-		return array(
+		return [
 			"id" => $run->getId(),
 			"name" => $name,
 			"watching" => Task\Row::number($session, "attached"),
 			"frame" => Task\Host::frame($run->getId()),
-		);
+		];
 	}
 
 	/**
@@ -289,40 +289,40 @@ class mod_run implements Module {
 		$job = $run->getJob();
 		$jobHref = Task\Run::runJobHref($run, $workspaces);
 		$args = Task\Run::argList($run);
-		$rows = array();
+		$rows = [];
 
-		$rows[] = self::detail("Folder", array(
+		$rows[] = self::detail("Folder", [
 			"link" => self::link(Task\Route::href(Task\Route::folderHref($folder, $workspaces)), "folder", $folder),
-		));
+		]);
 
 		if ($dir !== "") {
-			$rows[] = self::detail("Directory", array(
+			$rows[] = self::detail("Directory", [
 				"link" => self::link(Task\Route::href(Task\Route::placeHref($folder, $dir, $workspaces)), "folder-open", $dir . "/"),
 				"after" => "the job ran here",
-			));
+			]);
 		}
 
-		$rows[] = self::detail("Job", $jobHref === "" ? array("text" => $job) : array("link" => self::link(Task\Route::href($jobHref), "", $job)));
+		$rows[] = self::detail("Job", $jobHref === "" ? ["text" => $job] : ["link" => self::link(Task\Route::href($jobHref), "", $job)]);
 
 		if (count($args) > 0) {
-			$rows[] = self::detail("Arguments", array("code" => $args, "after" => "after --, one argument each"));
+			$rows[] = self::detail("Arguments", ["code" => $args, "after" => "after --, one argument each"]);
 		}
 
-		$rows[] = self::detail("By", array("who" => $chrome->who()->ofRun($run)));
-		$rows[] = self::detail("Started", array("text" => Task\Clock::read($run->getStartedAt())));
-		$rows[] = self::detail("Finished", $run->getFinishedAt() === "" ? array("faint" => "in progress") : array("text" => Task\Clock::read($run->getFinishedAt())));
-		$rows[] = self::detail("Duration", array("text" => Task\Run::duration(Task\Run::elapsed($run))));
-		$rows[] = self::detail("Result", array("state" => Task\Run::label($run), "after" => $message));
+		$rows[] = self::detail("By", ["who" => $chrome->who()->ofRun($run)]);
+		$rows[] = self::detail("Started", ["text" => Task\Clock::read($run->getStartedAt())]);
+		$rows[] = self::detail("Finished", $run->getFinishedAt() === "" ? ["faint" => "in progress"] : ["text" => Task\Clock::read($run->getFinishedAt())]);
+		$rows[] = self::detail("Duration", ["text" => Task\Run::duration(Task\Run::elapsed($run))]);
+		$rows[] = self::detail("Result", ["state" => Task\Run::label($run), "after" => $message]);
 
 		if ($run->getReason() !== "") {
-			$rows[] = self::detail("Reason", array(
+			$rows[] = self::detail("Reason", [
 				"text" => $run->getReason(),
-				"badge" => array("tone" => "bad", "text" => "out of hours"),
-			));
+				"badge" => ["tone" => "bad", "text" => "out of hours"],
+			]);
 		}
 
-		$rows[] = self::detail("Terminal", array("text" => $run->getTermCols() . "×" . $run->getTermRows()));
-		$rows[] = self::detail("ID", array("class" => "faint", "text" => $run->getId()));
+		$rows[] = self::detail("Terminal", ["text" => $run->getTermCols() . "×" . $run->getTermRows()]);
+		$rows[] = self::detail("ID", ["class" => "faint", "text" => $run->getId()]);
 
 		return $rows;
 	}
@@ -340,42 +340,42 @@ class mod_run implements Module {
 	 */
 	function artifacts($chrome, $run) {
 		$artifacts = new Task\Artifacts\Artifacts;
-		$found = $artifacts->find(array("run" => $run->getId()));
+		$found = $artifacts->find(["run" => $run->getId()]);
 		$deletes = $chrome->allowed("artifact/delete");
-		$rows = array();
+		$rows = [];
 
 		foreach ($found as $file) {
 			$name = $file->getName();
 			$href = self::ARTIFACT_API . $file->getId();
 			$menu = new Task\Menu("Actions on " . $name);
 
-			$menu->whenDanger($deletes, "trash", "Delete", array(
+			$menu->whenDanger($deletes, "trash", "Delete", [
 				"data-delete" => $href,
 				"data-confirm" => "Delete " . $name . "?",
 				"data-confirm-ok" => "Delete",
 				"data-next" => "reload",
-			));
+			]);
 
-			$rows[] = array(
+			$rows[] = [
 				"name" => $name,
 				"href" => $href,
 				"size" => Task\Size::bytes($file->getByteSize()),
 				"type" => $file->getContentType(),
 				"menu" => $menu->data(),
-			);
+			];
 		}
 
 		$buttons = new Task\Buttons(true);
 
-		return array(
-			"block" => array(
+		return [
+			"block" => [
 				"title" => "Artifacts",
 				"note" => 'files left under $TASK_UI_ARTIFACTS',
 				"empty" => count($rows) === 0 ? 'None: a job keeps files by writing them to the directory in $TASK_UI_ARTIFACTS.' : "",
 				"buttons" => $buttons->data(),
-			),
+			],
 			"rows" => $rows,
-		);
+		];
 	}
 
 	/**
@@ -449,18 +449,18 @@ class mod_run implements Module {
 
 	/** detail is one row of the Run table: its label, and the pieces of its cell. */
 	static function detail($label, $cell) {
-		$row = array(
+		$row = [
 			"label" => $label,
 			"class" => "",
-			"who" => array(),
-			"state" => array(),
+			"who" => [],
+			"state" => [],
 			"link" => self::link("", "", ""),
-			"code" => array(),
+			"code" => [],
 			"text" => "",
 			"faint" => "",
 			"after" => "",
-			"badge" => array("tone" => "", "text" => ""),
-		);
+			"badge" => ["tone" => "", "text" => ""],
+		];
 
 		foreach ($cell as $key => $value) {
 			$row[$key] = $value;
@@ -471,11 +471,11 @@ class mod_run implements Module {
 
 	/** link is the link of a cell: where it goes, its icon and what it says. */
 	static function link($href, $icon, $text) {
-		return array(
+		return [
 			"href" => $href,
 			"icon" => $icon,
 			"text" => $text,
-		);
+		];
 	}
 }
 

@@ -35,7 +35,7 @@ class mod_projects implements Module {
 	}
 
 	function tables() {
-		return array("workspace");
+		return ["workspace"];
 	}
 
 	function serve() {
@@ -48,10 +48,10 @@ class mod_projects implements Module {
 			return;
 		}
 
-		$chrome->heading(Task\Setup::PROJECTS, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::PROJECTS, "href" => ""),
-		));
+		$chrome->heading(Task\Setup::PROJECTS, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::PROJECTS, "href" => ""],
+		]);
 
 		$workspaces = new Task\Workspace($chrome->db);
 		$named = $workspaces->names();
@@ -61,11 +61,11 @@ class mod_projects implements Module {
 		$groups = Task\Project::groups($entries, $named);
 		$steps = Task\Setup::steps($chrome, Task\Setup::PROJECTS);
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($chrome),
 			"groups" => $this->blocks($chrome, $groups, $spaces, Task\Row::text($instance, "root")),
 			"trail" => Task\Setup::trail($steps),
-		), "projects.tpl");
+		], "projects.tpl");
 	}
 
 	/** head is the page head: the heading, the lead and Add project. */
@@ -75,7 +75,7 @@ class mod_projects implements Module {
 		$href = Task\Route::href(Task\Project::PAGE . "/new");
 
 		if ($chrome->allowed("project/edit")) {
-			$buttons->primary("plus", "Add project", array("href" => $href));
+			$buttons->primary("plus", "Add project", ["href" => $href]);
 		}
 
 		$head->buttons($buttons->data());
@@ -90,7 +90,7 @@ class mod_projects implements Module {
 	 * what git ignores there, and neither is PHP's to do.
 	 */
 	static function dirs($entries) {
-		$out = array();
+		$out = [];
 
 		foreach ($entries as $entry) {
 			$out[] = Task\Row::text($entry, "dir");
@@ -107,13 +107,13 @@ class mod_projects implements Module {
 	 * which draws no table at all.
 	 */
 	function blocks($chrome, $groups, $spaces, $root) {
-		$out = array();
+		$out = [];
 
 		foreach ($groups as $group) {
-			$out[] = array(
+			$out[] = [
 				"block" => Task\Project::block($chrome, $group, $root),
 				"table" => Task\Project::table($chrome, $group["entries"], $spaces, self::RELOAD),
-			);
+			];
 		}
 
 		return $out;

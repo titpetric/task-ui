@@ -17,10 +17,10 @@ class Host {
 	public static $login = false;
 	public static $assetVersion = "";
 	public static $whoami = "";
-	public static $folders = array();
-	public static $jobs = array();
-	public static $projects = array();
-	public static $folderDirs = array();
+	public static $folders = [];
+	public static $jobs = [];
+	public static $projects = [];
+	public static $folderDirs = [];
 
 	/**
 	 * folderDirCalls counts the crossings a tree spent asking for them, which
@@ -28,49 +28,49 @@ class Host {
 	 * thing a fixture holds.
 	 */
 	public static $folderDirCalls = 0;
-	public static $isDir = array();
-	public static $commits = array();
-	public static $running = array();
-	public static $flows = array();
-	public static $dirty = array();
-	public static $rules = array();
-	public static $published = array();
-	public static $dispatched = array();
-	public static $runs = array();
-	public static $artifacts = array();
-	public static $sessions = array();
-	public static $frames = array();
-	public static $screens = array();
-	public static $expired = array();
+	public static $isDir = [];
+	public static $commits = [];
+	public static $running = [];
+	public static $flows = [];
+	public static $dirty = [];
+	public static $rules = [];
+	public static $published = [];
+	public static $dispatched = [];
+	public static $runs = [];
+	public static $artifacts = [];
+	public static $sessions = [];
+	public static $frames = [];
+	public static $screens = [];
+	public static $expired = [];
 	public static $claude = false;
-	public static $tree = array();
-	public static $space = array();
-	public static $spaces = array();
-	public static $inventory = array();
+	public static $tree = [];
+	public static $space = [];
+	public static $spaces = [];
+	public static $inventory = [];
 
 	/** reach is the ssh login of each address, for a fixture. */
-	public static $reach = array();
-	public static $hosts = array();
-	public static $reachable = array();
-	public static $tooling = array();
-	public static $places = array();
-	public static $groups = array();
-	public static $listings = array();
-	public static $rootTrees = array();
-	public static $modTimes = array();
-	public static $statuses = array();
-	public static $checkouts = array();
-	public static $hours = array();
-	public static $keystore = array();
-	public static $keyFolders = array();
-	public static $instance = array();
-	public static $usage = array();
-	public static $telemetry = array();
-	public static $integrations = array();
-	public static $entries = array();
-	public static $variables = array();
-	public static $variable = array();
-	public static $integrationEnv = array();
+	public static $reach = [];
+	public static $hosts = [];
+	public static $reachable = [];
+	public static $tooling = [];
+	public static $places = [];
+	public static $groups = [];
+	public static $listings = [];
+	public static $rootTrees = [];
+	public static $modTimes = [];
+	public static $statuses = [];
+	public static $checkouts = [];
+	public static $hours = [];
+	public static $keystore = [];
+	public static $keyFolders = [];
+	public static $instance = [];
+	public static $usage = [];
+	public static $telemetry = [];
+	public static $integrations = [];
+	public static $entries = [];
+	public static $variables = [];
+	public static $variable = [];
+	public static $integrationEnv = [];
 
 	/** The path the router is mounted at, "" once the prefix is gone. */
 	static function base() {
@@ -135,29 +135,29 @@ class Host {
 		$key = $folder . "|" . $dir . "|" . $id;
 
 		if (!isset(self::$jobs[$key])) {
-			return array(
+			return [
 				"found" => false,
 				"id" => "",
 				"name" => "",
 				"dir" => "",
 				"shell" => false,
 				"host" => false,
-				"allow" => array(),
-				"folder_allow" => array(),
+				"allow" => [],
+				"folder_allow" => [],
 				"kind" => "",
 				"source" => "",
 				"source_lines" => 0,
 				"description" => "",
 				"summary" => "",
-				"command" => array(),
-				"steps" => array(),
-				"aliases" => array(),
-				"depends" => array(),
+				"command" => [],
+				"steps" => [],
+				"aliases" => [],
+				"depends" => [],
 				"interactive" => false,
 				"takes_args" => false,
 				"args_command" => "",
 				"key" => "",
-			);
+			];
 		}
 
 		return self::$jobs[$key];
@@ -169,7 +169,7 @@ class Host {
 	 * sidebar lists it anyway.
 	 */
 	static function projects($workspace) {
-		return isset(self::$projects[$workspace]) ? self::$projects[$workspace] : array();
+		return isset(self::$projects[$workspace]) ? self::$projects[$workspace] : [];
 	}
 
 	/**
@@ -188,7 +188,7 @@ class Host {
 	 */
 	static function folderDirs($ids, $workspaces) {
 		self::$folderDirCalls = self::$folderDirCalls + 1;
-		$out = array();
+		$out = [];
 
 		foreach ($ids as $id) {
 			if (isset(self::$folderDirs[$id]) && self::$folderDirs[$id] !== "") {
@@ -251,7 +251,7 @@ class Host {
 			return self::$sessions[$id];
 		}
 
-		return array(
+		return [
 			"live" => false,
 			"attached" => 0,
 			"message" => "",
@@ -259,7 +259,7 @@ class Host {
 			"exit_code" => 0,
 			"title" => "",
 			"finished_at" => "",
-		);
+		];
 	}
 
 	/** The last screen of a live run, as the SVG a page embeds. */
@@ -277,11 +277,11 @@ class Host {
 			return self::$screens[$id];
 		}
 
-		return array(
+		return [
 			"svg" => "",
 			"lines" => 0,
 			"complete" => false,
-		);
+		];
 	}
 
 	/** Whether a run names a recording the retention sweep has removed. */
@@ -296,7 +296,7 @@ class Host {
 
 	/** Sends an event on the stream every live label reads. */
 	static function publish($topic, $payload) {
-		self::$published[] = array("topic" => $topic, "payload" => $payload);
+		self::$published[] = ["topic" => $topic, "payload" => $payload];
 
 		return true;
 	}
@@ -308,11 +308,11 @@ class Host {
 	 * writes, "" for the top of it.
 	 */
 	static function dispatch($comment, $action, $folder = "") {
-		self::$dispatched[] = array(
+		self::$dispatched[] = [
 			"comment" => $comment,
 			"action" => $action,
 			"folder" => $folder,
-		);
+		];
 
 		return "01NOTE";
 	}
@@ -336,7 +336,7 @@ class Host {
 	 * takes the tag off one paragraph and leaves two alone.
 	 */
 	static function markdown($src, $prefix = "", $dir = "") {
-		$out = array();
+		$out = [];
 
 		foreach (preg_split('/\n\s*\n/', $src) as $block) {
 			$out[] = "<p>" . htmlspecialchars($block, ENT_QUOTES) . "</p>";
@@ -349,13 +349,13 @@ class Host {
 	 * A note's text: the same renderer with a line break kept and @name
 	 * marked. A name in link becomes a link under prefix.
 	 */
-	static function message($src, $prefix = "", $link = array()) {
+	static function message($src, $prefix = "", $link = []) {
 		return "<p>" . htmlspecialchars($src, ENT_QUOTES) . "</p>";
 	}
 
 	/** The files under one folder of the artifact tree, "" for the whole tree. */
 	static function artifacts($folder = "") {
-		return isset(self::$artifacts[$folder]) ? self::$artifacts[$folder] : array();
+		return isset(self::$artifacts[$folder]) ? self::$artifacts[$folder] : [];
 	}
 
 	/** The text of one artifact, from the top of the tree, or "". */
@@ -369,7 +369,7 @@ class Host {
 	 * size is the space the files under it take.
 	 */
 	static function tree($dir) {
-		return isset(self::$tree[$dir]) ? self::$tree[$dir] : array();
+		return isset(self::$tree[$dir]) ? self::$tree[$dir] : [];
 	}
 
 	/**
@@ -382,12 +382,12 @@ class Host {
 			return self::$space;
 		}
 
-		return array(
+		return [
 			"measured" => false,
 			"files" => 0,
 			"history" => 0,
 			"ignored" => 0,
-		);
+		];
 	}
 
 	/**
@@ -398,7 +398,7 @@ class Host {
 	 * no meter answers none of them and a page says nothing about space.
 	 */
 	static function spaces($dirs) {
-		$out = array();
+		$out = [];
 
 		foreach ($dirs as $dir) {
 			if (isset(self::$spaces[$dir])) {
@@ -421,25 +421,25 @@ class Host {
 	 * answers on. An address the hub reports nothing of is a host of the
 	 * answer with no measures on it.
 	 */
-	static function inventory($hosts, $held = array()) {
+	static function inventory($hosts, $held = []) {
 		if (self::$inventory) {
 			return self::$inventory;
 		}
 
-		return array(
+		return [
 			"off" => true,
 			"error" => "",
-			"hosts" => array(),
-			"logins" => array(),
-			"cluster" => array(
+			"hosts" => [],
+			"logins" => [],
+			"cluster" => [
 				"up" => 0,
 				"down" => 0,
 				"left" => 0,
-				"pools" => array(),
-				"hosts" => array(),
-			),
-			"history" => array(),
-		);
+				"pools" => [],
+				"hosts" => [],
+			],
+			"history" => [],
+		];
 	}
 
 	/**
@@ -486,21 +486,21 @@ class Host {
 			return self::$hosts[$name];
 		}
 
-		return array(
+		return [
 			"found" => false,
 			"error" => "",
-			"system" => array(),
+			"system" => [],
 			"login" => "",
-			"containers" => array(),
+			"containers" => [],
 			"measured" => false,
 			"sized" => false,
 			"unsized" => "",
-			"filesystems" => array(),
+			"filesystems" => [],
 			"from_df" => false,
 			"read" => "",
-			"samples" => array(),
-			"container_samples" => array(),
-		);
+			"samples" => [],
+			"container_samples" => [],
+		];
 	}
 
 	/**
@@ -521,20 +521,20 @@ class Host {
 			return self::$places[$key];
 		}
 
-		return array(
+		return [
 			"found" => false,
 			"id" => "",
 			"title" => "",
 			"description" => "",
 			"dir" => "",
 			"rel" => "",
-			"allow" => array(),
+			"allow" => [],
 			"hours" => "",
 			"error" => "",
-			"errors" => array(),
-			"sources" => array(),
-			"includes" => array(),
-		);
+			"errors" => [],
+			"sources" => [],
+			"includes" => [],
+		];
 	}
 
 	/**
@@ -550,7 +550,7 @@ class Host {
 	static function groups($folder, $rel, $seen, $shell, $claude) {
 		$key = $folder . "|" . $rel;
 
-		return isset(self::$groups[$key]) ? self::$groups[$key] : array();
+		return isset(self::$groups[$key]) ? self::$groups[$key] : [];
 	}
 
 	/**
@@ -565,7 +565,7 @@ class Host {
 	static function listing($folder, $rel, $seen) {
 		$key = $folder . "|" . $rel;
 
-		return isset(self::$listings[$key]) ? self::$listings[$key] : array();
+		return isset(self::$listings[$key]) ? self::$listings[$key] : [];
 	}
 
 	/**
@@ -579,7 +579,7 @@ class Host {
 	static function rootTree($named, $seen) {
 		$key = $named ? "1" : "0";
 
-		return isset(self::$rootTrees[$key]) ? self::$rootTrees[$key] : array();
+		return isset(self::$rootTrees[$key]) ? self::$rootTrees[$key] : [];
 	}
 
 	/**
@@ -606,7 +606,7 @@ class Host {
 			return self::$statuses[$dir];
 		}
 
-		return array(
+		return [
 			"found" => false,
 			"checkout" => "",
 			"branch" => "",
@@ -615,8 +615,8 @@ class Host {
 			"ahead" => 0,
 			"behind" => 0,
 			"dirty" => 0,
-			"changes" => array(),
-		);
+			"changes" => [],
+		];
 	}
 
 	/**
@@ -632,20 +632,20 @@ class Host {
 			return self::$checkouts[$dir];
 		}
 
-		return array(
+		return [
 			"found" => false,
 			"remote" => "",
 			"branch" => "",
 			"commit" => "",
 			"subject" => "",
 			"when" => "",
-			"space" => array(
+			"space" => [
 				"measured" => false,
 				"files" => 0,
 				"history" => 0,
 				"ignored" => 0,
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -658,7 +658,7 @@ class Host {
 			return self::$hours[$text];
 		}
 
-		return array("line" => "", "open" => true);
+		return ["line" => "", "open" => true];
 	}
 
 	/**
@@ -677,11 +677,11 @@ class Host {
 			return self::$keystore;
 		}
 
-		return array(
+		return [
 			"dir" => "",
 			"instance" => "",
-			"keys" => array(),
-		);
+			"keys" => [],
+		];
 	}
 
 	/**
@@ -709,7 +709,7 @@ class Host {
 			return self::$instance;
 		}
 
-		return array(
+		return [
 			"url" => "",
 			"listen" => "",
 			"root" => "",
@@ -728,31 +728,31 @@ class Host {
 			"compose_project" => "",
 			"beszel" => false,
 			"running" => false,
-			"backlog" => array(
+			"backlog" => [
 				"parallel" => 0,
 				"going" => 0,
 				"waiting" => 0,
 				"auto" => 0,
 				"configured" => 0,
 				"length" => 0,
-			),
+			],
 			"parent_env" => "",
-			"env" => array(),
-			"env_base" => array(),
-			"env_sensitive" => array(),
+			"env" => [],
+			"env_base" => [],
+			"env_sensitive" => [],
 			"measured" => false,
-			"storage" => array(
-				"rows" => array(),
-				"total" => array(
+			"storage" => [
+				"rows" => [],
+				"total" => [
 					"name" => "",
 					"where" => "",
 					"size" => 0,
 					"files" => 0,
 					"pending" => false,
-				),
+				],
 				"pending" => false,
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -769,11 +769,11 @@ class Host {
 			return self::$usage;
 		}
 
-		return array(
+		return [
 			"off" => true,
 			"error" => "",
-			"areas" => array(),
-		);
+			"areas" => [],
+		];
 	}
 
 	/**
@@ -798,7 +798,7 @@ class Host {
 			return self::$telemetry;
 		}
 
-		return array(
+		return [
 			"error" => "",
 			"wired" => false,
 			"path" => "",
@@ -809,15 +809,15 @@ class Host {
 			"top_requests" => 0,
 			"max_spans_per_trace" => 0,
 			"debug_span_min_duration" => "",
-			"ignore_paths" => array(),
+			"ignore_paths" => [],
 			"live_stream" => false,
 			"refresh_interval" => 0,
-			"allowed_networks" => array(),
+			"allowed_networks" => [],
 			"option_path" => "",
 			"capture_logs" => false,
 			"track_memory_use" => false,
 			"trust_request_id" => false,
-		);
+		];
 	}
 
 	/**

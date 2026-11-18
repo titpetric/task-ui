@@ -16,16 +16,16 @@ $db = Task\DB::writer();
 
 // The files of one run, a minute apart, and two versions of a path of the
 // artifact tree, which are the rows that hold a commit.
-$rows = array(
-	array("id" => "fx-art-1", "run" => $run, "name" => "build.log", "path" => "", "size" => 512, "at" => "10:01"),
-	array("id" => "fx-art-2", "run" => $run, "name" => "coverage.html", "path" => "", "size" => 2048, "at" => "10:02"),
-	array("id" => "fx-art-3", "run" => "fx-art-other-run", "name" => "elsewhere.log", "path" => "", "size" => 10, "at" => "10:03"),
-	array("id" => "fx-art-4", "run" => "", "name" => "notes.md", "path" => "fx-art/notes.md", "size" => 30, "at" => "10:04", "commit" => "fx-art-c1"),
-	array("id" => "fx-art-5", "run" => "", "name" => "notes.md", "path" => "fx-art/notes.md", "size" => 40, "at" => "10:05", "commit" => "fx-art-c2"),
-);
+$rows = [
+	["id" => "fx-art-1", "run" => $run, "name" => "build.log", "path" => "", "size" => 512, "at" => "10:01"],
+	["id" => "fx-art-2", "run" => $run, "name" => "coverage.html", "path" => "", "size" => 2048, "at" => "10:02"],
+	["id" => "fx-art-3", "run" => "fx-art-other-run", "name" => "elsewhere.log", "path" => "", "size" => 10, "at" => "10:03"],
+	["id" => "fx-art-4", "run" => "", "name" => "notes.md", "path" => "fx-art/notes.md", "size" => 30, "at" => "10:04", "commit" => "fx-art-c1"],
+	["id" => "fx-art-5", "run" => "", "name" => "notes.md", "path" => "fx-art/notes.md", "size" => 40, "at" => "10:05", "commit" => "fx-art-c2"],
+];
 
 foreach ($rows as $row) {
-	$db->replace("artifact", array(
+	$db->replace("artifact", [
 		"id" => $row["id"],
 		"run_id" => $row["run"],
 		"folder" => $folder,
@@ -37,7 +37,7 @@ foreach ($rows as $row) {
 		"commit_id" => isset($row["commit"]) ? $row["commit"] : "",
 		"user_name" => "admin",
 		"created_at" => "2026-11-02 " . $row["at"] . ":00.000 +0000 UTC",
-	));
+	]);
 }
 
 // A page reads through the reader, which refuses a write.
@@ -45,7 +45,7 @@ $artifacts = new Task\Artifacts\Artifacts;
 
 // named is what a query answered, in the order it answered.
 function named($found) {
-	$out = array();
+	$out = [];
 
 	foreach ($found as $artifact) {
 		$out[] = $artifact->getId();
@@ -55,15 +55,15 @@ function named($found) {
 }
 
 // The files of one run, newest first, which is what a run page lists.
-echo named($artifacts->find(array("run" => $run))), "\n";
-echo "[", named($artifacts->find(array("run" => "fx-art-no-run"))), "]\n";
-echo named($artifacts->find(array("run" => $run, "limit" => 1))), "\n";
+echo named($artifacts->find(["run" => $run])), "\n";
+echo "[", named($artifacts->find(["run" => "fx-art-no-run"])), "]\n";
+echo named($artifacts->find(["run" => $run, "limit" => 1])), "\n";
 
 // The rest of the conditions: a folder, a job, and a path of the tree, whose
 // rows are the versions of that file.
-echo named($artifacts->find(array("folder" => $folder))), "\n";
-echo named($artifacts->find(array("folder" => $folder, "job" => "build"))), "\n";
-echo named($artifacts->find(array("path" => "fx-art/notes.md"))), "\n";
+echo named($artifacts->find(["folder" => $folder])), "\n";
+echo named($artifacts->find(["folder" => $folder, "job" => "build"])), "\n";
+echo named($artifacts->find(["path" => "fx-art/notes.md"])), "\n";
 
 // One artifact by ID, and null for an ID that names none.
 $one = $artifacts->get("fx-art-2");

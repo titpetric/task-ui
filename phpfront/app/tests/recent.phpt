@@ -14,7 +14,7 @@ $folder = "fx-recent";
 
 $db = Task\DB::writer();
 
-$db->replace("run", array(
+$db->replace("run", [
 	"id" => "fx-recent-1",
 	"folder" => $folder,
 	"job" => "build",
@@ -24,24 +24,24 @@ $db->replace("run", array(
 	"started_at" => "2026-11-02 10:01:00.000 +0000 UTC",
 	"term_cols" => 120,
 	"term_rows" => 30,
-));
+]);
 
 // The merge walks two lists that each arrive newest first. A run and a
 // workflow run of the same instant keep the order the Go side's stable sort
 // keeps, which is the run first.
-$runs = array(
-	array("at" => "2026-11-02 10:05:00.000 +0000 UTC", "href" => "/runs/a"),
-	array("at" => "2026-11-02 09:03:00.000 +0000 UTC", "href" => "/runs/b"),
-	array("at" => "2026-11-02 08:01:00.000 +0000 UTC", "href" => "/runs/c"),
-);
-$flows = array(
-	array("at" => "2026-11-02 10:04:00.000 +0000 UTC", "href" => "/workflows/x"),
-	array("at" => "2026-11-02 09:03:00.000 +0000 UTC", "href" => "/workflows/y"),
-);
+$runs = [
+	["at" => "2026-11-02 10:05:00.000 +0000 UTC", "href" => "/runs/a"],
+	["at" => "2026-11-02 09:03:00.000 +0000 UTC", "href" => "/runs/b"],
+	["at" => "2026-11-02 08:01:00.000 +0000 UTC", "href" => "/runs/c"],
+];
+$flows = [
+	["at" => "2026-11-02 10:04:00.000 +0000 UTC", "href" => "/workflows/x"],
+	["at" => "2026-11-02 09:03:00.000 +0000 UTC", "href" => "/workflows/y"],
+];
 
 // hrefs names what a merge answered, in the order it answered.
 function hrefs($entries) {
-	$out = array();
+	$out = [];
 
 	foreach ($entries as $entry) {
 		$out[] = $entry["href"];
@@ -52,16 +52,16 @@ function hrefs($entries) {
 
 echo hrefs(Task\Recent::merge($runs, $flows, 50)), "\n";
 echo hrefs(Task\Recent::merge($runs, $flows, 2)), "\n";
-echo hrefs(Task\Recent::merge($runs, array(), 50)), "\n";
-echo hrefs(Task\Recent::merge(array(), $flows, 50)), "\n";
-echo "[", hrefs(Task\Recent::merge(array(), array(), 50)), "]\n";
+echo hrefs(Task\Recent::merge($runs, [], 50)), "\n";
+echo hrefs(Task\Recent::merge([], $flows, 50)), "\n";
+echo "[", hrefs(Task\Recent::merge([], [], 50)), "]\n";
 
 // Two entries of the same second are ordered by the fraction the column
 // holds, as the Go page's compare of two times is. Whole seconds would read
 // them as equal and answer the run first whichever started first, so the pair
 // is merged both ways round and the newer leads either way.
-$earlier = array(array("at" => "2026-11-02 10:05:00.100 +0000 UTC", "href" => "/runs/d"));
-$later = array(array("at" => "2026-11-02 10:05:00.500 +0000 UTC", "href" => "/workflows/z"));
+$earlier = [["at" => "2026-11-02 10:05:00.100 +0000 UTC", "href" => "/runs/d"]];
+$later = [["at" => "2026-11-02 10:05:00.500 +0000 UTC", "href" => "/workflows/z"]];
 
 echo hrefs(Task\Recent::merge($earlier, $later, 50)), "\n";
 echo hrefs(Task\Recent::merge($later, $earlier, 50)), "\n";
@@ -71,7 +71,7 @@ echo hrefs(Task\Recent::merge($later, $earlier, 50)), "\n";
 // time.Duration is, so a second short of an hour is still the last hour.
 $second = Task\Clock::NANO;
 
-foreach (array(0, 3599, 3600, 7200, 86399, 86400, 172800) as $since) {
+foreach ([0, 3599, 3600, 7200, 86399, 86400, 172800] as $since) {
 	echo Task\Recent::hoursAgo($since * $second), "\n";
 }
 
@@ -87,7 +87,7 @@ foreach ($groups as $group) {
 
 // The prompt that run dispatched, which the rail counts on its row rather
 // than listing.
-$db->replace("run", array(
+$db->replace("run", [
 	"id" => "fx-recent-2",
 	"folder" => $folder,
 	"job" => "@claude-prompt",
@@ -99,18 +99,18 @@ $db->replace("run", array(
 	"term_rows" => 30,
 	"parent_id" => "fx-recent-1",
 	"parent_kind" => "run",
-));
+]);
 
 // One run of a job as the component reads it. The icon is an eye and not a
 // play: the catalogue here holds no folder, so nothing says the reader may
 // start the job again.
-$ops = new Task\Model\User(array("id" => "fx-recent-u", "name" => "ops", "role" => "runner", "admin" => true));
+$ops = new Task\Model\User(["id" => "fx-recent-u", "name" => "ops", "role" => "runner", "admin" => true]);
 $access = new Task\Access($ops);
-$roles = array("ops" => "runner");
+$roles = ["ops" => "runner"];
 $rail = new Task\Recent;
 $table = new Task\Runs\Runs;
 $first = $table->get("fx-recent-1");
-$entry = $rail->ofRun($first, $access, $roles, array());
+$entry = $rail->ofRun($first, $access, $roles, []);
 
 echo $entry["href"], " ", $entry["name"], " ", $entry["place"], " [", $entry["icon"], "] ", $entry["state"], "\n";
 echo var_export($entry["ended"], true), " ", var_export($entry["flow"], true), " ", $entry["act"], " ", $entry["children"], "\n";
@@ -119,7 +119,7 @@ echo $entry["avatar"]["name"], " ", $entry["avatar"]["role"], " ", $entry["avata
 
 // A thread's run is called by the user it answers as, because every note runs
 // the same job in the same place and the user is what tells two of them apart.
-$thread = $rail->ofRun($table->get("fx-recent-2"), $access, $roles, array(), 2);
+$thread = $rail->ofRun($table->get("fx-recent-2"), $access, $roles, [], 2);
 
 echo $thread["name"], " ", $thread["place"], " [", $thread["icon"], "] ", $thread["children"], "\n";
 
@@ -134,7 +134,7 @@ $run = $table->get("fx-recent-1");
 
 // A folder that declares no such job: the host answers not found, so nothing
 // says the reader may start it again. Nobody signed in may either.
-$undeclared = array(Task\Fixture::folder($folder, array($test)));
+$undeclared = [Task\Fixture::folder($folder, [$test])];
 
 echo var_export(Task\Recent::runnable($run, $access, $undeclared), true), "\n";
 echo var_export(Task\Recent::runnable($run, null, $undeclared), true), "\n";
@@ -143,9 +143,9 @@ echo var_export(Task\Recent::runnable($run, null, $undeclared), true), "\n";
 // the one the sidebar's own rows are drawn by. A catalogue of other folders
 // alone answers no, because the rule reads the allow list of the run's folder
 // and the page does not hold it.
-$known = Task\Fixture::folder($folder, array($build, $test));
-$catalogue = array(Task\Fixture::declared($known));
-$elsewhere = array(Task\Fixture::folder("fx-recent-other", array($build)));
+$known = Task\Fixture::folder($folder, [$build, $test]);
+$catalogue = [Task\Fixture::declared($known)];
+$elsewhere = [Task\Fixture::folder("fx-recent-other", [$build])];
 
 echo var_export(Task\Recent::runnable($run, $access, $catalogue), true), "\n";
 echo var_export(Task\Recent::runnable($run, $access, $elsewhere), true), "\n";
@@ -153,20 +153,20 @@ echo var_export(Task\Recent::runnable($run, $access, $elsewhere), true), "\n";
 // The runs each row of the rail dispatched, counted by the row's ID, and
 // counted as the reader sees them: a prompt's run is one count for a reader
 // with prompt/view and none for a reader without it.
-$listed = array($table->get("fx-recent-1"));
+$listed = [$table->get("fx-recent-1")];
 $counts = $rail->children($listed, $ops, true, true);
 $hidden = $rail->children($listed, $ops, false, false);
 
-echo $counts["fx-recent-1"], " ", count($hidden), " ", count($rail->children(array(), $ops, true, true)), "\n";
+echo $counts["fx-recent-1"], " ", count($hidden), " ", count($rail->children([], $ops, true, true)), "\n";
 
 // The count goes on the entry, which draws it instead of the runs under it.
-echo $rail->ofRun($first, $access, $roles, array(), 3)["children"], "\n";
+echo $rail->ofRun($first, $access, $roles, [], 3)["children"], "\n";
 
 // The role of a name no row holds is "", which draws the avatar without one.
 echo "[", Task\Recent::role($roles, "nobody"), "]\n";
 
 // Where the rail's own link goes, and how many entries it lists.
-$data = $rail->data($access, $roles, array());
+$data = $rail->data($access, $roles, []);
 
 echo $data["href"], " ", Task\Recent::COUNT, "\n";
 ---

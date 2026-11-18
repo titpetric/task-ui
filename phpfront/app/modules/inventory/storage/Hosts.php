@@ -27,7 +27,7 @@ class Hosts {
 	/** all is every host, by name. */
 	function all() {
 		$rows = $this->db->get_all("SELECT * FROM host ORDER BY name");
-		$out = array();
+		$out = [];
 
 		if (!is_array($rows)) {
 			return $out;
@@ -56,7 +56,7 @@ class Hosts {
 
 		$id = \Task\Id::make();
 
-		$this->db->insert("host", array(
+		$this->db->insert("host", [
 			"id" => $id,
 			"name" => $name === "" ? $address : $name,
 			"address" => $address,
@@ -64,7 +64,7 @@ class Hosts {
 			"login" => $login,
 			"added_by" => $by,
 			"created_at" => \Task\Clock::stamp(),
-		));
+		]);
 
 		return $id;
 	}

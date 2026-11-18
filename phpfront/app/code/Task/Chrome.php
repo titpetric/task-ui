@@ -16,7 +16,7 @@ class Chrome {
 	var $title = "";
 
 	/** crumbs are the trail above the content: text, and a href or "". */
-	var $crumbs = array();
+	var $crumbs = [];
 
 	/**
 	 * error is what the page reports outside a form, for a page that answers
@@ -79,7 +79,7 @@ class Chrome {
 	}
 
 	/** heading sets the page's title and its trail in one call. */
-	function heading($title, $crumbs = array()) {
+	function heading($title, $crumbs = []) {
 		$this->title = $title;
 		$this->crumbs = $crumbs;
 
@@ -185,7 +185,7 @@ class Chrome {
 	 */
 	function folders() {
 		if ($this->catalogue === null) {
-			$this->catalogue = array();
+			$this->catalogue = [];
 
 			foreach ($this->all() as $folder) {
 				if (User::sees($this->user, Row::text($folder, "id"))) {
@@ -348,7 +348,7 @@ class Chrome {
 	 * the page needs.
 	 */
 	function roles() {
-		return $this->user === null ? array() : $this->who()->roles;
+		return $this->user === null ? [] : $this->who()->roles;
 	}
 
 	/**
@@ -362,7 +362,7 @@ class Chrome {
 	 */
 	function runAsUsers() {
 		if (!User::admin($this->user)) {
-			return array();
+			return [];
 		}
 
 		$users = $this->users->all();
@@ -380,7 +380,7 @@ class Chrome {
 	 * who may not run a prompt as somebody else.
 	 */
 	function agents() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->runAsUsers() as $option) {
 			$user = $this->users->byName($option["name"]);
@@ -396,14 +396,14 @@ class Chrome {
 	/** contacts is who the orb may chat with: every user but the reader, by name. */
 	function contacts() {
 		if (!$this->allowed("note/edit") || !$this->allowed("note/view")) {
-			return array();
+			return [];
 		}
 
-		$out = array();
+		$out = [];
 
 		foreach ($this->users->all() as $user) {
 			if ($user->getName() !== $this->name()) {
-				$out[] = array("name" => $user->getName(), "role" => User::role($user));
+				$out[] = ["name" => $user->getName(), "role" => User::role($user)];
 			}
 		}
 
@@ -418,18 +418,18 @@ class Chrome {
 	 */
 	function runAs() {
 		if (!$this->allowed("prompt/edit")) {
-			return array(
-				"users" => array(),
+			return [
+				"users" => [],
 				"selected" => "",
 				"short" => true,
-			);
+			];
 		}
 
-		return array(
+		return [
 			"users" => $this->runAsUsers(),
 			"selected" => $this->name(),
 			"short" => true,
-		);
+		];
 	}
 
 	/**
@@ -448,7 +448,7 @@ class Chrome {
 
 		$sidebar = new Sidebar($this->db);
 
-		return array(
+		return [
 			"base" => Host::base(),
 			"version" => Host::version(),
 			"assets" => Host::assets(),
@@ -475,7 +475,7 @@ class Chrome {
 			"contacts" => $this->contacts(),
 			"recents" => $this->recents(),
 			"running" => count($this->live()) > 0,
-		);
+		];
 	}
 
 	/**
@@ -489,14 +489,14 @@ class Chrome {
 	 * writes for the maps its sign in page leaves unset.
 	 */
 	function anonymous($path) {
-		return array(
+		return [
 			"base" => Host::base(),
 			"version" => Host::version(),
 			"assets" => Host::assets(),
 			"assetVersion" => Host::assetVersion(),
 			"title" => $this->title,
 			"path" => $path,
-			"crumbs" => array(),
+			"crumbs" => [],
 			"notice" => "",
 			"error" => $this->error,
 			"user" => null,
@@ -505,7 +505,7 @@ class Chrome {
 			"roles" => "null",
 			"workspaces" => "null",
 			"loginRequired" => Host::login(),
-		);
+		];
 	}
 
 	/** recents is the right rail: the latest runs by anyone, newest first. */
@@ -522,10 +522,10 @@ class Chrome {
 			return null;
 		}
 
-		return array(
+		return [
 			"name" => $this->user->getName(),
 			"role" => User::role($this->user),
 			"initials" => User::initials($this->user),
-		);
+		];
 	}
 }

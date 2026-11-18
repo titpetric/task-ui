@@ -13,20 +13,20 @@ $db = Task\DB::writer();
 
 // The runs a report is about: one that ended, one still running, two of a
 // batch, and the run of Claude's that answered a prompt.
-$runs = array(
-	array("id" => "fx-rep-run", "job" => "build", "state" => "ok", "at" => "10:01", "batch" => ""),
-	array("id" => "fx-rep-plain", "job" => "build", "state" => "ok", "at" => "10:02", "batch" => ""),
-	array("id" => "fx-rep-pending", "job" => "build", "state" => "ok", "at" => "10:03", "batch" => ""),
-	array("id" => "fx-rep-failed", "job" => "build", "state" => "ok", "at" => "10:04", "batch" => ""),
-	array("id" => "fx-rep-kept", "job" => "build", "state" => "ok", "at" => "10:05", "batch" => ""),
-	array("id" => "fx-rep-batch-new", "job" => "@host:web2", "state" => "ok", "at" => "10:07", "batch" => "fx-rep-batch"),
-	array("id" => "fx-rep-batch-old", "job" => "@host:web1", "state" => "ok", "at" => "10:06", "batch" => "fx-rep-batch"),
-	array("id" => "fx-rep-claude", "job" => "@claude-prompt", "state" => "ok", "at" => "10:08", "batch" => ""),
-	array("id" => "fx-rep-live", "job" => "@claude-prompt", "state" => "running", "at" => "10:09", "batch" => ""),
-);
+$runs = [
+	["id" => "fx-rep-run", "job" => "build", "state" => "ok", "at" => "10:01", "batch" => ""],
+	["id" => "fx-rep-plain", "job" => "build", "state" => "ok", "at" => "10:02", "batch" => ""],
+	["id" => "fx-rep-pending", "job" => "build", "state" => "ok", "at" => "10:03", "batch" => ""],
+	["id" => "fx-rep-failed", "job" => "build", "state" => "ok", "at" => "10:04", "batch" => ""],
+	["id" => "fx-rep-kept", "job" => "build", "state" => "ok", "at" => "10:05", "batch" => ""],
+	["id" => "fx-rep-batch-new", "job" => "@host:web2", "state" => "ok", "at" => "10:07", "batch" => "fx-rep-batch"],
+	["id" => "fx-rep-batch-old", "job" => "@host:web1", "state" => "ok", "at" => "10:06", "batch" => "fx-rep-batch"],
+	["id" => "fx-rep-claude", "job" => "@claude-prompt", "state" => "ok", "at" => "10:08", "batch" => ""],
+	["id" => "fx-rep-live", "job" => "@claude-prompt", "state" => "running", "at" => "10:09", "batch" => ""],
+];
 
 foreach ($runs as $row) {
-	$db->replace("run", array(
+	$db->replace("run", [
 		"id" => $row["id"],
 		"folder" => "fx-rep",
 		"job" => $row["job"],
@@ -35,25 +35,25 @@ foreach ($runs as $row) {
 		"state" => $row["state"],
 		"batch_id" => $row["batch"],
 		"started_at" => "2026-11-02 " . $row["at"] . ":00.000 +0000 UTC",
-	));
+	]);
 }
 
 // The threads. A summary thread asks one of two questions and names the run it
 // is about; its first reply names the run that answers it. A thread whose
 // question is the reader's own is an answer and not a summary.
-$notes = array(
-	array("id" => "fx-rep-n1", "parent" => "", "body" => Task\Report::SUMMARY, "about" => "fx-rep-plain", "run" => "", "state" => "done"),
-	array("id" => "fx-rep-n2", "parent" => "fx-rep-n1", "body" => "the build is clean", "about" => "fx-rep-plain", "run" => "fx-rep-sum1", "state" => "done", "by" => "claude"),
-	array("id" => "fx-rep-n3", "parent" => "", "body" => Task\Report::SUMMARY, "about" => "fx-rep-pending", "run" => "fx-rep-sum3", "state" => "working"),
-	array("id" => "fx-rep-n4", "parent" => "", "body" => Task\Report::SUMMARY, "about" => "fx-rep-failed", "run" => "fx-rep-sum4", "state" => "failed"),
-	array("id" => "fx-rep-n5", "parent" => "", "body" => Task\Report::BATCH, "about" => "fx-rep-batch-old", "run" => "", "state" => "done"),
-	array("id" => "fx-rep-n6", "parent" => "fx-rep-n5", "body" => "both hosts answered", "about" => "fx-rep-batch-old", "run" => "fx-rep-sum5", "state" => "done", "by" => "claude"),
-	array("id" => "fx-rep-n7", "parent" => "", "body" => "why did this run end the way it did", "about" => "fx-rep-run", "run" => "", "state" => "done"),
-	array("id" => "fx-rep-n8", "parent" => "fx-rep-n7", "body" => "it ran out of disk", "about" => "fx-rep-run", "run" => "fx-rep-claude", "state" => "done", "by" => "claude"),
-);
+$notes = [
+	["id" => "fx-rep-n1", "parent" => "", "body" => Task\Report::SUMMARY, "about" => "fx-rep-plain", "run" => "", "state" => "done"],
+	["id" => "fx-rep-n2", "parent" => "fx-rep-n1", "body" => "the build is clean", "about" => "fx-rep-plain", "run" => "fx-rep-sum1", "state" => "done", "by" => "claude"],
+	["id" => "fx-rep-n3", "parent" => "", "body" => Task\Report::SUMMARY, "about" => "fx-rep-pending", "run" => "fx-rep-sum3", "state" => "working"],
+	["id" => "fx-rep-n4", "parent" => "", "body" => Task\Report::SUMMARY, "about" => "fx-rep-failed", "run" => "fx-rep-sum4", "state" => "failed"],
+	["id" => "fx-rep-n5", "parent" => "", "body" => Task\Report::BATCH, "about" => "fx-rep-batch-old", "run" => "", "state" => "done"],
+	["id" => "fx-rep-n6", "parent" => "fx-rep-n5", "body" => "both hosts answered", "about" => "fx-rep-batch-old", "run" => "fx-rep-sum5", "state" => "done", "by" => "claude"],
+	["id" => "fx-rep-n7", "parent" => "", "body" => "why did this run end the way it did", "about" => "fx-rep-run", "run" => "", "state" => "done"],
+	["id" => "fx-rep-n8", "parent" => "fx-rep-n7", "body" => "it ran out of disk", "about" => "fx-rep-run", "run" => "fx-rep-claude", "state" => "done", "by" => "claude"],
+];
 
 foreach ($notes as $row) {
-	$db->replace("note", array(
+	$db->replace("note", [
 		"id" => $row["id"],
 		"channel" => "notes",
 		"parent_id" => $row["parent"],
@@ -66,16 +66,16 @@ foreach ($notes as $row) {
 		"workspace_id" => "fx-rep-ws",
 		"created_at" => "2026-11-02 11:00:00.000 +0000 UTC",
 		"updated_at" => "2026-11-02 11:00:00.000 +0000 UTC",
-	));
+	]);
 }
 
 // The summary the runs page keeps, for a run no thread asks about.
-$db->replace("run_summary", array(
+$db->replace("run_summary", [
 	"run_id" => "fx-rep-kept",
 	"summary" => "kept by hand",
 	"user_name" => "admin",
 	"created_at" => "2026-11-02 12:00:00.000 +0000 UTC",
-));
+]);
 
 // A page reads through the reader, which refuses a write.
 $reports = new Task\Report;
@@ -123,11 +123,11 @@ echo told($reports->of($rows->get("fx-rep-run"))), "\n";
 echo told($reports->of(null)), "\n";
 
 // The summaries of several runs at once, which is what a list page reads.
-$found = $reports->summaries(array("fx-rep-plain", "fx-rep-pending", "fx-rep-kept", "fx-rep-run"));
+$found = $reports->summaries(["fx-rep-plain", "fx-rep-pending", "fx-rep-kept", "fx-rep-run"]);
 
 echo implode(",", array_keys($found)), "\n";
 echo var_export($found["fx-rep-pending"]["pending"], true), " ", var_export($found["fx-rep-plain"]["pending"], true), "\n";
-echo count($reports->summaries(array())), "\n";
+echo count($reports->summaries([])), "\n";
 ---
 fx-rep-plain about fx-rep-plain [the build is clean] by admin summary true
 /runs/fx-rep-plain/report

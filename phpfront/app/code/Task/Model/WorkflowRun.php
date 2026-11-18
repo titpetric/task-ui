@@ -10,7 +10,7 @@ class WorkflowRun {
 	const TABLE = "workflow_run";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"workflow_id",
 		"name",
@@ -24,13 +24,13 @@ class WorkflowRun {
 		"updated_at",
 		"input",
 		"answer",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("started_at", "finished_at", "created_at", "updated_at");
+	public static $stamps = ["started_at", "finished_at", "created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Workflow ID */
@@ -58,7 +58,7 @@ class WorkflowRun {
 	/** Answer */
 	var $answer = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->workflow_id = \Task\Row::text($row, "workflow_id");
 		$this->name = \Task\Row::text($row, "name");
@@ -224,7 +224,7 @@ class WorkflowRun {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

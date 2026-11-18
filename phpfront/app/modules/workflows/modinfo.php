@@ -11,13 +11,13 @@ $module->setIcon("workflow");
 $module->enableSideBar();
 $module->setSideBarHref("/workflows");
 $module->setSideBarRule("");
-$module->setTables(array(
+$module->setTables([
 	"workflow",
 	"workflow_run",
 	"workflow_run_step",
 	"workflow_run_step_check",
 	"workflow_step",
 	"workflow_step_check",
-));
+]);
 
 return $module;

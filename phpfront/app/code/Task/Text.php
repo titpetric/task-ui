@@ -8,17 +8,17 @@ class Text {
 	/** items reads a JSON array column, an empty list for empty text. */
 	static function items($text) {
 		if (!is_string($text) || $text === "") {
-			return array();
+			return [];
 		}
 
 		$found = json_decode($text, true);
 
-		return is_array($found) ? $found : array();
+		return is_array($found) ? $found : [];
 	}
 
 	/** encode writes a list back, never null, so the column holds an array. */
 	static function encode($list) {
-		return json_encode(is_array($list) ? array_values($list) : array());
+		return json_encode(is_array($list) ? array_values($list) : []);
 	}
 
 	/**
@@ -43,11 +43,11 @@ class Text {
 	/** map reads a JSON object of lists, such as a project's allow lists. */
 	static function map($text) {
 		if (!is_string($text) || $text === "") {
-			return array();
+			return [];
 		}
 
 		$found = json_decode($text, true);
 
-		return is_array($found) ? $found : array();
+		return is_array($found) ? $found : [];
 	}
 }

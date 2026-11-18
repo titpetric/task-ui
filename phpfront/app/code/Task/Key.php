@@ -40,12 +40,12 @@ class Key {
 		$keys = $this->ssh();
 		$roles = $this->store->roles();
 		$holders = $this->store->holders();
-		$out = array();
+		$out = [];
 
 		foreach ($users as $user) {
 			$name = $user->getName();
 			$role = User::role($user);
-			$names = array();
+			$names = [];
 
 			foreach ($keys as $key) {
 				if (self::grants($roles, $key, $role) || self::grants($holders, $key, $name)) {
@@ -112,7 +112,7 @@ class Key {
 	 * opens with, and the pattern a name must match.
 	 */
 	static function nameField($value) {
-		return array("value" => $value, "pattern" => self::NAME);
+		return ["value" => $value, "pattern" => self::NAME];
 	}
 
 	/**
@@ -148,12 +148,12 @@ class Key {
 	 */
 	static function mine($keys, $user) {
 		if ($user === null) {
-			return array();
+			return [];
 		}
 
 		$name = $user->getName();
 		$role = User::role($user);
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			if ($key["purpose"] !== self::SSH || $key["workspace"] !== "") {
@@ -177,7 +177,7 @@ class Key {
 	 */
 	static function ofWorkspace($keys, $id) {
 		$scope = Workspace::SCOPE . $id;
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			if ($key["purpose"] === self::SSH && $key["scope"] === $scope) {
@@ -194,11 +194,11 @@ class Key {
 	 * the form was opened from.
 	 */
 	static function wsFoot($next, $dialog, $label) {
-		return array(
+		return [
 			"dialog" => $dialog,
 			"cancel" => Route::href($next),
 			"label" => $label,
-		);
+		];
 	}
 
 	/**
@@ -215,7 +215,7 @@ class Key {
 	static function wsGenerate($folder, $dir, $next, $dialog) {
 		$foot = self::wsFoot($next, $dialog, "Add key");
 
-		return array(
+		return [
 			"api" => "/api/workspaces/" . $folder . "/keys/generate",
 			"next" => $next . "?notice=Key+generated",
 			"dialog" => $dialog,
@@ -223,7 +223,7 @@ class Key {
 			"dir" => $dir,
 			"comment" => "task-ui " . $folder,
 			"foot" => $foot,
-		);
+		];
 	}
 
 	/**
@@ -236,7 +236,7 @@ class Key {
 	static function wsUpload($folder, $dir, $next, $dialog) {
 		$foot = self::wsFoot($next, $dialog, "Add key");
 
-		return array(
+		return [
 			"api" => "/api/workspaces/" . $folder . "/keys/upload",
 			"next" => $next . "?notice=Key+uploaded",
 			"dialog" => $dialog,
@@ -245,7 +245,7 @@ class Key {
 			"rows" => $dialog ? 6 : 10,
 			"comment" => "task-ui " . $folder,
 			"foot" => $foot,
-		);
+		];
 	}
 
 	/**
@@ -257,12 +257,12 @@ class Key {
 		$generate = self::wsGenerate($folder, $dir, $next, true);
 		$upload = self::wsUpload($folder, $dir, $next, true);
 
-		return array("generate" => $generate, "upload" => $upload);
+		return ["generate" => $generate, "upload" => $upload];
 	}
 
 	/** linked are the instance SSH keys linked to a user by name, which a profile lists. */
 	static function linked($keys, $name) {
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			if (in_array($name, $key["users"], true)) {
@@ -287,7 +287,7 @@ class Key {
 	 * workspace gets it, so there is nothing left to choose.
 	 */
 	static function rows($chrome, $keys, $next, $workspace = "") {
-		$out = array();
+		$out = [];
 
 		foreach ($keys as $key) {
 			$out[] = self::row($chrome, $key, $next, $workspace);
@@ -304,7 +304,7 @@ class Key {
 		$menu = self::menu($chrome, $key, $next, $workspace);
 		$copy = Copy::of($key["public_key"], "the public key of " . $name, null, true);
 
-		return array(
+		return [
 			"name" => $name,
 			"href" => $key["encrypts"] || $owned || !$chrome->allowed("key/edit") ? "" : $edit,
 			"encrypts" => $key["encrypts"],
@@ -314,7 +314,7 @@ class Key {
 			"size" => $key["size"],
 			"copy" => $copy,
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -361,18 +361,18 @@ class Key {
 		$bare = count($keys) === 0;
 
 		if ($chrome->allowed("key/edit")) {
-			$buttons->item("key", "Generate key", array("href" => self::userHref("generate", $name)));
-			$buttons->item("upload", "Upload key", array("href" => self::userHref("upload", $name)));
+			$buttons->item("key", "Generate key", ["href" => self::userHref("generate", $name)]);
+			$buttons->item("upload", "Upload key", ["href" => self::userHref("upload", $name)]);
 		}
 
-		$block = array(
+		$block = [
 			"title" => "Keys",
 			"note" => "linked to " . $name . ", in the ssh agent of their runs",
 			"empty" => $bare ? "No key linked to " . $name . "; the role's keys come with the role." : "",
 			"buttons" => $buttons->data(),
-		);
+		];
 
-		return array("block" => $block, "keys" => self::rows($chrome, $keys, $next));
+		return ["block" => $block, "keys" => self::rows($chrome, $keys, $next)];
 	}
 
 	/**
@@ -412,37 +412,37 @@ class Key {
 			$menu->detail("Links", self::says($key));
 		}
 
-		$menu->item("copy", "Copy public key", array("data-copy" => $key["public_key"]));
-		$menu->item("download", "Download public key", array("data-download" => $key["public_key"], "data-filename" => $name . ".pub"));
-		$menu->when($canEdit && !$key["encrypts"] && !$owned, "edit", "Edit links", array("href" => self::editHref($name, $next)));
+		$menu->item("copy", "Copy public key", ["data-copy" => $key["public_key"]]);
+		$menu->item("download", "Download public key", ["data-download" => $key["public_key"], "data-filename" => $name . ".pub"]);
+		$menu->when($canEdit && !$key["encrypts"] && !$owned, "edit", "Edit links", ["href" => self::editHref($name, $next)]);
 		$menu->sep();
 
 		if ($canEdit && $key["backup"] !== "") {
-			$menu->item("rotate", "Rotate key", array("disabled" => "Delete the backup first"));
-			$menu->danger("trash", "Delete backup", array(
+			$menu->item("rotate", "Rotate key", ["disabled" => "Delete the backup first"]);
+			$menu->danger("trash", "Delete backup", [
 				"data-delete" => "/api/keys/" . $name . "/backup",
 				"data-confirm" => self::dropsBackup($key),
 				"data-confirm-ok" => "Delete backup",
 				"data-next" => "reload",
-			));
+			]);
 		}
 
 		if ($canEdit && $key["backup"] === "") {
-			$menu->item("rotate", "Rotate key", array(
+			$menu->item("rotate", "Rotate key", [
 				"data-api" => "/api/keys/" . $name . "/rotate",
 				"data-method" => "POST",
 				"data-next" => $next . ($key["encrypts"] ? "?rekeyed={rekeyed}&what=secret" : "?notice=Key+rotated") . "#key-" . $name,
 				"data-confirm" => self::rotates($key),
 				"data-confirm-ok" => "Rotate key",
-			));
+			]);
 		}
 
-		$menu->whenDanger($canRemove && !$key["encrypts"], "trash", "Remove", array(
+		$menu->whenDanger($canRemove && !$key["encrypts"], "trash", "Remove", [
 			"data-delete" => $remove,
 			"data-confirm" => "Remove " . $name . "? " . ($owned ? "The workspace's runs lose it." : "Runs and hosts that use it lose access.") . " Its files stay in the key folder as a backup.",
 			"data-confirm-ok" => "Remove",
 			"data-next" => "reload",
-		));
+		]);
 
 		return $menu;
 	}

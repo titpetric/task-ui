@@ -32,7 +32,7 @@ class mod_thread implements Module {
 	}
 
 	function tables() {
-		return array("note", "note_participant", "run", "user");
+		return ["note", "note_participant", "run", "user"];
 	}
 
 	function serve() {
@@ -78,21 +78,21 @@ class mod_thread implements Module {
 			return;
 		}
 
-		$replies = $store->replies(array($note->getId()));
-		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
+		$replies = $store->replies([$note->getId()]);
+		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
 		$title = Task\Note::excerpt(Task\Threads\Talk::opening($note, $under));
 
-		$chrome->heading($title, array(
-			array("text" => "Threads", "href" => "/threads"),
-			array("text" => $title, "href" => ""),
-		));
+		$chrome->heading($title, [
+			["text" => "Threads", "href" => "/threads"],
+			["text" => $title, "href" => ""],
+		]);
 
 		$head = new Task\Head($title);
 		$seen = new Task\Seen($chrome);
 
 		$head->buttons($this->menu($note, $chrome)->data());
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"id" => $note->getId(),
 			"channel" => $note->getChannel(),
@@ -101,19 +101,19 @@ class mod_thread implements Module {
 			"editor" => self::field(),
 			"replies" => $chat ? $member && $chrome->allowed("note/edit") : ($prompt ? $chrome->allowed("prompt/edit") : $chrome->allowed("note/edit")),
 			"mic" => $chrome->allowed("note/edit"),
-		), "thread.tpl");
+		], "thread.tpl");
 	}
 
 	/** menu is the thread's own actions: a thread is deleted, never rewritten. */
 	function menu($note, $chrome) {
 		$menu = new Task\Menu("Actions on this thread");
 
-		$menu->whenDanger(Task\Note::deletes($note, $chrome), "trash", "Delete", array(
+		$menu->whenDanger(Task\Note::deletes($note, $chrome), "trash", "Delete", [
 			"data-delete" => "/api/notes/" . $note->getId(),
 			"data-confirm" => "Delete this thread and every message in it? It leaves every listing; nobody reads it again.",
 			"data-confirm-ok" => "Delete",
 			"data-next" => Task\Route::href("/threads"),
-		));
+		]);
 
 		return $menu;
 	}
@@ -124,14 +124,14 @@ class mod_thread implements Module {
 	 * because a reply is where an agent is named.
 	 */
 	static function field() {
-		return array(
+		return [
 			"name" => "body",
 			"rows" => 2,
 			"label" => "A reply",
 			"placeholder" => "",
 			"mentions" => true,
 			"toolbar" => "inline",
-		);
+		];
 	}
 }
 

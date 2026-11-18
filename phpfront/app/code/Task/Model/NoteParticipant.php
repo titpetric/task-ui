@@ -10,13 +10,13 @@ class NoteParticipant {
 	const TABLE = "note_participant";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("note_id", "user_id", "user_name", "last_read_at", "created_at");
+	public static $fields = ["note_id", "user_id", "user_name", "last_read_at", "created_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("note_id", "user_id");
+	public static $primary = ["note_id", "user_id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("last_read_at", "created_at");
+	public static $stamps = ["last_read_at", "created_at"];
 	/** Note ID */
 	var $note_id = "";
 	/** User ID */
@@ -28,7 +28,7 @@ class NoteParticipant {
 	/** Created At */
 	var $created_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->note_id = \Task\Row::text($row, "note_id");
 		$this->user_id = \Task\Row::text($row, "user_id");
 		$this->user_name = \Task\Row::text($row, "user_name");
@@ -98,7 +98,7 @@ class NoteParticipant {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

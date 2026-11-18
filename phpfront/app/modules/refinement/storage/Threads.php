@@ -91,16 +91,16 @@ class Threads {
 		$thread = \Task\Id::make();
 		$comment = \Task\Id::make();
 
-		$this->db->insert("refinement_thread", array(
+		$this->db->insert("refinement_thread", [
 			"id" => $thread,
 			"title" => Thread::title($want),
 			"user" => $user,
 			"report_markdown" => "",
 			"created_at" => $now,
 			"updated_at" => $now,
-		));
+		]);
 
-		$this->db->insert("refinement_comment", array(
+		$this->db->insert("refinement_comment", [
 			"id" => $comment,
 			"thread_id" => $thread,
 			"user" => $user,
@@ -109,9 +109,9 @@ class Threads {
 			"kind" => "",
 			"collapsed_into" => "",
 			"created_at" => $now,
-		));
+		]);
 
-		return array("id" => $thread, "comment_id" => $comment);
+		return ["id" => $thread, "comment_id" => $comment];
 	}
 
 	/**
@@ -123,7 +123,7 @@ class Threads {
 		$comment = \Task\Id::make();
 		$before = $this->latest($thread);
 
-		$this->db->insert("refinement_comment", array(
+		$this->db->insert("refinement_comment", [
 			"id" => $comment,
 			"thread_id" => $thread,
 			"user" => $user,
@@ -132,17 +132,17 @@ class Threads {
 			"kind" => "",
 			"collapsed_into" => "",
 			"created_at" => $now,
-		));
+		]);
 
-		$this->db->insert("refinement_correction", array(
+		$this->db->insert("refinement_correction", [
 			"id" => \Task\Id::make(),
 			"thread_id" => $thread,
 			"comment_id" => $comment,
 			"corrects_id" => $before,
 			"created_at" => $now,
-		));
+		]);
 
-		$this->db->update("refinement_thread", array("id" => $thread, "updated_at" => $now), "id");
+		$this->db->update("refinement_thread", ["id" => $thread, "updated_at" => $now], "id");
 
 		return $comment;
 	}
@@ -160,7 +160,7 @@ class Threads {
 		$now = \Task\Clock::stamp();
 		$comment = \Task\Id::make();
 
-		$this->db->insert("refinement_comment", array(
+		$this->db->insert("refinement_comment", [
 			"id" => $comment,
 			"thread_id" => $thread,
 			"user" => $user,
@@ -169,10 +169,10 @@ class Threads {
 			"kind" => "apply",
 			"collapsed_into" => "",
 			"created_at" => $now,
-		));
+		]);
 
 		$this->db->query("UPDATE refinement_comment SET collapsed_into = ? WHERE thread_id = ? AND collapsed_into = '' AND id <> ?", $comment, $thread, $comment);
-		$this->db->update("refinement_thread", array("id" => $thread, "updated_at" => $now), "id");
+		$this->db->update("refinement_thread", ["id" => $thread, "updated_at" => $now], "id");
 
 		return $comment;
 	}
@@ -191,7 +191,7 @@ class Threads {
 			$now = \Task\Clock::stamp();
 			$comment = \Task\Id::make();
 
-			$this->db->insert("refinement_comment", array(
+			$this->db->insert("refinement_comment", [
 				"id" => $comment,
 				"thread_id" => $into,
 				"user" => $rule["user"],
@@ -200,15 +200,15 @@ class Threads {
 				"kind" => "",
 				"collapsed_into" => "",
 				"created_at" => $now,
-			));
+			]);
 
-			$this->db->insert("refinement_correction", array(
+			$this->db->insert("refinement_correction", [
 				"id" => \Task\Id::make(),
 				"thread_id" => $into,
 				"comment_id" => $comment,
 				"corrects_id" => $before,
 				"created_at" => $now,
-			));
+			]);
 
 			$before = $comment;
 		}
@@ -216,7 +216,7 @@ class Threads {
 
 	/** note records the run a dispatch opened, beside the comment it answers. */
 	function note($comment, $note) {
-		return $this->db->update("refinement_comment", array("id" => $comment, "note_id" => $note), "id");
+		return $this->db->update("refinement_comment", ["id" => $comment, "note_id" => $note], "id");
 	}
 
 	/**

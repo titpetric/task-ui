@@ -21,7 +21,7 @@ function moment($zone, $day, $hour, $minute) {
 function sample($zone, $day, $hour, $minute, $command, $tool, $job, $ms, $exit) {
 	$at = moment($zone, $day, $hour, $minute);
 
-	return array(
+	return [
 		"at" => $at->in(Time\Location::utc())->format(Task\Clock::STORED),
 		"at_unix" => $at->unix(),
 		"command" => $command,
@@ -30,7 +30,7 @@ function sample($zone, $day, $hour, $minute, $command, $tool, $job, $ms, $exit) 
 		"duration_ms" => $ms,
 		"exit_code" => $exit,
 		"failed" => false,
-	);
+	];
 }
 
 $now = moment($zone, 19, 22, 0);
@@ -38,13 +38,13 @@ $now = moment($zone, 19, 22, 0);
 // The samples are oldest first, which is the order the report lists them in.
 // The last two are not on a chart: one whose text the charts never read is
 // placed by its number alone, and one the report gives no moment for at all.
-$samples = array(
+$samples = [
 	sample($zone, 17, 12, 0, "npm ci", "npm", "", 4000, 0),
 	sample($zone, 19, 7, 0, "go test ./...", "go", "test", 2500, 0),
 	sample($zone, 19, 7, 30, "go build ./...", "go", "build", 500, 1),
 	sample($zone, 19, 21, 0, "go test ./...", "go", "test", 1000, 0),
 	sample($zone, 19, 21, 0, "docker build", "docker", "", 1000, 0),
-);
+];
 
 // A chart buckets by the number and nothing else: the text of this one is not
 // a stamp, and the slot it lands in is the one its number names.
@@ -59,7 +59,7 @@ $samples[4]["at_unix"] = 0;
 // A command key reports its last run, which Task\Clock::ago words against the
 // process clock; the report here names none, because a fixture that stated an
 // answer would state a different one tomorrow. clock.phpt holds that reading.
-$report = array(array(
+$report = [[
 	"name" => "task-ui",
 	"repository" => "titpetric/task-ui",
 	"database" => ".atkins/atkins.db",
@@ -69,9 +69,9 @@ $report = array(array(
 	"runs" => 5,
 	"total_ms" => 9000,
 	"samples" => $samples,
-	"usage" => array(),
-	"command_usage" => array(),
-	"commands" => array(array(
+	"usage" => [],
+	"command_usage" => [],
+	"commands" => [[
 		"command" => "npm ci",
 		"tool" => "npm",
 		"runs" => 1,
@@ -80,7 +80,7 @@ $report = array(array(
 		"max_ms" => 4000,
 		"failures" => 0,
 		"last_run_at" => "",
-	), array(
+	], [
 		"command" => "go test ./...",
 		"tool" => "go",
 		"runs" => 2,
@@ -89,8 +89,8 @@ $report = array(array(
 		"max_ms" => 2500,
 		"failures" => 1,
 		"last_run_at" => "",
-	)),
-), array(
+	]],
+], [
 	"name" => "deploy",
 	"repository" => "malta/deploy",
 	"database" => ".atkins/deploy.db",
@@ -99,16 +99,16 @@ $report = array(array(
 	"to" => "2026-10-19",
 	"runs" => 4,
 	"total_ms" => 6000,
-	"samples" => array(),
-	"command_usage" => array(),
-	"usage" => array(
-		array("date" => "2026-10-19", "command" => "", "tool" => "go", "runs" => 2, "total_ms" => 3000),
-		array("date" => "2026-10-19", "command" => "", "tool" => "npm", "runs" => 1, "total_ms" => 1000),
-		array("date" => "2026-10-15", "command" => "", "tool" => "go", "runs" => 1, "total_ms" => 2000),
-		array("date" => "2026-10-01", "command" => "", "tool" => "go", "runs" => 9, "total_ms" => 9000),
-	),
-	"commands" => array(),
-));
+	"samples" => [],
+	"command_usage" => [],
+	"usage" => [
+		["date" => "2026-10-19", "command" => "", "tool" => "go", "runs" => 2, "total_ms" => 3000],
+		["date" => "2026-10-19", "command" => "", "tool" => "npm", "runs" => 1, "total_ms" => 1000],
+		["date" => "2026-10-15", "command" => "", "tool" => "go", "runs" => 1, "total_ms" => 2000],
+		["date" => "2026-10-01", "command" => "", "tool" => "go", "runs" => 9, "total_ms" => 9000],
+	],
+	"commands" => [],
+]];
 
 $panel = new Task\Tooling($report, $now);
 $data = $panel->data();
@@ -130,7 +130,7 @@ foreach ($scope["charts"] as $chart) {
 // counted names the slots of a chart that anything ran in, by their index, so
 // a window is read as what it holds and not as what it draws.
 function counted($chart) {
-	$out = array();
+	$out = [];
 
 	foreach ($chart["bars"]["slots"] as $i => $slot) {
 		if (count($slot["segments"]) > 0) {
@@ -170,7 +170,7 @@ foreach ($slot["segments"] as $segment) {
 // The legend is the window's top commands by their total, each in its colour,
 // and a command keeps that colour in every window of the panel.
 function named($chart) {
-	$out = array();
+	$out = [];
 
 	foreach ($chart["legend"] as $entry) {
 		$out[] = $entry["name"] . "=" . $entry["color"] . "/" . $entry["total"] . "/" . $entry["runs"];
@@ -216,7 +216,7 @@ echo count($chart["ticks"]), " ", $chart["ticks"][0]["label"], " ", $chart["tick
 
 // A tree nobody has run a job in through atkins draws no panel at all, which
 // is the usual answer.
-$empty = new Task\Tooling(array(), $now);
+$empty = new Task\Tooling([], $now);
 
 echo count($panel->data()), " ", count($empty->data()), "\n";
 

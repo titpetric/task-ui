@@ -71,25 +71,25 @@ class Activity {
 	var $days = 0;
 
 	/** spans are the three charts: what each covers, and how it is drawn. */
-	var $spans = array();
+	var $spans = [];
 
 	/** edges are where each chart's slots start, and where its last one ends. */
-	var $edges = array();
+	var $edges = [];
 
 	/** marks are the same edges as unix seconds, and a run finds its slot by them. */
-	var $marks = array();
+	var $marks = [];
 
 	/** bars are each chart's slots: their runs, their durations and their hovers. */
-	var $bars = array();
+	var $bars = [];
 
 	/** stats are the finished runs of each chart's window. */
-	var $stats = array();
+	var $stats = [];
 
 	/** lines are each chart's durations as paths, empty where none of its runs finished. */
-	var $lines = array();
+	var $lines = [];
 
 	/** ticks are the time markers under each chart. */
-	var $ticks = array();
+	var $ticks = [];
 
 	/** total is every run of the window, and failed the ones of them that broke. */
 	var $total = 0;
@@ -100,7 +100,7 @@ class Activity {
 	var $median = 0;
 
 	/** durations is the duration line, empty where a page draws none. */
-	var $durations = array();
+	var $durations = [];
 
 	/**
 	 * The charts of the runs that started in a window of days up to now,
@@ -113,19 +113,19 @@ class Activity {
 		$this->now = $now;
 		$this->zone = $now->location();
 		$this->days = $days < 1 ? self::DAYS : $days;
-		$this->spans = array(
+		$this->spans = [
 			self::span("Last " . $this->days . " days", "day", $this->days, 0, "", true),
 			self::span("Last 24 hours", "hour", 24, 1, "hours", false),
 			self::span("Last 7 days", "3 hours", 56, 3, "wide", false),
-		);
+		];
 
 		foreach ($this->spans as $c => $span) {
 			$this->edges[$c] = self::edges($span, $now, $this->zone);
 			$this->marks[$c] = self::marks($this->edges[$c]);
 			$this->bars[$c] = self::slots($span["slots"]);
 			$this->stats[$c] = self::blank();
-			$this->lines[$c] = array();
-			$this->ticks[$c] = array();
+			$this->lines[$c] = [];
+			$this->ticks[$c] = [];
 		}
 
 		$finished = $this->tally($runs);
@@ -148,16 +148,16 @@ class Activity {
 	 */
 	function data() {
 		if ($this->total === 0) {
-			return array();
+			return [];
 		}
 
-		return array(
+		return [
 			"sum" => self::plural($this->total, "run") . " in " . $this->days . " days",
 			"failed" => $this->failed > 0 ? $this->failed . " failed" : "",
 			"median" => $this->median > 0 ? "median " . Run::duration($this->median) : "",
 			"charts" => $this->charts(),
 			"durations" => $this->durations,
-		);
+		];
 	}
 
 	/**
@@ -166,7 +166,7 @@ class Activity {
 	 * started is on no chart.
 	 */
 	static function of($found) {
-		$out = array();
+		$out = [];
 
 		foreach ($found as $run) {
 			$at = Clock::parse($run->getStartedAt());
@@ -175,13 +175,13 @@ class Activity {
 				continue;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"at" => $at,
 				"unix" => $at->unix(),
 				"nano" => $at->unixnano(),
 				"elapsed" => Run::elapsed($run),
 				"state" => $run->getState(),
-			);
+			];
 		}
 
 		return $out;
@@ -198,7 +198,7 @@ class Activity {
 	 * numbers. A row with no stamp is on no chart, as there.
 	 */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		foreach ($found as $row) {
 			$at = Clock::parse(Row::stamp($row, "started_text"));
@@ -207,13 +207,13 @@ class Activity {
 				continue;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"at" => $at,
 				"unix" => $at->unix(),
 				"nano" => $at->unixnano(),
 				"elapsed" => Run::took($at, Clock::parse(Row::stamp($row, "finished_text"))),
 				"state" => Row::text($row, "state"),
-			);
+			];
 		}
 
 		return $out;
@@ -231,7 +231,7 @@ class Activity {
 		$charts = count($this->spans);
 		$bars = $this->bars;
 		$stats = $this->stats;
-		$finished = array();
+		$finished = [];
 
 		foreach ($runs as $seq => $run) {
 			$unix = $run["unix"];
@@ -289,7 +289,7 @@ class Activity {
 		$this->bars = $bars;
 		$this->stats = $stats;
 
-		usort($finished, array("Task\\Activity", "earlier"));
+		usort($finished, ["Task\\Activity", "earlier"]);
 
 		return $finished;
 	}
@@ -320,16 +320,16 @@ class Activity {
 
 	/** charts is each chart as the component draws it, in the order a page lays them out. */
 	function charts() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->spans as $c => $span) {
-			$bars = array();
+			$bars = [];
 
 			foreach ($this->bars[$c] as $bar) {
 				$bars[] = self::view($bar);
 			}
 
-			$out[] = array(
+			$out[] = [
 				"class" => $span["class"] === "" ? "activity-chart" : "activity-chart " . $span["class"],
 				"title" => $span["title"],
 				"label" => "Runs per " . $span["unit"] . ", " . strtolower($span["title"]),
@@ -338,7 +338,7 @@ class Activity {
 				"bars" => $bars,
 				"lines" => $this->lines[$c],
 				"ticks" => $this->ticks[$c],
-			);
+			];
 		}
 
 		return $out;
@@ -352,14 +352,14 @@ class Activity {
 	 * own, which a week in three hour slots needs.
 	 */
 	static function span($title, $unit, $slots, $hours, $class, $smooth) {
-		return array(
+		return [
 			"title" => $title,
 			"unit" => $unit,
 			"slots" => $slots,
 			"hours" => $hours,
 			"class" => $class,
 			"smooth" => $smooth,
-		);
+		];
 	}
 
 	/**
@@ -372,7 +372,7 @@ class Activity {
 	 */
 	static function edges($span, $now, $zone) {
 		$midnight = \DateTime::parse_in_location(Clock::DAY, $now->format(Clock::DAY), $zone);
-		$out = array();
+		$out = [];
 
 		if ($span["hours"] === 0) {
 			$first = $midnight->addDate(0, 0, 1 - $span["slots"]);
@@ -408,7 +408,7 @@ class Activity {
 
 	/** marks is each edge as a unix second, the number slot() searches. */
 	static function marks($edges) {
-		$out = array();
+		$out = [];
 
 		foreach ($edges as $edge) {
 			$out[] = $edge->unix();
@@ -448,10 +448,10 @@ class Activity {
 
 	/** slots is a chart's empty bars, one per column. */
 	static function slots($n) {
-		$out = array();
+		$out = [];
 
 		for ($i = 0; $i < $n; $i++) {
-			$out[] = array(
+			$out[] = [
 				"ok" => 0,
 				"failed" => 0,
 				"other" => 0,
@@ -469,7 +469,7 @@ class Activity {
 				"edge" => "",
 				"title" => "",
 				"hitTitle" => "",
-			);
+			];
 		}
 
 		return $out;
@@ -477,13 +477,13 @@ class Activity {
 
 	/** blank is a window with no finished run in it yet. */
 	static function blank() {
-		return array(
+		return [
 			"count" => 0,
 			"fastest" => 0,
 			"mean" => 0,
 			"slowest" => 0,
 			"spent" => 0,
-		);
+		];
 	}
 
 	/** spend counts a finished run into a window's stats. */
@@ -506,13 +506,13 @@ class Activity {
 	 */
 	static function summary($stats) {
 		if ($stats["count"] === 0) {
-			return array("text" => "", "title" => "");
+			return ["text" => "", "title" => ""];
 		}
 
-		return array(
+		return [
 			"text" => "min/avg/max/total: " . Run::duration($stats["fastest"]) . " " . Run::duration($stats["mean"]) . " " . Run::duration($stats["slowest"]) . " " . Run::duration($stats["spent"]),
 			"title" => self::plural($stats["count"], "finished run") . ": the fastest, the mean, the slowest and their time together",
-		);
+		];
 	}
 
 	/**
@@ -607,17 +607,17 @@ class Activity {
 	 */
 	static function paths($bars, $smooth, $slowest) {
 		if ($slowest === 0 && !self::anyFinished($bars)) {
-			return array();
+			return [];
 		}
 
 		$top = $slowest * self::NANOS;
 
-		return array(
+		return [
 			"max" => self::path($bars, $smooth, "maxNanos", $top),
 			"min" => self::path($bars, $smooth, "minNanos", $top),
 			"avg" => self::path($bars, $smooth, "averageNanos", $top),
 			"label" => "Average, slowest and fastest run per column, the slowest " . Run::duration($slowest),
-		);
+		];
 	}
 
 	/**
@@ -639,8 +639,8 @@ class Activity {
 		}
 
 		$step = 100 / $n;
-		$xs = array();
-		$ys = array();
+		$xs = [];
+		$ys = [];
 
 		foreach ($bars as $i => $bar) {
 			$xs[] = ($i + 0.5) * $step;
@@ -678,7 +678,7 @@ class Activity {
 	 */
 	static function tangents($ys, $step) {
 		$n = count($ys);
-		$slopes = array();
+		$slopes = [];
 
 		for ($i = 0; $i < $n - 1; $i++) {
 			$slopes[] = ($ys[$i + 1] - $ys[$i]) / $step;
@@ -723,7 +723,7 @@ class Activity {
 		$n = count($runs);
 
 		if ($n === 0) {
-			return array();
+			return [];
 		}
 
 		$longest = 0;
@@ -732,8 +732,8 @@ class Activity {
 			$longest = max($longest, $run["elapsed"]);
 		}
 
-		$xs = array();
-		$ys = array();
+		$xs = [];
+		$ys = [];
 
 		foreach ($runs as $i => $run) {
 			$xs[] = $n === 1 ? 50 : $i * 100 / ($n - 1);
@@ -744,7 +744,7 @@ class Activity {
 			$line = "M 0 " . self::number($ys[0]) . " L 100 " . self::number($ys[0]);
 			$area = "M 0 100 L 0 " . self::number($ys[0]) . " L 100 " . self::number($ys[0]) . " L 100 100 Z";
 		} else {
-			$parts = array();
+			$parts = [];
 
 			foreach ($runs as $i => $run) {
 				$parts[] = ($i === 0 ? "M " : "L ") . self::point($xs[$i], $ys[$i]);
@@ -754,14 +754,14 @@ class Activity {
 			$area = "M 0 100 L " . substr($line, 2) . " L 100 100 Z";
 		}
 
-		return array(
+		return [
 			"label" => "Duration of the latest " . $n . " runs, the longest " . Run::duration($longest),
 			"caption" => "duration of the latest " . $n . " runs",
 			"line" => $line,
 			"area" => $area,
 			"longest" => Run::duration($longest),
 			"points" => $this->points($runs, $xs),
-		);
+		];
 	}
 
 	/**
@@ -770,7 +770,7 @@ class Activity {
 	 */
 	function points($runs, $xs) {
 		$n = count($runs);
-		$out = array();
+		$out = [];
 
 		foreach ($runs as $i => $run) {
 			$from = $i > 0 ? ($xs[$i - 1] + $xs[$i]) / 2 : 0;
@@ -778,13 +778,13 @@ class Activity {
 			$title = Run::duration($run["elapsed"]) . ", " . $run["at"]->in($this->zone)->format(self::WHEN) . " · " . $run["state"];
 			$edge = self::edge($i, $n, 4);
 
-			$out[] = array(
+			$out[] = [
 				"class" => $edge === "" ? "hit tip" : "hit tip " . $edge,
 				"style" => "left:" . self::number($from) . "%;width:" . self::number($to - $from) . "%",
 				"at" => self::number($xs[$i]),
 				"title" => $title,
 				"failed" => self::broke($run["state"]),
-			);
+			];
 		}
 
 		return $out;
@@ -804,7 +804,7 @@ class Activity {
 			return 0;
 		}
 
-		$all = array();
+		$all = [];
 
 		foreach ($runs as $run) {
 			$all[] = $run["elapsed"];
@@ -855,11 +855,11 @@ class Activity {
 	 */
 	static function ticks($span, $edges) {
 		$n = $span["slots"];
-		$out = array();
+		$out = [];
 
 		if ($span["hours"] === 0) {
 			for ($i = $n - 1; $i >= 0; $i -= 7) {
-				$out[] = array("label" => $edges[$i]->format("Jan 2"), "at" => self::middle($i, $n));
+				$out[] = ["label" => $edges[$i]->format("Jan 2"), "at" => self::middle($i, $n)];
 			}
 
 			return array_reverse($out);
@@ -873,10 +873,10 @@ class Activity {
 					continue;
 				}
 
-				$out[] = array(
+				$out[] = [
 					"label" => $clock % 6 === 3 ? self::two($clock) . ":00" : "",
 					"at" => self::middle($i, $n),
-				);
+				];
 			}
 
 			return $out;
@@ -884,7 +884,7 @@ class Activity {
 
 		for ($i = 1; $i < $n; $i++) {
 			if ($edges[$i]->hour() === 12) {
-				$out[] = array("label" => $edges[$i]->format("Mon"), "at" => self::number($i * 100 / $n));
+				$out[] = ["label" => $edges[$i]->format("Mon"), "at" => self::number($i * 100 / $n)];
 			}
 		}
 
@@ -893,14 +893,14 @@ class Activity {
 
 	/** view is a bar as the component draws it: its hovers, and each part's height. */
 	static function view($bar) {
-		return array(
+		return [
 			"class" => "tip " . $bar["edge"],
 			"tip" => $bar["title"],
 			"hit" => $bar["hitTitle"],
 			"ok" => $bar["okStyle"],
 			"failed" => $bar["failedStyle"],
 			"other" => $bar["otherStyle"],
-		);
+		];
 	}
 
 	/**

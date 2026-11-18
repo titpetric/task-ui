@@ -53,8 +53,8 @@ class Retention {
 	 * where the selects go for an area with no rule.
 	 */
 	static function areas() {
-		return array(
-			array(
+		return [
+			[
 				"kind" => "recordings",
 				"title" => "Run recordings",
 				"what" => "The terminal recording and output of a finished run, the .cast file Replay reads. The run, who started it and how it ended stay.",
@@ -63,8 +63,8 @@ class Retention {
 				"sized" => true,
 				"unlimited" => false,
 				"fixed" => "",
-			),
-			array(
+			],
+			[
 				"kind" => "runs",
 				"title" => "Run history",
 				"what" => "The rows of finished runs older than the age, with their recordings, summaries and the prompt threads about them. The size is their recordings'.",
@@ -73,8 +73,8 @@ class Retention {
 				"sized" => true,
 				"unlimited" => false,
 				"fixed" => "",
-			),
-			array(
+			],
+			[
 				"kind" => "prompts",
 				"title" => "Prompt threads",
 				"what" => "Prompt threads whose last reply is older than the age, with their replies. The runs stay; the notes people write on the board are not touched.",
@@ -83,8 +83,8 @@ class Retention {
 				"sized" => false,
 				"unlimited" => false,
 				"fixed" => "",
-			),
-			array(
+			],
+			[
 				"kind" => "workflow_runs",
 				"title" => "Workflow run history",
 				"what" => "The runs of workflows older than the age, with their steps, answers and the threads of their prompts. The workflows stay.",
@@ -93,8 +93,8 @@ class Retention {
 				"sized" => false,
 				"unlimited" => false,
 				"fixed" => "",
-			),
-			array(
+			],
+			[
 				"kind" => "artifacts",
 				"title" => "Artifact history",
 				"what" => "The earlier versions of the artifact tree's files, which the history keeps when a run or a user writes a file again. The latest version of every file stays.",
@@ -103,8 +103,8 @@ class Retention {
 				"sized" => true,
 				"unlimited" => false,
 				"fixed" => "",
-			),
-			array(
+			],
+			[
 				"kind" => "secret_reads",
 				"title" => "Secret read log",
 				"what" => "Which run got which secret in its environment. The log always keeps the last 1000 reads of each secret.",
@@ -113,8 +113,8 @@ class Retention {
 				"sized" => false,
 				"unlimited" => false,
 				"fixed" => "",
-			),
-			array(
+			],
+			[
 				"kind" => self::SIGNINS,
 				"title" => "Expired sign-ins",
 				"what" => "Tokens and browser sessions past their expiry, which no longer sign in.",
@@ -123,8 +123,8 @@ class Retention {
 				"sized" => false,
 				"unlimited" => false,
 				"fixed" => "Removed every cleanup, no setting.",
-			),
-			array(
+			],
+			[
 				"kind" => "tooling",
 				"title" => "Tool history",
 				"what" => "The runs and commands older than the age in atkins.db of each workspace's home and the instance's own copy: what the tools ran, which atkins prunes and vacuums.",
@@ -133,32 +133,32 @@ class Retention {
 				"sized" => true,
 				"unlimited" => true,
 				"fixed" => "",
-			),
-		);
+			],
+		];
 	}
 
 	/** ages are the ages a rule takes, shortest first. */
 	static function ages() {
-		return array(self::DAY, self::WEEK, self::MONTH, self::QUARTER, self::YEAR, self::NEVER);
+		return [self::DAY, self::WEEK, self::MONTH, self::QUARTER, self::YEAR, self::NEVER];
 	}
 
 	/** label names an age as the page lists it: "31 days", "Never". */
 	static function label($age) {
-		$labels = array(
+		$labels = [
 			self::DAY => "24 hours",
 			self::WEEK => "7 days",
 			self::MONTH => "31 days",
 			self::QUARTER => "90 days",
 			self::YEAR => "365 days",
 			self::NEVER => "Never",
-		);
+		];
 
 		return isset($labels[$age]) ? $labels[$age] : "";
 	}
 
 	/** sizes are the size limits the page lists, in bytes, besides no limit. */
 	static function sizes() {
-		return array(100 << 20, 500 << 20, 1 << 30, 5 << 30, 10 << 30, 50 << 30);
+		return [100 << 20, 500 << 20, 1 << 30, 5 << 30, 10 << 30, 50 << 30];
 	}
 
 	/**
@@ -166,12 +166,12 @@ class Retention {
 	 * decimal, "100 MB", and the byte wording of any other.
 	 */
 	static function sizeLabel($bytes) {
-		$units = array(
-			array(1 << 40, "TB"),
-			array(1 << 30, "GB"),
-			array(1 << 20, "MB"),
-			array(1 << 10, "KB"),
-		);
+		$units = [
+			[1 << 40, "TB"],
+			[1 << 30, "GB"],
+			[1 << 20, "MB"],
+			[1 << 10, "KB"],
+		];
 
 		foreach ($units as $unit) {
 			if ($bytes < $unit[0]) {
@@ -190,7 +190,7 @@ class Retention {
 
 	/** kinds are the kinds of data with a rule, in the order the page shows them. */
 	static function kinds() {
-		$out = array();
+		$out = [];
 
 		foreach (self::areas() as $area) {
 			if ($area["fixed"] === "") {
@@ -203,7 +203,7 @@ class Retention {
 
 	/** blank is the rule a kind keeps with nothing stored: 31 days, no size limit. */
 	static function blank() {
-		return array("age" => self::MONTH, "limit" => 0);
+		return ["age" => self::MONTH, "limit" => 0];
 	}
 
 	/**
@@ -223,7 +223,7 @@ class Retention {
 	 */
 	function rules() {
 		$values = $this->values();
-		$out = array();
+		$out = [];
 
 		foreach (self::kinds() as $kind) {
 			$rule = self::blank();
@@ -268,20 +268,20 @@ class Retention {
 	 */
 	static function rows($usage, $rules) {
 		$found = self::byKind($usage);
-		$out = array();
+		$out = [];
 
 		foreach (self::areas() as $area) {
 			$kind = $area["kind"];
 			$rule = isset($rules[$kind]) ? $rules[$kind] : self::blank();
-			$holds = isset($found[$kind]) ? $found[$kind] : array("count" => 0, "bytes" => 0);
+			$holds = isset($found[$kind]) ? $found[$kind] : ["count" => 0, "bytes" => 0];
 
-			$out[] = array(
+			$out[] = [
 				"area" => $area,
 				"limited" => $area["sized"] && !$area["unlimited"],
 				"holds" => self::holds($area, $holds),
 				"ages" => self::ageChoices($rule),
 				"limits" => self::limitChoices($rule),
-			);
+			];
 		}
 
 		return $out;
@@ -289,7 +289,7 @@ class Retention {
 
 	/** byKind is the host's area usage by the kind each row names. */
 	static function byKind($usage) {
-		$out = array();
+		$out = [];
 
 		foreach ($usage as $row) {
 			$out[Row::text($row, "kind")] = $row;
@@ -324,14 +324,14 @@ class Retention {
 
 	/** ageChoices are the ages the Keep select lists, the rule's selected. */
 	static function ageChoices($rule) {
-		$out = array();
+		$out = [];
 
 		foreach (self::ages() as $age) {
-			$out[] = array(
+			$out[] = [
 				"value" => $age,
 				"label" => self::label($age),
 				"selected" => $age === $rule["age"],
-			);
+			];
 		}
 
 		return $out;
@@ -352,20 +352,20 @@ class Retention {
 			sort($sizes);
 		}
 
-		$out = array(
-			array(
+		$out = [
+			[
 				"value" => "0",
 				"label" => "No limit",
 				"selected" => $limit === 0,
-			),
-		);
+			],
+		];
 
 		foreach ($sizes as $size) {
-			$out[] = array(
+			$out[] = [
 				"value" => (string)$size,
 				"label" => self::sizeLabel($size),
 				"selected" => $size === $limit,
-			);
+			];
 		}
 
 		return $out;

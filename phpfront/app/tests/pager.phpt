@@ -6,14 +6,14 @@ description: Pager keeps the whole query of the page it links from, less the cur
 // The query the page was read with, which the links keep: a field the form
 // draws, a field no form draws, an empty field, and the cursor this page
 // arrived on.
-$_GET = array(
+$_GET = [
 	"n" => "15",
 	"folder" => "fx-pager",
 	"dir" => "a/b",
 	"batch" => "x y",
 	"state" => "",
 	"before" => "fx-pager-9",
-);
+];
 
 $pages = Task\Pager::of("/runs", "fx-pager-1", "fx-pager-4");
 
@@ -29,7 +29,7 @@ $one = Task\Pager::of("/runs", "", "");
 echo "[", $one["prev"], "] [", $one["next"], "]\n";
 
 // A page read with no query at all links by the cursor alone.
-$_GET = array();
+$_GET = [];
 $bare = Task\Pager::of("/notes", "fx-pager-1", "");
 
 echo $bare["prev"], "\n";
@@ -40,24 +40,24 @@ echo $bare["prev"], "\n";
 // pageSize leaves on the values the pager is handed.
 //
 // $_REQUEST is what asks, $_GET what the link keeps, as in a request.
-$_REQUEST = array();
-$_GET = array();
+$_REQUEST = [];
+$_GET = [];
 $size = Task\Pager::size();
 $links = Task\Pager::of("/runs", "", "fx-pager-4");
 
 echo $size, " ", $links["next"], "\n";
 
 // A size the list does not offer is the default, in the link as in the form.
-$_REQUEST = array("n" => "7");
-$_GET = array("n" => "7", "user" => "admin");
+$_REQUEST = ["n" => "7"];
+$_GET = ["n" => "7", "user" => "admin"];
 $size = Task\Pager::size();
 $links = Task\Pager::of("/runs", "", "fx-pager-4");
 
 echo $size, " ", $links["next"], "\n";
 
 // One it offers is kept.
-$_REQUEST = array("n" => "50");
-$_GET = array("n" => "50");
+$_REQUEST = ["n" => "50"];
+$_GET = ["n" => "50"];
 $size = Task\Pager::size();
 $links = Task\Pager::of("/runs", "", "fx-pager-4");
 

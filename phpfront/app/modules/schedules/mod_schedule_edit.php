@@ -41,7 +41,7 @@ class mod_schedule_edit implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"schedule",
 			"workflow",
 			"workflow_step",
@@ -50,7 +50,7 @@ class mod_schedule_edit implements Module {
 			"key_info",
 			"key_role",
 			"key_user",
-		);
+		];
 	}
 
 	function serve() {
@@ -85,14 +85,14 @@ class mod_schedule_edit implements Module {
 			return;
 		}
 
-		$chrome->heading(self::TITLE, array(
-			array("text" => "Scheduled", "href" => "/schedules"),
-			array("text" => self::TITLE, "href" => ""),
-		));
+		$chrome->heading(self::TITLE, [
+			["text" => "Scheduled", "href" => "/schedules"],
+			["text" => self::TITLE, "href" => ""],
+		]);
 
 		$head = new Task\Head(self::TITLE, self::LEAD);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"edit" => true,
 			"target" => $target["target"],
@@ -112,19 +112,19 @@ class mod_schedule_edit implements Module {
 			"triage" => $target["triage"],
 			"enabled" => Task\Schedule::enabled($schedule),
 			"pickUser" => $target["pickUser"],
-			"runAs" => array(
+			"runAs" => [
 				"id" => "sch-user",
-				"options" => array(
+				"options" => [
 					"users" => $users,
 					"selected" => $target["runAs"],
 					"short" => false,
-				),
-			),
-			"folders" => array(),
-			"jobs" => array(),
-			"hosts" => array(),
-			"workflows" => array(),
-		), "edit.tpl");
+				],
+			],
+			"folders" => [],
+			"jobs" => [],
+			"hosts" => [],
+			"workflows" => [],
+		], "edit.tpl");
 	}
 
 	/**
@@ -137,7 +137,7 @@ class mod_schedule_edit implements Module {
 		$flows = $lookup->workflows();
 		$id = $schedule->getWorkflowId();
 
-		if (!isset($flows[$id]) || !Task\Schedules\Catalogue::visible($chrome, array($id => $flows[$id]))) {
+		if (!isset($flows[$id]) || !Task\Schedules\Catalogue::visible($chrome, [$id => $flows[$id]])) {
 			$view->missing(self::MISSING);
 
 			return null;
@@ -147,7 +147,7 @@ class mod_schedule_edit implements Module {
 		$fixed = $flows[$id]["runAs"];
 		$users = $chrome->runAsUsers();
 
-		return array(
+		return [
 			"target" => "workflow",
 			"workflow" => $id,
 			"name" => $name,
@@ -157,7 +157,7 @@ class mod_schedule_edit implements Module {
 			"triage" => false,
 			"pickUser" => $fixed === "" && count($users) > 0,
 			"runAs" => $fixed === "" ? $schedule->getUserName() : $fixed,
-		);
+		];
 	}
 
 	/**
@@ -178,7 +178,7 @@ class mod_schedule_edit implements Module {
 			$href = Task\Route::href(Task\Route::folderHref($schedule->getFolder(), $workspaces) . "/" . Task\Route::pathEscape($schedule->getJob()));
 		}
 
-		return array(
+		return [
 			"target" => "job",
 			"workflow" => "",
 			"name" => "",
@@ -188,7 +188,7 @@ class mod_schedule_edit implements Module {
 			"triage" => Task\Schedule::triages($schedule),
 			"pickUser" => count($chrome->runAsUsers()) > 0,
 			"runAs" => $schedule->getUserName(),
-		);
+		];
 	}
 }
 

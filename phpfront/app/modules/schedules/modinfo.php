@@ -11,6 +11,6 @@ $module->setIcon("clock");
 $module->enableSideBar();
 $module->setSideBarHref("/schedules");
 $module->setSideBarRule("");
-$module->setTables(array("schedule"));
+$module->setTables(["schedule"]);
 
 return $module;

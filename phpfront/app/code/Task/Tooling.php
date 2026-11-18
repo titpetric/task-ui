@@ -20,7 +20,7 @@ namespace Task;
 // Task\Run::duration words them.
 class Tooling {
 	/** WINDOWS are the day charts an atkins that lists no samples draws, the longer first. */
-	const WINDOWS = array(30, 7);
+	const WINDOWS = [30, 7];
 
 	/** STUB is the least height of a bar with anything in it, in percent, so a quiet command next to a busy one still shows. */
 	const STUB = 4;
@@ -51,10 +51,10 @@ class Tooling {
 	 * and the scopes of the panel: a reader following one command down the
 	 * page follows one colour.
 	 */
-	var $palette = array();
+	var $palette = [];
 
 	/** scopes are the sections of the panel, the project's database first. */
-	var $scopes = array();
+	var $scopes = [];
 
 	/**
 	 * The panel of a report, as Task\Host::tooling() answers it. data() is
@@ -73,10 +73,10 @@ class Tooling {
 	/** data is the scope the tooling component reads. */
 	function data() {
 		if (count($this->scopes) === 0) {
-			return array();
+			return [];
 		}
 
-		return array("scopes" => $this->scopes);
+		return ["scopes" => $this->scopes];
 	}
 
 	/**
@@ -87,11 +87,11 @@ class Tooling {
 	 * and nothing else: the activity chart's own classes are its template's.
 	 */
 	static function spans() {
-		return array(
+		return [
 			Activity::span("Last 30 days", "day", 30, 0, "", false),
 			Activity::span("Last 24 hours", "hour", 24, 1, "", false),
 			Activity::span("Last 7 days", "3 hours", 56, 3, "wide", false),
-		);
+		];
 	}
 
 	/** days is how many calendar days a span reaches back. */
@@ -117,8 +117,8 @@ class Tooling {
 	 * 470ms of a 2s /runs while a stamp was a string to parse.
 	 */
 	function scope($scope) {
-		$charts = array();
-		$latest = array();
+		$charts = [];
+		$latest = [];
 
 		if (count($scope["samples"]) > 0) {
 			$stamps = self::stamps($scope["samples"]);
@@ -144,7 +144,7 @@ class Tooling {
 
 		$commands = self::commands($scope["commands"]);
 
-		return array(
+		return [
 			"database" => $scope["database"],
 			"name" => $scope["name"],
 			"repository" => $scope["repository"],
@@ -153,7 +153,7 @@ class Tooling {
 			"latest" => $latest,
 			"toggle" => Activity::plural(count($commands), "command") . " by the time they have taken",
 			"commands" => $commands,
-		);
+		];
 	}
 
 	/**
@@ -167,7 +167,7 @@ class Tooling {
 	 * which is twenty of them and not the window.
 	 */
 	static function stamps($samples) {
-		$out = array();
+		$out = [];
 
 		foreach ($samples as $i => $sample) {
 			$out[$i] = Row::number($sample, "at_unix");
@@ -191,18 +191,18 @@ class Tooling {
 
 		$edges = Activity::edges($span, $this->now, $this->zone);
 		$marks = Activity::marks($edges);
-		$slots = array();
+		$slots = [];
 
 		for ($i = 0; $i < $span["slots"]; $i++) {
-			$slots[] = array(
+			$slots[] = [
 				"label" => Activity::label($span, $edges, $i),
 				"title" => "",
 				"runs" => 0,
 				"ms" => 0,
-			);
+			];
 		}
 
-		$rows = array();
+		$rows = [];
 
 		foreach ($scope["samples"] as $i => $sample) {
 			$at = $stamps[$i];
@@ -217,12 +217,12 @@ class Tooling {
 				continue;
 			}
 
-			$rows[] = array(
+			$rows[] = [
 				"slot" => $slot,
 				"name" => $sample["command"],
 				"runs" => 1,
 				"ms" => $sample["duration_ms"],
-			);
+			];
 			$slots[$slot]["runs"]++;
 			$slots[$slot]["ms"] += $sample["duration_ms"];
 		}
@@ -252,21 +252,21 @@ class Tooling {
 		}
 
 		$daily = self::days_of($scope, $days);
-		$slots = array();
-		$at = array();
+		$slots = [];
+		$at = [];
 
 		foreach ($daily as $i => $day) {
-			$slots[] = array(
+			$slots[] = [
 				"label" => $day["date"],
 				"title" => self::slotTitle($day["date"], $day["runs"], $day["total_ms"]),
 				"runs" => $day["runs"],
 				"ms" => $day["total_ms"],
-			);
+			];
 			$at[$day["date"]] = $i;
 		}
 
 		$series = self::series($scope, $daily);
-		$rows = array();
+		$rows = [];
 
 		foreach ($series["rows"] as $row) {
 			$row["slot"] = isset($at[$row["date"]]) ? $at[$row["date"]] : 0;
@@ -315,26 +315,26 @@ class Tooling {
 			}
 		}
 
-		$bars = array();
+		$bars = [];
 		$n = count($slots);
 
 		foreach ($slots as $index => $slot) {
 			$edge = Activity::edge($index, $n, max(4, intdiv($n * 2, 15)));
-			$bars[] = array(
+			$bars[] = [
 				"class" => "tip " . $edge,
 				"title" => $slot["title"],
 				"segments" => self::segments($slot["label"], $sums[$index], $legend, $tallest, $edge),
-			);
+			];
 		}
 
-		return array(
+		return [
 			"runs" => $runs,
 			"total" => $total,
 			"busiest" => $busiest,
 			"n" => $n,
 			"bars" => $bars,
 			"legend" => $legend,
-		);
+		];
 	}
 
 	/**
@@ -347,12 +347,12 @@ class Tooling {
 	 * one chart never share one.
 	 */
 	function legend($rows) {
-		$totals = array();
-		$names = array();
+		$totals = [];
+		$names = [];
 
 		foreach ($rows as $row) {
 			if (!isset($totals[$row["name"]])) {
-				$totals[$row["name"]] = array("runs" => 0, "total" => 0);
+				$totals[$row["name"]] = ["runs" => 0, "total" => 0];
 				$names[] = $row["name"];
 			}
 
@@ -369,7 +369,7 @@ class Tooling {
 		});
 
 		$top = count($names) > self::TOP ? array_slice($names, 0, self::TOP) : $names;
-		$taken = array();
+		$taken = [];
 
 		foreach ($top as $name) {
 			if (isset($this->palette[$name])) {
@@ -377,8 +377,8 @@ class Tooling {
 			}
 		}
 
-		$out = array();
-		$rank = array();
+		$out = [];
+		$rank = [];
 
 		foreach ($top as $index => $name) {
 			$color = $this->color($name, $taken);
@@ -388,10 +388,10 @@ class Tooling {
 		}
 
 		if (count($names) === count($top)) {
-			return array("entries" => $out, "rank" => $rank);
+			return ["entries" => $out, "rank" => $rank];
 		}
 
-		$rest = array("runs" => 0, "total" => 0);
+		$rest = ["runs" => 0, "total" => 0];
 
 		foreach (array_slice($names, count($top)) as $name) {
 			$rest["runs"] += $totals[$name]["runs"];
@@ -400,17 +400,17 @@ class Tooling {
 
 		$out[] = self::entry("other", self::OTHER, $rest["runs"], $rest["total"]);
 
-		return array("entries" => $out, "rank" => $rank);
+		return ["entries" => $out, "rank" => $rank];
 	}
 
 	/** entry is one line of a legend as the markup draws it. */
 	static function entry($name, $color, $runs, $total) {
-		return array(
+		return [
 			"name" => $name,
 			"color" => $color,
 			"total" => Run::duration($total),
 			"runs" => Activity::plural($runs, "run"),
-		);
+		];
 	}
 
 	/**
@@ -423,7 +423,7 @@ class Tooling {
 			return $this->palette[$name];
 		}
 
-		$held = array();
+		$held = [];
 
 		foreach ($this->palette as $color) {
 			$held[$color] = isset($held[$color]) ? $held[$color] + 1 : 1;
@@ -462,16 +462,16 @@ class Tooling {
 	 * order, then the rest as other. A slot nothing ran in sums to nothing.
 	 */
 	static function sums($slots, $rows, $rank, $entries) {
-		$out = array();
+		$out = [];
 
 		foreach ($slots as $i => $slot) {
-			$out[$i] = array();
+			$out[$i] = [];
 		}
 
 		foreach ($rows as $row) {
 			if (count($out[$row["slot"]]) === 0) {
 				for ($k = 0; $k < $entries; $k++) {
-					$out[$row["slot"]][] = array("runs" => 0, "ms" => 0);
+					$out[$row["slot"]][] = ["runs" => 0, "ms" => 0];
 				}
 			}
 
@@ -497,29 +497,29 @@ class Tooling {
 		}
 
 		if ($sum <= 0) {
-			return array();
+			return [];
 		}
 
-		$out = array();
+		$out = [];
 
 		foreach ($legend as $index => $entry) {
 			$ms = $sums[$index]["ms"];
 
 			if ($ms <= 0) {
-				$out[] = array(
+				$out[] = [
 					"class" => "",
 					"style" => "",
 					"title" => "",
-				);
+				];
 
 				continue;
 			}
 
-			$out[] = array(
+			$out[] = [
 				"class" => "tip " . $edge . " " . $entry["color"],
 				"style" => self::height($ms, $tallest),
 				"title" => $when . " · " . $entry["name"] . ": " . Run::duration($ms) . ", " . Activity::plural($sums[$index]["runs"], "run"),
-			);
+			];
 		}
 
 		return $out;
@@ -558,19 +558,19 @@ class Tooling {
 			$stats .= " · busiest " . $chart["unit"] . " " . Run::duration($chart["busiest"]);
 		}
 
-		return array(
+		return [
 			"class" => $chart["class"],
 			"title" => $chart["title"],
 			"stats" => $stats,
-			"bars" => array(
+			"bars" => [
 				"class" => $chart["density"] === "" ? "tooling-bars" : "tooling-bars " . $chart["density"],
 				"style" => "--n: " . $chart["n"] . "; --k: " . count($chart["legend"]),
 				"label" => "Time spent per " . $chart["unit"] . " by " . $chart["by"] . ", " . strtolower($chart["title"]),
 				"slots" => $chart["bars"],
-			),
+			],
 			"ticks" => $chart["ticks"],
 			"legend" => $chart["legend"],
-		);
+		];
 	}
 
 	/**
@@ -582,7 +582,7 @@ class Tooling {
 		$today = $this->now->format(Clock::DAY);
 		$n = count($samples);
 		$take = $n > self::LATEST ? self::LATEST : $n;
-		$out = array();
+		$out = [];
 
 		for ($i = $n - 1; $i >= $n - $take; $i--) {
 			$sample = $samples[$i];
@@ -594,7 +594,7 @@ class Tooling {
 				$when = $local->format(Clock::DAY) === $today ? $local->format("15:04") : $local->format("Mon 15:04");
 			}
 
-			$out[] = array(
+			$out[] = [
 				"stamp" => Clock::read($sample["at"]),
 				"when" => $when,
 				"color" => isset($this->palette[$sample["command"]]) ? $this->palette[$sample["command"]] : self::OTHER,
@@ -604,7 +604,7 @@ class Tooling {
 				"took" => Run::duration($sample["duration_ms"]),
 				"failed" => $sample["failed"] || $sample["exit_code"] !== 0,
 				"exit" => $sample["exit_code"],
-			);
+			];
 		}
 
 		return $out;
@@ -612,10 +612,10 @@ class Tooling {
 
 	/** commands is the command keys by their total time, the table behind the toggle. */
 	static function commands($found) {
-		$out = array();
+		$out = [];
 
 		foreach ($found as $command) {
-			$out[] = array(
+			$out[] = [
 				"command" => $command["command"],
 				"tool" => $command["tool"],
 				"runs" => $command["runs"],
@@ -624,7 +624,7 @@ class Tooling {
 				"max" => Run::duration($command["max_ms"]),
 				"failures" => $command["failures"],
 				"last" => Clock::ago($command["last_run_at"]),
-			);
+			];
 		}
 
 		return $out;
@@ -652,11 +652,11 @@ class Tooling {
 		$last = self::date($scope["to"]);
 
 		if ($last === null || $days <= 0) {
-			return array();
+			return [];
 		}
 
 		$first = $last->addDate(0, 0, 1 - $days)->format(Clock::DAY);
-		$totals = array();
+		$totals = [];
 
 		foreach ($scope["usage"] as $row) {
 			if ($row["date"] < $first) {
@@ -664,24 +664,24 @@ class Tooling {
 			}
 
 			if (!isset($totals[$row["date"]])) {
-				$totals[$row["date"]] = array("runs" => 0, "total_ms" => 0);
+				$totals[$row["date"]] = ["runs" => 0, "total_ms" => 0];
 			}
 
 			$totals[$row["date"]]["runs"] += $row["runs"];
 			$totals[$row["date"]]["total_ms"] += $row["total_ms"];
 		}
 
-		$out = array();
+		$out = [];
 
 		for ($i = 1 - $days; $i <= 0; $i++) {
 			$date = $last->addDate(0, 0, $i)->format(Clock::DAY);
-			$held = isset($totals[$date]) ? $totals[$date] : array("runs" => 0, "total_ms" => 0);
+			$held = isset($totals[$date]) ? $totals[$date] : ["runs" => 0, "total_ms" => 0];
 
-			$out[] = array(
+			$out[] = [
 				"date" => $date,
 				"runs" => $held["runs"],
 				"total_ms" => $held["total_ms"],
-			);
+			];
 		}
 
 		return $out;
@@ -694,41 +694,41 @@ class Tooling {
 	 */
 	static function series($scope, $daily) {
 		if (count($daily) === 0) {
-			return array("rows" => array(), "by" => "command");
+			return ["rows" => [], "by" => "command"];
 		}
 
 		$first = $daily[0]["date"];
-		$rows = array();
+		$rows = [];
 
 		if (count($scope["command_usage"]) > 0) {
 			foreach ($scope["command_usage"] as $row) {
 				if ($row["date"] >= $first) {
-					$rows[] = array(
+					$rows[] = [
 						"slot" => 0,
 						"date" => $row["date"],
 						"name" => $row["command"],
 						"runs" => $row["runs"],
 						"ms" => $row["total_ms"],
-					);
+					];
 				}
 			}
 
-			return array("rows" => $rows, "by" => "command");
+			return ["rows" => $rows, "by" => "command"];
 		}
 
 		foreach ($scope["usage"] as $row) {
 			if ($row["date"] >= $first) {
-				$rows[] = array(
+				$rows[] = [
 					"slot" => 0,
 					"date" => $row["date"],
 					"name" => $row["tool"],
 					"runs" => $row["runs"],
 					"ms" => $row["total_ms"],
-				);
+				];
 			}
 		}
 
-		return array("rows" => $rows, "by" => "tool");
+		return ["rows" => $rows, "by" => "tool"];
 	}
 
 	/**
@@ -740,7 +740,7 @@ class Tooling {
 		$n = count($daily);
 		$step = $n <= 7 ? 1 : 7;
 		$layout = $n <= 7 ? "Mon" : "Jan 2";
-		$out = array();
+		$out = [];
 
 		for ($i = $n - 1; $i >= 0; $i -= $step) {
 			$day = self::date($daily[$i]["date"]);
@@ -749,7 +749,7 @@ class Tooling {
 				continue;
 			}
 
-			$out[] = array("label" => $day->format($layout), "at" => Activity::middle($i, $n));
+			$out[] = ["label" => $day->format($layout), "at" => Activity::middle($i, $n)];
 		}
 
 		return array_reverse($out);

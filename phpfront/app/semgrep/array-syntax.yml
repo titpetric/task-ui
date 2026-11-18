@@ -1,0 +1,18 @@
+# Array literals are written [] and not array(): the PHP parser folds the two
+# into one node, so the generic matcher reads the source. The match starts at
+# the line's first column, or the fix indents continuation lines to the match.
+rules:
+  - id: front.array-syntax
+    languages: [generic]
+    severity: WARNING
+    message: Write an array literal as [ ... ], not array( ... ).
+    paths:
+      include:
+        - "*.php"
+        - "*.phpt"
+      exclude:
+        - "**/ext/**"
+        - "**/templates_c/**"
+        - "**/semgrep/**"
+    pattern-regex: '(?m)^([^\n]*?)(?<![A-Za-z0-9_$])array\s*\(((?:[^()]|\((?2)\))*)\)'
+    fix: '$1[$2]'

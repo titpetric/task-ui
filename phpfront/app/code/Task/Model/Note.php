@@ -10,7 +10,7 @@ class Note {
 	const TABLE = "note";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array(
+	public static $fields = [
 		"id",
 		"channel",
 		"parent_id",
@@ -31,13 +31,13 @@ class Note {
 		"spoken",
 		"workspace_id",
 		"dir",
-	);
+	];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at", "edited_at", "deleted_at");
+	public static $stamps = ["created_at", "updated_at", "edited_at", "deleted_at"];
 	/** ID */
 	var $id = "";
 	/** Channel */
@@ -79,7 +79,7 @@ class Note {
 	/** Dir */
 	var $dir = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->channel = \Task\Row::text($row, "channel");
 		$this->parent_id = \Task\Row::text($row, "parent_id");
@@ -329,7 +329,7 @@ class Note {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

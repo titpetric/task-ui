@@ -31,7 +31,7 @@ class mod_workspace_key_upload implements Module {
 	}
 
 	function tables() {
-		return array("workspace");
+		return ["workspace"];
 	}
 
 	function serve() {
@@ -63,11 +63,11 @@ class mod_workspace_key_upload implements Module {
 		$head = new Task\Head(self::TITLE, self::lead($folder, $dir));
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"form" => Task\Key::wsUpload($folder, $dir, $next, false),
 			"trail" => Task\Setup::trail($steps),
-		), "workspace_key_upload.tpl");
+		], "workspace_key_upload.tpl");
 	}
 
 	/**

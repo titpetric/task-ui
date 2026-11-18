@@ -8,27 +8,27 @@ require "ext/autoload.php";
 // The tree asks about every row it draws, which is every pin and every project
 // of every workspace. The answers are the host's, so the fixture states them,
 // and the number of crossings is what the batch is for.
-Task\Host::$folderDirs = array(
+Task\Host::$folderDirs = [
 	"infra" => "/src/infra",
 	"malta/deploy" => "/src/malta/src/deploy",
 	"malta/deploy/api" => "/src/malta/src/deploy/api",
 	"malta" => "/src/malta",
-);
+];
 Task\Host::$folderDirCalls = 0;
 
 $folders = new Task\Folders;
-$folders->workspaces = array("malta");
+$folders->workspaces = ["malta"];
 
 // places is what the rows are asked about: each folder, and the project at the
 // top of the workspace it sits in, which the sidebar limit orders by its last
 // commit. A workspace's own folder is in no project and names none.
-$side = array(
-	array("id" => "infra"),
-	array("id" => "malta/deploy/api"),
-	array("id" => "malta/deploy"),
-	array("id" => "malta"),
-	array("id" => "nowhere"),
-);
+$side = [
+	["id" => "infra"],
+	["id" => "malta/deploy/api"],
+	["id" => "malta/deploy"],
+	["id" => "malta"],
+	["id" => "nowhere"],
+];
 
 echo implode(",", $folders->places($side)), "\n";
 
@@ -50,15 +50,15 @@ $folders->warm($folders->places($side));
 
 echo Task\Host::$folderDirCalls, "\n";
 
-$folders->warm(array("malta/deploy", "malta/other"));
+$folders->warm(["malta/deploy", "malta/other"]);
 
 echo Task\Host::$folderDirCalls, " [", $folders->dirOf("malta/other"), "]\n";
 
 // An empty ID is asked of nobody, and neither is an empty list.
 $bare = new Task\Folders;
-$bare->workspaces = array("malta");
-$bare->warm(array("", ""));
-$bare->warm(array());
+$bare->workspaces = ["malta"];
+$bare->warm(["", ""]);
+$bare->warm([]);
 
 echo Task\Host::$folderDirCalls, "\n";
 
@@ -70,14 +70,14 @@ echo $bare->dirOf("infra"), " ", Task\Host::$folderDirCalls, " ", $bare->dirOf("
 // one drawn from the ID where the catalogue holds none, and no folder inside
 // it. A project's jobs are on its page, so no row carries them.
 $scoped = new Task\Folders;
-$scoped->workspaces = array("malta");
-$group = array(
+$scoped->workspaces = ["malta"];
+$group = [
 	"id" => "malta/deploy",
 	"top" => null,
-	"nested" => array(array("id" => "malta/deploy/api")),
-	"projects" => array(),
+	"nested" => [["id" => "malta/deploy/api"]],
+	"projects" => [],
 	"workspace" => false,
-);
+];
 
 $out = $scoped->scope($group);
 

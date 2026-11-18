@@ -49,7 +49,7 @@ class mod_secret_edit implements Module {
 	}
 
 	function tables() {
-		return array("secret", "workspace");
+		return ["secret", "workspace"];
 	}
 
 	function serve() {
@@ -87,17 +87,17 @@ class mod_secret_edit implements Module {
 		$secret = $row->getIsSecret() !== 0;
 		$title = self::TITLE . $row->getName();
 
-		$chrome->heading($title, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE),
-			array("text" => $row->getName(), "href" => ""),
-		));
+		$chrome->heading($title, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE],
+			["text" => $row->getName(), "href" => ""],
+		]);
 
 		$workspaces = new Task\Workspace($chrome->db);
 		$head = new Task\Head($title, self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::SECRETS);
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"id" => $row->getId(),
 			"name" => $row->getName(),
@@ -110,7 +110,7 @@ class mod_secret_edit implements Module {
 			"options" => Task\Secret::options($row->getScope(), $workspaces->all()),
 			"cancel" => Task\Route::href(Task\Secret::PAGE),
 			"trail" => Task\Setup::trail($steps),
-		), "secret_form.tpl");
+		], "secret_form.tpl");
 	}
 }
 

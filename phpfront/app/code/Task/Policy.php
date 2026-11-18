@@ -18,10 +18,10 @@ class Policy {
 	/** ALL is the rule that stands for every rule of a section. */
 	const ALL = "all";
 
-	var $entries = array();
+	var $entries = [];
 
-	function __construct($entries = array()) {
-		$this->entries = is_array($entries) ? $entries : array();
+	function __construct($entries = []) {
+		$this->entries = is_array($entries) ? $entries : [];
 	}
 
 	/**

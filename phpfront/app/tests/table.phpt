@@ -5,9 +5,9 @@ description: Table builds the plain list, and a cell escapes what a reader typed
 
 $table = new Task\Table("jobs", "fit");
 
-$table->head(array(Task\Table::cell("Job"), Task\Table::cell("Runs", "num")));
-$table->row(array(Task\Table::cell("plan"), Task\Table::cell(3)), "row-1", "01hz", "bad");
-$table->foot(array(Task\Table::raw("<b>2</b>", "", 2)));
+$table->head([Task\Table::cell("Job"), Task\Table::cell("Runs", "num")]);
+$table->row([Task\Table::cell("plan"), Task\Table::cell(3)], "row-1", "01hz", "bad");
+$table->foot([Task\Table::raw("<b>2</b>", "", 2)]);
 
 $data = $table->data();
 

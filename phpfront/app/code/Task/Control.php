@@ -25,16 +25,16 @@ class Control {
 	var $workspaces;
 
 	/** last is the run that ended last of a job, by the job's key. */
-	var $last = array();
+	var $last = [];
 
 	/** live is the run in progress of a job as its row, by the job's key. */
-	var $live = array();
+	var $live = [];
 
 	/** summaries is where the summary of a job's last run is linked, by key. */
-	var $summaries = array();
+	var $summaries = [];
 
 	/** pins are the reader's, which decide whether a Pin item pins or unpins. */
-	var $pins = array();
+	var $pins = [];
 
 	/** pinning says whether a row's [...] carries a Pin at all. */
 	var $pinning = false;
@@ -62,9 +62,9 @@ class Control {
 		$this->last = $this->latest($groups);
 		$this->live = $this->chrome->liveRuns();
 		$this->summaries = $this->summarized($groups);
-		$this->pins = $this->pinning ? $this->chrome->pins() : array();
+		$this->pins = $this->pinning ? $this->chrome->pins() : [];
 
-		$out = array();
+		$out = [];
 
 		foreach ($groups as $group) {
 			$out[] = $this->row($group);
@@ -81,7 +81,7 @@ class Control {
 	 * still says the job failed, which is what the Go page colours by.
 	 */
 	function latest($groups) {
-		$ids = array();
+		$ids = [];
 
 		foreach ($groups as $group) {
 			$folder = Row::items($group, "folder");
@@ -93,7 +93,7 @@ class Control {
 		}
 
 		if (count($ids) === 0) {
-			return array();
+			return [];
 		}
 
 		$runs = new Runs\Runs($this->db);
@@ -107,10 +107,10 @@ class Control {
 	 */
 	function summarized($groups) {
 		if (!$this->access->allowed("prompt/view")) {
-			return array();
+			return [];
 		}
 
-		$keys = array();
+		$keys = [];
 
 		foreach ($groups as $group) {
 			foreach (Row::items($group, "jobs") as $job) {
@@ -125,11 +125,11 @@ class Control {
 		}
 
 		if (count($keys) === 0) {
-			return array();
+			return [];
 		}
 
 		$reports = new Report($this->db);
-		$out = array();
+		$out = [];
 
 		foreach ($reports->jobSummaries(array_keys($keys)) as $id => $link) {
 			$out[$keys[$id]] = $link;
@@ -162,19 +162,19 @@ class Control {
 			$empty = count($jobs) > 0 ? "" : Row::text($group, "empty");
 		}
 
-		return array(
+		return [
 			"label" => $label,
 			"title" => $title,
 			"href" => $href,
 			"empty" => $empty,
 			"jobs" => $this->buttons($folder, $jobs),
 			"menu" => $this->menu($label, $folder, $jobs),
-		);
+		];
 	}
 
 	/** buttons is the row's jobs, each as the control-job component reads it. */
 	function buttons($folder, $jobs) {
-		$out = array();
+		$out = [];
 
 		foreach ($jobs as $job) {
 			$out[] = $this->button($folder, $job);
@@ -202,7 +202,7 @@ class Control {
 		$can = Folders::allows($this->access, $folder, $job);
 		$run = isset($this->live[$key]) ? $this->live[$key] : null;
 
-		return array(
+		return [
 			"key" => $key,
 			"folder" => Row::text($folder, "id"),
 			"job" => $id,
@@ -221,7 +221,7 @@ class Control {
 			"run" => $run === null ? "" : $run->getId(),
 			"href" => Route::href(Route::placeHref(Row::text($folder, "id"), $dir, $this->workspaces) . "/" . $id),
 			"title" => self::says($run, $what, $desc, $args, $terminal, $can),
-		);
+		];
 	}
 
 	/**
@@ -319,33 +319,33 @@ class Control {
 				$label .= "...";
 			}
 
-			$menu->item("summary", $label, array_merge(array("data-summarize" => ""), $start));
+			$menu->item("summary", $label, array_merge(["data-summarize" => ""], $start));
 		}
 
 		if (isset($this->last[$key])) {
-			$menu->item("eye", "View the last run of " . $job_id, array("data-attach" => $this->last[$key]->getId()));
+			$menu->item("eye", "View the last run of " . $job_id, ["data-attach" => $this->last[$key]->getId()]);
 		}
 
 		if (isset($this->summaries[$key])) {
 			$found = $this->summaries[$key];
 
-			$menu->item("summary", "Summary of " . $job_id, array("href" => Route::href($found["href"]), "title" => $found["preview"]));
+			$menu->item("summary", "Summary of " . $job_id, ["href" => Route::href($found["href"]), "title" => $found["preview"]]);
 		}
 
-		$menu->item("list", "History of " . $job_id, array("href" => Route::href(Route::placeHref($id, $dir, $this->workspaces) . "/" . $job_id)));
+		$menu->item("list", "History of " . $job_id, ["href" => Route::href(Route::placeHref($id, $dir, $this->workspaces) . "/" . $job_id)]);
 
 		if ($this->pinning) {
 			Pin::item($menu, $this->pins, $id, $job_id, $dir, $job_id);
 		}
 
 		if ($idle && $can && $hours !== "") {
-			$forced = array("data-force" => "", "title" => "Run out of hours, with a reason");
+			$forced = ["data-force" => "", "title" => "Run out of hours, with a reason"];
 
 			$menu->danger("play", "Run force " . $job_id, array_merge($forced, $start));
 		}
 
 		if (!$idle && $can) {
-			$menu->danger("stop", "Kill " . $job_id, array("data-kill" => $this->live[$key]->getId()));
+			$menu->danger("stop", "Kill " . $job_id, ["data-kill" => $this->live[$key]->getId()]);
 		}
 
 		return $menu;
@@ -357,13 +357,13 @@ class Control {
 	 * follow.
 	 */
 	function starts($id, $folder, $job) {
-		$out = array(
+		$out = [
 			"data-run" => "",
 			"data-folder" => $id,
 			"data-dir" => Row::text($job, "dir"),
 			"data-job" => Row::text($job, "id"),
 			"data-title" => self::what($folder, $job),
-		);
+		];
 		$confirm = Row::text($job, "confirm");
 
 		if ($confirm !== "") {
@@ -418,7 +418,7 @@ class Control {
 		$force = Row::text($folder, "hours") !== "";
 		$dir = Row::text($job, "dir");
 
-		return array(
+		return [
 			"folder" => Row::text($folder, "id"),
 			"dir" => $dir,
 			"job" => Row::text($job, "id"),
@@ -430,6 +430,6 @@ class Control {
 			"summarize" => $summarize,
 			"force" => $force,
 			"menu" => $summarize || $force,
-		);
+		];
 	}
 }

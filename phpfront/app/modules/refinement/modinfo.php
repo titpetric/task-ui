@@ -11,6 +11,6 @@ $module->setIcon("flow");
 $module->enableSideBar();
 $module->setSideBarHref("/refinement");
 $module->setSideBarRule("module");
-$module->setTables(array("refinement_artifact", "refinement_comment", "refinement_correction", "refinement_thread"));
+$module->setTables(["refinement_artifact", "refinement_comment", "refinement_correction", "refinement_thread"]);
 
 return $module;

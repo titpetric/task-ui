@@ -10,13 +10,13 @@ class KeyRole {
 	const TABLE = "key_role";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "key_name", "role", "created_at");
+	public static $fields = ["id", "key_name", "role", "created_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at");
+	public static $stamps = ["created_at"];
 	/** ID */
 	var $id = "";
 	/** Key Name */
@@ -26,7 +26,7 @@ class KeyRole {
 	/** Created At */
 	var $created_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->key_name = \Task\Row::text($row, "key_name");
 		$this->role = \Task\Row::text($row, "role");
@@ -84,7 +84,7 @@ class KeyRole {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

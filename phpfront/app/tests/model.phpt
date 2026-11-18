@@ -3,13 +3,13 @@ description: A generated model reads a row, answers through its getters and give
 ---
 <?php
 
-$ws = new Task\Model\Workspace(array(
+$ws = new Task\Model\Workspace([
 	"id" => "01HZ",
 	"folder" => "internal",
 	"title" => "Internal",
 	"shallow" => 1,
 	"sidebar_limit" => "5",
-));
+]);
 
 echo $ws->getId(), "\n";
 echo $ws->getFolder(), "\n";
@@ -32,10 +32,10 @@ echo count($values), " ", $values["folder"], " ", var_export($values["shallow"],
 // A setter answers the model, so writes chain.
 echo $ws->setTitle("Renamed")->getTitle(), "\n";
 
-$rows = Task\Model\Workspace::rows(array(
-	array("id" => "01", "folder" => "a"),
-	array("id" => "02", "folder" => "b"),
-));
+$rows = Task\Model\Workspace::rows([
+	["id" => "01", "folder" => "a"],
+	["id" => "02", "folder" => "b"],
+]);
 
 echo count($rows), " ", $rows[0]->getFolder(), $rows[1]->getFolder(), "\n";
 echo count(Task\Model\Workspace::rows(false)), "\n";

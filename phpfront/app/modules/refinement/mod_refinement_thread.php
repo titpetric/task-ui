@@ -36,7 +36,7 @@ class mod_refinement_thread implements Module {
 	}
 
 	function tables() {
-		return array("refinement_thread", "refinement_comment", "refinement_correction");
+		return ["refinement_thread", "refinement_comment", "refinement_correction"];
 	}
 
 	function serve() {
@@ -66,10 +66,10 @@ class mod_refinement_thread implements Module {
 		$comments = $store->comments(Task\Row::text($thread, "id"));
 		$title = Task\Row::text($thread, "title");
 
-		$chrome->heading($title, array(
-			array("text" => "Refinement", "href" => "/refinement"),
-			array("text" => $title, "href" => ""),
-		));
+		$chrome->heading($title, [
+			["text" => "Refinement", "href" => "/refinement"],
+			["text" => $title, "href" => ""],
+		]);
 
 		$view->page($this->scope($thread, $comments), "thread.tpl");
 	}
@@ -86,9 +86,9 @@ class mod_refinement_thread implements Module {
 
 		$head->buttons($this->links($folder)->data());
 
-		return array(
+		return [
 			"head" => $head->data(),
-			"thread" => array("id" => $folder),
+			"thread" => ["id" => $folder],
 			"entries" => $this->entries($comments, $folder),
 			"design" => Task\Refinement\Thread::designID($comments),
 			"output" => Task\Refinement\Thread::report($report["images"], $folder),
@@ -96,7 +96,7 @@ class mod_refinement_thread implements Module {
 			"visual" => $report["images"] !== "",
 			"comment" => self::field("comment", 3, "A change to make", "use ULID as primary keys"),
 			"fork" => self::field("want", 2, "What to design in the fork", "A deployment topology diagram: the hosts, what runs on each and the links between them."),
-		);
+		];
 	}
 
 	/**
@@ -106,14 +106,14 @@ class mod_refinement_thread implements Module {
 	 * Neither box names anyone, so there is no list of users on an `@`.
 	 */
 	static function field($name, $rows, $label, $placeholder) {
-		return array(
+		return [
 			"name" => $name,
 			"rows" => $rows,
 			"label" => $label,
 			"placeholder" => $placeholder,
 			"mentions" => false,
 			"toolbar" => "inline",
-		);
+		];
 	}
 
 	/**
@@ -131,14 +131,14 @@ class mod_refinement_thread implements Module {
 		$buttons = new Task\Buttons;
 		$files = Task\Route::href("/artifacts?path=" . Task\Route::queryEscape($folder));
 
-		$buttons->item("box", "The files of this thread", array("href" => $files));
+		$buttons->item("box", "The files of this thread", ["href" => $files]);
 
 		$pad = $folder . "/" . Task\Refinement\Prompt::SCRATCHPAD;
 
 		if (Task\Host::artifact($pad) !== "") {
 			$href = Task\Refinement\Thread::FILES . Task\Route::escapePath($pad);
 
-			$buttons->item("file", "The scratch pad", array("href" => $href));
+			$buttons->item("file", "The scratch pad", ["href" => $href]);
 		}
 
 		return $buttons;

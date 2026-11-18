@@ -37,7 +37,7 @@ class Place {
 	var $pull = null;
 
 	/** allow is who the place lets run its jobs, beyond admin and runner. */
-	var $allow = array();
+	var $allow = [];
 
 	/**
 	 * of is the place a folder's ID names, read against the named workspaces:
@@ -138,11 +138,11 @@ class Place {
 		$edits = $chrome->allowed("project/edit");
 		$reads = $chrome->allowed("workspace/view");
 
-		$menu->when($this->workspace && $edits, "plus", "Add project", array("href" => $this->addProjectPage()));
-		$menu->when($this->workspace && $reads, "settings", "Edit workspace", array("href" => $this->settings()));
-		$menu->when($this->workspace && $reads, "key", "SSH keys", array("href" => $this->keysPage()));
-		$menu->when($this->workspace && $chrome->allowed("secret/view"), "secret", "Secrets", array("href" => $this->secretsPage()));
-		$menu->when($this->project && $chrome->allowed("project/view"), "settings", "Edit project", array("href" => $this->settings()));
+		$menu->when($this->workspace && $edits, "plus", "Add project", ["href" => $this->addProjectPage()]);
+		$menu->when($this->workspace && $reads, "settings", "Edit workspace", ["href" => $this->settings()]);
+		$menu->when($this->workspace && $reads, "key", "SSH keys", ["href" => $this->keysPage()]);
+		$menu->when($this->workspace && $chrome->allowed("secret/view"), "secret", "Secrets", ["href" => $this->secretsPage()]);
+		$menu->when($this->project && $chrome->allowed("project/view"), "settings", "Edit project", ["href" => $this->settings()]);
 
 		if (!$root && $chrome->user !== null) {
 			Pin::item($menu, $pins, $this->id, "", "", $this->kind());
@@ -150,7 +150,7 @@ class Place {
 
 		$placed = $this->workspace || $this->project;
 
-		$menu->when(!$root && $placed && $chrome->allowed("schedule/edit"), "clock", "Add schedule", array("href" => $this->schedulesPage()));
+		$menu->when(!$root && $placed && $chrome->allowed("schedule/edit"), "clock", "Add schedule", ["href" => $this->schedulesPage()]);
 
 		if ($this->pull !== null && Folders::allows($chrome->access, $this->place(), $this->pull)) {
 			$menu->item("download", "Pull now", $this->pulls());
@@ -168,18 +168,18 @@ class Place {
 	 * that decides who may run its jobs.
 	 */
 	function place() {
-		return array("id" => $this->id, "allow" => $this->allow);
+		return ["id" => $this->id, "allow" => $this->allow];
 	}
 
 	/** pulls is what Pull now carries: the run of the git skill's pull job. */
 	function pulls() {
-		return array(
+		return [
 			"data-run" => "",
 			"data-folder" => $this->id,
 			"data-dir" => Row::text($this->pull, "dir"),
 			"data-job" => Row::text($this->pull, "id"),
 			"data-title" => $this->id . " / " . Row::text($this->pull, "name"),
-		);
+		];
 	}
 
 	/**
@@ -192,12 +192,12 @@ class Place {
 	function removes($checkout) {
 		$said = "Removed " . $this->id;
 
-		return array(
+		return [
 			"data-delete" => "/api/projects/" . $this->id,
 			"data-confirm" => self::removeConfirm($this->id, Row::text($checkout, "remote")),
 			"data-confirm-ok" => "Remove checkout",
 			"data-next" => Route::href(self::PROJECTS) . "?notice=" . Route::queryEscape($said),
-		);
+		];
 	}
 
 	/**
@@ -208,7 +208,7 @@ class Place {
 		$buttons = new Buttons;
 
 		if ($this->workspace && $this->projects === 0 && $chrome->allowed("project/edit")) {
-			$buttons->primary("plus", "Add project", array("href" => $this->addProjectPage()));
+			$buttons->primary("plus", "Add project", ["href" => $this->addProjectPage()]);
 		}
 
 		return $buttons->data();
@@ -264,7 +264,7 @@ class Place {
 			$title .= ", tracking " . $upstream;
 		}
 
-		return array(
+		return [
 			"title" => $title,
 			"branch" => Row::text($status, "branch"),
 			"detached" => Row::text($status, "detached"),
@@ -276,7 +276,7 @@ class Place {
 			"clean" => $upstream !== "" && $ahead === 0 && $behind === 0 && $dirty === 0,
 			"where" => $checkout === "" ? "the root" : $checkout,
 			"changes" => Row::items($status, "changes"),
-		);
+		];
 	}
 
 	/** files words how many files of a checkout git reports as changed. */
@@ -295,11 +295,11 @@ class Place {
 	static function source($folder, $file, $lines) {
 		$label = $lines === 1 ? "Show 1 line" : "Show " . $lines . " lines";
 
-		return array(
+		return [
 			"folder" => $folder,
 			"file" => $file,
 			"label" => $label,
-		);
+		];
 	}
 
 	/**
@@ -313,11 +313,11 @@ class Place {
 	static function hours($text) {
 		$read = Host::hours($text);
 
-		return array(
+		return [
 			"text" => $text,
 			"line" => Row::text($read, "line"),
 			"open" => Row::flag($read, "open"),
-		);
+		];
 	}
 
 	/** who is who may run the jobs of a place, which a runner always may. */

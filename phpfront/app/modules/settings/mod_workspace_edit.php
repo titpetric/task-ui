@@ -83,7 +83,7 @@ class mod_workspace_edit implements Module {
 	}
 
 	function tables() {
-		return array("workspace", "project", "secret");
+		return ["workspace", "project", "secret"];
 	}
 
 	function serve() {
@@ -112,12 +112,12 @@ class mod_workspace_edit implements Module {
 		$here = Task\Workspace::PAGE . "/" . $folder;
 		$href = Task\Route::folderHref($folder, $named);
 
-		$chrome->heading($title, array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Task\Setup::WORKSPACES, "href" => Task\Workspace::PAGE),
-			array("text" => Task\Route::crumbName($folder), "href" => $href),
-			array("text" => self::CRUMB, "href" => ""),
-		));
+		$chrome->heading($title, [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Task\Setup::WORKSPACES, "href" => Task\Workspace::PAGE],
+			["text" => Task\Route::crumbName($folder), "href" => $href],
+			["text" => self::CRUMB, "href" => ""],
+		]);
 		$chrome->asks($folder);
 
 		$instance = Task\Host::instance(false);
@@ -130,7 +130,7 @@ class mod_workspace_edit implements Module {
 		$secrets = new Task\Secret($chrome->db);
 		$counts = Task\Workspace::counts($secrets->scopes(), $named);
 		$found = isset($counts[$folder]) ? $counts[$folder] : 0;
-		$ids = isset($nested[$folder]) ? $nested[$folder] : array();
+		$ids = isset($nested[$folder]) ? $nested[$folder] : [];
 		$keyfolder = Task\Key::folder();
 		$dir = Task\Row::text($keyfolder, "dir");
 		$keys = Task\Key::ofWorkspace($keyfolder["keys"], Task\Row::text($row, "id"));
@@ -138,22 +138,22 @@ class mod_workspace_edit implements Module {
 		$admin = Task\User::admin($chrome->user);
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 
-		$view->page(array(
+		$view->page([
 			"head" => $this->head($chrome, $folder, $title, $ids, $found, $href, $dir !== "" && $admin),
 			"settings" => $this->settings($row, $folder, $root),
 			"home" => $this->home($chrome, $row, $folder, $named, $edit),
 			"block" => $this->block($folder, $inside),
 			"table" => Task\Project::table($chrome, $inside, $spaces, self::RELOAD),
-			"keys" => $dir === "" ? array() : $this->keys($chrome, $keys, $here, $folder, $edit && $dir !== ""),
-			"dialogs" => $edit && $dir !== "" ? Task\Key::wsDialogs($folder, $dir, $here) : array(),
+			"keys" => $dir === "" ? [] : $this->keys($chrome, $keys, $here, $folder, $edit && $dir !== ""),
+			"dialogs" => $edit && $dir !== "" ? Task\Key::wsDialogs($folder, $dir, $here) : [],
 			"export" => $dir === "" ? "" : $folder,
 			"trail" => Task\Setup::trail($steps),
-		), "workspace_edit.tpl");
+		], "workspace_edit.tpl");
 	}
 
 	/** dirs is the directory of each entry, which the measure of them is asked for. */
 	function dirs($entries) {
-		$out = array();
+		$out = [];
 
 		foreach ($entries as $entry) {
 			$out[] = Task\Row::text($entry, "dir");
@@ -176,10 +176,10 @@ class mod_workspace_edit implements Module {
 		$adds = Task\Route::href(Task\Place::PROJECTS . "/new") . "?workspace=" . Task\Route::queryEscape($folder);
 
 		if ($chrome->allowed("project/edit")) {
-			$buttons->primary("plus", "Add project", array("href" => $adds));
+			$buttons->primary("plus", "Add project", ["href" => $adds]);
 		}
 
-		$buttons->when($exports, "download", "Export", array("data-dialog-open" => "export-dialog"));
+		$buttons->when($exports, "download", "Export", ["data-dialog-open" => "export-dialog"]);
 		$head->buttons($buttons->data());
 		$head->menu($menu->data());
 
@@ -204,14 +204,14 @@ class mod_workspace_edit implements Module {
 		$deletes = $chrome->allowed("workspace/delete");
 		$secrets = Task\Route::href(Task\Place::SECRETS) . "?workspace=" . Task\Route::queryEscape($folder);
 
-		$menu->item("folder-open", "Open", array("href" => Task\Route::href($href)));
-		$menu->when($deletes && $found > 0, "secret", Task\Workspace::blocked($found), array("href" => $secrets));
-		$menu->whenDanger($deletes && $found === 0, "trash", "Delete", array(
+		$menu->item("folder-open", "Open", ["href" => Task\Route::href($href)]);
+		$menu->when($deletes && $found > 0, "secret", Task\Workspace::blocked($found), ["href" => $secrets]);
+		$menu->whenDanger($deletes && $found === 0, "trash", "Delete", [
 			"data-delete" => "/api/workspaces/" . $folder,
 			"data-confirm" => Task\Workspace::confirm($folder, $ids),
 			"data-confirm-ok" => "Delete",
 			"data-next" => self::DELETED,
-		));
+		]);
 
 		return $menu;
 	}
@@ -228,17 +228,17 @@ class mod_workspace_edit implements Module {
 		$limit = Task\Row::number($row, "sidebar_limit");
 		$page = Task\Workspace::PAGE . "/" . $folder;
 
-		return array(
+		return [
 			"dir" => self::where($root, $folder),
 			"action" => "/api/workspaces/" . $folder,
 			"next" => $page . self::SAVED,
 			"title" => Task\Row::text($row, "title"),
 			"description" => Task\Row::text($row, "description"),
-			"recursive" => array("id" => self::RECURSIVE, "checked" => !Task\Row::flag($row, "shallow")),
+			"recursive" => ["id" => self::RECURSIVE, "checked" => !Task\Row::flag($row, "shallow")],
 			"limit" => $limit > 0 ? $limit : "",
 			"hours" => Task\Row::text($row, "hours"),
 			"cancel" => Task\Route::href(Task\Workspace::PAGE),
-		);
+		];
 	}
 
 	/**
@@ -273,7 +273,7 @@ class mod_workspace_edit implements Module {
 		$pull = Task\Project::pull($chrome, $id);
 		$empty = $url === "";
 
-		return array(
+		return [
 			"block" => $this->homeBlock($folder, $id, $pull, $empty, $edit),
 			"empty" => $empty,
 			"folder" => $id,
@@ -286,20 +286,20 @@ class mod_workspace_edit implements Module {
 			"clone" => $empty ? "Clone" : "Replace",
 			"action" => "/api/workspaces/" . $folder . "/home",
 			"next" => Task\Workspace::PAGE . "/" . $folder . self::CLONED,
-		);
+		];
 	}
 
 	/** checkout is what git knows about the home's checkout, none where it holds none. */
 	function checkout($found) {
 		$when = Task\Row::text($found, "when");
 
-		return array(
+		return [
 			"found" => Task\Row::flag($found, "found"),
 			"branch" => Task\Row::text($found, "branch"),
 			"commit" => Task\Row::text($found, "commit"),
 			"subject" => Task\Row::text($found, "subject"),
 			"ago" => $when === "" ? "" : Task\Clock::ago($when),
-		);
+		];
 	}
 
 	/**
@@ -315,21 +315,21 @@ class mod_workspace_edit implements Module {
 			$buttons->item("download", "Pull now", Task\Project::pulls($id, $pull));
 		}
 
-		$buttons->when($edit, "plus", $empty ? "Clone" : "Replace", array("data-dialog-open" => "home-replace-dialog"));
-		$buttons->whenDanger($edit && !$empty, "", "Remove", array(
+		$buttons->when($edit, "plus", $empty ? "Clone" : "Replace", ["data-dialog-open" => "home-replace-dialog"]);
+		$buttons->whenDanger($edit && !$empty, "", "Remove", [
 			"data-api" => "/api/workspaces/" . $folder . "/home",
 			"data-method" => "DELETE",
 			"data-confirm" => $asks,
 			"data-confirm-ok" => "Remove",
 			"data-next" => $page . self::REMOVED,
-		));
+		]);
 
-		return array(
+		return [
 			"title" => self::HOME_TITLE,
 			"note" => $id . self::HOME_NOTE,
 			"empty" => $empty ? self::HOME_EMPTY : "",
 			"buttons" => $buttons->data(),
-		);
+		];
 	}
 
 	/**
@@ -340,12 +340,12 @@ class mod_workspace_edit implements Module {
 		$note = $folder === Task\Route::INTERNAL ? self::ROOT_NOTE : "inside " . $folder . "/src/";
 		$empty = count($inside) === 0 ? "No projects in " . $folder . " yet." : "";
 
-		return array(
+		return [
 			"title" => self::PROJECTS_TITLE,
 			"note" => $note,
 			"empty" => $empty,
-			"buttons" => array(),
-		);
+			"buttons" => [],
+		];
 	}
 
 	/**
@@ -356,18 +356,18 @@ class mod_workspace_edit implements Module {
 		$buttons = new Task\Buttons(true);
 		$found = count($keys);
 
-		$buttons->when($adds, "upload", "Upload key", array("data-dialog-open" => "key-upload-dialog"));
-		$buttons->when($adds, "key", "Generate key", array("data-dialog-open" => "key-generate-dialog"));
+		$buttons->when($adds, "upload", "Upload key", ["data-dialog-open" => "key-upload-dialog"]);
+		$buttons->when($adds, "key", "Generate key", ["data-dialog-open" => "key-generate-dialog"]);
 
-		return array(
-			"block" => array(
+		return [
+			"block" => [
 				"title" => self::KEYS_TITLE,
 				"note" => self::KEYS_NOTE,
 				"empty" => $found === 0 ? self::KEYS_EMPTY : "",
 				"buttons" => $buttons->data(),
-			),
+			],
 			"rows" => Task\Key::rows($chrome, $keys, $here, $folder),
-		);
+		];
 	}
 }
 

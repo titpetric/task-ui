@@ -28,13 +28,13 @@ class User {
 	 * mod_settings::ADMIN is what Task\User::ROLES asks for there. See
 	 * docs/todo-correction.md.
 	 */
-	const ROLES = array("admin", "runner", "viewer");
+	const ROLES = ["admin", "runner", "viewer"];
 
 	/**
 	 * ASSIGNABLE is the roles a select offers: every role but admin, which is
 	 * the flag beside it and not a choice of the list.
 	 */
-	const ASSIGNABLE = array("runner", "viewer");
+	const ASSIGNABLE = ["runner", "viewer"];
 
 	var $db;
 
@@ -78,7 +78,7 @@ class User {
 
 	/** roles is the role each user acts with, by name. */
 	function roles() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->all() as $user) {
 			$out[$user->getName()] = self::role($user);
@@ -116,7 +116,7 @@ class User {
 
 	/** folders is the folders a row may see; an empty list means every one. */
 	static function folders($user) {
-		return $user === null ? array() : Text::items($user->getFolders());
+		return $user === null ? [] : Text::items($user->getFolders());
 	}
 
 	/** sees reports whether a row may see a folder. */
@@ -150,7 +150,7 @@ class User {
 	}
 
 	/** listed reports whether both allow lists let a row run a job. */
-	static function listed($user, $folderAllow = array(), $jobAllow = array()) {
+	static function listed($user, $folderAllow = [], $jobAllow = []) {
 		return $user !== null && self::onList($user, $folderAllow) && self::onList($user, $jobAllow);
 	}
 
@@ -167,18 +167,18 @@ class User {
 	 * answers, of user name to key names.
 	 */
 	static function options($users, $keys) {
-		$out = array();
+		$out = [];
 
 		foreach ($users as $user) {
 			$name = $user->getName();
-			$names = isset($keys[$name]) ? $keys[$name] : array();
+			$names = isset($keys[$name]) ? $keys[$name] : [];
 
-			$out[] = array(
+			$out[] = [
 				"name" => $name,
 				"role" => self::role($user),
 				"keys" => implode(" ", $names),
 				"said" => count($names) > 0 ? "keys: " . implode(", ", $names) : "no keys",
-			);
+			];
 		}
 
 		return $out;

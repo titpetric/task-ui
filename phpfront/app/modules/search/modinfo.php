@@ -11,6 +11,6 @@ $module->setIcon("magnifier");
 $module->enableSideBar();
 $module->setSideBarHref("/search");
 $module->setSideBarRule("prompt/edit");
-$module->setTables(array("search_document", "search_section", "search_term"));
+$module->setTables(["search_document", "search_section", "search_term"]);
 
 return $module;

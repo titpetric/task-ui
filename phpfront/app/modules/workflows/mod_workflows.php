@@ -40,7 +40,7 @@ class mod_workflows implements Module {
 	}
 
 	function tables() {
-		return array(
+		return [
 			"workflow",
 			"workflow_step",
 			"workflow_run",
@@ -49,7 +49,7 @@ class mod_workflows implements Module {
 			"note",
 			"user",
 			"workspace",
-		);
+		];
 	}
 
 	function serve() {
@@ -62,13 +62,13 @@ class mod_workflows implements Module {
 			return;
 		}
 
-		$chrome->heading("Workflows", array(array("text" => "Workflows", "href" => "")));
+		$chrome->heading("Workflows", [["text" => "Workflows", "href" => ""]]);
 
 		$store = new Task\Workflow($chrome->db);
 		$flows = $store->visible($chrome);
 		$clock = new Task\Schedules\Schedules($chrome->db);
 		$schedules = $clock->all();
-		$rows = array();
+		$rows = [];
 
 		foreach ($flows as $flow) {
 			$rows[] = $this->row($chrome, $flow, $schedules);
@@ -78,29 +78,29 @@ class mod_workflows implements Module {
 		$buttons = new Task\Buttons;
 		$head = new Task\Head("Workflows", self::LEAD);
 
-		$buttons->primary("plus", "Add workflow", array("href" => Task\Route::href("/workflows/new")));
+		$buttons->primary("plus", "Add workflow", ["href" => Task\Route::href("/workflows/new")]);
 		$head->buttons($buttons->data());
 
-		$view->page(array(
+		$view->page([
 			"head" => $head->data(),
 			"prompt" => $this->prompt($chrome),
 			"block" => $this->block("Workflows", count($rows) === 0 ? self::NONE : ""),
 			"rows" => $rows,
 			"runsBlock" => $this->block("Recent runs", count($runs) === 0 ? self::NEVER : ""),
 			"runs" => $runs,
-		));
+		]);
 	}
 
 	/** block is the head of one of the page's two blocks, with what it says when empty. */
 	function block($title, $empty) {
 		$buttons = new Task\Buttons(true);
 
-		return array(
+		return [
 			"title" => $title,
 			"note" => "",
 			"empty" => $empty,
 			"buttons" => $buttons->data(),
-		);
+		];
 	}
 
 	/**
@@ -121,10 +121,10 @@ class mod_workflows implements Module {
 		$last = $flow["last"];
 		$menu = new Task\Menu("Actions on " . $flow["name"]);
 
-		$menu->when($flow["canChange"], "edit", "Edit", array("href" => Task\Route::href("/workflows/" . $id . "/edit")));
-		$menu->when($flow["running"] !== "", "eye", "The run going", array("href" => Task\Route::href("/workflows/" . $id . "/runs/" . $flow["running"])));
+		$menu->when($flow["canChange"], "edit", "Edit", ["href" => Task\Route::href("/workflows/" . $id . "/edit")]);
+		$menu->when($flow["running"] !== "", "eye", "The run going", ["href" => Task\Route::href("/workflows/" . $id . "/runs/" . $flow["running"])]);
 
-		return array(
+		return [
 			"id" => $id,
 			"name" => $flow["name"],
 			"description" => Task\Chrome::line($flow["description"]),
@@ -140,7 +140,7 @@ class mod_workflows implements Module {
 			"prompted" => $flow["prompted"],
 			"runDenied" => $flow["runDenied"],
 			"menu" => $menu->data(),
-		);
+		];
 	}
 
 	/**
@@ -151,7 +151,7 @@ class mod_workflows implements Module {
 	 * too, however they were made, so the hover says who the run would be.
 	 */
 	static function hints($flow, $schedules) {
-		$out = array();
+		$out = [];
 
 		foreach ($schedules as $schedule) {
 			if ($schedule->getWorkflowId() !== $flow["id"]) {
@@ -161,11 +161,11 @@ class mod_workflows implements Module {
 			$on = Task\Schedule::enabled($schedule);
 			$who = $flow["runAs"] === "" ? $schedule->getUserName() : $flow["runAs"];
 
-			$out[] = array(
+			$out[] = [
 				"expression" => $schedule->getExpression(),
 				"enabled" => $on,
 				"title" => ($on ? "Scheduled" : "A schedule, disabled") . ", as " . $who,
-			);
+			];
 		}
 
 		return $out;
@@ -182,17 +182,17 @@ class mod_workflows implements Module {
 	 */
 	function recent($chrome, $flows) {
 		if (count($flows) === 0) {
-			return array();
+			return [];
 		}
 
-		$names = array();
+		$names = [];
 
 		foreach ($flows as $flow) {
 			$names[$flow["id"]] = $flow["name"];
 		}
 
 		$store = new Task\Workflows\Runs($chrome->db);
-		$out = array();
+		$out = [];
 
 		foreach ($store->latest(4 * self::RECENT) as $run) {
 			if (count($out) === self::RECENT) {
@@ -219,7 +219,7 @@ class mod_workflows implements Module {
 		$answer = $run->getAnswer();
 		$message = $run->getMessage();
 
-		return array(
+		return [
 			"id" => $id,
 			"workflowId" => $run->getWorkflowId(),
 			"name" => $run->getName(),
@@ -228,18 +228,18 @@ class mod_workflows implements Module {
 			"user" => $chrome->who()->of($run->getUserName()),
 			"ago" => Task\Clock::ago($run->getStartedAt()),
 			"stamp" => Task\Clock::read($run->getStartedAt()),
-			"fold" => array(
+			"fold" => [
 				"id" => $id,
 				"answer" => $answer !== "",
 				"open" => true,
-			),
-			"answer" => array(
+			],
+			"answer" => [
 				"id" => $id,
 				"body" => $answer === "" ? "" : $chrome->message($answer),
 				"cols" => 3,
 				"open" => true,
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -261,10 +261,10 @@ class mod_workflows implements Module {
 		$roots = $notes->ofArea(Task\Note::AREA_WORKFLOWS);
 		$replies = $notes->replies(Task\Note::ids($roots));
 		$agents = $users->agents();
-		$threads = array();
+		$threads = [];
 
 		foreach ($roots as $note) {
-			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
+			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
 			$answerers = Task\Note::answerers($note, $under, $agents);
 
 			if (self::seesPlace($chrome, $note->getDir())) {
@@ -272,14 +272,14 @@ class mod_workflows implements Module {
 			}
 		}
 
-		return array(
+		return [
 			"title" => "Prompt",
 			"note" => "Claude Code builds or changes a workflow with the task tools, runs it and answers with its link",
 			"open" => true,
 			"hidden" => false,
 			"watch" => false,
 			"api" => Task\Prompt::API,
-			"fields" => array(array("name" => "area", "value" => Task\Note::AREA_WORKFLOWS)),
+			"fields" => [["name" => "area", "value" => Task\Note::AREA_WORKFLOWS]],
 			"editor" => Task\Prompt::field("Describe a workflow to build or change"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in ",
@@ -289,7 +289,7 @@ class mod_workflows implements Module {
 			"place" => Task\Route::INTERNAL,
 			"area" => Task\Note::AREA_WORKFLOWS,
 			"threads" => $threads,
-		);
+		];
 	}
 
 	/**
@@ -311,13 +311,13 @@ class mod_workflows implements Module {
 
 	/** picks are the folders the prompt box offers to run in, the root first. */
 	function picks($chrome) {
-		$out = array(
-			array("value" => Task\Route::INTERNAL, "text" => Task\Route::INTERNAL . " (the root)"),
-		);
+		$out = [
+			["value" => Task\Route::INTERNAL, "text" => Task\Route::INTERNAL . " (the root)"],
+		];
 
 		foreach ($chrome->folders() as $folder) {
 			$id = Task\Row::text($folder, "id");
-			$out[] = array("value" => $id, "text" => $id);
+			$out[] = ["value" => $id, "text" => $id];
 		}
 
 		return $out;

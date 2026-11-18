@@ -38,7 +38,7 @@ class Tokens {
 	 */
 	function ofKind($user, $kind) {
 		$rows = $this->db->get_all("SELECT * FROM user_auth_token WHERE user_id = ? AND kind = ? ORDER BY created_at DESC, name", $user, $kind);
-		$out = array();
+		$out = [];
 
 		if (!is_array($rows)) {
 			return $out;

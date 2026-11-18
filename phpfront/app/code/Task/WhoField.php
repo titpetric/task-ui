@@ -21,12 +21,12 @@ class WhoField {
 	var $type = "";
 
 	/** roles and users are the names the setting holds, checked. */
-	var $roles = array();
+	var $roles = [];
 
-	var $users = array();
+	var $users = [];
 
 	/** all are the users to list, as rows of the user table. */
-	var $all = array();
+	var $all = [];
 
 	/** empty is what nothing checked means; "" means no run gets it then. */
 	var $empty = "";
@@ -60,28 +60,28 @@ class WhoField {
 
 	/** data is the scope the component reads. */
 	function data() {
-		$roles = array();
-		$users = array();
+		$roles = [];
+		$users = [];
 
 		foreach (User::ROLES as $role) {
-			$roles[] = array(
+			$roles[] = [
 				"name" => $role,
 				"checked" => in_array($role, $this->roles, true),
 				"count" => $this->count($role),
-			);
+			];
 		}
 
 		foreach ($this->all as $user) {
 			$name = $user->getName();
 
-			$users[] = array(
+			$users[] = [
 				"name" => $name,
 				"role" => User::role($user),
 				"checked" => in_array($name, $this->users, true),
-			);
+			];
 		}
 
-		return array(
+		return [
 			"compact" => $this->compact,
 			"empty" => $this->empty,
 			"name" => $this->name,
@@ -90,7 +90,7 @@ class WhoField {
 			"roles" => $roles,
 			"users" => $users,
 			"extra" => $this->extra(),
-		);
+		];
 	}
 
 	/** count is how many of the listed users act with a role. */
@@ -111,7 +111,7 @@ class WhoField {
 	 * a save keeps them.
 	 */
 	function extra() {
-		$out = array();
+		$out = [];
 
 		foreach ($this->users as $name) {
 			if (in_array($name, User::ROLES, true) || in_array($name, $out, true)) {
@@ -142,10 +142,10 @@ class WhoField {
 	/** names is a list of names from what a caller holds them in, the empty out. */
 	static function names($value) {
 		if (!is_array($value)) {
-			return array();
+			return [];
 		}
 
-		$out = array();
+		$out = [];
 
 		foreach ($value as $name) {
 			if ($name !== "" && $name !== null) {

@@ -49,12 +49,12 @@ class Project {
 	static function crumbs($id, $workspaces, $last) {
 		$href = Route::folderHref($id, $workspaces);
 
-		return array(
-			array("text" => "Settings", "href" => "/settings"),
-			array("text" => Setup::PROJECTS, "href" => self::PAGE),
-			array("text" => $id, "href" => $href),
-			array("text" => $last, "href" => ""),
-		);
+		return [
+			["text" => "Settings", "href" => "/settings"],
+			["text" => Setup::PROJECTS, "href" => self::PAGE],
+			["text" => $id, "href" => $href],
+			["text" => $last, "href" => ""],
+		];
 	}
 
 	/**
@@ -106,7 +106,7 @@ class Project {
 		$workflows = new Workflows\Workflows($this->db);
 		$mine = new Settings\Refs($this->db);
 		$found = array_merge($schedules->refs($id), $mine->of($id), $workflows->stepsIn($id));
-		$out = array();
+		$out = [];
 
 		foreach ($found as $row) {
 			$kind = str_replace("_", " ", Row::text($row, "kind"));
@@ -158,8 +158,8 @@ class Project {
 	 * so. frontend/view/project_group.go.
 	 */
 	static function groups($entries, $workspaces) {
-		$out = array();
-		$at = array();
+		$out = [];
+		$at = [];
 
 		foreach ($workspaces as $folder) {
 			if (isset($at[$folder])) {
@@ -167,7 +167,7 @@ class Project {
 			}
 
 			$at[$folder] = count($out);
-			$out[] = array("workspace" => $folder, "entries" => array());
+			$out[] = ["workspace" => $folder, "entries" => []];
 		}
 
 		foreach ($entries as $entry) {
@@ -246,15 +246,15 @@ class Project {
 		if ($adds) {
 			$href = Route::href(self::PAGE . "/new") . "?workspace=" . Route::queryEscape($workspace);
 
-			$buttons->item("plus", "Add project", array("href" => $href));
+			$buttons->item("plus", "Add project", ["href" => $href]);
 		}
 
-		return array(
+		return [
 			"title" => self::title($workspace),
 			"note" => self::note($workspace, $root),
 			"empty" => $found === 0 ? self::empty($workspace) : "",
 			"buttons" => $buttons->data(),
-		);
+		];
 	}
 
 	/**
@@ -266,13 +266,13 @@ class Project {
 	 * no column at all rather than an empty one.
 	 */
 	static function table($chrome, $entries, $spaces, $next) {
-		$rows = array();
+		$rows = [];
 
 		foreach ($entries as $entry) {
 			$rows[] = self::entry($chrome, $entry, $spaces, $next);
 		}
 
-		return array("sized" => count($spaces) > 0, "rows" => $rows);
+		return ["sized" => count($spaces) > 0, "rows" => $rows];
 	}
 
 	/**
@@ -283,12 +283,12 @@ class Project {
 	static function entry($chrome, $entry, $spaces, $next) {
 		$id = Row::text($entry, "id");
 		$dir = Row::text($entry, "dir");
-		$space = isset($spaces[$dir]) ? $spaces[$dir] : array();
+		$space = isset($spaces[$dir]) ? $spaces[$dir] : [];
 		$pull = self::pull($chrome, $id);
 		$found = Row::flag($entry, "checkout");
 		$when = Row::text($entry, "when");
 
-		return array(
+		return [
 			"id" => $id,
 			"href" => Route::href(Route::folderHref($id, $chrome->workspaces())),
 			"bad" => Row::text($entry, "error") !== "",
@@ -302,7 +302,7 @@ class Project {
 			"ago" => $when === "" ? "" : Clock::ago($when),
 			"space" => Size::mini($space),
 			"menu" => self::menu($chrome, $entry, $pull, $next),
-		);
+		];
 	}
 
 	/**
@@ -318,8 +318,8 @@ class Project {
 		$menu = new Menu("Actions on " . $id);
 		$href = Route::folderHref($id, $chrome->workspaces());
 
-		$menu->item("folder-open", "Open", array("href" => Route::href($href)));
-		$menu->item("settings", "Edit project", array("href" => Route::href(self::PAGE . "/" . $id)));
+		$menu->item("folder-open", "Open", ["href" => Route::href($href)]);
+		$menu->item("settings", "Edit project", ["href" => Route::href(self::PAGE . "/" . $id)]);
 
 		if ($pull !== null) {
 			$menu->item("download", "Pull now", self::pulls($id, $pull));
@@ -334,13 +334,13 @@ class Project {
 
 	/** pulls is what Pull now carries: the run of the git skill's pull job. */
 	static function pulls($id, $pull) {
-		return array(
+		return [
 			"data-run" => "",
 			"data-folder" => $id,
 			"data-dir" => Row::text($pull, "dir"),
 			"data-job" => Row::text($pull, "id"),
 			"data-title" => $id . " / " . Row::text($pull, "name"),
-		);
+		];
 	}
 
 	/**
@@ -353,12 +353,12 @@ class Project {
 	static function removes($entry, $next) {
 		$id = Row::text($entry, "id");
 
-		return array(
+		return [
 			"data-delete" => "/api/projects/" . $id,
 			"data-confirm" => Place::removeConfirm($id, Row::text($entry, "remote")),
 			"data-confirm-ok" => "Remove checkout",
 			"data-next" => $next,
-		);
+		];
 	}
 
 	/**
@@ -375,7 +375,7 @@ class Project {
 			return null;
 		}
 
-		$place = array("id" => $id, "allow" => Row::items($job, "folder_allow"));
+		$place = ["id" => $id, "allow" => Row::items($job, "folder_allow")];
 
 		if (!Folders::allows($chrome->access, $place, $job)) {
 			return null;

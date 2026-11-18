@@ -10,13 +10,13 @@ class RefinementThread {
 	const TABLE = "refinement_thread";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "title", "user", "report_markdown", "created_at", "updated_at");
+	public static $fields = ["id", "title", "user", "report_markdown", "created_at", "updated_at"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at");
+	public static $stamps = ["created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Title */
@@ -30,7 +30,7 @@ class RefinementThread {
 	/** Updated At */
 	var $updated_at = "";
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->title = \Task\Row::text($row, "title");
 		$this->user = \Task\Row::text($row, "user");
@@ -112,7 +112,7 @@ class RefinementThread {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

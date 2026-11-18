@@ -10,13 +10,13 @@ class SearchTerm {
 	const TABLE = "search_term";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("document_id", "ordinal", "term", "weight");
+	public static $fields = ["document_id", "ordinal", "term", "weight"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("document_id", "ordinal", "term");
+	public static $primary = ["document_id", "ordinal", "term"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array();
+	public static $stamps = [];
 	/** Document ID */
 	var $document_id = "";
 	/** Ordinal */
@@ -26,7 +26,7 @@ class SearchTerm {
 	/** Weight */
 	var $weight = 0;
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->document_id = \Task\Row::text($row, "document_id");
 		$this->ordinal = \Task\Row::number($row, "ordinal");
 		$this->term = \Task\Row::text($row, "term");
@@ -84,7 +84,7 @@ class SearchTerm {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

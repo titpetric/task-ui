@@ -44,7 +44,7 @@ class Access {
 
 	/** effective is every checkable path and whether the user may. */
 	function effective() {
-		$out = array();
+		$out = [];
 
 		foreach (Permission::checks() as $path) {
 			$out[$path] = $this->allowed($path);
@@ -55,7 +55,7 @@ class Access {
 
 	/** allows is the paths the user may, in file order. */
 	function allows() {
-		$out = array();
+		$out = [];
 
 		foreach (Permission::checks() as $path) {
 			if ($this->allowed($path)) {
@@ -82,7 +82,7 @@ class Access {
 	}
 
 	/** run reports whether the user may run a job of a folder. */
-	function run($folder, $folderAllow = array(), $jobAllow = array()) {
+	function run($folder, $folderAllow = [], $jobAllow = []) {
 		if (!User::sees($this->user, $folder)) {
 			return false;
 		}

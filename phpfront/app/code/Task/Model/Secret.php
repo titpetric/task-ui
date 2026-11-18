@@ -10,13 +10,13 @@ class Secret {
 	const TABLE = "secret";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "scope", "name", "content", "created_at", "updated_at", "is_secret");
+	public static $fields = ["id", "scope", "name", "content", "created_at", "updated_at", "is_secret"];
 
 	/** primary is the primary key columns. */
-	public static $primary = array("id");
+	public static $primary = ["id"];
 
 	/** stamps is the timestamp columns, which are written null when empty. */
-	public static $stamps = array("created_at", "updated_at");
+	public static $stamps = ["created_at", "updated_at"];
 	/** ID */
 	var $id = "";
 	/** Scope */
@@ -32,7 +32,7 @@ class Secret {
 	/** Is Secret */
 	var $is_secret = 0;
 
-	function __construct($row = array()) {
+	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
 		$this->scope = \Task\Row::text($row, "scope");
 		$this->name = \Task\Row::text($row, "name");
@@ -126,7 +126,7 @@ class Secret {
 
 	/** rows turns what the database answered into models. */
 	static function rows($found) {
-		$out = array();
+		$out = [];
 
 		if (!is_array($found)) {
 			return $out;

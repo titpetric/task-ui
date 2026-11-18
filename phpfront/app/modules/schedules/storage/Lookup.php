@@ -32,16 +32,16 @@ class Lookup {
 	 */
 	function workflows() {
 		$steps = $this->steps();
-		$out = array();
+		$out = [];
 
 		foreach ($this->store->named() as $row) {
 			$id = \Task\Row::text($row, "id");
 
-			$out[$id] = array(
+			$out[$id] = [
 				"name" => \Task\Row::text($row, "name"),
 				"runAs" => \Task\Row::text($row, "run_as"),
 				"folders" => self::folders($steps, $id),
-			);
+			];
 		}
 
 		return $out;
@@ -62,9 +62,9 @@ class Lookup {
 	 * depth first walk; what reads it is a set.
 	 */
 	static function folders($steps, $id) {
-		$out = array();
-		$seen = array($id => true);
-		$queue = array($id);
+		$out = [];
+		$seen = [$id => true];
+		$queue = [$id];
 
 		while (count($queue) > 0) {
 			$next = array_shift($queue);
