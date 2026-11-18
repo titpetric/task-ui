@@ -87,7 +87,7 @@ jobs:
       - task: schema
       - task: test
       - task: front
-      - git status --porcelain -- app/model schema phpfront/app/code/Task/Model phpfront/app/tests/schema.sql | tee /dev/stderr | (! read)
+      - git status --porcelain -- app/model schema phpfront/app/code/Task/Model | tee /dev/stderr | (! read)
 
   deps:
     desc: "Update the front end's composer dependencies"

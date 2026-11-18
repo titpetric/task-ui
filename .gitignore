@@ -7,3 +7,4 @@
 /task-ui
 /data/
 internal/testkey/testdata/
+phpfront/app/tests/task-ui.db*

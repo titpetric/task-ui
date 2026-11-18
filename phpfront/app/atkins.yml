@@ -60,8 +60,9 @@ jobs:
         fi
 
   test:
-    desc: "Run the test fixtures"
+    desc: "Migrate a test database and run the test fixtures"
     steps:
+      - bash tools/testdb.sh
       - phpscript test ./tests/...
 
   # Rewrites code/Task/Model from the same schema.yml mig gen reads for the Go

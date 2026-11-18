@@ -76,7 +76,7 @@ The 69 templates are `html/template` and not MiniTPL, so they cannot move to `ap
 
 ### The .phpt fixtures
 
-`app/tests/` holds fixtures for modules and for the theme together. Module fixtures go to `modules/<name>/tests/`, the rest to `theme/tests/`, and `app/tests/` goes. `bootstrap.php`, `setup.php` and `schema.sql` need a home and every `phpscript.yml` include path needs updating.
+`app/tests/` holds fixtures for modules and for the theme together. Module fixtures go to `modules/<name>/tests/`, the rest to `theme/tests/`, and `app/tests/` goes. `bootstrap.php`, `setup.php` and `tools/testdb.sh` need a home and every `phpscript.yml` include path needs updating.
 
 ## Tooling
 

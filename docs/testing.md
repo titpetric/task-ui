@@ -211,7 +211,7 @@ test:
     setup: tests/setup.php
 ```
 
-`include` loads the bootstrap once per session, `hooks.setup` applies `tests/schema.sql`, and `env` is the connection `new Database` resolves: without it the suite builds no provider and a storage class has nothing to open. A module's own file is the `test:` block alone.
+`include` loads the bootstrap once per session, `hooks.setup` seeds the rows the fixtures read, and `env` is the connection `new Database` resolves: without it the suite builds no provider and a storage class has nothing to open. `tools/testdb.sh` migrates `tests/task-ui.db` before the suite starts. A module's own file is the `test:` block alone.
 
 `tests/bootstrap.php` of a module requires `ext/autoload.php` and nothing else, so a fixture names the class it is about and the classmap finds it. The front end's adds `stubs/host.php` and `stubs/fixture.php`: the host calls are Go, and a fixture reads the stubs' statics in their place.
 

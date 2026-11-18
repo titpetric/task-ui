@@ -5,12 +5,12 @@
 # to the tree root: a fixture requires "ext/autoload.php" and means the path
 # an endpoint means.
 #
-# The database is one in-memory SQLite shared by name across the process, so
-# the setup hook's schema is the schema every fixture opens. The connection is
-# the one Task\DB names, so a storage class under test opens its own
-# connection the way a page does and nothing in code/ knows it is a test.
+# The database is a file built from every migration by tools/testdb.sh, before
+# the suite starts; the setup hook seeds the rows the fixtures read. The
+# connection is the one Task\DB names, so a storage class under test opens its
+# own connection the way a page does and nothing in code/ knows it is a test.
 env:
-  - "PLATFORM_DB_TASK-UI=sqlite://file:phpfront?mode=memory&cache=shared"
+  - "PLATFORM_DB_TASK-UI=sqlite://tests/task-ui.db"
 
 test:
   include: tests/bootstrap.php

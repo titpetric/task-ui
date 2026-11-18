@@ -26,7 +26,7 @@ A byte stream is not a page: `/files/*`, `/artifacts/files/*` and the archives a
 | `modules/<name>/`             | one directory per sidebar entry                                                          |
 | `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime        |
 | `tools/`                      | the generators and the precompiler                                                       |
-| `tests/`                      | the `.phpt` fixtures, `bootstrap.php`, `setup.php` and `schema.sql`                      |
+| `tests/`                      | the `.phpt` fixtures, `bootstrap.php`, `setup.php` and the migrated test database         |
 
 A module directory holds:
 

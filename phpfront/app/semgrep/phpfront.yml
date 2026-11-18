@@ -38,6 +38,48 @@ rules:
           metavariable: $METHOD
           regex: ^(query|get|get_all|get_one|insert|replace|update|exec|prepare|begin|commit|rollback)$
 
+  # A fixture reads through the DAO. A write on the database binding, or a
+  # statement in a literal, is state the next fixture did not ask for.
+  - id: task-ui.front.sql-in-fixture
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A fixture reads through the DAO and seeds nothing. Move the rows to the
+      suite's setup hook, or ask the storage class for them.
+    paths:
+      include:
+        - "**/*.phpt"
+      # The fixtures written before the rule: each moves its seeds to setup.php.
+      exclude:
+        - "tests/activity.phpt"
+        - "tests/artifact.phpt"
+        - "tests/chat.phpt"
+        - "tests/chrome.phpt"
+        - "tests/key.phpt"
+        - "tests/lookup.phpt"
+        - "tests/note.phpt"
+        - "tests/prompt.phpt"
+        - "tests/recent.phpt"
+        - "tests/refs.phpt"
+        - "tests/report-page.phpt"
+        - "tests/report.phpt"
+        - "tests/row.phpt"
+        - "tests/run-page.phpt"
+        - "tests/run.phpt"
+        - "tests/runs.phpt"
+        - "tests/schedules.phpt"
+        - "tests/seen.phpt"
+        - "tests/sidebar.phpt"
+        - "tests/sidebar_dupes.phpt"
+        - "tests/talk.phpt"
+        - "tests/thread-feed.phpt"
+        - "tests/thread-work.phpt"
+        - "tests/threads-filter.phpt"
+        - "tests/workspace.phpt"
+    pattern-either:
+      - pattern-regex: '\$db\s*->\s*(query|get|get_all|get_one|insert|replace|update|delete|exec|prepare|begin|commit|rollback)\s*\('
+      - pattern-regex: '[''"]\s*(SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE)\s'
+
   # The same convention as a text match, for the statement built in a page
   # and handed to something this does not name.
   #
