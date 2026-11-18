@@ -24,8 +24,10 @@ class Note {
 		"updated_at",
 		"about_run_id",
 		"about_workflow_run_id",
+		"agent",
 		"area",
 		"edited_at",
+		"origin",
 		"deleted_at",
 		"audio_path",
 		"spoken",
@@ -64,10 +66,14 @@ class Note {
 	var $about_run_id = "";
 	/** About Workflow Run ID */
 	var $about_workflow_run_id = "";
+	/** Agent */
+	var $agent = "";
 	/** Area */
 	var $area = "";
 	/** Edited At */
 	var $edited_at = "";
+	/** Origin */
+	var $origin = "";
 	/** Deleted At */
 	var $deleted_at = "";
 	/** Audio Path */
@@ -93,8 +99,10 @@ class Note {
 		$this->updated_at = \Task\Row::stamp($row, "updated_at");
 		$this->about_run_id = \Task\Row::text($row, "about_run_id");
 		$this->about_workflow_run_id = \Task\Row::text($row, "about_workflow_run_id");
+		$this->agent = \Task\Row::text($row, "agent");
 		$this->area = \Task\Row::text($row, "area");
 		$this->edited_at = \Task\Row::stamp($row, "edited_at");
+		$this->origin = \Task\Row::text($row, "origin");
 		$this->deleted_at = \Task\Row::stamp($row, "deleted_at");
 		$this->audio_path = \Task\Row::text($row, "audio_path");
 		$this->spoken = \Task\Row::text($row, "spoken");
@@ -244,6 +252,17 @@ class Note {
 
 		return $this;
 	}
+	/** getAgent is Agent. */
+	function getAgent() {
+		return $this->agent;
+	}
+
+	/** setAgent sets Agent. */
+	function setAgent($value) {
+		$this->agent = $value;
+
+		return $this;
+	}
 	/** getArea is Area. */
 	function getArea() {
 		return $this->area;
@@ -263,6 +282,17 @@ class Note {
 	/** setEditedAt sets Edited At. */
 	function setEditedAt($value) {
 		$this->edited_at = $value;
+
+		return $this;
+	}
+	/** getOrigin is Origin. */
+	function getOrigin() {
+		return $this->origin;
+	}
+
+	/** setOrigin sets Origin. */
+	function setOrigin($value) {
+		$this->origin = $value;
 
 		return $this;
 	}

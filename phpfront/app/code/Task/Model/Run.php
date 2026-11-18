@@ -36,6 +36,7 @@ class Run {
 		"title",
 		"parent_id",
 		"parent_kind",
+		"claude_session",
 	];
 
 	/** primary is the primary key columns. */
@@ -93,6 +94,8 @@ class Run {
 	var $parent_id = "";
 	/** Parent Kind */
 	var $parent_kind = "";
+	/** Claude Session */
+	var $claude_session = "";
 
 	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
@@ -120,6 +123,7 @@ class Run {
 		$this->title = \Task\Row::text($row, "title");
 		$this->parent_id = \Task\Row::text($row, "parent_id");
 		$this->parent_kind = \Task\Row::text($row, "parent_kind");
+		$this->claude_session = \Task\Row::text($row, "claude_session");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -393,6 +397,17 @@ class Run {
 	/** setParentKind sets Parent Kind. */
 	function setParentKind($value) {
 		$this->parent_kind = $value;
+
+		return $this;
+	}
+	/** getClaudeSession is Claude Session. */
+	function getClaudeSession() {
+		return $this->claude_session;
+	}
+
+	/** setClaudeSession sets Claude Session. */
+	function setClaudeSession($value) {
+		$this->claude_session = $value;
 
 		return $this;
 	}
