@@ -71,7 +71,7 @@ func (a *App) wire(version string) error {
 	detector.UseProber(a.Catalogue.Skills)
 	a.Search = newSearchIndexer(cfg, store, a.Catalogue)
 	a.Runner = runner.New(runner.Options{
-		HostPaths: svc.mounts, HostData: svc.hostData,
+		HostPaths: svc.mounts, HostData: svc.hostData, ClaudeDir: cfg.ClaudeDir(),
 		Keys:          svc.Keystore,
 		Runs:          store.Runs,
 		Artifacts:     store.Artifacts,
@@ -112,8 +112,8 @@ func (a *App) wire(version string) error {
 	a.Guard.Now = cfg.Clock()
 	a.Guard.RunTokens = access.NewRunTokens()
 	a.Board = &note.Board{
-		Notes: store.Notes, Chats: store.Chats, Users: store.Users, Runs: store.Runs, WorkflowRuns: store.WorkflowRuns, RunSummaries: store.RunSummaries, Catalogue: a.Catalogue, Runner: a.Runner,
-		Recordings: svc.Recordings, Events: svc.Events, Root: cfg.Root, Workspaces: store.Workspaces,
+		Notes: store.Notes, NoteEvents: store.NoteEvents, Chats: store.Chats, Users: store.Users, Runs: store.Runs, WorkflowRuns: store.WorkflowRuns, RunSummaries: store.RunSummaries, Catalogue: a.Catalogue, Runner: a.Runner,
+		Recordings: svc.Recordings, Events: svc.Events, Root: cfg.Root, ClaudeDir: cfg.ClaudeDir(), Workspaces: store.Workspaces,
 		Hosts: promptHosts(svc.Hosts, svc.SSH, store.Hosts.Names), BaseURL: cfg.URL,
 		RunTokens: a.Guard.RunTokens, MCPURL: func() string { return MCPURL(a.Addr()) },
 	}

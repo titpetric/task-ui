@@ -11,8 +11,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/titpetric/task-ui/integration/claude"
+	"github.com/titpetric/task-ui/internal/claudesession"
 )
 
 // errNoToken refuses a command whose environment has no Claude Code token.
@@ -40,6 +42,9 @@ func (a *Agent) signedIn() bool {
 // environ returns a.Env with IS_SANDBOX=1 and the flag that reads the CLAUDE.md of every added directory.
 func (a *Agent) environ() []string {
 	env := append(append([]string{}, a.Env...), "IS_SANDBOX=1")
+	if config := a.getenv("TASK_UI_CLAUDE_CONFIG"); config != "" {
+		env = append(env, "CLAUDE_CONFIG_DIR="+config)
+	}
 	if a.getenv("TASK_UI_HOME") != "" {
 		env = append(env, "CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1")
 	}
@@ -85,6 +90,18 @@ func (a *Agent) claudePath() (string, error) {
 	return "", errors.New("claude: not found in PATH")
 }
 
+// sessionArgs returns the flags that name or resume the run's Claude conversation, none without one.
+func (a *Agent) sessionArgs() []string {
+	session := a.getenv("TASK_UI_CLAUDE_SESSION")
+	if session == "" {
+		return nil
+	}
+	if a.getenv("TASK_UI_CLAUDE_RESUME") != "" {
+		return []string{"--resume", claudesession.UUID(session)}
+	}
+	return []string{"--session-id", claudesession.UUID(session)}
+}
+
 // ask runs claude -p on prompt in dir, streams its work to a.Stdout and writes the final answer to out.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if !a.signedIn() {
@@ -95,6 +112,7 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 		return err
 	}
 	args := append([]string{"-p", "--dangerously-skip-permissions", "--output-format", "stream-json", "--verbose"}, a.homeArgs(dir)...)
+	args = append(args, a.sessionArgs()...)
 	if config := a.getenv("TASK_UI_MCP_CONFIG"); config != "" {
 		args = append(args, "--mcp-config", config)
 	}
@@ -109,29 +127,85 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 	if err != nil {
 		return err
 	}
-	if err := cmd.Start(); err != nil {
+	transcript, err := openTranscript(a.getenv("TASK_UI_TRANSCRIPT"))
+	if err != nil {
 		return err
 	}
-	streamClaude(pipe, a.Stdout, out)
-	return cmd.Wait()
+	defer transcript.close()
+	if config := a.getenv("TASK_UI_CLAUDE_CONFIG"); config != "" {
+		if err := os.MkdirAll(config, 0o700); err != nil {
+			return err
+		}
+	}
+	if err := cmd.Start(); err != nil {
+		transcript.error(err.Error())
+		_ = claudesession.Remove(a.getenv("TASK_UI_CLAUDE_CONFIG"))
+		return err
+	}
+	transcript.status("Starting", "starting")
+	streamClaudeTo(pipe, a.Stdout, out, transcript)
+	err = cmd.Wait()
+	if err != nil {
+		transcript.error(err.Error())
+	}
+	// A killed run keeps its session for the restart to resume; any other exit is done with it.
+	if !killed(err) {
+		_ = claudesession.Remove(a.getenv("TASK_UI_CLAUDE_CONFIG"))
+	}
+	return err
+}
+
+// killed reports a process that ended by a signal rather than of its own.
+func killed(err error) bool {
+	var exit *exec.ExitError
+	if !errors.As(err, &exit) {
+		return false
+	}
+	status, ok := exit.Sys().(syscall.WaitStatus)
+	return ok && status.Signaled()
+}
+
+// claudeBlock is one content block of a stream-json message: what Claude says, thinks, calls and reads back.
+type claudeBlock struct {
+	Type      string          `json:"type"`
+	Text      string          `json:"text"`
+	Thinking  string          `json:"thinking"`
+	Name      string          `json:"name"`
+	ID        string          `json:"id"`
+	Input     json.RawMessage `json:"input"`
+	ToolUseID string          `json:"tool_use_id"`
+	Content   json.RawMessage `json:"content"`
+	IsError   bool            `json:"is_error"`
 }
 
 // claudeEvent is the part of a stream-json line the run reads: what Claude writes, does and answers.
 type claudeEvent struct {
 	Type    string `json:"type"`
+	Subtype string `json:"subtype"`
 	Message struct {
-		Content []struct {
-			Type  string          `json:"type"`
-			Text  string          `json:"text"`
-			Name  string          `json:"name"`
-			Input json.RawMessage `json:"input"`
-		} `json:"content"`
+		ID      string        `json:"id"`
+		Content []claudeBlock `json:"content"`
 	} `json:"message"`
-	Result string `json:"result"`
+	Result     string   `json:"result"`
+	IsError    bool     `json:"is_error"`
+	DurationMS int64    `json:"duration_ms"`
+	NumTurns   int      `json:"num_turns"`
+	Model      string   `json:"model"`
+	Cwd        string   `json:"cwd"`
+	SessionID  string   `json:"session_id"`
+	Tools      []string `json:"tools"`
+	MCPServers []struct {
+		Name string `json:"name"`
+	} `json:"mcp_servers"`
 }
 
 // streamClaude writes each message and tool Claude writes to progress, and the run's answer to answer.
 func streamClaude(r io.Reader, progress, answer io.Writer) {
+	streamClaudeTo(r, progress, answer, nil)
+}
+
+// streamClaudeTo is streamClaude, with the transcript the thread reads beside it.
+func streamClaudeTo(r io.Reader, progress, answer io.Writer, transcript *transcript) {
 	if answer == nil {
 		answer = io.Discard
 	}
@@ -145,23 +219,49 @@ func streamClaude(r io.Reader, progress, answer io.Writer) {
 			fmt.Fprintln(progress, string(line))
 			continue
 		}
-		if event.Type == "assistant" {
-			for _, block := range event.Message.Content {
-				if block.Type == "text" && strings.TrimSpace(block.Text) != "" {
-					fmt.Fprintln(progress, block.Text)
-					said = true
-				}
-				if block.Type == "tool_use" {
-					fmt.Fprintln(progress, toolLine(block.Name, block.Input))
+		switch event.Type {
+		case "system":
+			if event.Subtype == "init" {
+				transcript.system(event)
+			}
+		case "assistant":
+			for block, content := range event.Message.Content {
+				switch content.Type {
+				case "text":
+					if strings.TrimSpace(content.Text) != "" {
+						fmt.Fprintln(progress, content.Text)
+						said = true
+						transcript.text(content.Text, event.Message.ID, block)
+					}
+				case "thinking":
+					transcript.thinking(content.Thinking)
+				case "tool_use":
+					fmt.Fprintln(progress, toolLine(content.Name, content.Input))
+					transcript.toolUse(content.Name, content.ID, content.Input)
+					transcript.status("Running "+content.Name, "tool")
 				}
 			}
-		}
-		if event.Type == "result" && event.Result != "" {
-			fmt.Fprintln(answer, event.Result)
-			if !said {
-				fmt.Fprintln(progress, event.Result)
+		case "user":
+			for _, content := range event.Message.Content {
+				if content.Type != "tool_result" {
+					continue
+				}
+				transcript.toolResult(content.ToolUseID, toolResultText(content.Content), content.IsError)
+				transcript.status("Reading result", "result")
 			}
+		case "result":
+			if event.Result != "" {
+				fmt.Fprintln(answer, event.Result)
+				if !said {
+					fmt.Fprintln(progress, event.Result)
+				}
+			}
+			transcript.result(event)
+			transcript.status("Finished", "done")
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		transcript.error(err.Error())
 	}
 }
 

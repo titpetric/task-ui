@@ -695,6 +695,11 @@
       key: MUL
       comment: About Workflow Run ID
       datatype: char(26)
+    - name: agent
+      type: text
+      key: MUL
+      comment: Agent
+      datatype: varchar
     - name: area
       type: text
       comment: Area
@@ -703,6 +708,11 @@
       type: timestamp
       comment: Edited At
       datatype: datetime
+    - name: origin
+      type: text
+      key: MUL
+      comment: Origin
+      datatype: varchar
     - name: deleted_at
       type: timestamp
       key: MUL
@@ -738,6 +748,9 @@
     - name: idx_note_about_workflow_run
       columns:
         - about_workflow_run_id
+    - name: idx_note_agent
+      columns:
+        - agent
     - name: idx_note_channel
       columns:
         - channel
@@ -745,6 +758,9 @@
     - name: idx_note_deleted
       columns:
         - deleted_at
+    - name: idx_note_origin
+      columns:
+        - origin
     - name: idx_note_parent
       columns:
         - parent_id
@@ -755,6 +771,82 @@
       columns:
         - workspace_id
         - dir
+- name: note_event
+  comment: Note Event
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: note_id
+      type: text
+      key: MUL
+      comment: Note ID
+      datatype: char(26)
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: question_id
+      type: text
+      key: MUL
+      comment: Question ID
+      datatype: char(26)
+    - name: seq
+      type: integer
+      key: MUL
+      comment: Seq
+      datatype: bigint
+      size: 8
+    - name: kind
+      type: TEXT
+      comment: Kind
+      datatype: varchar
+      values:
+        - error
+        - result
+        - status
+        - system
+        - text
+        - thinking
+        - tool_result
+        - tool_use
+    - name: tool_id
+      type: text
+      key: MUL
+      comment: Tool ID
+      datatype: varchar
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+    - name: data
+      type: text
+      comment: Data
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_note_event_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_note_event_thread
+      columns:
+        - note_id
+        - question_id
+        - run_id
+        - seq
+    - name: uidx_note_event_seq
+      columns:
+        - run_id
+        - seq
+      unique: true
 - name: note_participant
   comment: Note Participant
   columns:
@@ -1254,6 +1346,10 @@
       type: text
       comment: Parent Kind
       datatype: varchar
+    - name: claude_session
+      type: text
+      comment: Claude Session
+      datatype: char(26)
   indexes:
     - name: sqlite_autoindex_run_1
       columns:

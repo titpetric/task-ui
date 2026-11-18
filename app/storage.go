@@ -29,6 +29,7 @@ type AppStorage struct {
 	Modules      *storage.ModuleStorage
 	Sidebar      *storage.SidebarStorage
 	Notes        *storage.NoteStorage
+	NoteEvents   *storage.NoteEventStorage
 	Search       *storage.SearchStorage
 	Chats        *storage.ChatStorage
 	Pins         *storage.PinStorage
@@ -67,6 +68,7 @@ func NewAppStorage(db storage.DB) *AppStorage {
 		Modules:      storage.NewModuleStorage(db),
 		Sidebar:      storage.NewSidebarStorage(db),
 		Notes:        storage.NewNoteStorage(db),
+		NoteEvents:   storage.NewNoteEventStorage(db),
 		Search:       storage.NewSearchStorage(db),
 		Chats:        storage.NewChatStorage(db),
 		Pins:         storage.NewPinStorage(db),

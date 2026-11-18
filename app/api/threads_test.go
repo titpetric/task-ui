@@ -37,6 +37,8 @@ func TestThreadHandlers(t *testing.T) {
 		_ = (*Handlers).postThread
 		_ = (*Handlers).listThreads
 		_ = (*Handlers).getThread
+		_ = (*Handlers).setThreadAgent
+		_ = (*Handlers).threadVisible
 		_ = (*Handlers).readThread
 		_ = (*Handlers).threadAudio
 		_ = (*Handlers).chatArtifactAllowed

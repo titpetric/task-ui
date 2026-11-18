@@ -90,7 +90,7 @@ func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutR
 	// The thread's run changes the note it holds; the caller gets it as
 	// asked.
 	asked := *note
-	b.dispatchPrompt(thread, req, nil)
+	b.dispatchPrompt(thread, note, req, nil)
 	return &asked, nil
 }
 
@@ -106,22 +106,22 @@ func (b *Board) reask(ctx context.Context, note *model.Note) {
 		b.finish(ctx, note, model.NoteFailed, "The prompt did not start: "+err.Error(), nil)
 		return
 	}
-	b.dispatchPrompt(note, req, nil)
+	b.dispatchPrompt(note, note, req, nil)
 }
 
 // dispatchPrompt starts the prompt job on a prompt's thread, in the
 // background, and replies with Claude's answer when the run ends: in a
 // new reply, or in again, the reply to rewrite, from the thread before
 // it.
-func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *model.Note) {
-	req, answer, cleanup, ok := b.promptEnv(note, req, again)
+func (b *Board) dispatchPrompt(thread, question *model.Note, req runner.Request, again *model.Note) {
+	req, answer, cleanup, ok := b.promptEnv(thread, req, again)
 	if !ok {
 		return
 	}
 	go func() {
 		defer cleanup()
 		req.Env = append(req.Env, b.hosts(context.Background())...)
-		b.run(context.Background(), note, req, answer, "The prompt", again)
+		b.run(context.Background(), thread, question, req, answer, "The prompt", again)
 	}()
 }
 
@@ -136,6 +136,9 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *mode
 // A run it cannot describe, or a reply file it cannot make, fails the note, and promptEnv returns false.
 func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Note) (runner.Request, string, func(), bool) {
 	ctx := context.Background()
+	if req.ClaudeSession == "" && !req.Resume {
+		req.ClaudeSession = model.NewID()
+	}
 	answer, err := replyFile()
 	if err != nil {
 		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error(), again)

@@ -92,7 +92,7 @@ func (b *Board) TriageRun(stop context.Context, user *model.User, runID string) 
 	}
 	defer cleanup()
 	req.Env = append(req.Env, b.hosts(ctx)...)
-	answered := b.run(stop, thread, req, answer, "The triage", nil)
+	answered := b.run(stop, thread, thread, req, answer, "The triage", nil)
 	if stop.Err() != nil {
 		return nil, "", stop.Err()
 	}

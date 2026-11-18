@@ -274,6 +274,11 @@ func (c *Config) RecordingsDir() string {
 	return filepath.Join(c.DataDir, "recordings")
 }
 
+// ClaudeDir is where each live Claude Code session keeps its transcript, one directory per prompt run.
+func (c *Config) ClaudeDir() string {
+	return filepath.Join(c.DataDir, "claude")
+}
+
 // ArtifactTree is the tree every run's artifacts go into, a git repository.
 func (c *Config) ArtifactTree() string {
 	return filepath.Join(c.ArtifactsDir(), "tree")

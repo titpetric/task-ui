@@ -142,7 +142,21 @@
 <?php }?></div>
 
 
-<ol class="talk" data-notes<?php if($_v['data']['chat_thread']){?>
+<?php if($_v['data']['pick_agent']){?>
+<form class="agent-pick" data-agent-form data-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+">
+	<label class="faint" for="thread-agent">Agent</label>
+	<select id="thread-agent" name="agent">
+<?php if(!empty($_v['data']['agent_names']))foreach($_v['data']['agent_names'] as $_v['name']){?>		<option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+"<?php if($_v['name'] == $_v['data']['agent']){?>
+ selected<?php }?>><?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+</option>
+<?php }?>	</select>
+	<button class="btn" type="submit">Save</button>
+</form><?php }?>
+
+<ol class="talk" data-notes data-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+"<?php if($_v['data']['chat_thread']){?>
  data-chat-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
 "<?php }?>>
 <?php if(!empty($_v['data']['messages']))foreach($_v['data']['messages'] as $_v['message']){?>	<li class="said<?php if($_v['message']['mine']){?>
@@ -178,7 +192,38 @@
 <?php }?>		</header>
 		<div class="said-body prose"><?php echo $_v['message']['body'];?>
 </div>
-<?php if($_v['message']['audio']){?>
+<?php if($_v['message']['work']){?>
+		<div class="work">
+<?php if(!empty($_v['message']['work']))foreach($_v['message']['work'] as $_v['run']){?>			<div class="work-run" data-run="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
+">
+<?php if(!empty($_v['run']['events']))foreach($_v['run']['events'] as $_v['event']){?><?php if($_v['event']['kind'] == 'status'){?>
+				<div class="work-status"><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
+</div>
+<?php }elseif($_v['event']['kind'] == 'text' || $_v['event']['kind'] == 'result'){?>
+				<div class="work-text prose"><?php echo $_v['event']['prose'];?>
+</div>
+<?php }elseif($_v['event']['kind'] == 'thinking'){?>
+				<details class="work-thinking"><summary>Thinking</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
+</pre></details>
+<?php }elseif($_v['event']['kind'] == 'tool_use'){?>
+				<details class="work-tool"><summary><code><?php echo htmlspecialchars($_v['event']['tool'], ENT_QUOTES);?>
+</code></summary><pre><?php echo htmlspecialchars($_v['event']['input'], ENT_QUOTES);?>
+</pre></details>
+<?php }elseif($_v['event']['kind'] == 'tool_result'){?>
+				<details class="work-result<?php if($_v['event']['error']){?>
+ error<?php }?>"><summary><?php if($_v['event']['error']){?>
+Error<?php }else{?>
+Result<?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
+</pre></details>
+<?php }elseif($_v['event']['kind'] == 'system'){?>
+				<details class="work-system"><summary>Session</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
+</pre></details>
+<?php }elseif($_v['event']['kind'] == 'error'){?>
+				<div class="work-error"><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
+</div>
+<?php } }?>			</div>
+<?php }?>		</div>
+<?php }?><?php if($_v['message']['audio']){?>
 		<audio class="said-audio" controls preload="none" src="<?php echo htmlspecialchars($_v['message']['audio'], ENT_QUOTES);?>
 "></audio>
 <?php }?>

@@ -10,6 +10,7 @@ import (
 
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/artifacts"
+	"github.com/titpetric/task-ui/feature/note"
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
@@ -100,17 +101,95 @@ func (h *Handlers) listThreads(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// getThread returns a chat thread with its messages.
+// getThread returns a chat with its messages, or a prompt or note with its work.
 func (h *Handlers) getThread(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "note/view") || !h.board(w) {
+	if !h.board(w) {
 		return
 	}
-	thread, messages, peer, unread, err := h.opts.Board.ChatThread(r.Context(), access.UserFrom(r.Context()), param(r, "id"))
+	id := param(r, "id")
+	thread, err := h.opts.Board.Notes.Get(r.Context(), id)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	if thread.Channel != model.ChannelChat {
+		if !h.threadVisible(r, thread) {
+			failErr(w, storage.ErrNotFound)
+			return
+		}
+		conversation, err := h.opts.Board.Conversation(r.Context(), id)
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, conversation)
+		return
+	}
+	if !h.require(w, r, "note/view") {
+		return
+	}
+	thread, messages, peer, unread, err := h.opts.Board.ChatThread(r.Context(), access.UserFrom(r.Context()), id)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"thread": thread, "with": peer, "unread": unread, "messages": messages})
+}
+
+// setThreadAgent changes the agent a thread's runs answer as.
+func (h *Handlers) setThreadAgent(w http.ResponseWriter, r *http.Request) {
+	if !h.board(w) {
+		return
+	}
+	id := param(r, "id")
+	thread, err := h.opts.Board.Notes.Get(r.Context(), id)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	if thread.ParentID != "" || thread.Channel == model.ChannelChat || !h.threadVisible(r, thread) {
+		failErr(w, storage.ErrNotFound)
+		return
+	}
+	user := access.UserFrom(r.Context())
+	if thread.UserName != user.Name && !user.CanAdmin() {
+		fail(w, http.StatusForbidden, "only the thread's author or an admin picks its agent")
+		return
+	}
+	if thread.State == model.NoteWorking {
+		fail(w, http.StatusConflict, "the thread is working")
+		return
+	}
+	var req struct {
+		Agent string `json:"agent"`
+	}
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	agent := strings.TrimSpace(req.Agent)
+	if agent == "" {
+		fail(w, http.StatusBadRequest, "the thread needs an agent")
+		return
+	}
+	if h.opts.Board.Users == nil {
+		fail(w, http.StatusBadRequest, "no agent "+agent)
+		return
+	}
+	named, err := h.opts.Board.Users.GetByName(r.Context(), agent)
+	if err != nil || !named.AgentReply || !named.Mcp {
+		fail(w, http.StatusBadRequest, "no agent "+agent)
+		return
+	}
+	if err := h.opts.Board.Notes.SetAgent(r.Context(), id, agent); err != nil {
+		failErr(w, err)
+		return
+	}
+	thread.Agent = agent
+	if h.opts.Events != nil {
+		h.opts.Events.Publish(note.ThreadTopic(id), "note", *thread)
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"agent": agent})
 }
 
 // readThread moves the user's read marker in a chat thread to now.

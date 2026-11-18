@@ -868,11 +868,17 @@ type Note struct {
 	// About Workflow Run ID
 	AboutWorkflowRunID string `db:"about_workflow_run_id" json:"about_workflow_run_id"`
 
+	// Agent
+	Agent string `db:"agent" json:"agent"`
+
 	// Area
 	Area string `db:"area" json:"area"`
 
 	// Edited At
 	EditedAt *time.Time `db:"edited_at" json:"edited_at"`
+
+	// Origin
+	Origin string `db:"origin" json:"origin"`
 
 	// Deleted At
 	DeletedAt *time.Time `db:"deleted_at" json:"deleted_at"`
@@ -968,6 +974,12 @@ func (n *Note) GetAboutWorkflowRunID() string { return n.AboutWorkflowRunID }
 // SetAboutWorkflowRunID sets AboutWorkflowRunID to the provided value.
 func (n *Note) SetAboutWorkflowRunID(val string) { n.AboutWorkflowRunID = val }
 
+// GetAgent will return the value of Agent.
+func (n *Note) GetAgent() string { return n.Agent }
+
+// SetAgent sets Agent to the provided value.
+func (n *Note) SetAgent(val string) { n.Agent = val }
+
 // GetArea will return the value of Area.
 func (n *Note) GetArea() string { return n.Area }
 
@@ -979,6 +991,12 @@ func (n *Note) GetEditedAt() *time.Time { return n.EditedAt }
 
 // SetEditedAt sets EditedAt to the provided value.
 func (n *Note) SetEditedAt(stamp time.Time) { n.EditedAt = &stamp }
+
+// GetOrigin will return the value of Origin.
+func (n *Note) GetOrigin() string { return n.Origin }
+
+// SetOrigin sets Origin to the provided value.
+func (n *Note) SetOrigin(val string) { n.Origin = val }
 
 // GetDeletedAt will return the value of DeletedAt.
 func (n *Note) GetDeletedAt() *time.Time { return n.DeletedAt }
@@ -1014,10 +1032,114 @@ func (n *Note) SetDir(val string) { n.Dir = val }
 const NoteTable = "`note`"
 
 // NoteFields is a list of all columns in the DB table.
-var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "area", "edited_at", "deleted_at", "audio_path", "spoken", "workspace_id", "dir"}
+var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "agent", "area", "edited_at", "origin", "deleted_at", "audio_path", "spoken", "workspace_id", "dir"}
 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}
+
+// NoteEvent generated for db table `note_event`.
+//
+// Note Event.
+type NoteEvent struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Note ID
+	NoteID string `db:"note_id" json:"note_id"`
+
+	// Run ID
+	RunID string `db:"run_id" json:"run_id"`
+
+	// Question ID
+	QuestionID string `db:"question_id" json:"question_id"`
+
+	// Seq
+	Seq int64 `db:"seq" json:"seq"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Tool ID
+	ToolID string `db:"tool_id" json:"tool_id"`
+
+	// Body
+	Body string `db:"body" json:"body"`
+
+	// Data
+	Data string `db:"data" json:"data"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (n *NoteEvent) GetID() string { return n.ID }
+
+// SetID sets ID to the provided value.
+func (n *NoteEvent) SetID(val string) { n.ID = val }
+
+// GetNoteID will return the value of NoteID.
+func (n *NoteEvent) GetNoteID() string { return n.NoteID }
+
+// SetNoteID sets NoteID to the provided value.
+func (n *NoteEvent) SetNoteID(val string) { n.NoteID = val }
+
+// GetRunID will return the value of RunID.
+func (n *NoteEvent) GetRunID() string { return n.RunID }
+
+// SetRunID sets RunID to the provided value.
+func (n *NoteEvent) SetRunID(val string) { n.RunID = val }
+
+// GetQuestionID will return the value of QuestionID.
+func (n *NoteEvent) GetQuestionID() string { return n.QuestionID }
+
+// SetQuestionID sets QuestionID to the provided value.
+func (n *NoteEvent) SetQuestionID(val string) { n.QuestionID = val }
+
+// GetSeq will return the value of Seq.
+func (n *NoteEvent) GetSeq() int64 { return n.Seq }
+
+// SetSeq sets Seq to the provided value.
+func (n *NoteEvent) SetSeq(val int64) { n.Seq = val }
+
+// GetKind will return the value of Kind.
+func (n *NoteEvent) GetKind() string { return n.Kind }
+
+// SetKind sets Kind to the provided value.
+func (n *NoteEvent) SetKind(val string) { n.Kind = val }
+
+// GetToolID will return the value of ToolID.
+func (n *NoteEvent) GetToolID() string { return n.ToolID }
+
+// SetToolID sets ToolID to the provided value.
+func (n *NoteEvent) SetToolID(val string) { n.ToolID = val }
+
+// GetBody will return the value of Body.
+func (n *NoteEvent) GetBody() string { return n.Body }
+
+// SetBody sets Body to the provided value.
+func (n *NoteEvent) SetBody(val string) { n.Body = val }
+
+// GetData will return the value of Data.
+func (n *NoteEvent) GetData() string { return n.Data }
+
+// SetData sets Data to the provided value.
+func (n *NoteEvent) SetData(val string) { n.Data = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (n *NoteEvent) GetCreatedAt() *time.Time { return n.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (n *NoteEvent) SetCreatedAt(stamp time.Time) { n.CreatedAt = &stamp }
+
+// NoteEventTable is the name of the table in the DB.
+const NoteEventTable = "`note_event`"
+
+// NoteEventFields is a list of all columns in the DB table.
+var NoteEventFields = []string{"id", "note_id", "run_id", "question_id", "seq", "kind", "tool_id", "body", "data", "created_at"}
+
+// NoteEventPrimaryFields are the primary key fields in the DB table.
+var NoteEventPrimaryFields = []string{"id"}
 
 // NoteParticipant generated for db table `note_participant`.
 //
@@ -1716,6 +1838,9 @@ type Run struct {
 
 	// Parent Kind
 	ParentKind string `db:"parent_kind" json:"parent_kind"`
+
+	// Claude Session
+	ClaudeSession string `db:"claude_session" json:"claude_session"`
 }
 
 // GetID will return the value of ID.
@@ -1868,11 +1993,17 @@ func (r *Run) GetParentKind() string { return r.ParentKind }
 // SetParentKind sets ParentKind to the provided value.
 func (r *Run) SetParentKind(val string) { r.ParentKind = val }
 
+// GetClaudeSession will return the value of ClaudeSession.
+func (r *Run) GetClaudeSession() string { return r.ClaudeSession }
+
+// SetClaudeSession sets ClaudeSession to the provided value.
+func (r *Run) SetClaudeSession(val string) { r.ClaudeSession = val }
+
 // RunTable is the name of the table in the DB.
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message", "title", "parent_id", "parent_kind"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message", "title", "parent_id", "parent_kind", "claude_session"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}
@@ -2044,6 +2175,12 @@ func (s *Schedule) GetUpdatedAt() *time.Time { return s.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (s *Schedule) SetUpdatedAt(stamp time.Time) { s.UpdatedAt = &stamp }
 
+// GetSource will return the value of Source.
+func (s *Schedule) GetSource() string { return s.Source }
+
+// SetSource sets Source to the provided value.
+func (s *Schedule) SetSource(val string) { s.Source = val }
+
 // GetTarget will return the value of Target.
 func (s *Schedule) GetTarget() string { return s.Target }
 
@@ -2072,10 +2209,286 @@ func (s *Schedule) SetWorkflowID(val string) { s.WorkflowID = val }
 const ScheduleTable = "`schedule`"
 
 // ScheduleFields is a list of all columns in the DB table.
-var ScheduleFields = []string{"id", "folder", "job", "user_id", "user_name", "expression", "enabled", "last_run_at", "next_run_at", "created_at", "updated_at", "target", "args", "triage", "workflow_id"}
+var ScheduleFields = []string{"id", "folder", "job", "user_id", "user_name", "expression", "enabled", "last_run_at", "next_run_at", "created_at", "updated_at", "source", "target", "args", "triage", "workflow_id"}
 
 // SchedulePrimaryFields are the primary key fields in the DB table.
 var SchedulePrimaryFields = []string{"id"}
+
+// SearchDocument generated for db table `search_document`.
+//
+// Search Document.
+type SearchDocument struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Path
+	Path string `db:"path" json:"path"`
+
+	// File
+	File string `db:"file" json:"file"`
+
+	// Folder ID
+	FolderID string `db:"folder_id" json:"folder_id"`
+
+	// Workspace
+	Workspace string `db:"workspace" json:"workspace"`
+
+	// Project
+	Project string `db:"project" json:"project"`
+
+	// Target
+	Target string `db:"target" json:"target"`
+
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Dir
+	Dir string `db:"dir" json:"dir"`
+
+	// Title
+	Title string `db:"title" json:"title"`
+
+	// Hash
+	Hash string `db:"hash" json:"hash"`
+
+	// Size
+	Size int64 `db:"size" json:"size"`
+
+	// Modified At
+	ModifiedAt *time.Time `db:"modified_at" json:"modified_at"`
+
+	// Indexed At
+	IndexedAt *time.Time `db:"indexed_at" json:"indexed_at"`
+}
+
+// GetID will return the value of ID.
+func (s *SearchDocument) GetID() string { return s.ID }
+
+// SetID sets ID to the provided value.
+func (s *SearchDocument) SetID(val string) { s.ID = val }
+
+// GetKind will return the value of Kind.
+func (s *SearchDocument) GetKind() string { return s.Kind }
+
+// SetKind sets Kind to the provided value.
+func (s *SearchDocument) SetKind(val string) { s.Kind = val }
+
+// GetPath will return the value of Path.
+func (s *SearchDocument) GetPath() string { return s.Path }
+
+// SetPath sets Path to the provided value.
+func (s *SearchDocument) SetPath(val string) { s.Path = val }
+
+// GetFile will return the value of File.
+func (s *SearchDocument) GetFile() string { return s.File }
+
+// SetFile sets File to the provided value.
+func (s *SearchDocument) SetFile(val string) { s.File = val }
+
+// GetFolderID will return the value of FolderID.
+func (s *SearchDocument) GetFolderID() string { return s.FolderID }
+
+// SetFolderID sets FolderID to the provided value.
+func (s *SearchDocument) SetFolderID(val string) { s.FolderID = val }
+
+// GetWorkspace will return the value of Workspace.
+func (s *SearchDocument) GetWorkspace() string { return s.Workspace }
+
+// SetWorkspace sets Workspace to the provided value.
+func (s *SearchDocument) SetWorkspace(val string) { s.Workspace = val }
+
+// GetProject will return the value of Project.
+func (s *SearchDocument) GetProject() string { return s.Project }
+
+// SetProject sets Project to the provided value.
+func (s *SearchDocument) SetProject(val string) { s.Project = val }
+
+// GetTarget will return the value of Target.
+func (s *SearchDocument) GetTarget() string { return s.Target }
+
+// SetTarget sets Target to the provided value.
+func (s *SearchDocument) SetTarget(val string) { s.Target = val }
+
+// GetName will return the value of Name.
+func (s *SearchDocument) GetName() string { return s.Name }
+
+// SetName sets Name to the provided value.
+func (s *SearchDocument) SetName(val string) { s.Name = val }
+
+// GetDir will return the value of Dir.
+func (s *SearchDocument) GetDir() string { return s.Dir }
+
+// SetDir sets Dir to the provided value.
+func (s *SearchDocument) SetDir(val string) { s.Dir = val }
+
+// GetTitle will return the value of Title.
+func (s *SearchDocument) GetTitle() string { return s.Title }
+
+// SetTitle sets Title to the provided value.
+func (s *SearchDocument) SetTitle(val string) { s.Title = val }
+
+// GetHash will return the value of Hash.
+func (s *SearchDocument) GetHash() string { return s.Hash }
+
+// SetHash sets Hash to the provided value.
+func (s *SearchDocument) SetHash(val string) { s.Hash = val }
+
+// GetSize will return the value of Size.
+func (s *SearchDocument) GetSize() int64 { return s.Size }
+
+// SetSize sets Size to the provided value.
+func (s *SearchDocument) SetSize(val int64) { s.Size = val }
+
+// GetModifiedAt will return the value of ModifiedAt.
+func (s *SearchDocument) GetModifiedAt() *time.Time { return s.ModifiedAt }
+
+// SetModifiedAt sets ModifiedAt to the provided value.
+func (s *SearchDocument) SetModifiedAt(stamp time.Time) { s.ModifiedAt = &stamp }
+
+// GetIndexedAt will return the value of IndexedAt.
+func (s *SearchDocument) GetIndexedAt() *time.Time { return s.IndexedAt }
+
+// SetIndexedAt sets IndexedAt to the provided value.
+func (s *SearchDocument) SetIndexedAt(stamp time.Time) { s.IndexedAt = &stamp }
+
+// SearchDocumentTable is the name of the table in the DB.
+const SearchDocumentTable = "`search_document`"
+
+// SearchDocumentFields is a list of all columns in the DB table.
+var SearchDocumentFields = []string{"id", "kind", "path", "file", "folder_id", "workspace", "project", "target", "name", "dir", "title", "hash", "size", "modified_at", "indexed_at"}
+
+// SearchDocumentPrimaryFields are the primary key fields in the DB table.
+var SearchDocumentPrimaryFields = []string{"id"}
+
+// SearchSection generated for db table `search_section`.
+//
+// Search Section.
+type SearchSection struct {
+	// Document ID
+	DocumentID string `db:"document_id" json:"document_id"`
+
+	// Ordinal
+	Ordinal int64 `db:"ordinal" json:"ordinal"`
+
+	// Level
+	Level int64 `db:"level" json:"level"`
+
+	// Heading
+	Heading string `db:"heading" json:"heading"`
+
+	// Breadcrumb
+	Breadcrumb string `db:"breadcrumb" json:"breadcrumb"`
+
+	// Line
+	Line int64 `db:"line" json:"line"`
+
+	// Body
+	Body string `db:"body" json:"body"`
+}
+
+// GetDocumentID will return the value of DocumentID.
+func (s *SearchSection) GetDocumentID() string { return s.DocumentID }
+
+// SetDocumentID sets DocumentID to the provided value.
+func (s *SearchSection) SetDocumentID(val string) { s.DocumentID = val }
+
+// GetOrdinal will return the value of Ordinal.
+func (s *SearchSection) GetOrdinal() int64 { return s.Ordinal }
+
+// SetOrdinal sets Ordinal to the provided value.
+func (s *SearchSection) SetOrdinal(val int64) { s.Ordinal = val }
+
+// GetLevel will return the value of Level.
+func (s *SearchSection) GetLevel() int64 { return s.Level }
+
+// SetLevel sets Level to the provided value.
+func (s *SearchSection) SetLevel(val int64) { s.Level = val }
+
+// GetHeading will return the value of Heading.
+func (s *SearchSection) GetHeading() string { return s.Heading }
+
+// SetHeading sets Heading to the provided value.
+func (s *SearchSection) SetHeading(val string) { s.Heading = val }
+
+// GetBreadcrumb will return the value of Breadcrumb.
+func (s *SearchSection) GetBreadcrumb() string { return s.Breadcrumb }
+
+// SetBreadcrumb sets Breadcrumb to the provided value.
+func (s *SearchSection) SetBreadcrumb(val string) { s.Breadcrumb = val }
+
+// GetLine will return the value of Line.
+func (s *SearchSection) GetLine() int64 { return s.Line }
+
+// SetLine sets Line to the provided value.
+func (s *SearchSection) SetLine(val int64) { s.Line = val }
+
+// GetBody will return the value of Body.
+func (s *SearchSection) GetBody() string { return s.Body }
+
+// SetBody sets Body to the provided value.
+func (s *SearchSection) SetBody(val string) { s.Body = val }
+
+// SearchSectionTable is the name of the table in the DB.
+const SearchSectionTable = "`search_section`"
+
+// SearchSectionFields is a list of all columns in the DB table.
+var SearchSectionFields = []string{"document_id", "ordinal", "level", "heading", "breadcrumb", "line", "body"}
+
+// SearchSectionPrimaryFields are the primary key fields in the DB table.
+var SearchSectionPrimaryFields = []string{"document_id", "ordinal"}
+
+// SearchTerm generated for db table `search_term`.
+//
+// Search Term.
+type SearchTerm struct {
+	// Document ID
+	DocumentID string `db:"document_id" json:"document_id"`
+
+	// Ordinal
+	Ordinal int64 `db:"ordinal" json:"ordinal"`
+
+	// Term
+	Term string `db:"term" json:"term"`
+
+	// Weight
+	Weight int64 `db:"weight" json:"weight"`
+}
+
+// GetDocumentID will return the value of DocumentID.
+func (s *SearchTerm) GetDocumentID() string { return s.DocumentID }
+
+// SetDocumentID sets DocumentID to the provided value.
+func (s *SearchTerm) SetDocumentID(val string) { s.DocumentID = val }
+
+// GetOrdinal will return the value of Ordinal.
+func (s *SearchTerm) GetOrdinal() int64 { return s.Ordinal }
+
+// SetOrdinal sets Ordinal to the provided value.
+func (s *SearchTerm) SetOrdinal(val int64) { s.Ordinal = val }
+
+// GetTerm will return the value of Term.
+func (s *SearchTerm) GetTerm() string { return s.Term }
+
+// SetTerm sets Term to the provided value.
+func (s *SearchTerm) SetTerm(val string) { s.Term = val }
+
+// GetWeight will return the value of Weight.
+func (s *SearchTerm) GetWeight() int64 { return s.Weight }
+
+// SetWeight sets Weight to the provided value.
+func (s *SearchTerm) SetWeight(val int64) { s.Weight = val }
+
+// SearchTermTable is the name of the table in the DB.
+const SearchTermTable = "`search_term`"
+
+// SearchTermFields is a list of all columns in the DB table.
+var SearchTermFields = []string{"document_id", "ordinal", "term", "weight"}
+
+// SearchTermPrimaryFields are the primary key fields in the DB table.
+var SearchTermPrimaryFields = []string{"document_id", "ordinal", "term"}
 
 // Secret generated for db table `secret`.
 type Secret struct {
@@ -4303,6 +4716,67 @@ func (n *Note) Delete(opts ...QueryOption) string {
 }
 
 // Insert starts building an INSERT INTO query.
+func (n *NoteEvent) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteEventTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := NoteEventFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (n *NoteEvent) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteEventTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (n *NoteEvent) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteEventTable}).Apply(opts...)
+	cols := NoteEventFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (n *NoteEvent) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteEventTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
 func (n *NoteParticipant) Insert(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: NoteParticipantTable, Statement: "INSERT INTO"}).Apply(opts...)
 	cols := NoteParticipantFields
@@ -4966,6 +5440,189 @@ func (s *Schedule) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (s *Schedule) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: ScheduleTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *SearchDocument) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchDocumentTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SearchDocumentFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *SearchDocument) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchDocumentTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *SearchDocument) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchDocumentTable}).Apply(opts...)
+	cols := SearchDocumentFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *SearchDocument) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchDocumentTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *SearchSection) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchSectionTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SearchSectionFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *SearchSection) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchSectionTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *SearchSection) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchSectionTable}).Apply(opts...)
+	cols := SearchSectionFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *SearchSection) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchSectionTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *SearchTerm) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchTermTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SearchTermFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *SearchTerm) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchTermTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *SearchTerm) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchTermTable}).Apply(opts...)
+	cols := SearchTermFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *SearchTerm) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SearchTermTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

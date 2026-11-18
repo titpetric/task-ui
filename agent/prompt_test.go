@@ -6,6 +6,14 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
+// A resumed prompt names the page its answer lands on, from the file its run came with.
+func TestPromptPage(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "the page", promptPage(&Agent{}))
+	assert.Equal(t, "the run's page", promptPage(&Agent{Env: []string{"TASK_UI_PROMPT_RUN=/tmp/run"}}))
+	assert.Equal(t, "the workflow run's page", promptPage(&Agent{Env: []string{"TASK_UI_PROMPT_RUN=/tmp/run", "TASK_UI_PROMPT_WORKFLOW=/tmp/flow"}}))
+}
+
 // The tooling of TASK_UI_TOOLING reads as the tools the run has and
 // where to ask one for its usage; nothing without tools.
 func TestToolset(t *testing.T) {

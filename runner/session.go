@@ -46,6 +46,10 @@ type Session struct {
 	args []string
 	// timeout kills the run once it runs that long; zero lets it run.
 	timeout time.Duration
+	// resume continues the Claude Code session the run row names.
+	resume bool
+	// transcript is the file the run's Claude writes its events to.
+	transcript string
 	// workspace is the directory of the run's workspace, "" for none, and
 	// workspaceName its folder: internal for the default workspace, the root.
 	// workspaceID is its row's ID, whose keys the run gets; "" without

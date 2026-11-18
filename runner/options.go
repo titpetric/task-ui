@@ -52,6 +52,9 @@ type Options struct {
 	// TASK_UI_HOST_DATA: a job's docker run -v goes to the host's daemon.
 	HostPaths hostpath.Mounts
 	HostData  string
+	// ClaudeDir holds the live Claude Code sessions, a directory per
+	// prompt run. Empty starts no resumable session.
+	ClaudeDir string
 	// Root is where the folders are, and Workspaces the directories under it
 	// whose folder is a namespace: a run of a folder inside one names the
 	// workspace in its environment, and its home project is the run's HOME.

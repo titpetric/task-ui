@@ -5,7 +5,26 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/claudesession"
 )
+
+// A run names its session on the first start and resumes it after a restart; no session takes no flags.
+func TestAgent_sessionArgs(t *testing.T) {
+	t.Parallel()
+	id := "01arz3ndektsv4rrffq69g5fav"
+	fresh := &Agent{Env: []string{"TASK_UI_CLAUDE_SESSION=" + id}}
+	assert.Equal(t, []string{"--session-id", claudesession.UUID(id)}, fresh.sessionArgs())
+	resumed := &Agent{Env: []string{"TASK_UI_CLAUDE_SESSION=" + id, "TASK_UI_CLAUDE_RESUME=1"}}
+	assert.Equal(t, []string{"--resume", claudesession.UUID(id)}, resumed.sessionArgs())
+	assert.Len(t, (&Agent{}).sessionArgs(), 0)
+}
+
+// A run with a session config reads Claude Code's config directory from it.
+func TestAgent_environ(t *testing.T) {
+	t.Parallel()
+	a := &Agent{Env: []string{"TASK_UI_CLAUDE_CONFIG=/data/claude/ana_x"}}
+	assert.Contains(t, a.environ(), "CLAUDE_CONFIG_DIR=/data/claude/ana_x")
+}
 
 // A streamed run writes Claude's text and tools to the terminal and its result to the answer.
 func TestStreamClaude(t *testing.T) {

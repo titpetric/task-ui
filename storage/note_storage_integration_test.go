@@ -294,6 +294,24 @@ func TestNoteStorage_Feed(t *testing.T) {
 	assert.Equal(t, finished.ID, words[0].ID)
 }
 
+// A thread keeps the agent its runs answer as; a reply refuses the change.
+func TestNoteStorage_SetAgent(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+
+	thread := &model.Note{UserName: "ops", Body: "ask", WorkspaceID: "ws1"}
+	assert.NoError(t, notes.Create(ctx, thread))
+	assert.NoError(t, notes.SetAgent(ctx, thread.ID, "consuela"))
+	fresh, err := notes.Get(ctx, thread.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "consuela", fresh.Agent)
+
+	reply := &model.Note{UserName: "ops", Body: "follow", ParentID: thread.ID}
+	assert.NoError(t, notes.Create(ctx, reply))
+	assert.ErrorIs(t, notes.SetAgent(ctx, reply.ID, "claude"), storage.ErrNotFound)
+}
+
 // Every method returns the driver's error.
 func TestNoteStorage_Closed(t *testing.T) {
 	t.Parallel()
@@ -314,6 +332,7 @@ func TestNoteStorage_Closed(t *testing.T) {
 	_, err = notes.Threads(ctx)
 	assert.ErrorContains(t, err, errClosed)
 	assert.ErrorContains(t, notes.SetState(ctx, "n1", model.NoteWorking, "r1"), errClosed)
+	assert.ErrorContains(t, notes.SetAgent(ctx, "n1", "claude"), errClosed)
 	assert.ErrorContains(t, notes.Release(ctx, "n1", model.NoteOpen), errClosed)
 	assert.ErrorContains(t, notes.Answer(ctx, "n1", "hello", "", "r1"), errClosed)
 	assert.ErrorContains(t, notes.Delete(ctx, "n1"), errClosed)

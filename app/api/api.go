@@ -140,6 +140,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/threads", h.listThreads)
 	r.Get("/threads/{id}", h.getThread)
 	r.Post("/threads/{id}/read", h.readThread)
+	r.Post("/threads/{id}/agent", h.setThreadAgent)
 	r.Get("/threads/messages/{id}/audio", h.threadAudio)
 
 	r.Get("/projects", h.listProjects)

@@ -12,6 +12,7 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/orb/recording"
 	"github.com/titpetric/task-ui/integration/claude"
+	"github.com/titpetric/task-ui/internal/folder"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -260,4 +261,45 @@ func cutTail(output string, limit int) (string, bool) {
 		}
 	}
 	return strings.Join(lines, "\n"), cut
+}
+
+// agentJob returns the Notes agent, @claude-note, in the root.
+func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
+	if b.Root == "" {
+		return nil, nil
+	}
+	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
+	return root, b.agentCommand(root.NoteJob(), "note")
+}
+
+// agentCommand returns a Claude job with AgentCommand and its subcommand.
+func (b *Board) agentCommand(job *folder.Job, subcommand string) *folder.Job {
+	if b.AgentCommand != nil {
+		job.Command = append(append([]string{}, b.AgentCommand...), subcommand)
+	}
+	return job
+}
+
+// output returns the last lines of a run's output, from its recording.
+func (b *Board) output(run *model.Run) string {
+	if b.Recordings == nil {
+		return ""
+	}
+	cast, err := b.Recordings.Read(run)
+	if errors.Is(err, recording.ErrExpired) {
+		return recording.Expired
+	}
+	if err != nil {
+		return ""
+	}
+	defer cast.Close()
+	replay, err := runner.ReplayCast(cast)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(strings.TrimRight(replay.Output.Text(), " \n"), "\n")
+	if len(lines) > tail {
+		lines = lines[len(lines)-tail:]
+	}
+	return strings.Join(lines, "\n")
 }

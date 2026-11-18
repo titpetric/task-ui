@@ -26,6 +26,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/titpetric/task-ui/app/model"
@@ -69,10 +70,13 @@ type Board struct {
 	// RunSummaries keep the summaries the Runs page's Summary wrote, a
 	// report of a run without a summary thread; nil leaves them out.
 	RunSummaries *storage.RunSummaryStorage
-	Catalogue    folder.Catalogue
-	Runner       *runner.Manager
-	Recordings   *recording.Store
-	Events       *event.Bus
+	// NoteEvents keeps what Claude did in each run of a thread; nil keeps
+	// no transcript and publishes no live work.
+	NoteEvents *storage.NoteEventStorage
+	Catalogue  folder.Catalogue
+	Runner     *runner.Manager
+	Recordings *recording.Store
+	Events     *event.Bus
 	// AgentCommand is the command the Claude jobs of the board run, a
 	// prompt's and the Notes agent's, their subcommand after it; nil runs
 	// the jobs' own, task-ui agent.
@@ -81,7 +85,10 @@ type Board struct {
 	// the Notes agent run in the default workspace's home. Workspaces
 	// tells a workspace's folder from a project's, for the prompt that
 	// works in a workspace's home; nil knows none.
-	Root       string
+	Root string
+	// ClaudeDir holds the live Claude Code sessions, one directory a
+	// prompt run; nil resumes none and keeps none.
+	ClaudeDir  string
 	Workspaces *storage.WorkspaceStorage
 	// Hosts lists the inventory for a prompt's run, as beszel.Hosts does,
 	// in TASK_UI_HOSTS; nil, or an error of beszel.ErrOff, leaves it out.
@@ -106,6 +113,9 @@ type Board struct {
 	// thread's note ID. The last to end settles the note.
 	dispatchedMu sync.Mutex
 	dispatched   map[string]*dispatches
+
+	// closing leaves a run a restart killed working, with its session, for Recover.
+	closing atomic.Bool
 }
 
 // Post leaves a note on the board, or a reply under one of them. A note naming
@@ -253,25 +263,41 @@ func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 	req.Env = append(req.Env, mcp...)
 	go func() {
 		defer closeMCP()
-		b.runAs(context.Background(), &own, req, answer, "The agent job", agent.Name, again)
+		b.runAs(context.Background(), &own, &own, req, answer, "The agent job", agent.Name, again)
 	}()
 }
 
 // run starts a request for a note and replies when the run ends.
-func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, answer, what string, again *model.Note) bool {
-	return b.runAs(stop, note, req, answer, what, "", again)
+func (b *Board) run(stop context.Context, note, question *model.Note, req runner.Request, answer, what string, again *model.Note) bool {
+	return b.runAs(stop, note, question, req, answer, what, "", again)
 }
 
 // runAs is run, with the user a new reply is from.
-func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request, answer, what, as string, again *model.Note) bool {
+func (b *Board) runAs(stop context.Context, note, question *model.Note, req runner.Request, answer, what, as string, again *model.Note) bool {
 	ctx := context.Background()
 	defer os.Remove(answer)
+	if question == nil {
+		question = note
+	}
 	b.takeReplied(note.ID)
 	req.ParentID, req.ParentKind = parentOf(note)
 	if again != nil {
 		req.ID = again.RunID
 	}
+	tail, tailStarted := b.watch(note, question, &req, again)
+	if tail != nil {
+		defer os.Remove(tail.path)
+	}
 	session, err := b.start(stop, req)
+	if tail != nil && err == nil {
+		tail.runID = session.ID()
+		go func() {
+			ticker := time.NewTicker(transcriptEvery)
+			defer ticker.Stop()
+			tail.follow(ticker.C, session.Done())
+			close(tailStarted)
+		}()
+	}
 	if again != nil {
 		// The reply as it stands once the run in the way ends, or a new
 		// reply when someone deleted it.
@@ -305,6 +331,13 @@ func (b *Board) runAs(stop context.Context, note *model.Note, req runner.Request
 	case <-stop.Done():
 		_ = b.Runner.Stop(session.ID())
 		<-session.Done()
+	}
+	if b.stopped(req) {
+		return false
+	}
+	if tail != nil {
+		<-tailStarted
+		b.finalEvent(ctx, note, question, session.ID())
 	}
 	status := session.Status()
 	state := model.NoteDone
@@ -439,52 +472,17 @@ func (b *Board) Answerer() string {
 	return answerer
 }
 
-// agentJob returns the Notes agent, @claude-note, in the root.
-func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
-	if b.Root == "" {
-		return nil, nil
-	}
-	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
-	return root, b.agentCommand(root.NoteJob(), "note")
-}
-
-// agentCommand returns a Claude job with AgentCommand and its subcommand.
-func (b *Board) agentCommand(job *folder.Job, subcommand string) *folder.Job {
-	if b.AgentCommand != nil {
-		job.Command = append(append([]string{}, b.AgentCommand...), subcommand)
-	}
-	return job
-}
-
-// output returns the last lines of a run's output, from its recording.
-func (b *Board) output(run *model.Run) string {
-	if b.Recordings == nil {
-		return ""
-	}
-	cast, err := b.Recordings.Read(run)
-	if errors.Is(err, recording.ErrExpired) {
-		return recording.Expired
-	}
-	if err != nil {
-		return ""
-	}
-	defer cast.Close()
-	replay, err := runner.ReplayCast(cast)
-	if err != nil {
-		return ""
-	}
-	lines := strings.Split(strings.TrimRight(replay.Output.Text(), " \n"), "\n")
-	if len(lines) > tail {
-		lines = lines[len(lines)-tail:]
-	}
-	return strings.Join(lines, "\n")
-}
-
 // publish tells the pages a note changed.
 func (b *Board) publish(note *model.Note) {
-	if b.Events != nil {
-		b.Events.Publish(Topic, "note", *note)
+	if b.Events == nil {
+		return
 	}
+	b.Events.Publish(Topic, "note", *note)
+	root := note.ID
+	if note.ParentID != "" {
+		root = note.ParentID
+	}
+	b.Events.Publish(ThreadTopic(root), "note", *note)
 }
 
 // report is the agent's reply when its run produced no answer.

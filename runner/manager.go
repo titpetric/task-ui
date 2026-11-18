@@ -188,6 +188,8 @@ func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *
 	session := NewSession(run, req.Folder, req.Job)
 	session.env = req.Env
 	session.dir, session.args, session.timeout = req.Dir, req.Args, req.Timeout
+	session.resume = req.Resume
+	session.transcript = req.Transcript
 	session.Titled = m.publish
 	session.noWorkspace = req.NoWorkspace
 	if session.noWorkspace {

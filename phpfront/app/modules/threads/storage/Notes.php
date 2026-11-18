@@ -189,6 +189,18 @@ class Notes {
 		return $note->getParentId() === "" ? $note : $this->get($note->getParentId());
 	}
 
+	/** events is what each run of a thread did, oldest first, by question and run. */
+	function events($id) {
+		return $this->db->get_all("SELECT * FROM note_event WHERE note_id = ? ORDER BY question_id, run_id, seq", $id);
+	}
+
+	/** omits what each run of a thread did from every listing and every reader. */
+	function forget($id) {
+		$this->db->query("DELETE FROM note_event WHERE note_id = ?", $id);
+
+		return true;
+	}
+
 	/** replies is the replies of many threads at once, oldest first, by thread. */
 	function replies($ids) {
 		$out = [];
@@ -236,8 +248,9 @@ class Notes {
 		return $note;
 	}
 
-	/** purge removes a note and every reply under it, deleted or not. */
+	/** purge removes a note, every reply under it and their work, deleted or not. */
 	function purge($id) {
+		$this->forget($id);
 		$this->db->query("DELETE FROM note WHERE id = ? OR parent_id = ?", $id, $id);
 
 		return true;

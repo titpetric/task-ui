@@ -20,7 +20,9 @@
 "/></svg><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
 </small></span>
 <?php if($_v['entry']['children']){?>
-						<span class="badge" title="Runs it started"><?php echo htmlspecialchars($_v['entry']['children'], ENT_QUOTES);?>
+						<span class="badge" title="<?php if($_v['entry']['thread']){?>
+Replies<?php }else{?>
+Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], ENT_QUOTES);?>
 </span><?php } if(!$_v['entry']['ended']){?>
 						<svg class="ic act"><use href="#i-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
 "/></svg><?php }?>

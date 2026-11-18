@@ -17,8 +17,10 @@ Note.
 | updated_at            | datetime |     | Updated At            |
 | about_run_id          | char(26) | MUL | About Run ID          |
 | about_workflow_run_id | char(26) | MUL | About Workflow Run ID |
+| agent                 | varchar  | MUL | Agent                 |
 | area                  | varchar  |     | Area                  |
 | edited_at             | datetime |     | Edited At             |
+| origin                | varchar  | MUL | Origin                |
 | deleted_at            | datetime | MUL | Deleted At            |
 | audio_path            | varchar  |     | Audio Path            |
 | spoken                | varchar  |     | Spoken                |

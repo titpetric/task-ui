@@ -171,3 +171,9 @@ func TestConfig_Validate(t *testing.T) {
 	assert.ErrorContains(t, (&app.Config{}).Validate(), "data directory")
 	assert.ErrorContains(t, (&app.Config{Root: t.TempDir()}).Validate(), "positive")
 }
+
+// The Claude session directory sits under the data directory.
+func TestConfig_ClaudeDir(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, filepath.Join("d", "claude"), (&app.Config{DataDir: "d"}).ClaudeDir())
+}

@@ -91,6 +91,9 @@ func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
 			return nil, err
 		}
 	}
+	if err := os.MkdirAll(cfg.ClaudeDir(), 0o700); err != nil {
+		return nil, err
+	}
 	db, err := storage.OpenAndMigrate(ctx, cfg.DB, Migrations())
 	if err != nil {
 		return nil, fmt.Errorf("opening %s: %w", cfg.DB, err)
@@ -231,6 +234,7 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 func (a *App) shutdown(server *http.Server) error {
 	ctx, cancel := context.WithTimeout(context.Background(), a.Config.Grace+5*time.Second)
 	defer cancel()
+	a.Board.Close()
 	a.Runner.Shutdown(ctx)
 	if err := server.Shutdown(ctx); err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		return err

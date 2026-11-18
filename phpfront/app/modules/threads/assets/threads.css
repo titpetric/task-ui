@@ -93,3 +93,73 @@
 .said-body {
   margin-top: 0.4rem;
 }
+
+/* .work is what the agent did for a message: a status line, its text, and
+   the tool cards it opens. */
+.work {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+  font-size: var(--fs-sm);
+}
+
+.work-run + .work-run {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+}
+
+.work-status {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.work-text {
+  margin-top: 0.35rem;
+}
+
+.work details {
+  margin-top: 0.35rem;
+}
+
+.work summary {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.work pre {
+  max-height: 18rem;
+  margin: 0.25rem 0 0;
+  padding: 0.4rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--ink-1);
+  border-radius: var(--radius);
+  font-size: var(--fs-xs);
+}
+
+.work-tool summary code {
+  color: var(--signal);
+}
+
+.work-result.error summary,
+.work-error {
+  color: var(--bad);
+}
+
+.agent-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--block-gap);
+}
+
+.agent-pick.saved button {
+  color: var(--signal);
+}
+
+.agent-pick.failed button {
+  color: var(--bad);
+}

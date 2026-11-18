@@ -81,6 +81,18 @@ class mod_thread implements Module {
 		$replies = $store->replies([$note->getId()]);
 		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
 		$title = Task\Note::excerpt(Task\Threads\Talk::opening($note, $under));
+		$work = Task\Threads\Work::byQuestion($store->events($note->getId()), $chrome);
+		$users = new Task\User;
+		$agentNames = [];
+		foreach ($users->agents() as $user) {
+			$agentNames[] = $user->getName();
+		}
+
+		$agent = $note->getAgent();
+
+		if ($agent === "" && $prompt) {
+			$agent = count($agentNames) > 0 ? $agentNames[0] : "claude";
+		}
 
 		$chrome->heading($title, [
 			["text" => "Threads", "href" => "/threads"],
@@ -97,7 +109,10 @@ class mod_thread implements Module {
 			"id" => $note->getId(),
 			"channel" => $note->getChannel(),
 			"chat_thread" => $chat,
-			"messages" => Task\Threads\Talk::messages($note, $under, $chrome, $seen),
+			"messages" => Task\Threads\Talk::messages($note, $under, $chrome, $seen, $work),
+			"agent" => $agent,
+			"agent_names" => $agentNames,
+			"pick_agent" => !$chat && $note->getState() !== Task\Note::WORKING && ($chrome->name() === $note->getUserName() || Task\User::admin($chrome->user)),
 			"editor" => self::field(),
 			"replies" => $chat ? $member && $chrome->allowed("note/edit") : ($prompt ? $chrome->allowed("prompt/edit") : $chrome->allowed("note/edit")),
 			"mic" => $chrome->allowed("note/edit"),

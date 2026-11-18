@@ -230,6 +230,11 @@ func (s *NoteStorage) SetState(ctx context.Context, id, state, runID string) err
 	return s.change(ctx, "UPDATE note SET state = ?, run_id = CASE WHEN ? = '' THEN run_id ELSE ? END, updated_at = ? WHERE id = ?", state, runID, runID, stamp(), id)
 }
 
+// SetAgent sets the agent a root note's runs answer as, ErrNotFound off a reply.
+func (s *NoteStorage) SetAgent(ctx context.Context, id, agent string) error {
+	return s.change(ctx, "UPDATE note SET agent = ?, updated_at = ? WHERE id = ? AND parent_id = ''", agent, stamp(), id)
+}
+
 // Release sets a note's state and lets go of its run, for someone who works on it over MCP.
 func (s *NoteStorage) Release(ctx context.Context, id, state string) error {
 	return s.change(ctx, "UPDATE note SET state = ?, run_id = '', updated_at = ? WHERE id = ?", state, stamp(), id)

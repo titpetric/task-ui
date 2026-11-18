@@ -18,6 +18,23 @@ import (
 // heartbeat is how often an idle stream sends a comment.
 const heartbeat = 15 * time.Second
 
+// threadVisible reports whether the request's user may follow a thread.
+func (h *Handlers) threadVisible(r *http.Request, thread *model.Note) bool {
+	user := access.UserFrom(r.Context())
+	switch {
+	case thread.IsPrompt():
+		return h.can(r, "prompt/view") && seesPlace(h.opts.Catalogue, user, thread.Dir)
+	case thread.Channel == model.ChannelChat:
+		if !h.can(r, "note/view") || h.opts.Board.Chats == nil {
+			return false
+		}
+		member, err := h.opts.Board.Chats.IsParticipant(r.Context(), thread.ID, user.ID)
+		return err == nil && (member || user.CanAdmin())
+	default:
+		return h.can(r, "note/view")
+	}
+}
+
 // sse streams the events of a topic as server-sent events.
 func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 	topic := param(r, "topic")
@@ -62,6 +79,16 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 				return notes && err == nil && (member || user.CanAdmin())
 			}
 			return notes
+		}
+	case "thread":
+		if id == "" || h.opts.Board == nil {
+			failErr(w, storage.ErrNotFound)
+			return
+		}
+		thread, err := h.opts.Board.Notes.Get(r.Context(), id)
+		if err != nil || thread.ParentID != "" || !h.threadVisible(r, thread) {
+			failErr(w, storage.ErrNotFound)
+			return
 		}
 	case "workflow":
 		wf, err := h.opts.Workflows.Get(r.Context(), id)

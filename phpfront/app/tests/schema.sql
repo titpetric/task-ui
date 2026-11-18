@@ -143,12 +143,28 @@ CREATE TABLE note (
     run_id CHAR(26) NOT NULL DEFAULT '',
     created_at DATETIME,
     updated_at DATETIME
-, about_run_id CHAR(26) NOT NULL DEFAULT '', about_workflow_run_id CHAR(26) NOT NULL DEFAULT '', area TEXT NOT NULL DEFAULT '', edited_at DATETIME, deleted_at DATETIME, audio_path TEXT NOT NULL DEFAULT '', spoken TEXT NOT NULL DEFAULT '', workspace_id CHAR(26) NOT NULL DEFAULT '', dir TEXT NOT NULL DEFAULT '');
+, about_run_id CHAR(26) NOT NULL DEFAULT '', about_workflow_run_id CHAR(26) NOT NULL DEFAULT '', agent TEXT NOT NULL DEFAULT '', area TEXT NOT NULL DEFAULT '', edited_at DATETIME, origin TEXT NOT NULL DEFAULT '', deleted_at DATETIME, audio_path TEXT NOT NULL DEFAULT '', spoken TEXT NOT NULL DEFAULT '', workspace_id CHAR(26) NOT NULL DEFAULT '', dir TEXT NOT NULL DEFAULT '');
 CREATE INDEX idx_note_channel ON note(channel, parent_id);
 CREATE INDEX idx_note_parent ON note(parent_id);
 CREATE INDEX idx_note_state ON note(state);
 CREATE INDEX idx_note_about_run ON note(about_run_id);
 CREATE INDEX idx_note_about_workflow_run ON note(about_workflow_run_id);
+CREATE INDEX idx_note_agent ON note(agent);
+CREATE TABLE note_event (
+    id CHAR(26) PRIMARY KEY NOT NULL,
+    note_id CHAR(26) NOT NULL,
+    run_id CHAR(26) NOT NULL DEFAULT '',
+    question_id CHAR(26) NOT NULL DEFAULT '',
+    seq INTEGER NOT NULL DEFAULT 0,
+    kind TEXT NOT NULL CHECK (kind IN ('status', 'text', 'thinking', 'tool_use', 'tool_result', 'system', 'result', 'error')),
+    tool_id TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    data TEXT NOT NULL DEFAULT '',
+    created_at DATETIME
+);
+CREATE UNIQUE INDEX uidx_note_event_seq ON note_event(run_id, seq);
+CREATE INDEX idx_note_event_thread ON note_event(note_id, question_id, run_id, seq);
+CREATE INDEX idx_note_origin ON note(origin);
 CREATE TABLE note_participant (
     note_id CHAR(26) NOT NULL,
     user_id CHAR(26) NOT NULL,
@@ -261,7 +277,7 @@ CREATE TABLE IF NOT EXISTS "run" (
     target TEXT NOT NULL DEFAULT '',
     batch_id CHAR(26) NOT NULL DEFAULT '',
     message TEXT NOT NULL DEFAULT ''
-, title TEXT NOT NULL DEFAULT '', parent_id CHAR(26) NOT NULL DEFAULT '', parent_kind TEXT NOT NULL DEFAULT '');
+, title TEXT NOT NULL DEFAULT '', parent_id CHAR(26) NOT NULL DEFAULT '', parent_kind TEXT NOT NULL DEFAULT '', claude_session CHAR(26) NOT NULL DEFAULT '');
 CREATE INDEX idx_run_folder_job ON run(folder, job);
 CREATE INDEX idx_run_state ON run(state);
 CREATE INDEX idx_run_started_at ON run(started_at);

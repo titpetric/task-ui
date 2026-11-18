@@ -92,7 +92,7 @@ func (b *Board) askWorkflowRun(stop context.Context, user *model.User, run *mode
 	}
 	defer cleanup()
 	req.Env = append(req.Env, b.hosts(ctx)...)
-	answered := b.run(stop, note, req, answer, "The prompt", nil)
+	answered := b.run(stop, note, note, req, answer, "The prompt", nil)
 	switch {
 	case stop.Err() != nil:
 		return note, false, stop.Err()

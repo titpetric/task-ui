@@ -26,14 +26,16 @@ class Talk {
 	 * docs/guide/voice.md tells the session to write. The row does not hold
 	 * it, so the folder is listed once and the answers take what is there.
 	 */
-	static function messages($note, $replies, $chrome, $seen = null) {
+	static function messages($note, $replies, $chrome, $seen = null, $work = []) {
 		$out = [self::message($note, $chrome, $seen)];
+		$out[0]["work"] = isset($work[$note->getId()]) ? $work[$note->getId()] : [];
 		$spoken = self::spokenFor($note, count($replies));
 		$at = 0;
 
 		foreach ($replies as $reply) {
 			$at = $at + 1;
 			$said = self::message($reply, $chrome, $seen);
+			$said["work"] = isset($work[$reply->getId()]) ? $work[$reply->getId()] : [];
 
 			if ($said["audio"] === "" && isset($spoken[$at])) {
 				$said["audio"] = $spoken[$at];
@@ -114,6 +116,7 @@ class Talk {
 			"working" => $note->getState() === \Task\Note::WORKING,
 			"run" => $run,
 			"short" => substr($run, 0, 8),
+			"work" => [],
 			"ago" => \Task\Clock::ago($note->getCreatedAt()),
 			"stamp" => \Task\Clock::read($note->getCreatedAt()),
 		];

@@ -63,21 +63,31 @@ type Request struct {
 	// in the same directory: the new attempt replaces the run's row,
 	// recording, summary and artifacts. Empty takes a new ID.
 	ID string
+	// ClaudeSession names the Claude Code conversation of a prompt's run,
+	// a ULID whose directory under the data directory holds its transcript,
+	// so a run the instance killed resumes. Empty starts no session.
+	ClaudeSession string
+	// Transcript is the file Claude writes its JSONL events to, read as
+	// TASK_UI_TRANSCRIPT; empty keeps no transcript.
+	Transcript string
+	// Resume continues the conversation ClaudeSession names rather than
+	// starting it.
+	Resume bool
 }
 
-// newRun is the row of the run a request starts, under its ID or, when
-// it has none, a new one the storage sets.
+// newRun returns the row of the run a request starts, under req.ID or a new ID.
 func (req Request) newRun() *model.Run {
 	run := &model.Run{
-		ID:       req.ID,
-		Folder:   req.Folder.ID,
-		Job:      req.Job.ID,
-		Dir:      req.Job.Dir,
-		Args:     model.EncodeList(req.Args),
-		Target:   req.Target,
-		BatchID:  req.BatchID,
-		TermCols: int64(req.Cols),
-		TermRows: int64(req.Rows),
+		ID:            req.ID,
+		Folder:        req.Folder.ID,
+		Job:           req.Job.ID,
+		Dir:           req.Job.Dir,
+		Args:          model.EncodeList(req.Args),
+		Target:        req.Target,
+		BatchID:       req.BatchID,
+		TermCols:      int64(req.Cols),
+		TermRows:      int64(req.Rows),
+		ClaudeSession: req.ClaudeSession,
 	}
 	// A rerun takes the ID of the run its thread holds: no run parents itself.
 	if req.ParentID != req.ID {

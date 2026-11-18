@@ -8,15 +8,26 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/internal/claudesession"
 )
 
-// command builds the process: bash -l for the login environment, the
-// job's argv passed as arguments so the shell never parses a name, and
-// the request's args after --, the same way; the share of the server's
-// environment the parent environment passes, the secrets, the run
-// facts and what the instance found in its PATH in the environment,
-// HOME at the workspace's home project, the artifact directory ready. The process starts in the request's
-// directory, or the folder's.
+// claudeEnv returns the variables a prompt run's Claude Code reads for its session, none without one.
+func (m *Manager) claudeEnv(session *Session) []string {
+	run := session.Run
+	if run.ClaudeSession == "" || m.opts.ClaudeDir == "" {
+		return nil
+	}
+	env := []string{
+		"TASK_UI_CLAUDE_SESSION=" + run.ClaudeSession,
+		"TASK_UI_CLAUDE_CONFIG=" + claudesession.Dir(m.opts.ClaudeDir, run.UserName, run.ClaudeSession),
+	}
+	if session.resume {
+		env = append(env, "TASK_UI_CLAUDE_RESUME=1")
+	}
+	return env
+}
+
+// command builds the process and its environment for a session.
 func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, error) {
 	f, job, run := session.Folder, session.Job, session.Run
 	args := append([]string{"-l", "-c", `exec "$0" "$@"`}, job.Command...)
@@ -64,6 +75,10 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		}
 	}
 	cmd.Env = append(cmd.Env, session.env...)
+	if session.transcript != "" {
+		cmd.Env = append(cmd.Env, "TASK_UI_TRANSCRIPT="+session.transcript)
+	}
+	cmd.Env = append(cmd.Env, m.claudeEnv(session)...)
 	cmd.Env = append(cmd.Env,
 		"TERM=xterm-256color",
 		"COLORTERM=truecolor",

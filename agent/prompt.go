@@ -29,21 +29,26 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		return errNoToken
 	}
 	source := a.getenv("TASK_UI_PROMPT_SOURCE")
-	prompt := "A prompt from a task-ui folder page. The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the last message is the question:\n\n" +
-		thread + "\n\n" + answerLine(source, "the page")
-	if path := a.getenv("TASK_UI_PROMPT_RUN"); path != "" {
-		run, err := os.ReadFile(path)
-		if err != nil {
-			return err
+	prompt := ""
+	if a.getenv("TASK_UI_CLAUDE_RESUME") != "" {
+		prompt = "task-ui restarted while you worked. Continue the same task in this conversation and finish it. " + answerLine(source, promptPage(a))
+	} else {
+		prompt = "A prompt from a task-ui folder page. The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the last message is the question:\n\n" +
+			thread + "\n\n" + answerLine(source, "the page")
+		if path := a.getenv("TASK_UI_PROMPT_RUN"); path != "" {
+			run, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			prompt = aboutRun(string(run), thread, source)
 		}
-		prompt = aboutRun(string(run), thread, source)
-	}
-	if path := a.getenv("TASK_UI_PROMPT_WORKFLOW"); path != "" {
-		run, err := os.ReadFile(path)
-		if err != nil {
-			return err
+		if path := a.getenv("TASK_UI_PROMPT_WORKFLOW"); path != "" {
+			run, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			prompt = aboutWorkflow(string(run), thread, source)
 		}
-		prompt = aboutWorkflow(string(run), thread, source)
 	}
 
 	var out io.Writer
@@ -56,6 +61,17 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		out = reply
 	}
 	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), source, inventory(a.getenv("TASK_UI_HOSTS")), a.context()), out)
+}
+
+// promptPage names the page a resumed prompt's answer is shown on.
+func promptPage(a *Agent) string {
+	switch {
+	case a.getenv("TASK_UI_PROMPT_WORKFLOW") != "":
+		return "the workflow run's page"
+	case a.getenv("TASK_UI_PROMPT_RUN") != "":
+		return "the run's page"
+	}
+	return "the page"
 }
 
 // answerLine closes a prompt. With a source the final message is only the fallback reply.
