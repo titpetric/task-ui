@@ -212,6 +212,9 @@ note<?php }?>"/></svg>
 				<span class="faint" title="<?php echo htmlspecialchars($_v['row']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['ago'], ENT_QUOTES);?>
 </span>
+				<?php if($_v['row']['place']){?>
+<span class="faint mono"><?php echo htmlspecialchars($_v['row']['place'], ENT_QUOTES);?>
+</span><?php }?>
 				<span class="faint"><?php echo htmlspecialchars($_v['row']['messages'], ENT_QUOTES);?>
  messages</span>
 <?php if($_v['row']['heard']){?>

@@ -166,6 +166,44 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 	return client(s.db).Select[model.Note](ctx, query, args...)
 }
 
+// Feed returns the prompt and board threads that start a conversation, newest activity first.
+func (s *NoteStorage) Feed(ctx context.Context, filter ConversationFilter) ([]Conversation, error) {
+	where := []string{"n.parent_id = ''", "n.deleted_at IS NULL", "n.channel = ?"}
+	args := []any{model.ChannelNotes}
+	if filter.WorkspaceID != "" {
+		where = append(where, "n.workspace_id = ?")
+		args = append(args, filter.WorkspaceID)
+	}
+	if filter.Folder != "" {
+		where = append(where, "(n.dir = ? OR n.dir LIKE ?)")
+		args = append(args, filter.Folder, filter.Folder+"/%")
+	}
+	if filter.UserName != "" {
+		where = append(where, "n.user_name = ?")
+		args = append(args, filter.UserName)
+	}
+	if filter.State != "" {
+		where = append(where, "n.state = ?")
+		args = append(args, filter.State)
+	} else if filter.Live {
+		where = append(where, "(n.state IN (?, ?) OR (n.state IN (?, ?) AND n.updated_at >= ?))")
+		args = append(args, model.NoteOpen, model.NoteWorking, model.NoteDone, model.NoteFailed, stamp().Add(-time.Hour))
+	}
+	if filter.Query != "" {
+		where = append(where, "n.body LIKE ?")
+		args = append(args, "%"+filter.Query+"%")
+	}
+	limit := filter.Limit
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	query := "SELECT n.*, COALESCE((SELECT MAX(r.created_at) FROM note r WHERE r.parent_id = n.id AND r.deleted_at IS NULL), n.created_at) AS last_at, " +
+		"(SELECT COUNT(*) FROM note r WHERE r.parent_id = n.id AND r.deleted_at IS NULL) AS messages " +
+		"FROM note n WHERE " + strings.Join(where, " AND ") +
+		" ORDER BY last_at DESC, n.id DESC LIMIT " + strconv.Itoa(limit)
+	return client(s.db).Select[Conversation](ctx, query, args...)
+}
+
 // Replies returns the replies to the notes, oldest first, by note.
 func (s *NoteStorage) Replies(ctx context.Context, ids []string) (map[string][]model.Note, error) {
 	replies := map[string][]model.Note{}

@@ -46,7 +46,7 @@ class mod_threads implements Module {
 		$chrome = new Task\Chrome;
 		$view = new Task\View($this, $chrome);
 
-		if (!$chrome->allowed("note/view")) {
+		if (!$chrome->allowed("note/view") && !$chrome->allowed("prompt/view")) {
 			$view->refused();
 
 			return;
@@ -56,7 +56,13 @@ class mod_threads implements Module {
 
 		$store = new Task\Threads\Notes;
 		$users = new Task\User;
-		$roots = $store->timeline();
+		$roots = array();
+		foreach ($store->feed() as $note) {
+			if (Task\Threads\Timeline::visible($note, $chrome)) {
+				$roots[] = $note;
+			}
+		}
+
 		$replies = $store->replies(Task\Note::ids($roots));
 		$agents = $users->agents();
 		$seen = new Task\Seen($chrome);
@@ -69,8 +75,10 @@ class mod_threads implements Module {
 			$rows[] = Task\Threads\Timeline::row($note, $under, $chrome, $seen);
 		}
 
-		foreach ($store->chats($userID) as $chat) {
-			$chats[] = Task\Threads\Timeline::chat($chat, $chrome);
+		if ($chrome->allowed("note/view")) {
+			foreach ($store->chats($userID) as $chat) {
+				$chats[] = Task\Threads\Timeline::chat($chat, $chrome);
+			}
 		}
 
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";

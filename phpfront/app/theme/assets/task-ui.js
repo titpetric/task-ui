@@ -4554,6 +4554,7 @@
   // place, data-dir, as the note's dir names it.
   if (notesList && window.EventSource) {
     var pending;
+    var pendingPoll;
     var place = notesList.dataset.dir || "";
     var area = notesList.dataset.area || "";
     new EventSource("/api/sse/notes").addEventListener("note", function (event) {
@@ -4567,6 +4568,8 @@
       if (changed.id && !area && ((changed.dir || "") !== place || changed.area)) return;
       clearTimeout(pending);
       pending = setTimeout(refreshNotes, 150);
+      clearTimeout(pendingPoll);
+      pendingPoll = setTimeout(poll, 250);
     });
   }
 
@@ -4646,10 +4649,13 @@
       window.taskUI.voice.openThread(link.dataset.chat);
     });
     if (!notesList && window.EventSource) {
+      var pendingPoll;
       new EventSource("/api/sse/notes").addEventListener("note", function (event) {
         var note = {};
         try { note = JSON.parse(event.data); } catch (e) { return; }
         bellNote(note);
+        clearTimeout(pendingPoll);
+        pendingPoll = setTimeout(poll, 250);
       });
     }
   }
@@ -5888,16 +5894,21 @@
   // place of the last entry that fits when some don't.
   var recentsMore = '<a href="' + mount() + '/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>';
 
-  // renderRecents draws the runs nothing dispatched and the runs of
-  // workflows, newest first, each run with the ones it dispatched counted.
-  function renderRecents(runs, flows) {
+  // renderRecents draws the threads, the runs nothing dispatched and the runs
+  // of workflows, newest first, each run with the ones it dispatched counted.
+  function renderRecents(runs, flows, threads) {
     if (!recents) return;
     var children = {};
+    var owned = {};
     runs.forEach(function (r) {
       if (r.parent_id) children[r.parent_id] = (children[r.parent_id] || 0) + 1;
     });
-    var entries = runs.filter(function (r) { return !r.parent_id; })
+    (threads || []).forEach(function (t) {
+      if (t.run_id) owned[t.run_id] = true;
+    });
+    var entries = runs.filter(function (r) { return !r.parent_id && !owned[r.id] && !isPromptRun(r) && !isNoteRun(r); })
       .map(function (r) { return { run: r, at: r.started_at || "", children: children[r.id] || 0 }; })
+      .concat((threads || []).map(function (t) { return { thread: t, at: t.last_at || t.created_at || "" }; }))
       .concat((flows || []).map(function (f) { return { flow: f, at: f.started_at || "" }; }));
     entries.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
     entries = entries.slice(0, 50);
@@ -5966,8 +5977,20 @@
     return (days === 1 ? "1 day" : days + " days") + " ago";
   }
 
-  // recentHTML draws one entry of the recents: a workflow run, or a run.
+  // recentHTML draws one entry of the recents: a workflow run, a thread, or a run.
   function recentHTML(e) {
+    if (e.thread) {
+      var t = e.thread;
+      var dot = threadDot(t.state);
+      return '<a href="' + mount() + "/threads/" + encodeURIComponent(t.id) + '" class="recent" title="' +
+        escapeHTML("Open the thread: " + threadLabel(t) + ", " + t.user_name + ", " + (t.state || "a message")) + '">' +
+        '<i class="dot ' + escapeHTML(dot) + '"></i>' +
+        '<span class="what"><b>' + escapeHTML(threadLabel(t)) + '</b><small>' +
+        iconHTML(t.workspace_id ? "prompt" : "note") + escapeHTML(t.dir || "board") + '</small></span>' +
+        (t.messages ? '<span class="badge" title="Replies">' + t.messages + "</span>" : "") +
+        (t.state === "working" || t.state === "open" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
+        avatarHTML(t.user_name) + "</a>";
+    }
     if (e.flow) {
       var f = e.flow;
       return '<a href="' + mount() + "/workflows/" + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
@@ -5986,6 +6009,21 @@
       (e.children ? '<span class="badge" title="Runs it started">' + e.children + "</span>" : "") +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
       avatarHTML(r.user_name) + "</a>";
+  }
+
+  // threadLabel is what the rail calls a thread: the first line of what was asked.
+  function threadLabel(t) {
+    var line = String(t.body || "").split("\n")[0].replace(/^[#>*\s-]+/, "").trim();
+    return line.length > 80 ? line.slice(0, 80) + "..." : line || "(no text)";
+  }
+
+  // threadDot is the state a thread's dot draws, as a run's state does.
+  function threadDot(state) {
+    if (state === "working") return "running";
+    if (state === "open") return "queued";
+    if (state === "done") return "ok";
+    if (state === "failed") return "failed";
+    return "";
   }
 
   // isPromptRun reports whether a run is a prompt's: @claude-prompt, or
@@ -6030,11 +6068,11 @@
 
   function poll() {
     if (document.hidden) return;
-    Promise.all([api("GET", "/api/runs?limit=50"), api("GET", "/api/workflow-runs?limit=50")]).then(function (both) {
-      var res = both[0], flows = both[1];
+    Promise.all([api("GET", "/api/runs?limit=50"), api("GET", "/api/workflow-runs?limit=50"), api("GET", "/api/threads?live=1&limit=50")]).then(function (both) {
+      var res = both[0], flows = both[1], threads = both[2];
       if (res.status !== 200 || !res.data.runs) return;
       var runs = res.data.runs;
-      renderRecents(runs, flows.status === 200 ? flows.data.runs : []);
+      renderRecents(runs, flows.status === 200 ? flows.data.runs : [], threads.status === 200 ? (threads.data.threads || []) : []);
       var running = {}, runningJobs = {};
       runs.forEach(function (r) {
         if (r.state !== "running") return;

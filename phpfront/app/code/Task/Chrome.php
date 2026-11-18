@@ -513,7 +513,7 @@ class Chrome {
 		$rail = new Recent($this->db);
 		$people = $this->who();
 
-		return $rail->data($this->access, $people->roles, $this->folders());
+		return $rail->data($this->access, $people->roles, $this->folders(), $this->workspaces());
 	}
 
 	/** reader is the signed in user, as the header draws them. */

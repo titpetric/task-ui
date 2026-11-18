@@ -49,6 +49,7 @@ class mod_dashboard implements Module {
 			"head" => $head->data(),
 			"note" => $note,
 			"runs" => $this->tiles($chrome),
+			"threads" => $this->threads($chrome),
 		));
 	}
 
@@ -94,7 +95,39 @@ class mod_dashboard implements Module {
 		});
 
 		foreach ($runs as $run) {
+			if (Task\Run::isClaude($run)) {
+				continue;
+			}
+
 			$out[] = $this->tile($run, $roles);
+		}
+
+		return $out;
+	}
+
+	/** threads is a card per Claude thread in progress that the reader may read. */
+	function threads($chrome) {
+		$store = new Task\Threads\Notes;
+		$out = array();
+
+		foreach ($store->live() as $note) {
+			if (Task\Note::isPrompt($note)) {
+				if (!$chrome->allowed("prompt/view") || !Task\Note::seesPlace($chrome, $note->getDir())) {
+					continue;
+				}
+			} elseif (!$chrome->allowed("note/view")) {
+				continue;
+			}
+
+			$out[] = array(
+				"id" => $note->getId(),
+				"href" => Task\Route::href("/threads/" . rawurlencode($note->getId())),
+				"name" => Task\Note::excerpt($note->getBody()),
+				"place" => $note->getDir() === "" ? "board" : $note->getDir(),
+				"state" => Task\Recent::threadState($note->getState()),
+				"run" => $note->getRunId(),
+				"who" => $chrome->who()->of($note->getUserName()),
+			);
 		}
 
 		return $out;

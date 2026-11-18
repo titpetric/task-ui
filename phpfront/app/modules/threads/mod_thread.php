@@ -39,7 +39,7 @@ class mod_thread implements Module {
 		$chrome = new Task\Chrome;
 		$view = new Task\View($this, $chrome);
 
-		if (!$chrome->allowed("note/view")) {
+		if (!$chrome->allowed("note/view") && !$chrome->allowed("prompt/view")) {
 			$view->refused();
 
 			return;
@@ -54,7 +54,15 @@ class mod_thread implements Module {
 			return;
 		}
 
-		if (Task\Note::isPrompt($note) && !$chrome->allowed("prompt/view")) {
+		$prompt = Task\Note::isPrompt($note);
+
+		if ($prompt && (!$chrome->allowed("prompt/view") || !Task\Note::seesPlace($chrome, $note->getDir()))) {
+			$view->refused();
+
+			return;
+		}
+
+		if (!$prompt && !Task\Note::isChat($note) && !$chrome->allowed("note/view")) {
 			$view->refused();
 
 			return;
@@ -91,7 +99,7 @@ class mod_thread implements Module {
 			"chat_thread" => $chat,
 			"messages" => Task\Threads\Talk::messages($note, $under, $chrome, $seen),
 			"editor" => self::field(),
-			"replies" => $chat ? $member && $chrome->allowed("note/edit") : $chrome->allowed("note/edit"),
+			"replies" => $chat ? $member && $chrome->allowed("note/edit") : ($prompt ? $chrome->allowed("prompt/edit") : $chrome->allowed("note/edit")),
 			"mic" => $chrome->allowed("note/edit"),
 		), "thread.tpl");
 	}

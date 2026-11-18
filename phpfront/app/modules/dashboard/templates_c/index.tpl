@@ -151,6 +151,32 @@
  them.</div>
 <?php }?>
 <div data-sse="runs" data-dashboard>
+<?php if($_v['data']['threads']){?>
+<section class="block">
+	<h3>Working threads <small>Claude conversations in progress</small></h3>
+	<div class="tiles" data-threads>
+<?php if(!empty($_v['data']['threads']))foreach($_v['data']['threads'] as $_v['thread']){?>		<a class="tile thread-tile" href="<?php echo htmlspecialchars($_v['thread']['href'], ENT_QUOTES);?>
+" data-thread-tile="<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+">
+			<div class="tile-head">
+				<i class="dot <?php echo htmlspecialchars($_v['thread']['state'], ENT_QUOTES);?>
+"></i>
+				<b><?php echo htmlspecialchars($_v['thread']['name'], ENT_QUOTES);?>
+</b>
+				<span class="faint mono"><?php echo htmlspecialchars($_v['thread']['place'], ENT_QUOTES);?>
+</span>
+				<span class="spacer"></span>
+				<?php $_v['data_avatar'] = $_v['thread']['who'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
+</span>
+			</div>
+			<div class="frame faint">Claude is working in the thread.</div>
+		</a>
+<?php }?>	</div>
+</section>
+<?php }?>
 <section class="block">
 	<h3>Running now <small>one run per job, up to a run per CPU; terminals take no turn</small></h3>
 	<div class="tiles" data-tiles>

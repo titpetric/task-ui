@@ -43,6 +43,21 @@ class Notes {
 		return \Task\Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND workspace_id = '' AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", self::NOTES, $limit));
 	}
 
+	/** feed is every board thread and prompt, newest first; a chat is listed by chats(). */
+	function feed($limit = self::LIMIT) {
+		return \Task\Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", self::NOTES, $limit));
+	}
+
+	/** live is the board threads and prompts the agent is working on, newest first. */
+	function live($limit = self::LIMIT) {
+		return \Task\Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND state IN ('open', 'working') AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", self::NOTES, $limit));
+	}
+
+	/** recent is the live threads and the ones that moved in the last hour, newest first. */
+	function recent($limit = self::LIMIT) {
+		return \Task\Model\Note::rows($this->db->get_all("SELECT * FROM note WHERE parent_id = '' AND channel = ? AND (state IN ('open', 'working') OR updated_at >= datetime('now', '-1 hour')) AND " . self::LIVE . " ORDER BY rowid DESC LIMIT ?", self::NOTES, $limit));
+	}
+
 	/**
 	 * chats is the chat threads a user is in, newest message first, each with
 	 * its peer, its last message and how much of it the user has not read.

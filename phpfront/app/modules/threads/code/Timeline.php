@@ -33,6 +33,7 @@ class Timeline {
 			"said" => \Task\Note::excerpt(Talk::opening($note, $replies)),
 			"state" => $note->getState(),
 			"working" => $note->getState() === \Task\Note::WORKING,
+			"place" => $note->getDir(),
 			"run" => $run,
 			"short" => substr($run, 0, 8),
 			"ago" => \Task\Clock::ago(self::lastAt($note, $replies)),
@@ -40,6 +41,15 @@ class Timeline {
 			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
 			"heard" => self::heard($note, $replies),
 		);
+	}
+
+	/** visible reports whether the reader may read a root note of the feed. */
+	static function visible($note, $chrome) {
+		if (\Task\Note::isPrompt($note)) {
+			return $chrome->allowed("prompt/view") && \Task\Note::seesPlace($chrome, $note->getDir());
+		}
+
+		return $chrome->allowed("note/view");
 	}
 
 	/** chat is one chat thread as the Chats section reads it. */

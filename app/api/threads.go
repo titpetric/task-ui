@@ -37,24 +37,67 @@ func (h *Handlers) postThread(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// listThreads returns the chat threads of the user, newest message first, and their unread count.
+// listThreads returns the user's chats and, with ?threads=1 or ?live=1, the prompt and board feed.
 func (h *Handlers) listThreads(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "note/view") || !h.board(w) {
+	q := r.URL.Query()
+	feed := q.Get("threads") == "1" || q.Get("live") == "1"
+	notes, prompts := h.can(r, "note/view"), h.can(r, "prompt/view")
+	if !h.board(w) {
 		return
 	}
-	chats, err := h.opts.Board.ChatList(r.Context(), access.UserFrom(r.Context()), queryInt(r, "limit", 50))
-	if err != nil {
-		failErr(w, err)
+	if !feed && !h.require(w, r, "note/view") {
 		return
 	}
-	if chats == nil {
-		chats = []storage.ChatSummary{}
+	if feed && !notes && !prompts {
+		fail(w, http.StatusForbidden, "you need the note/view or prompt/view permission to read threads")
+		return
 	}
-	var unread int64
-	for _, chat := range chats {
-		unread += chat.Unread
+	out := map[string]any{"unread": int64(0), "chats": []storage.ChatSummary{}}
+	if feed {
+		conversations, err := h.opts.Board.Notes.Feed(r.Context(), storage.ConversationFilter{
+			WorkspaceID: q.Get("workspace"),
+			Folder:      strings.Trim(q.Get("folder"), "/"),
+			UserName:    anyMatch(q.Get("user")),
+			State:       anyMatch(q.Get("state")),
+			Query:       strings.TrimSpace(q.Get("q")),
+			Live:        q.Get("live") == "1",
+			Limit:       queryInt(r, "limit", 50),
+		})
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		user := access.UserFrom(r.Context())
+		kept := conversations[:0]
+		for _, row := range conversations {
+			if row.IsPrompt() {
+				if prompts && seesPlace(h.opts.Catalogue, user, row.Dir) {
+					kept = append(kept, row)
+				}
+				continue
+			}
+			if notes {
+				kept = append(kept, row)
+			}
+		}
+		out["threads"] = kept
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"unread": unread, "chats": chats})
+	if !feed || notes {
+		chats, err := h.opts.Board.ChatList(r.Context(), access.UserFrom(r.Context()), queryInt(r, "limit", 50))
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		if chats != nil {
+			out["chats"] = chats
+		}
+		var unread int64
+		for _, chat := range chats {
+			unread += chat.Unread
+		}
+		out["unread"] = unread
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // getThread returns a chat thread with its messages.

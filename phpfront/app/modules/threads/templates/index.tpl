@@ -31,6 +31,7 @@
 			<span class="thread-meta">
 				<svg class="ic thread-kind" aria-label="{row.kind}"><use href="#i-{if $row.kind == 'voice'}mic{elseif $row.kind == 'prompt'}prompt{else}note{/if}"/></svg>
 				<span class="faint" title="{row.stamp}">{row.ago}</span>
+				{if $row.place}<span class="faint mono">{row.place}</span>{/if}
 				<span class="faint">{row.messages} messages</span>
 {if $row.heard}				<svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg>
 {/if}{if $row.state}				<span class="badge note-state {row.state}">{row.state}</span>

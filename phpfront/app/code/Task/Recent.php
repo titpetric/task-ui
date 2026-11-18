@@ -15,19 +15,21 @@ class Recent {
 	var $db;
 	var $runs = null;
 	var $flows = null;
+	var $notes = null;
 
 	function __construct($db = null) {
 		$this->db = $db === null ? DB::reader() : $db;
 		$this->runs = new Runs\Runs($this->db);
 		$this->flows = new Workflows\Runs($this->db);
+		$this->notes = new Threads\Notes($this->db);
 	}
 
 	/**
 	 * data is the scope the recents component reads: where the label goes,
 	 * and the groups of entries.
 	 */
-	function data($access, $roles = array(), $folders = array()) {
-		return array("href" => "/runs", "groups" => $this->groups($access, $roles, $folders));
+	function data($access, $roles = array(), $folders = array(), $workspaces = array()) {
+		return array("href" => "/runs", "groups" => $this->groups($access, $roles, $folders, $workspaces));
 	}
 
 	/**
@@ -38,8 +40,8 @@ class Recent {
 	 * calls view.GroupRecents(time.Now(), ...) while the page around it carries
 	 * the instance's Now, so a pinned clock does not move these headings.
 	 */
-	function groups($access, $roles = array(), $folders = array()) {
-		return self::group($this->entries($access, $roles, $folders), Clock::real()->unixnano());
+	function groups($access, $roles = array(), $folders = array(), $workspaces = array()) {
+		return self::group($this->entries($access, $roles, $folders, $workspaces), Clock::real()->unixnano());
 	}
 
 	/**
@@ -79,15 +81,37 @@ class Recent {
 	 * read to the nanosecond, because the Go page compares two times and not
 	 * two seconds.
 	 */
-	function entries($access, $roles = array(), $folders = array()) {
+	function entries($access, $roles = array(), $folders = array(), $workspaces = array()) {
 		$user = $access === null ? null : $access->user;
 		$prompts = $access !== null && $access->allowed("prompt/view");
 		$notes = $access !== null && $access->allowed("note/view");
 		$runs = array();
 		$flows = array();
 		$rows = array();
+		$threads = array();
+
+		foreach ($this->notes->recent(2 * self::COUNT) as $note) {
+			if (Note::isPrompt($note)) {
+				if ($prompts && self::seesPlace($access, $note->getDir(), $folders, $workspaces)) {
+					$threads[$note->getId()] = $note;
+				}
+
+				continue;
+			}
+
+			if ($notes) {
+				$threads[$note->getId()] = $note;
+			}
+		}
+
+		$replies = $this->notes->replies(array_keys($threads));
+		$owned = $this->owned($threads, $replies);
 
 		foreach ($this->runs->find(array("roots" => true, "limit" => 2 * self::COUNT)) as $run) {
+			if (Run::isPrompt($run) || Run::isNote($run) || isset($owned[$run->getId()])) {
+				continue;
+			}
+
 			if (Run::seen($user, $run, $prompts, $notes)) {
 				$rows[] = $run;
 			}
@@ -100,11 +124,98 @@ class Recent {
 			$runs[] = $this->ofRun($run, $access, $roles, $folders, isset($children[$id]) ? $children[$id] : 0);
 		}
 
+		foreach ($threads as $id => $note) {
+			$under = isset($replies[$id]) ? $replies[$id] : array();
+			$runs[] = $this->ofThread($note, $under, $roles);
+		}
+
 		foreach ($this->flows->visible($user, self::COUNT) as $flow) {
 			$flows[] = $this->ofFlow($flow, $roles);
 		}
 
+		usort($runs, function($one, $other) {
+			return Clock::nanos($other["at"]) <=> Clock::nanos($one["at"]);
+		});
+
 		return self::merge($runs, $flows, self::COUNT);
+	}
+
+	/** owned is the runs a thread and its replies answer, by run ID. */
+	function owned($threads, $replies) {
+		$out = array();
+
+		foreach ($threads as $id => $note) {
+			if ($note->getRunId() !== "") {
+				$out[$note->getRunId()] = true;
+			}
+
+			foreach (isset($replies[$id]) ? $replies[$id] : array() as $reply) {
+				if ($reply->getRunId() !== "") {
+					$out[$reply->getRunId()] = true;
+				}
+			}
+		}
+
+		return $out;
+	}
+
+	/** seesPlace reports whether the reader sees the place a prompt was asked in. */
+	static function seesPlace($access, $place, $folders, $workspaces) {
+		if ($place === Route::INTERNAL || $place === "") {
+			return $access === null || count(User::folders($access->user)) === 0;
+		}
+
+		return Route::heldHref($place, $folders, $workspaces) !== "";
+	}
+
+	/** ofThread is one thread as the rail reads it: what was asked, where, by whom and how it goes. */
+	function ofThread($note, $replies, $roles) {
+		$state = self::threadState($note->getState());
+		$user = $note->getUserName();
+		$said = Threads\Talk::opening($note, $replies);
+
+		return array(
+			"at" => self::threadAt($note, $replies),
+			"href" => "/threads/" . rawurlencode($note->getId()),
+			"name" => Note::excerpt($said),
+			"place" => $note->getDir() === "" ? "board" : $note->getDir(),
+			"icon" => Note::isPrompt($note) ? "prompt" : "note",
+			"state" => $state,
+			"ended" => $state === "" || $state === "ok" || $state === "failed",
+			"act" => "eye",
+			"flow" => false,
+			"thread" => true,
+			"children" => count($replies),
+			"title" => "Open the thread by " . $user . ", " . ($state === "" ? "a message" : $state),
+			"avatar" => Who::avatar($user, self::role($roles, $user)),
+		);
+	}
+
+	/** threadState is how a thread's state draws in the rail, as a run's state does. */
+	static function threadState($state) {
+		switch ($state) {
+			case Note::WORKING:
+				return "running";
+			case "open":
+				return "queued";
+			case Note::DONE:
+				return "ok";
+			case Note::FAILED:
+				return "failed";
+		}
+
+		return "";
+	}
+
+	/** threadAt is when a thread last moved: its newest reply, or the thread itself. */
+	static function threadAt($note, $replies) {
+		$at = $note->getCreatedAt();
+
+		foreach ($replies as $reply) {
+			$at = $reply->getCreatedAt();
+		}
+
+		return $at;
 	}
 
 	/**
@@ -186,6 +297,7 @@ class Recent {
 			"ended" => $ended,
 			"act" => $act,
 			"flow" => false,
+			"thread" => false,
 			"children" => $children,
 			"title" => "Open " . $name . ", " . $user . ", " . $state,
 			"avatar" => Who::avatar($user, self::role($roles, $user)),
@@ -207,6 +319,7 @@ class Recent {
 			"ended" => Run::ended($state),
 			"act" => "eye",
 			"flow" => true,
+			"thread" => false,
 			"children" => 0,
 			"title" => "Workflow " . $flow->getName() . ", " . $user . ", " . $state,
 			"avatar" => Who::avatar($user, self::role($roles, $user)),

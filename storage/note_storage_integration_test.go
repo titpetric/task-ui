@@ -249,6 +249,51 @@ func TestNoteStorage_Threads(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// Feed lists prompts and board notes, never chats, with their reply count
+// and newest activity, and narrows by workspace, place, user and text.
+func TestNoteStorage_Feed(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+
+	working := &model.Note{UserName: "ops", Body: "fix the deploy", WorkspaceID: "ws1", Dir: "ws1/app", State: model.NoteWorking, RunID: "run1"}
+	assert.NoError(t, notes.Create(ctx, working))
+	assert.NoError(t, notes.Create(ctx, &model.Note{UserName: "claude", Body: "on it", ParentID: working.ID}))
+	finished := &model.Note{UserName: "ops", Body: "why did the build fail", WorkspaceID: "ws2", Dir: "ws2/site"}
+	assert.NoError(t, notes.Create(ctx, finished))
+	assert.NoError(t, notes.SetState(ctx, finished.ID, model.NoteDone, "run2"))
+	board := &model.Note{UserName: "alice", Body: "deploy notes"}
+	assert.NoError(t, notes.Create(ctx, board))
+	assert.NoError(t, notes.Create(ctx, &model.Note{Channel: "chat", UserName: "alice", Body: "hello"}))
+
+	all, err := notes.Feed(ctx, storage.ConversationFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, all, 3, "the chat is not a thread of the feed")
+	for _, row := range all {
+		if row.ID == working.ID {
+			assert.Equal(t, 1, row.Messages)
+			assert.NotEqual(t, "", row.LastAt)
+		}
+	}
+
+	live, err := notes.Feed(ctx, storage.ConversationFilter{Live: true})
+	assert.NoError(t, err)
+	assert.Len(t, live, 2, "the working and the just finished thread")
+	for _, row := range live {
+		assert.NotEqual(t, board.ID, row.ID)
+	}
+
+	place, _ := notes.Feed(ctx, storage.ConversationFilter{Folder: "ws1/app"})
+	assert.Len(t, place, 1)
+	assert.Equal(t, working.ID, place[0].ID)
+	mine, _ := notes.Feed(ctx, storage.ConversationFilter{UserName: "alice"})
+	assert.Len(t, mine, 1)
+	assert.Equal(t, board.ID, mine[0].ID)
+	words, _ := notes.Feed(ctx, storage.ConversationFilter{Query: "build"})
+	assert.Len(t, words, 1)
+	assert.Equal(t, finished.ID, words[0].ID)
+}
+
 // Every method returns the driver's error.
 func TestNoteStorage_Closed(t *testing.T) {
 	t.Parallel()
@@ -261,6 +306,8 @@ func TestNoteStorage_Closed(t *testing.T) {
 	_, err = notes.ByRun(ctx, "r1")
 	assert.ErrorContains(t, err, errClosed)
 	_, err = notes.List(ctx, storage.NoteFilter{})
+	assert.ErrorContains(t, err, errClosed)
+	_, err = notes.Feed(ctx, storage.ConversationFilter{})
 	assert.ErrorContains(t, err, errClosed)
 	_, err = notes.Replies(ctx, []string{"n1"})
 	assert.ErrorContains(t, err, errClosed)

@@ -266,6 +266,15 @@ class Note {
 		return $note->getChannel() === self::CHAT;
 	}
 
+	/** seesPlace reports whether a reader may read a thread asked in a place. */
+	static function seesPlace($chrome, $place) {
+		if ($place === Route::INTERNAL) {
+			return count(User::folders($chrome->user)) === 0;
+		}
+
+		return Route::heldHref($place, $chrome->folders(), $chrome->workspaces()) !== "";
+	}
+
 	/**
 	 * answerers is the names of the agents that answer a thread, once each:
 	 * claude on a prompt, every agent an instruction names, and none where no
