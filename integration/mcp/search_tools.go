@@ -115,7 +115,7 @@ func searchDocs(ctx context.Context, c *client, args json.RawMessage) (string, e
 	var out struct {
 		Hits []searchHitView `json:"hits"`
 	}
-	if err := c.get(ctx, "/api/search?"+values.Encode(), &out); err != nil {
+	if err := c.get(ctx, "/search?"+values.Encode(), &out); err != nil {
 		return "", err
 	}
 	if len(out.Hits) == 0 {
@@ -157,7 +157,7 @@ func searchOutline(ctx context.Context, c *client, args json.RawMessage) (string
 		Document searchDocumentView   `json:"document"`
 		Sections []searchDocumentView `json:"sections"`
 	}
-	if err := c.get(ctx, "/api/search/documents/"+url.PathEscape(in.ID), &out); err != nil {
+	if err := c.get(ctx, "/search/documents/"+url.PathEscape(in.ID), &out); err != nil {
 		return "", err
 	}
 	var text strings.Builder
@@ -207,7 +207,7 @@ func searchBrowse(ctx context.Context, c *client, args json.RawMessage) (string,
 		Folders   []string             `json:"folders"`
 		Documents []searchDocumentView `json:"documents"`
 	}
-	if err := c.get(ctx, "/api/search/browse?"+values.Encode(), &out); err != nil {
+	if err := c.get(ctx, "/search/browse?"+values.Encode(), &out); err != nil {
 		return "", err
 	}
 	var text strings.Builder

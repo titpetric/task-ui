@@ -16,11 +16,11 @@ func TestSearchTools(t *testing.T) {
 		got = append(got, r.Method+" "+r.URL.RequestURI())
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
-		case "/api/search":
+		case "/search":
 			_, _ = w.Write([]byte(`{"query":"daily","hits":[{"document":"d1","ordinal":1,"kind":"doc","path":"src/acme/README.md","folder":"acme","heading":"Install","breadcrumb":"Acme > Install","line":7,"snippet":"run the daily deploy","score":4}]}`))
-		case "/api/search/browse":
+		case "/search/browse":
 			_, _ = w.Write([]byte(`{"path":"src/acme","folders":["src/acme/docs"],"documents":[{"id":"d2","kind":"job","path":"src/acme/atkins.yml#ci:daily","name":"ci:daily","title":"ci:daily - Run the gate.","dir":""}]}`))
-		case "/api/search/documents/d1":
+		case "/search/documents/d1":
 			_, _ = w.Write([]byte(`{"document":{"id":"d1","kind":"doc","path":"src/acme/README.md"},"sections":[{"ordinal":0,"level":1,"heading":"Acme"},{"ordinal":1,"level":2,"heading":"Install"}]}`))
 		default:
 			w.WriteHeader(http.StatusNotFound)
@@ -41,5 +41,5 @@ func TestSearchTools(t *testing.T) {
 	assert.Contains(t, out, "src/acme/docs/")
 	assert.Contains(t, out, "ci:daily")
 
-	assert.Equal(t, "GET /api/search?q=daily", got[0])
+	assert.Equal(t, "GET /search?q=daily", got[0])
 }
