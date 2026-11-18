@@ -341,8 +341,12 @@ func termRows(title, path string, sections []Section) []storage.SearchTerm {
 	return rows
 }
 
-// jobTerms adds the target's own words to its section's terms.
+// jobTerms adds the target's own words to its section's terms, one row per word.
 func jobTerms(rows []storage.SearchTerm, target Target) []storage.SearchTerm {
+	type key struct {
+		ordinal int64
+		term    string
+	}
 	extra := map[string]int{}
 	for _, field := range []struct {
 		text   string
@@ -354,10 +358,24 @@ func jobTerms(rows []storage.SearchTerm, target Target) []storage.SearchTerm {
 			extra[token] += field.weight
 		}
 	}
-	for term, weight := range extra {
-		rows = append(rows, storage.SearchTerm{Ordinal: 0, Term: term, Weight: int64(weight)})
+	weights := make(map[key]int64, len(rows)+len(extra))
+	for _, row := range rows {
+		weights[key{row.Ordinal, row.Term}] = row.Weight
 	}
-	return rows
+	for term, weight := range extra {
+		weights[key{0, term}] += int64(weight)
+	}
+	out := make([]storage.SearchTerm, 0, len(weights))
+	for k, weight := range weights {
+		out = append(out, storage.SearchTerm{Ordinal: k.ordinal, Term: k.term, Weight: weight})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Ordinal != out[j].Ordinal {
+			return out[i].Ordinal < out[j].Ordinal
+		}
+		return out[i].Term < out[j].Term
+	})
+	return out
 }
 
 // targetBody is the text search_read returns for a job target.

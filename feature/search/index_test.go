@@ -2,6 +2,7 @@ package search_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -59,6 +60,18 @@ func (f *fakeStore) JobDocuments(_ context.Context) ([]storage.SearchDocument, e
 }
 
 func (f *fakeStore) ReplaceDocument(_ context.Context, doc *storage.SearchDocument, sections []storage.SearchSection, terms []storage.SearchTerm) error {
+	type termKey struct {
+		ordinal int64
+		term    string
+	}
+	seen := map[termKey]bool{}
+	for _, term := range terms {
+		key := termKey{term.Ordinal, term.Term}
+		if seen[key] {
+			return fmt.Errorf("duplicate term %d %q", term.Ordinal, term.Term)
+		}
+		seen[key] = true
+	}
 	if old, ok := f.docs[doc.Path]; ok {
 		doc.ID = old.ID
 	}
@@ -141,6 +154,16 @@ func TestIndexer_Run(t *testing.T) {
 	assert.Equal(t, storage.SearchJobKind, job.Kind)
 	assert.Equal(t, "ci:daily", job.Target)
 	assert.Contains(t, store.sections["src/acme/atkins.yml#ci:daily"][0].Body, "atkins ci:daily")
+	type termKey struct {
+		ordinal int64
+		term    string
+	}
+	seen := map[termKey]bool{}
+	for _, row := range store.terms["src/acme/atkins.yml#ci:daily"] {
+		key := termKey{row.Ordinal, row.Term}
+		assert.True(t, !seen[key], "a word is one row of a section")
+		seen[key] = true
+	}
 
 	stats, err = index.Run(ctx)
 	assert.NoError(t, err)
