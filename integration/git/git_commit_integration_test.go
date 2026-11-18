@@ -68,7 +68,7 @@ func TestGit_CommitPath(t *testing.T) {
 	ctx := context.Background()
 
 	l.save("notes.txt", "two\n")
-	commit, made, err := g.CommitPath(ctx, l.dir, "notes.txt", "edit: notes.txt")
+	commit, made, err := g.CommitPath(ctx, l.dir, "notes.txt", "edit: notes.txt", "miguel")
 	if err != nil || !made || commit == "" {
 		t.Fatalf("CommitPath: commit=%q made=%v err=%v", commit, made, err)
 	}
@@ -78,14 +78,35 @@ func TestGit_CommitPath(t *testing.T) {
 	if subject := l.git(l.dir, "log", "-1", "--format=%s"); subject != "edit: notes.txt" {
 		t.Fatalf("subject is %q", subject)
 	}
+	if author := l.git(l.dir, "log", "-1", "--format=%an <%ae>"); author != "miguel <miguel@task-ui>" {
+		t.Fatalf("author is %q", author)
+	}
 
-	_, made, err = g.CommitPath(ctx, l.dir, "notes.txt", "edit: notes.txt")
+	_, made, err = g.CommitPath(ctx, l.dir, "notes.txt", "edit: notes.txt", "miguel")
 	if err != nil || made {
 		t.Fatalf("a path with no change: made=%v err=%v", made, err)
 	}
 
-	if _, _, err := g.CommitPath(ctx, t.TempDir(), "notes.txt", "edit: notes.txt"); err != ErrNotRepo {
+	if _, _, err := g.CommitPath(ctx, t.TempDir(), "notes.txt", "edit: notes.txt", "miguel"); err != ErrNotRepo {
 		t.Fatalf("outside a checkout: %v", err)
+	}
+}
+
+// A checkout that names no user of its own still commits: the identity is
+// task-ui's, and the author the reader's.
+func TestGit_CommitPath_NoIdentity(t *testing.T) {
+	t.Parallel()
+	l := newGitlab(t)
+	l.git(l.dir, "config", "--unset", "user.name")
+	l.git(l.dir, "config", "--unset", "user.email")
+	g := &Git{}
+
+	l.save("notes.txt", "four\n")
+	if _, made, err := g.CommitPath(context.Background(), l.dir, "notes.txt", "edit: notes.txt", "miguel"); err != nil || !made {
+		t.Fatalf("CommitPath without an identity: made=%v err=%v", made, err)
+	}
+	if author := l.git(l.dir, "log", "-1", "--format=%an <%ae>"); author != "miguel <miguel@task-ui>" {
+		t.Fatalf("author is %q", author)
 	}
 }
 
@@ -97,7 +118,7 @@ func TestGit_Push(t *testing.T) {
 	ctx := context.Background()
 
 	l.save("notes.txt", "three\n")
-	if _, made, err := g.CommitPath(ctx, l.dir, "notes.txt", "edit: notes.txt"); err != nil || !made {
+	if _, made, err := g.CommitPath(ctx, l.dir, "notes.txt", "edit: notes.txt", "miguel"); err != nil || !made {
 		t.Fatalf("CommitPath: made=%v err=%v", made, err)
 	}
 	if err := g.Push(ctx, l.dir, io.Discard); err != nil {

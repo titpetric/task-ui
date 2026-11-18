@@ -222,28 +222,74 @@ func (g *Git) Pull(ctx context.Context, dir string, w io.Writer) error {
 	return g.run(ctx, dir, w, "pull", "--ff-only", "--no-rebase")
 }
 
-// CommitPath stages rel and commits it as the checkout's user, answering the commit and whether one was made.
-func (g *Git) CommitPath(ctx context.Context, dir, rel, message string) (string, bool, error) {
+// CommitPath stages rel and commits it with the message, as the author the
+// editor's reader names, answering the commit and whether one was made. A
+// path that holds no change makes no commit. The identity is task-ui's and
+// the author the reader's, as the artifact tree commits a file a user writes.
+func (g *Git) CommitPath(ctx context.Context, dir, rel, message, author string) (string, bool, error) {
 	if !g.IsRepo(dir) {
 		return "", false, ErrNotRepo
 	}
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
-	if err := g.run(ctx, dir, io.Discard, "add", "--", rel); err != nil {
+	if err := g.editor(ctx, dir, io.Discard, "add", "--", rel); err != nil {
 		return "", false, err
 	}
-	staged, err := g.capture(ctx, dir, 10*time.Second, "status", "--porcelain", "--", rel)
+	staged, err := g.editorCapture(ctx, dir, "status", "--porcelain", "--", rel)
 	if err != nil {
 		return "", false, err
 	}
 	if staged == "" {
 		return "", false, nil
 	}
-	if err := g.run(ctx, dir, io.Discard, "commit", "-m", message, "--", rel); err != nil {
+	args := []string{"commit", "-q"}
+	if author != "" {
+		args = append(args, "--author", author+" <"+author+"@task-ui>")
+	}
+	args = append(args, "-m", message, "--", rel)
+	if err := g.editor(ctx, dir, io.Discard, args...); err != nil {
 		return "", false, err
 	}
-	commit, err := g.capture(ctx, dir, 10*time.Second, "rev-parse", "HEAD")
+	commit, err := g.editorCapture(ctx, dir, "rev-parse", "HEAD")
 	return commit, err == nil, err
+}
+
+// editor runs a git command of an edit in a checkout, with task-ui's fixed
+// identity and none of the host's configuration: no user's own settings, no
+// hooks, no signing and no pager, and a safe.directory that lets the server
+// read a checkout it may not own.
+func (g *Git) editor(ctx context.Context, dir string, w io.Writer, args ...string) error {
+	cmd := g.editorCommand(ctx, dir, args...)
+	cmd.Stdout, cmd.Stderr = w, w
+	return cmd.Run()
+}
+
+// editorCapture returns what an edit's git command printed, its error text included.
+func (g *Git) editorCapture(ctx context.Context, dir string, args ...string) (string, error) {
+	var out bytes.Buffer
+	run, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	err := g.editor(run, dir, &out, args...)
+	return strings.TrimSpace(out.String()), err
+}
+
+func (g *Git) editorCommand(ctx context.Context, dir string, args ...string) *exec.Cmd {
+	full := append([]string{
+		"-C", dir,
+		"-c", "safe.directory=*",
+		"-c", "user.name=task-ui",
+		"-c", "user.email=task-ui@localhost",
+		"-c", "commit.gpgsign=false",
+		"-c", "core.hooksPath=/dev/null",
+	}, args...)
+	cmd := exec.CommandContext(ctx, "git", full...)
+	cmd.Env = append(os.Environ(),
+		"GIT_CONFIG_GLOBAL=/dev/null",
+		"GIT_CONFIG_NOSYSTEM=1",
+		"GIT_TERMINAL_PROMPT=0",
+		"GIT_PAGER=cat",
+	)
+	return cmd
 }
 
 // Push sends the checkout's branch to its remote, with the key Keys hands

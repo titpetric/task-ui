@@ -80,6 +80,17 @@ func (r *apiRepo) call(method, path, body string) *httptest.ResponseRecorder {
 	return rec
 }
 
+// save writes a file the way the editor does: the whole file and the message
+// its change is committed with.
+func (r *apiRepo) save(path, content, message string) *httptest.ResponseRecorder {
+	r.t.Helper()
+	body, err := json.Marshal(map[string]any{"content": content, "message": message})
+	if err != nil {
+		r.t.Fatal(err)
+	}
+	return r.call(http.MethodPut, path, string(body))
+}
+
 func TestFileWriteAndPush(t *testing.T) {
 	r := newAPIRepo(t)
 
@@ -89,7 +100,7 @@ func TestFileWriteAndPush(t *testing.T) {
 		t.Fatalf("push: %d: %s", rec.Code, rec.Body.String())
 	}
 
-	rec = r.call(http.MethodPut, "/files/demo/notes.txt", "two\n")
+	rec = r.save("/files/demo/notes.txt", "two\n", "notes: count to two")
 	if rec.Code != http.StatusOK {
 		t.Fatalf("write: %d: %s", rec.Code, rec.Body.String())
 	}
@@ -103,16 +114,27 @@ func TestFileWriteAndPush(t *testing.T) {
 	if data, err := os.ReadFile(filepath.Join(r.dir, "notes.txt")); err != nil || string(data) != "two\n" {
 		t.Fatalf("the file holds %q: %v", data, err)
 	}
-	if subject := apiGit(t, r.dir, "log", "-1", "--format=%s"); subject != "edit: notes.txt" {
+	if subject := apiGit(t, r.dir, "log", "-1", "--format=%s"); subject != "notes: count to two" {
 		t.Fatalf("the commit subject is %q", subject)
+	}
+	if author := apiGit(t, r.dir, "log", "-1", "--format=%an <%ae>"); author != "root <root@task-ui>" {
+		t.Fatalf("the commit author is %q", author)
 	}
 
 	// A config dot file is editable, an env file is not.
-	if rec := r.call(http.MethodPut, "/files/demo/.gitignore", "build/\n"); rec.Code != http.StatusOK {
+	if rec := r.save("/files/demo/.gitignore", "build/\n", "ignore the build directory"); rec.Code != http.StatusOK {
 		t.Fatalf(".gitignore: %d: %s", rec.Code, rec.Body.String())
 	}
-	if rec := r.call(http.MethodPut, "/files/demo/.env", "TOKEN=2\n"); rec.Code != http.StatusNotFound {
+	if rec := r.save("/files/demo/.env", "TOKEN=2\n", "rotate the token"); rec.Code != http.StatusNotFound {
 		t.Fatalf(".env: %d: %s", rec.Code, rec.Body.String())
+	}
+
+	// A change is not written without the message that describes it.
+	if rec := r.save("/files/demo/notes.txt", "three\n", "  "); rec.Code != http.StatusBadRequest {
+		t.Fatalf("no message: %d: %s", rec.Code, rec.Body.String())
+	}
+	if data, err := os.ReadFile(filepath.Join(r.dir, "notes.txt")); err != nil || string(data) != "two\n" {
+		t.Fatalf("a refused save wrote the file: %q: %v", data, err)
 	}
 
 	// A raw read answers the file itself, for the editor to open.
@@ -125,21 +147,24 @@ func TestFileWriteAndPush(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("push after the edits: %d: %s", rec.Code, rec.Body.String())
 	}
-	if subject := apiGit(t, r.remote, "log", "-1", "--format=%s", "main"); subject != "edit: .gitignore" {
+	if subject := apiGit(t, r.remote, "log", "-1", "--format=%s", "main"); subject != "ignore the build directory" {
 		t.Fatalf("the remote's subject is %q", subject)
 	}
 }
 
 func TestFileWriteRefusesBinary(t *testing.T) {
 	r := newAPIRepo(t)
-	rec := r.call(http.MethodPut, "/files/demo/notes.txt", "one\x00two")
+	rec := r.save("/files/demo/notes.txt", "one\x00two", "a binary file")
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("binary: %d: %s", rec.Code, rec.Body.String())
 	}
-	if rec := r.call(http.MethodPut, "/files/demo/missing.txt", "x"); rec.Code != http.StatusNotFound {
+	if rec := r.save("/files/demo/missing.txt", "x", "a file that is not there"); rec.Code != http.StatusNotFound {
 		t.Fatalf("a file that does not exist: %d", rec.Code)
 	}
-	if rec := r.call(http.MethodPut, "/files/demo/../secret", "x"); rec.Code != http.StatusNotFound {
+	if rec := r.save("/files/demo/../secret", "x", "a path out of the folder"); rec.Code != http.StatusNotFound {
 		t.Fatalf("a path out of the folder: %d", rec.Code)
+	}
+	if rec := r.call(http.MethodPut, "/files/demo/notes.txt", "two\n"); rec.Code != http.StatusBadRequest {
+		t.Fatalf("a body that is not the editor's JSON: %d: %s", rec.Code, rec.Body.String())
 	}
 }
