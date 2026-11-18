@@ -10,4 +10,5 @@ import (
 func TestBoard_AskAs(tt *testing.T) {
 	var _ = (*note.Board).AskAs
 	var _ = (*note.Board).AskArea
+	var _ = (*note.Board).AskAreaAs
 }

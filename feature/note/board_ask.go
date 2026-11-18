@@ -33,10 +33,15 @@ func (b *Board) AskAs(ctx context.Context, user *model.User, parentID, dir, body
 // AskArea puts a prompt of an area's page, such as model.AreaWorkflows, to Claude in dir, as Ask does.
 // The thread names the area, and its runs read the area's instruction. It takes prompt/edit.
 func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body string) (*model.Note, error) {
+	return b.AskAreaAs(ctx, user, area, dir, body, "")
+}
+
+// AskAreaAs is AskArea as a named agent.
+func (b *Board) AskAreaAs(ctx context.Context, user *model.User, area, dir, body, agent string) (*model.Note, error) {
 	if area != model.AreaWorkflows {
 		return nil, fmt.Errorf("%w: no area %q", ErrInvalid, area)
 	}
-	return b.ask(ctx, user, "", dir, "", area, body, Spoken{}, "", "area:"+area)
+	return b.ask(ctx, user, "", dir, "", area, body, Spoken{}, agent, "area:"+area)
 }
 
 // ask puts a prompt to Claude in dir, a folder and a directory under that folder

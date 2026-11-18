@@ -122,7 +122,7 @@ func (h *Handlers) askArea(w http.ResponseWriter, r *http.Request, req PromptReq
 		fail(w, status, problem)
 		return
 	}
-	note, err := h.opts.Board.AskArea(r.Context(), user, req.Area, where, prompt)
+	note, err := h.opts.Board.AskAreaAs(r.Context(), user, req.Area, where, prompt, req.Agent)
 	if err != nil {
 		failErr(w, err)
 		return

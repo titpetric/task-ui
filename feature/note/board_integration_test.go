@@ -169,6 +169,23 @@ func TestBoard_AskAsAgentDefault(t *testing.T) {
 	settles(t, events, thread.ID)
 }
 
+// A workflow page's prompt answers as the agent it names.
+func TestBoard_AskAreaAs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board, _, ops := askingBoard(t)
+	agent := &model.User{Name: "consuela", Role: model.RoleViewer, AgentReply: true, Mcp: true}
+	assert.NoError(t, board.Users.Create(ctx, agent))
+
+	events, cancel := board.Events.Subscribe(note.Topic)
+	defer cancel()
+	thread, err := board.AskAreaAs(ctx, ops, model.AreaWorkflows, "infra", "build a workflow", "consuela")
+	assert.NoError(t, err)
+	assert.Equal(t, "consuela", thread.Agent)
+	assert.Equal(t, model.AreaWorkflows, thread.Area)
+	settles(t, events, thread.ID)
+}
+
 // resumingBoard is a board with a Claude session directory and an agent command that writes its environment to a file.
 func resumingBoard(t *testing.T) (*note.Board, *storage.RunStorage, *storage.NoteStorage, *model.User, string, string) {
 	t.Helper()
