@@ -318,7 +318,7 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `get_workflow`, `create_workflow`,
 `update_workflow`, `list_notes`, `note_comment`, `post_note`,
-`ask_prompt`, `list_artifacts`, `read_artifact`, `write_artifact`,
+`ask_prompt`, `list_threads`, `read_thread`, `list_artifacts`, `read_artifact`, `write_artifact`,
 `search_docs`, `search_outline`, `search_read`, `search_browse` and,
 for a user who linked Spotify, the seven `spotify_` tools of its section.
 A prompt's run and the Notes agent's reach these tools as their user

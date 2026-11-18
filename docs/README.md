@@ -34,6 +34,7 @@ Every list marks a job, a workflow or a run with `#!`: faint until it has run, t
 | [Artifacts](guide/artifacts.md)        | Artifacts                                | Files the runs leave behind                                                                                                 |
 | [Scheduled](guide/scheduled.md)        | Scheduled                                | Jobs on a cron expression                                                                                                   |
 | [Notes](guide/notes.md)                | Notes                                    | Messages, replies, and instructions to the agent                                                                            |
+| [Threads](guide/threads.md)            | Threads                                  | Prompts as conversations, the agent picker, and Claude's work rendered live                                                 |
 | [Search](guide/search.md)              | The header field, Search                 | The index of documentation and job targets, the agent that reads it, and `ci:daily` schedules                              |
 | [Modules](guide/modules.md)            | A module's row                           | The plugins written in PHP, and the refinement module                                                                       |
 | [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs      | Folders, the conventions, the git line, skills, Enter Shell, the prompt, a job's page, moving a project, pulls, keys, hours |

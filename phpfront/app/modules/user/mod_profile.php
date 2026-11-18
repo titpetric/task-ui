@@ -91,7 +91,7 @@ class mod_profile implements Module {
 			"runs" => $this->runs($chrome, $seen, $name, $workspaces),
 			"flows" => $this->flows($chrome, $name),
 			"notes" => $this->notes($chrome, $name),
-			"prompts" => $this->prompts($chrome, $name, $workspaces),
+			"prompts" => $this->prompts($chrome, $name),
 			"keys" => $this->keys($chrome, $name, $own),
 		], "profile.tpl");
 	}
@@ -363,15 +363,13 @@ class mod_profile implements Module {
 	 * prompts is the Prompts block: the prompt threads the user asked in a
 	 * place the reader sees, which takes prompt/view.
 	 *
-	 * A prompt about a run opens that run and any other opens the place it was
-	 * asked in; a place the reader's folders do not hold has no page and the
-	 * link is the note's anchor alone.
+	 * Each row opens the thread, which is the prompt and its answers.
 	 */
-	function prompts($chrome, $name, $workspaces) {
+	function prompts($chrome, $name) {
 		$rows = [];
 
 		if ($chrome->allowed("prompt/view")) {
-			$rows = $this->asked($chrome, $name, $workspaces);
+			$rows = $this->asked($chrome, $name);
 		}
 
 		return [
@@ -384,9 +382,8 @@ class mod_profile implements Module {
 	 * asked is the rows of the Prompts block: the threads of the window that
 	 * were asked in a place the reader sees, at most COUNT of them.
 	 */
-	function asked($chrome, $name, $workspaces) {
+	function asked($chrome, $name) {
 		$store = new Task\Threads\Notes($chrome->db);
-		$folders = $chrome->folders();
 		$rows = [];
 
 		foreach ($store->promptsByUser($name, self::WINDOW * self::COUNT) as $note) {
@@ -400,11 +397,9 @@ class mod_profile implements Module {
 				continue;
 			}
 
-			$about = $note->getAboutRunId();
-			$place = $about === "" ? Task\Route::heldHref($dir, $folders, $workspaces) : "/runs/" . $about;
-			$page = $place === "" ? "" : Task\Route::href($place);
+			$page = Task\Route::href("/threads/" . rawurlencode($note->getId()));
 
-			$rows[] = $this->note($note, $page, $dir);
+			$rows[] = $this->note($note, $page, $dir, false);
 		}
 
 		return $rows;
@@ -414,17 +409,16 @@ class mod_profile implements Module {
 	 * note is one item of the Notes or Prompts list: the one line the body
 	 * reads as, the state it is in and when it was written.
 	 *
-	 * page is where the item links, the note's own anchor added here: the
-	 * board for a note, and the run or the place for a prompt. dir is the
-	 * place a prompt was asked in, which the item says in small type, and ""
-	 * for a note of the board.
+	 * page is where the item links, the note's own anchor added here for the
+	 * board. dir is the place a prompt was asked in, which the item says in
+	 * small type, and "" for a note of the board.
 	 */
-	function note($note, $page, $dir = "") {
+	function note($note, $page, $dir = "", $anchor = true) {
 		$id = $note->getId();
 
 		return [
 			"id" => $id,
-			"href" => $page . "#note-" . $id,
+			"href" => $page . ($anchor ? "#note-" . $id : ""),
 			"excerpt" => Task\Note::excerpt($note->getBody()),
 			"state" => $note->getState(),
 			"ago" => Task\Clock::ago($note->getCreatedAt()),

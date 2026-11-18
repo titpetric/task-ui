@@ -88,7 +88,7 @@ func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest
 		fail(w, status, problem)
 		return
 	}
-	note, err := h.opts.Board.Ask(r.Context(), user, req.Parent, where, prompt, note.Spoken{Audio: req.Audio, Text: req.Spoken})
+	note, err := h.opts.Board.AskAs(r.Context(), user, req.Parent, where, prompt, note.Spoken{Audio: req.Audio, Text: req.Spoken}, req.Agent, req.Origin)
 	if err != nil {
 		failErr(w, err)
 		return

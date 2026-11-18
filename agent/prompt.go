@@ -60,7 +60,7 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		defer reply.Close()
 		out = reply
 	}
-	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), source, inventory(a.getenv("TASK_UI_HOSTS")), a.context()), out)
+	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), promptAgent(a), source, inventory(a.getenv("TASK_UI_HOSTS")), a.context()), out)
 }
 
 // promptPage names the page a resumed prompt's answer is shown on.
@@ -72,6 +72,14 @@ func promptPage(a *Agent) string {
 		return "the run's page"
 	}
 	return "the page"
+}
+
+// promptAgent names the agent a thread's replies are posted as.
+func promptAgent(a *Agent) string {
+	if name := a.getenv("TASK_UI_PROMPT_AGENT"); name != "" {
+		return "You answer this thread as " + name + "."
+	}
+	return ""
 }
 
 // answerLine closes a prompt. With a source the final message is only the fallback reply.

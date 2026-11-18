@@ -4,6 +4,7 @@ package note_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -129,6 +130,45 @@ func TestBoard_AskParent(t *testing.T) {
 	assert.Equal(t, "", roots[0].ParentKind)
 }
 
+// A prompt answers as the agent it names, and the thread keeps it.
+func TestBoard_AskAsAgent(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board, _, ops := askingBoard(t)
+	agent := &model.User{Name: "consuela", Role: model.RoleViewer, AgentReply: true, Mcp: true}
+	assert.NoError(t, board.Users.Create(ctx, agent))
+
+	events, cancel := board.Events.Subscribe(note.Topic)
+	defer cancel()
+	thread, err := board.AskAs(ctx, ops, "", "infra", "who broke the build", note.Spoken{}, "consuela", "folder")
+	assert.NoError(t, err)
+	assert.Equal(t, "consuela", thread.Agent)
+	assert.Equal(t, "folder", thread.Origin)
+	assert.Equal(t, "consuela", board.AnswererOf(ctx, thread))
+	settles(t, events, thread.ID)
+}
+
+// A prompt with no agent names the first agent, and refuses a user who is none.
+func TestBoard_AskAsAgentDefault(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board, _, ops := askingBoard(t)
+	agent := &model.User{Name: "consuela", Role: model.RoleViewer, AgentReply: true, Mcp: true}
+	plain := &model.User{Name: "plain", Role: model.RoleViewer}
+	assert.NoError(t, board.Users.Create(ctx, agent))
+	assert.NoError(t, board.Users.Create(ctx, plain))
+
+	_, err := board.AskAs(ctx, ops, "", "infra", "hello", note.Spoken{}, "plain", "folder")
+	assert.True(t, errors.Is(err, note.ErrInvalid), "a user without agent reply is no agent")
+
+	events, cancel := board.Events.Subscribe(note.Topic)
+	defer cancel()
+	thread, err := board.AskAs(ctx, ops, "", "infra", "hello", note.Spoken{}, "", "folder")
+	assert.NoError(t, err)
+	assert.Equal(t, "consuela", thread.Agent)
+	settles(t, events, thread.ID)
+}
+
 // resumingBoard is a board with a Claude session directory and an agent command that writes its environment to a file.
 func resumingBoard(t *testing.T) (*note.Board, *storage.RunStorage, *storage.NoteStorage, *model.User, string, string) {
 	t.Helper()
@@ -187,7 +227,7 @@ func TestBoard_CloseKeepsSession(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	board, runs, notes, ops, claudeDir, seen := resumingBoard(t)
-	board.AgentCommand = []string{"sh", "-c", "env > " + seen + "; sleep 1"}
+	board.AgentCommand = []string{"sh", "-c", "env > " + seen + "; sleep 0.2"}
 
 	thread, err := board.Ask(ctx, ops, "", "infra", "do the work", note.Spoken{})
 	assert.NoError(t, err)
@@ -200,7 +240,7 @@ func TestBoard_CloseKeepsSession(t *testing.T) {
 	assert.NoError(t, os.MkdirAll(dir, 0o700))
 
 	board.Close()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		if _, live := board.Runner.Get(run.ID); !live {
 			break
 		}

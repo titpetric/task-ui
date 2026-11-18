@@ -19,8 +19,13 @@ type PromptRequest struct {
 	// an admin anyone, others themself; empty, the caller. A reply takes
 	// none: the thread keeps its user.
 	User string `json:"user"`
-	Cols int    `json:"cols"`
-	Rows int    `json:"rows"`
+	// Agent names the user whose agent answers the thread; empty takes the
+	// first agent of the instance. A reply keeps the thread's agent.
+	Agent string `json:"agent"`
+	// Origin names the page the prompt came from, such as folder or run.
+	Origin string `json:"origin"`
+	Cols   int    `json:"cols"`
+	Rows   int    `json:"rows"`
 	// Audio is the recording the prompt was spoken into, a path of the
 	// artifact tree, and Spoken the transcription of it. A thread shows
 	// Spoken under a player for Audio; the agent reads Prompt, which

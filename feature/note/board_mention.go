@@ -111,6 +111,9 @@ func (b *Board) threadAgents(ctx context.Context, note *model.Note) []*model.Use
 // names, else none.
 func (b *Board) AnswerersOf(ctx context.Context, thread *model.Note) []string {
 	if thread.IsPrompt() {
+		if thread.Agent != "" {
+			return []string{thread.Agent}
+		}
 		return []string{answerer}
 	}
 	var names []string

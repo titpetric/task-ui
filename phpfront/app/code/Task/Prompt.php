@@ -97,6 +97,18 @@ class Prompt {
 		];
 	}
 
+	/** agents is the users a box offers to answer as, by name, the first the default. */
+	static function agents($chrome) {
+		$names = [];
+		$users = new User($chrome->db);
+
+		foreach ($users->agents() as $user) {
+			$names[] = $user->getName();
+		}
+
+		return ["names" => $names, "current" => count($names) === 0 ? "" : $names[0]];
+	}
+
 	/** short is the start of a run's ID, which is what the panel's line names it by. */
 	static function short($id) {
 		return strlen($id) > 4 ? substr($id, 0, 4) . "…" : $id;
@@ -112,8 +124,8 @@ class Prompt {
 	 * where a thread exists and stays folded where none does, and a named
 	 * workspace's page opens it either way, which is what $open says.
 	 *
-	 * Every thread here is a prompt, so Claude answers it and no agent is
-	 * looked up.
+	 * Every thread here is a prompt, so the box offers the agents a reply may
+	 * be posted as.
 	 */
 	static function inPlace($chrome, $folder, $dir, $open, $seen) {
 		if (!$chrome->allowed("prompt/edit") || !Host::claude()) {
@@ -160,6 +172,7 @@ class Prompt {
 		$notes = new Threads\Notes($chrome->db);
 		$roots = $notes->inPlace($place);
 		$replies = $notes->replies(Note::ids($roots));
+		$agents = self::agents($chrome);
 		$threads = [];
 
 		foreach ($roots as $note) {
@@ -177,8 +190,11 @@ class Prompt {
 			"editor" => self::field("what does this directory build, and how"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in " . $where . ", one prompt at a time. Claude replies under your question.",
+			"agents" => $agents["names"],
+			"agent" => $agents["current"],
 			"picks" => [],
 			"after" => "",
+			"next" => Route::href("/threads/{id}"),
 			"options" => $chrome->runAs(),
 			"place" => $place,
 			"area" => "",
@@ -220,9 +236,8 @@ class Prompt {
 			return null;
 		}
 
-		$users = new User;
 		$replies = $notes->replies(Note::ids($roots));
-		$agents = $users->agents();
+		$agents = self::agents($chrome);
 		$threads = [];
 
 		foreach ($roots as $note) {
@@ -240,8 +255,11 @@ class Prompt {
 			"editor" => self::field("why did this run end the way it did"),
 			"lead" => "Runs @claude-prompt as ",
 			"tail" => " in " . $where . "/, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.",
+			"agents" => $agents["names"],
+			"agent" => $agents["current"],
 			"picks" => [],
 			"after" => "",
+			"next" => Route::href("/threads/{id}"),
 			"options" => $chrome->runAs(),
 			"place" => $where,
 			"area" => "",
@@ -276,9 +294,7 @@ class Prompt {
 			return null;
 		}
 
-		$users = new User($chrome->db);
 		$replies = $notes->replies(Note::ids($roots));
-		$agents = $users->agents();
 		$place = count($roots) === 0 ? $flow["promptPlace"] : $roots[0]->getDir();
 		$threads = [];
 
@@ -297,8 +313,11 @@ class Prompt {
 			"editor" => self::field(""),
 			"lead" => "",
 			"tail" => "",
+			"agents" => [],
+			"agent" => "",
 			"picks" => [],
 			"after" => "",
+			"next" => "",
 			"options" => ["users" => []],
 			"place" => $place,
 			"area" => "",

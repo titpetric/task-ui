@@ -32,7 +32,7 @@ class mod_thread implements Module {
 	}
 
 	function tables() {
-		return ["note", "note_participant", "run", "user"];
+		return ["note", "note_event", "note_participant", "run", "user"];
 	}
 
 	function serve() {

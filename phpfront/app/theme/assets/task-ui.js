@@ -1384,6 +1384,10 @@
         if (button) button.disabled = false;
         form.reset();
         syncEditors(form);
+        if (form.dataset.next) {
+          window.location.href = filled(form.dataset.next, res.data);
+          return;
+        }
         refreshNotes();
         return;
       }
@@ -4265,35 +4269,16 @@
   function runFormAsk(form, button, values) {
     var place = { folder: form.dataset.folder || "", dir: form.dataset.dir || "" };
     var body = { folder: place.folder, dir: place.dir, prompt: runFormPrompt(form.dataset.prompt || "", values) };
+    var pick = form.querySelector("[name=agent]");
+    if (pick && pick.value) body.agent = pick.value;
+    body.origin = form.dataset.origin || (place.folder === "_" ? "workspace" : "folder");
     return api("POST", "/api/prompts", body).then(function (res) {
       button.disabled = false;
       if (res.status >= 300) {
         runFormSays(form, errorText(res));
         return;
       }
-      var id = res.data.id;
-      var done = runFormClose(form, "#note-" + encodeURIComponent(id), "the thread");
-      runFormFollow(place, id, done);
-      refreshNotes();
-    });
-  }
-
-  // runFormFollow waits for the run the thread starts and points the link
-  // at it; a browser with no event stream keeps the thread's link.
-  function runFormFollow(place, id, done) {
-    if (!window.EventSource) return;
-    var stream = new EventSource("/api/sse/notes");
-    var url = "/api/prompts?limit=20&folder=" + encodeURIComponent(place.folder) + (place.dir ? "&dir=" + encodeURIComponent(place.dir) : "");
-    stream.addEventListener("note", function (event) {
-      var changed = {};
-      try { changed = JSON.parse(event.data); } catch (e) { return; }
-      if (changed.id !== id) return;
-      api("GET", url).then(function (res) {
-        var thread = ((res.data && res.data.notes) || []).filter(function (note) { return note.id === id; })[0];
-        if (!thread || !thread.run_id) return;
-        stream.close();
-        done.innerHTML = 'Started <a href="' + escapeHTML(mount() + "/runs/" + encodeURIComponent(thread.run_id)) + '">run ' + escapeHTML(thread.run_id.slice(0, 8)) + "</a>";
-      });
+      window.location.assign("/threads/" + encodeURIComponent(res.data.id));
     });
   }
 
@@ -4731,7 +4716,7 @@
       if (heard && heard.spoken) body.spoken = heard.spoken;
       if (parent) body.parent = parent;
       else if (here.run) body.run = here.run;
-      else { body.folder = here.folder; body.dir = here.dir; }
+      else { body.folder = here.folder; body.dir = here.dir; body.origin = "orb"; }
       if (!parent && user) body.user = user;
       api("POST", "/api/prompts", body).then(function (res) {
         if (res.status >= 300) {

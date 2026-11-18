@@ -22,7 +22,12 @@ var ErrNoPrompt = errors.New("no prompt runs here")
 
 // Ask puts a prompt to Claude in dir, or in the thread of parentID, as ask does.
 func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body string, heard Spoken) (*model.Note, error) {
-	return b.ask(ctx, user, parentID, dir, "", "", body, heard)
+	return b.ask(ctx, user, parentID, dir, "", "", body, heard, "", "")
+}
+
+// AskAs is Ask as a named agent, from a page the origin names.
+func (b *Board) AskAs(ctx context.Context, user *model.User, parentID, dir, body string, heard Spoken, agent, origin string) (*model.Note, error) {
+	return b.ask(ctx, user, parentID, dir, "", "", body, heard, agent, origin)
 }
 
 // AskArea puts a prompt of an area's page, such as model.AreaWorkflows, to Claude in dir, as Ask does.
@@ -31,7 +36,7 @@ func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body s
 	if area != model.AreaWorkflows {
 		return nil, fmt.Errorf("%w: no area %q", ErrInvalid, area)
 	}
-	return b.ask(ctx, user, "", dir, "", area, body, Spoken{})
+	return b.ask(ctx, user, "", dir, "", area, body, Spoken{}, "", "area:"+area)
 }
 
 // ask puts a prompt to Claude in dir, a folder and a directory under that folder
@@ -42,7 +47,7 @@ func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body s
 // opens it again. Either way the board starts the prompt job on the
 // thread as the user and replies with Claude's answer when the run ends.
 // Asking takes prompt/edit.
-func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, area, body string, heard Spoken) (*model.Note, error) {
+func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, area, body string, heard Spoken, agent, origin string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
 	}
@@ -71,10 +76,16 @@ func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutR
 		thread = parent
 	} else {
 		note.State = model.NoteOpen
+		note.Origin = origin
 		// A workspace the runner does not know still marks a prompt.
 		if note.WorkspaceID = b.Runner.WorkspaceID(ctx, req); note.WorkspaceID == "" {
 			note.WorkspaceID = model.Default
 		}
+		answered, err := b.resolveAgent(ctx, agent)
+		if err != nil {
+			return nil, err
+		}
+		note.Agent = answered
 	}
 	if err := b.Notes.Create(ctx, note); err != nil {
 		return nil, err
@@ -146,6 +157,9 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 	}
 	thread := b.thread(ctx, note, again)
 	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+thread, "TASK_UI_PROMPT_REPLY="+answer)
+	if agent := b.AnswererOf(ctx, note); agent != "" {
+		req.Env = append(req.Env, "TASK_UI_PROMPT_AGENT="+agent)
+	}
 	req.Env = append(req.Env, instructions(note, thread)...)
 	var files []string
 	mcp, closeMCP := b.mcpEnv(req.User, note.ID)
@@ -181,6 +195,26 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 		req.Env = append(req.Env, a.env+"="+file)
 	}
 	return req, answer, cleanup, true
+}
+
+// resolveAgent names the agent a new thread's runs answer as, the first for none.
+func (b *Board) resolveAgent(ctx context.Context, name string) (string, error) {
+	if name != "" {
+		if b.Users == nil {
+			return "", fmt.Errorf("%w: no agent %q", ErrInvalid, name)
+		}
+		user, err := b.Users.GetByName(ctx, name)
+		if err != nil || !user.AgentReply || !user.Mcp {
+			return "", fmt.Errorf("%w: no agent %q", ErrInvalid, name)
+		}
+		return user.Name, nil
+	}
+	if b.Users != nil {
+		if agents, err := b.Users.Agents(ctx); err == nil && len(agents) > 0 {
+			return agents[0].Name, nil
+		}
+	}
+	return answerer, nil
 }
 
 // hosts is the inventory a prompt's run gets, TASK_UI_HOSTS: the hosts,

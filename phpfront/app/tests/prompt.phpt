@@ -5,8 +5,8 @@ description: Task\Prompt is where the header's prompt asks on a page - the place
 
 require "ext/autoload.php";
 
-// Nothing here reads a table: a page says where it is and this answers the
-// rest, over the folders the reader sees and the named workspaces.
+// A page says where it is and this answers the rest, over the folders the
+// reader sees and the named workspaces.
 
 $folders = [
 	["id" => "fx-prompt-malta"],
@@ -65,6 +65,20 @@ $claude = new Task\Model\Run(["id" => "06gp9t19", "folder" => Task\Route::INTERN
 
 echo said(Task\Prompt::ofRun($prompt, $folders, $workspaces)), "\n";
 echo said(Task\Prompt::ofRun($claude, $folders, $workspaces)), "\n";
+
+// A box offers every user an agent may reply as, by name, and the first is
+// the default a new thread takes.
+$db = Task\DB::writer();
+$db->query("DELETE FROM user WHERE id LIKE 'fx-prompt-agent-%'");
+$db->replace("user", ["id" => "fx-prompt-agent-1", "name" => "fx-prompt-ada", "role" => "runner", "agent_reply" => 1, "mcp" => 1]);
+$db->replace("user", ["id" => "fx-prompt-agent-2", "name" => "fx-prompt-bea", "role" => "runner", "agent_reply" => 1, "mcp" => 1]);
+$db->replace("user", ["id" => "fx-prompt-agent-3", "name" => "fx-prompt-cam", "role" => "runner"]);
+
+$chrome = new Task\Chrome($db);
+$agents = Task\Prompt::agents($chrome);
+
+echo in_array("fx-prompt-ada", $agents["names"], true) ? "ada" : "no ada", " ", in_array("fx-prompt-bea", $agents["names"], true) ? "bea" : "no bea", " ", in_array("fx-prompt-cam", $agents["names"], true) ? "cam" : "no cam", "\n";
+echo $agents["current"] === $agents["names"][0] ? "first is the default" : "another is the default", "\n";
 ---
 /f/internal
 /f/fx-prompt-malta
@@ -81,3 +95,5 @@ echo said(Task\Prompt::ofRun($claude, $folders, $workspaces)), "\n";
 06gp… 06gp []
 [fx-prompt-malta] [] [] [fx-prompt-malta] /f/fx-prompt-malta
 [internal] [] [] [internal] /f/internal
+ada bea no cam
+first is the default

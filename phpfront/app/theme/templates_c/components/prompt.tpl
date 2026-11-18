@@ -7,7 +7,9 @@
 </small></h3></summary>
 <?php if(!$_v['data_prompt']['watch']){?>
 	<form class="note-form" data-api="<?php echo htmlspecialchars($_v['data_prompt']['api'], ENT_QUOTES);?>
-" data-refresh-notes>
+" data-refresh-notes<?php if($_v['data_prompt']['next']){?>
+ data-next="<?php echo htmlspecialchars($_v['data_prompt']['next'], ENT_QUOTES);?>
+"<?php }?>>
 <?php if(!empty($_v['data_prompt']['fields']))foreach($_v['data_prompt']['fields'] as $_v['field']){?>		<input type="hidden" name="<?php echo htmlspecialchars($_v['field']['name'], ENT_QUOTES);?>
 " value="<?php echo htmlspecialchars($_v['field']['value'], ENT_QUOTES);?>
 ">
@@ -29,7 +31,11 @@
 )<?php }?> · <?php echo htmlspecialchars($_v['option']['said'], ENT_QUOTES);?>
 </option>
 <?php }?>		</select><?php }else{?>
-you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES); if($_v['data_prompt']['picks']){?>
+you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES); if($_v['data_prompt']['agents']){?>
+ Answered by <select name="agent" aria-label="Answers as"><?php if(!empty($_v['data_prompt']['agents']))foreach($_v['data_prompt']['agents'] as $_v['name']){?><option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+"<?php if($_v['name'] == $_v['data_prompt']['agent']){?>
+ selected<?php }?>><?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+</option><?php }?></select>.<?php }?><?php if($_v['data_prompt']['picks']){?>
 <select name="folder" aria-label="Run in"><?php if(!empty($_v['data_prompt']['picks']))foreach($_v['data_prompt']['picks'] as $_v['pick']){?><option value="<?php echo htmlspecialchars($_v['pick']['value'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['pick']['text'], ENT_QUOTES);?>
 </option><?php }?></select><?php }?><?php echo htmlspecialchars($_v['data_prompt']['after'], ENT_QUOTES);?>
