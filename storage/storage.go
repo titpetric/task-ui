@@ -3,7 +3,7 @@
 // Queries run through github.com/titpetric/pdo, whose generic methods
 // (Get[T], Select[T], Insert, Update) scan straight into the mig
 // generated model types. A *pdo.PDO is request scoped and not safe for
-// concurrent use, so every method allocates one over the shared *sqlx.DB
+// concurrent use, so every method allocates one over the shared *sql.DB
 // pool. Every SQL statement task-ui runs is in this package; a question
 // the app has gets a method here. rules/sql.yml refuses one written in
 // another package.
@@ -38,7 +38,6 @@ import (
 	"time"
 
 	"github.com/go-bridget/mig/migrate"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/titpetric/pdo"
 )
@@ -46,7 +45,7 @@ import (
 // DB is the shared connection pool under every storage. The program
 // links the driver: main and the tests import modernc.org/sqlite for
 // its side effect.
-type DB = *sqlx.DB
+type DB = *sql.DB
 
 // Project is the migration project name recorded in the migrations table.
 const Project = "task-ui"
@@ -62,9 +61,9 @@ func Open(dsn string) (DB, error) {
 	} else if !strings.Contains(dsn, "?") {
 		dsn += "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
 	}
-	// sqlx.Open answers an error only for a driver that is not
+	// sql.Open answers an error only for a driver that is not
 	// registered, and the program links this one in.
-	db, err := sqlx.Open("sqlite", dsn)
+	db, err := sql.Open("sqlite", dsn)
 	if memory && err == nil {
 		db.SetMaxOpenConns(1)
 	}
