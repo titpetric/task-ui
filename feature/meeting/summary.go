@@ -24,6 +24,17 @@ func (s *Service) summarize(m *model.Meeting) {
 		s.finishSummary(ctx, m.ID, "", model.SummaryFailed, err.Error())
 		return
 	}
+	said := 0
+	for _, line := range lines {
+		if line.Kind == model.LineSaid {
+			said++
+		}
+	}
+	if said == 0 {
+		s.finishSummary(ctx, m.ID, "", model.SummaryFailed,
+			"No speech reached the transcript. Live transcription needs Chrome or Edge, with the microphone on.")
+		return
+	}
 	env, role := s.envFor(ctx, m.UserID)
 	if env == nil {
 		s.finishSummary(ctx, m.ID, "", model.SummaryFailed, "the creator's sign-in could not be read")

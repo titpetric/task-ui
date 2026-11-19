@@ -320,8 +320,9 @@ func (s *Service) systemLine(ctx context.Context, meetingID string, user *model.
 	return line, nil
 }
 
-// Start sweeps rooms in the background until ctx ends.
+// Start resumes the summaries a stopped process left running, then sweeps until ctx ends.
 func (s *Service) Start(ctx context.Context) {
+	s.resumeSummaries(ctx)
 	go func() {
 		ticker := time.NewTicker(SweepEvery)
 		defer ticker.Stop()
@@ -334,6 +335,23 @@ func (s *Service) Start(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+// resumeSummaries asks Claude again for the rooms whose summary a restart interrupted.
+func (s *Service) resumeSummaries(ctx context.Context) {
+	rooms, err := s.Store.Working(ctx)
+	if err != nil {
+		s.logger().Warn("meetings: working summaries not read", "err", err)
+		return
+	}
+	for _, room := range rooms {
+		m := room
+		if s.Summarize == nil || s.Env == nil {
+			s.finishSummary(ctx, m.ID, "", model.SummaryFailed, "Claude is not set up on this instance")
+			continue
+		}
+		go s.summarize(&m)
+	}
 }
 
 // Sweep marks the participants with no pipe and no hearing gone, and ends the rooms past their hour or left empty.

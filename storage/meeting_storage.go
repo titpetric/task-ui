@@ -52,6 +52,16 @@ func (s *MeetingStorage) Open(ctx context.Context) ([]model.Meeting, error) {
 	return rooms, err
 }
 
+// Working returns the ended rooms whose summary a stopped process left running.
+func (s *MeetingStorage) Working(ctx context.Context) ([]model.Meeting, error) {
+	rooms, err := client(s.db).Select[model.Meeting](ctx,
+		"SELECT * FROM meeting WHERE state = ? AND summary_state = ?", model.MeetingEnded, model.SummaryWorking)
+	if rooms == nil {
+		rooms = []model.Meeting{}
+	}
+	return rooms, err
+}
+
 // Update writes a meeting's state, end, emptiness and summary.
 func (s *MeetingStorage) Update(ctx context.Context, m *model.Meeting) error {
 	m.UpdatedAt = stamp()

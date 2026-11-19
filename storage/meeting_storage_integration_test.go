@@ -98,6 +98,26 @@ func TestMeetingStorage(t *testing.T) {
 	assert.Equal(t, storage.ErrNotFound, err)
 }
 
+// Working returns the ended rooms whose summary a stopped process left running.
+func TestMeetingStorage_Working(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	meetings := storage.NewMeetingStorage(newDB(t))
+	now := time.Now().UTC().Truncate(time.Millisecond)
+
+	open := &model.Meeting{ID: model.NewID(), State: model.MeetingOpen, SummaryState: model.SummaryWorking, StartedAt: &now, LimitSeconds: model.MeetingLimit}
+	assert.NoError(t, meetings.Create(ctx, open))
+	done := &model.Meeting{ID: model.NewID(), State: model.MeetingEnded, SummaryState: model.SummaryDone, StartedAt: &now, LimitSeconds: model.MeetingLimit}
+	assert.NoError(t, meetings.Create(ctx, done))
+	working := &model.Meeting{ID: model.NewID(), State: model.MeetingEnded, SummaryState: model.SummaryWorking, StartedAt: &now, LimitSeconds: model.MeetingLimit}
+	assert.NoError(t, meetings.Create(ctx, working))
+
+	rooms, err := meetings.Working(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, rooms, 1)
+	assert.Equal(t, working.ID, rooms[0].ID)
+}
+
 // A meeting that is not there answers ErrNotFound.
 func TestMeetingStorage_Missing(t *testing.T) {
 	t.Parallel()

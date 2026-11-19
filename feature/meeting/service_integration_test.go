@@ -187,6 +187,92 @@ func TestServiceSweepPipe(t *testing.T) {
 	}
 }
 
+// A summary a stopped process left working runs again when the service starts.
+func TestServiceSummaryResume(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	svc, ana, _ := newService(t)
+	assert.NoError(t, svc.Users.Create(ctx, ana))
+	svc.Env = func(ctx context.Context, user, role string) (map[string]string, error) {
+		return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": "test"}, nil
+	}
+	asked := make(chan string, 1)
+	svc.Summarize = func(ctx context.Context, env map[string]string, system, prompt, document string) (string, error) {
+		asked <- document
+		return "## Topics discussed\n- shipping", nil
+	}
+
+	room, err := svc.Create(ctx, ana, "Resume")
+	assert.NoError(t, err)
+	_, _, _, err = svc.Join(ctx, ana, room.ID)
+	assert.NoError(t, err)
+	_, err = svc.Line(ctx, room, ana, "we ship today", 1)
+	assert.NoError(t, err)
+	room.State, room.SummaryState = model.MeetingEnded, model.SummaryWorking
+	assert.NoError(t, svc.Store.Update(ctx, room))
+
+	pipe := &meeting.Pipe{MeetingID: room.ID, Frames: make(chan meeting.Frame, meeting.Buffer)}
+	svc.Hub.Join(pipe)
+	defer svc.Hub.Leave(pipe)
+
+	run, cancel := context.WithCancel(ctx)
+	defer cancel()
+	svc.Start(run)
+
+	document := <-asked
+	assert.Contains(t, document, "ana: we ship today")
+	frame := <-pipe.Frames
+	assert.Contains(t, string(frame.Text), `"type":"summary"`)
+
+	stored, err := svc.Store.Get(ctx, room.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, model.SummaryDone, stored.SummaryState)
+	assert.Contains(t, stored.Summary, "Topics discussed")
+}
+
+// A room whose transcript holds no speech fails its summary instead of asking Claude.
+func TestServiceSummaryNoSpeech(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	svc, ana, _ := newService(t)
+	assert.NoError(t, svc.Users.Create(ctx, ana))
+	svc.Env = func(ctx context.Context, user, role string) (map[string]string, error) {
+		return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": "test"}, nil
+	}
+	asked := make(chan struct{}, 1)
+	svc.Summarize = func(ctx context.Context, env map[string]string, system, prompt, document string) (string, error) {
+		asked <- struct{}{}
+		return "", nil
+	}
+
+	room, err := svc.Create(ctx, ana, "Quiet")
+	assert.NoError(t, err)
+	_, _, _, err = svc.Join(ctx, ana, room.ID)
+	assert.NoError(t, err)
+	room.State, room.SummaryState = model.MeetingEnded, model.SummaryWorking
+	assert.NoError(t, svc.Store.Update(ctx, room))
+
+	pipe := &meeting.Pipe{MeetingID: room.ID, Frames: make(chan meeting.Frame, meeting.Buffer)}
+	svc.Hub.Join(pipe)
+	defer svc.Hub.Leave(pipe)
+
+	run, cancel := context.WithCancel(ctx)
+	defer cancel()
+	svc.Start(run)
+
+	<-pipe.Frames
+	stored, err := svc.Store.Get(ctx, room.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, model.SummaryFailed, stored.SummaryState)
+	assert.Contains(t, stored.SummaryMessage, "No speech")
+
+	select {
+	case <-asked:
+		t.Fatal("Claude was asked to summarise an empty transcript")
+	default:
+	}
+}
+
 // A summary is retried on an ended room alone, and a room ends on demand.
 func TestServiceRetry(t *testing.T) {
 	t.Parallel()
