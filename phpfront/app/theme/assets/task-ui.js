@@ -3562,6 +3562,8 @@
     var bare = function () {
       previewImage.hidden = true;
       previewImage.removeAttribute("src");
+      previewImage.classList.remove("zoomed");
+      previewDialog.classList.remove("zoomed");
       previewDoc.hidden = true;
       previewDoc.innerHTML = "";
       previewFrame.hidden = true;
@@ -3576,7 +3578,47 @@
       bare();
       previewImage.hidden = false;
       previewImage.src = src;
+      previewImage.title = "Tap to zoom in";
+      previewImage.tabIndex = 0;
+      previewImage.setAttribute("role", "button");
     };
+    // A tapped image shows its own pixels and the body scrolls around it; a
+    // second tap fits it to the window again. The point tapped stays under
+    // the finger, so a detail near an edge is the one the window opens on.
+    var toggleZoom = function (event) {
+      var body = previewDialog.querySelector(".preview-body");
+      if (previewImage.classList.contains("zoomed")) {
+        previewImage.classList.remove("zoomed");
+        previewDialog.classList.remove("zoomed");
+        previewImage.title = "Tap to zoom in";
+        body.scrollTop = 0;
+        body.scrollLeft = 0;
+        return;
+      }
+      var rect = previewImage.getBoundingClientRect();
+      var x = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
+      var y = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
+      previewImage.classList.add("zoomed");
+      previewDialog.classList.add("zoomed");
+      previewImage.title = "Tap to fit the window";
+      requestAnimationFrame(function () {
+        var zoomed = previewImage.getBoundingClientRect();
+        var box = body.getBoundingClientRect();
+        var left = zoomed.left - box.left + body.scrollLeft;
+        var top = zoomed.top - box.top + body.scrollTop;
+        body.scrollLeft = left + zoomed.width * x - body.clientWidth / 2;
+        body.scrollTop = top + zoomed.height * y - body.clientHeight / 2;
+      });
+    };
+    previewImage.addEventListener("click", toggleZoom);
+    previewImage.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      var rect = previewImage.getBoundingClientRect();
+      toggleZoom({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
+    });
     var showDoc = function (html, kind) {
       bare();
       previewDoc.hidden = false;

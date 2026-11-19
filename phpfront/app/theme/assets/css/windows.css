@@ -18,6 +18,23 @@ dialog.preview .preview-body img {
   background: var(--ink-0);
 }
 
+dialog.preview .preview-body #preview-image {
+  cursor: zoom-in;
+}
+
+/* A tapped image shows its own pixels and the body scrolls around it; flex
+   centring would hide the top and left of one larger than the window. */
+dialog.preview .preview-body #preview-image.zoomed {
+  max-width: none;
+  max-height: none;
+  cursor: zoom-out;
+}
+
+dialog.preview.zoomed .preview-body {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
 dialog.preview .preview-body:has(.preview-doc:not([hidden])),
 dialog.preview .preview-body:has(.preview-frame:not([hidden])) {
   align-items: flex-start;
