@@ -1062,6 +1062,11 @@
     loadSummary();
   }
 
+  // Opening a room is joining it: a meeting nobody is in ends when everyone left.
+  if (cfg.state === "open" && cfg.canEdit) {
+    join();
+  }
+
   // The index page opens a room and goes to it, and deletes an ended one in place.
   function initNew() {
     document.addEventListener("click", function (event) {
