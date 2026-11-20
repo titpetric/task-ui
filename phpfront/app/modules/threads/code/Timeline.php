@@ -32,7 +32,7 @@ class Timeline {
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
 			"kind" => self::kind($note),
 			"person" => $chrome->who()->of($note->getUserName()),
-			"said" => \Task\Note::excerpt(Talk::opening($note, $replies)),
+			"said" => Conversation::title($note, $replies),
 			"state" => $note->getState(),
 			"working" => $note->getState() === \Task\Note::WORKING,
 			"place" => $note->getDir(),

@@ -117,7 +117,7 @@ class Prompt {
 			$out[] = [
 				"id" => $note->getId(),
 				"href" => Route::href("/threads/" . Route::pathEscape($note->getId())),
-				"title" => Note::excerpt(Threads\Talk::opening($note, [])),
+				"title" => Threads\Conversation::title($note, []),
 				"state" => $note->getState(),
 			];
 		}
