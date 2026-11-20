@@ -20,11 +20,12 @@ dialog.preview .preview-body img {
 
 dialog.preview .preview-body #preview-image {
   cursor: zoom-in;
+  touch-action: none;
 }
 
-/* A tapped image shows its own pixels and the body scrolls around it; flex
-   centring would hide the top and left of one larger than the window. */
-dialog.preview .preview-body #preview-image.zoomed {
+/* An image larger than the window is scrolled around, and flex centring
+   would hide its top and left edge; the image keeps its own pixels. */
+dialog.preview.zoomed .preview-body #preview-image {
   max-width: none;
   max-height: none;
   cursor: zoom-out;

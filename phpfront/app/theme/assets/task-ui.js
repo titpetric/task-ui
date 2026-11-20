@@ -295,6 +295,19 @@
       return !!(session && session.ws && session.ws.readyState === 1 && session.run && session.run.can_run);
     },
     toast: toast,
+    // mount draws the editors and the mention layers of a part of the page
+    // that arrived after load, and unmount drops the ones about to go.
+    mount: function (root) {
+      mountEditors(root);
+      mentionFields(root);
+    },
+    unmount: function (root) {
+      destroyEditors(root);
+    },
+    // read marks the chat the page now shows as read.
+    read: function () {
+      chatRead();
+    },
   };
 
   // --------------------------------------------------------------- dialog
@@ -3559,11 +3572,194 @@
     };
     // bare empties the window's body: a frame or a player left standing
     // keeps loading the file behind whatever opens next.
+    // The image window zooms continuously: a pinch on a touch screen, a
+    // wheel with Ctrl held on a trackpad, a tap for its own pixels and a
+    // second tap to fit it, and a drag to move the part in the window.
+    var zoom = null;
+    var pointers = new Map();
+    var drag = null;
+    var pinch = null;
+    var moved = false;
+
+    var zoomBox = function () {
+      return previewDialog.querySelector(".preview-body");
+    };
+    var imageScale = function () {
+      var width = previewImage.naturalWidth;
+      return width ? previewImage.getBoundingClientRect().width / width : 1;
+    };
+    // beginZoom measures the fitted size the window gave the image: every
+    // gesture is a factor of that fit, and the fit is the smallest it goes.
+    var beginZoom = function () {
+      if (!previewImage.naturalWidth) {
+        return false;
+      }
+      if (!zoom) {
+        var fit = imageScale();
+        if (!fit) {
+          return false;
+        }
+        zoom = { scale: fit, min: fit, max: Math.max(1, fit) * 6 };
+      }
+      return true;
+    };
+    // zoomApply sizes the image to scale times its pixels and scrolls the
+    // body, so the point under the fingers stays under them.
+    var zoomApply = function (scale, anchorX, anchorY) {
+      var body = zoomBox();
+      var naturalW = previewImage.naturalWidth;
+      var naturalH = previewImage.naturalHeight;
+      if (!naturalW || !naturalH) {
+        return;
+      }
+      var rect = previewImage.getBoundingClientRect();
+      var box = body.getBoundingClientRect();
+      var x = rect.width ? (anchorX - rect.left) / rect.width : 0.5;
+      var y = rect.height ? (anchorY - rect.top) / rect.height : 0.5;
+      var width = naturalW * scale;
+      var height = naturalH * scale;
+      var style = getComputedStyle(body);
+      var padLeft = parseFloat(style.paddingLeft) || 0;
+      var padRight = parseFloat(style.paddingRight) || 0;
+      var padTop = parseFloat(style.paddingTop) || 0;
+      var padBottom = parseFloat(style.paddingBottom) || 0;
+      var roomW = body.clientWidth - padLeft - padRight;
+      var roomH = body.clientHeight - padTop - padBottom;
+      var over = width > roomW || height > roomH;
+      previewDialog.classList.toggle("zoomed", over);
+      previewImage.style.width = width + "px";
+      previewImage.style.height = height + "px";
+      var left = padLeft + Math.max(0, (roomW - width) / 2);
+      var top = padTop + Math.max(0, (roomH - height) / 2);
+      body.scrollLeft = left + x * width - (anchorX - box.left);
+      body.scrollTop = top + y * height - (anchorY - box.top);
+      zoom.scale = scale;
+      previewImage.title = "Tap to fit the window";
+    };
+    var zoomFit = function () {
+      var body = zoomBox();
+      previewDialog.classList.remove("zoomed");
+      previewImage.style.width = "";
+      previewImage.style.height = "";
+      previewImage.title = "Tap to zoom in";
+      zoom = null;
+      body.scrollLeft = 0;
+      body.scrollTop = 0;
+    };
+    var toggleZoom = function (event) {
+      if (!beginZoom()) {
+        return;
+      }
+      if (zoom.scale > zoom.min + 0.01) {
+        zoomFit();
+        return;
+      }
+      zoomApply(Math.min(zoom.max, zoom.min < 0.95 ? 1 : 2), event.clientX, event.clientY);
+    };
+    var distance = function (a, b) {
+      var dx = a.x - b.x;
+      var dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+    var midpoint = function (a, b) {
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
+    previewImage.addEventListener("pointerdown", function (event) {
+      if (previewImage.hidden || !beginZoom()) {
+        return;
+      }
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      previewImage.setPointerCapture(event.pointerId);
+      if (pointers.size === 1) {
+        var body = zoomBox();
+        drag = { x: event.clientX, y: event.clientY, left: body.scrollLeft, top: body.scrollTop };
+        pinch = null;
+        moved = false;
+      } else if (pointers.size === 2) {
+        var pair = Array.from(pointers.values());
+        pinch = { distance: distance(pair[0], pair[1]), scale: zoom.scale };
+        drag = null;
+        moved = true;
+      }
+    });
+    previewImage.addEventListener("pointermove", function (event) {
+      if (!pointers.has(event.pointerId)) {
+        return;
+      }
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pinch && pointers.size >= 2) {
+        var pair = Array.from(pointers.values());
+        var scale = pinch.scale * (distance(pair[0], pair[1]) / (pinch.distance || 1));
+        scale = Math.min(zoom.max, Math.max(zoom.min, scale));
+        var mid = midpoint(pair[0], pair[1]);
+        zoomApply(scale, mid.x, mid.y);
+        moved = true;
+        return;
+      }
+      if (drag && pointers.size === 1) {
+        var body = zoomBox();
+        var dx = event.clientX - drag.x;
+        var dy = event.clientY - drag.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          moved = true;
+        }
+        body.scrollLeft = drag.left - dx;
+        body.scrollTop = drag.top - dy;
+      }
+    });
+    var liftZoom = function (event) {
+      if (!pointers.delete(event.pointerId)) {
+        return;
+      }
+      if (pointers.size === 1 && pinch) {
+        var only = Array.from(pointers.values())[0];
+        var body = zoomBox();
+        drag = { x: only.x, y: only.y, left: body.scrollLeft, top: body.scrollTop };
+        pinch = null;
+      } else if (pointers.size === 0) {
+        drag = null;
+        pinch = null;
+      }
+    };
+    previewImage.addEventListener("pointerup", liftZoom);
+    previewImage.addEventListener("pointercancel", liftZoom);
+    previewImage.addEventListener("click", function (event) {
+      if (moved) {
+        moved = false;
+        return;
+      }
+      toggleZoom(event);
+    });
+    previewImage.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      var rect = previewImage.getBoundingClientRect();
+      toggleZoom({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
+    });
+    previewImage.addEventListener("wheel", function (event) {
+      if (!event.ctrlKey || !beginZoom()) {
+        return;
+      }
+      event.preventDefault();
+      var scale = zoom.scale * Math.exp(-event.deltaY * 0.002);
+      zoomApply(Math.min(zoom.max, Math.max(zoom.min, scale)), event.clientX, event.clientY);
+    }, { passive: false });
     var bare = function () {
       previewImage.hidden = true;
       previewImage.removeAttribute("src");
-      previewImage.classList.remove("zoomed");
+      previewImage.style.width = "";
+      previewImage.style.height = "";
       previewDialog.classList.remove("zoomed");
+      zoom = null;
+      pointers.clear();
+      drag = null;
+      pinch = null;
+      moved = false;
       previewDoc.hidden = true;
       previewDoc.innerHTML = "";
       previewFrame.hidden = true;
@@ -3582,43 +3778,6 @@
       previewImage.tabIndex = 0;
       previewImage.setAttribute("role", "button");
     };
-    // A tapped image shows its own pixels and the body scrolls around it; a
-    // second tap fits it to the window again. The point tapped stays under
-    // the finger, so a detail near an edge is the one the window opens on.
-    var toggleZoom = function (event) {
-      var body = previewDialog.querySelector(".preview-body");
-      if (previewImage.classList.contains("zoomed")) {
-        previewImage.classList.remove("zoomed");
-        previewDialog.classList.remove("zoomed");
-        previewImage.title = "Tap to zoom in";
-        body.scrollTop = 0;
-        body.scrollLeft = 0;
-        return;
-      }
-      var rect = previewImage.getBoundingClientRect();
-      var x = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
-      var y = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
-      previewImage.classList.add("zoomed");
-      previewDialog.classList.add("zoomed");
-      previewImage.title = "Tap to fit the window";
-      requestAnimationFrame(function () {
-        var zoomed = previewImage.getBoundingClientRect();
-        var box = body.getBoundingClientRect();
-        var left = zoomed.left - box.left + body.scrollLeft;
-        var top = zoomed.top - box.top + body.scrollTop;
-        body.scrollLeft = left + zoomed.width * x - body.clientWidth / 2;
-        body.scrollTop = top + zoomed.height * y - body.clientHeight / 2;
-      });
-    };
-    previewImage.addEventListener("click", toggleZoom);
-    previewImage.addEventListener("keydown", function (event) {
-      if (event.key !== "Enter" && event.key !== " ") {
-        return;
-      }
-      event.preventDefault();
-      var rect = previewImage.getBoundingClientRect();
-      toggleZoom({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
-    });
     var showDoc = function (html, kind) {
       bare();
       previewDoc.hidden = false;
@@ -4172,12 +4331,20 @@
         form.elements.body.value = "";
         syncEditors(form);
         if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
+        // A reply in the Threads pane redraws the pane; a new thread opens
+        // there, and both leave the list to the fetch below.
+        if (form.dataset.pane !== undefined) {
+          document.dispatchEvent(new CustomEvent("taskui:pane", { detail: { id: form.dataset.parent || "" } }));
+        }
+        if (form.hasAttribute("data-open-thread") && res.data && res.data.id) {
+          document.dispatchEvent(new CustomEvent("taskui:thread", { detail: { id: res.data.id } }));
+        }
         refreshNotes();
       });
   });
   // A chat thread is read when its page opens or a message lands on it.
-  var chatThread = document.querySelector("[data-chat-thread]");
   function chatRead() {
+    var chatThread = document.querySelector("[data-chat-thread]");
     if (!chatThread) return;
     api("POST", "/api/threads/" + encodeURIComponent(chatThread.dataset.chatThread) + "/read").then(function () {
       if (window.taskUI.bell) window.taskUI.bell.refresh();
