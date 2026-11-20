@@ -151,66 +151,38 @@
  them.</div>
 <?php }?>
 <div data-sse="runs" data-dashboard>
-<?php if($_v['data']['threads']){?>
 <section class="block">
-	<h3>Working threads <small>Claude conversations in progress</small></h3>
-	<div class="tiles" data-threads>
-<?php if(!empty($_v['data']['threads']))foreach($_v['data']['threads'] as $_v['thread']){?>		<a class="tile thread-tile" href="<?php echo htmlspecialchars($_v['thread']['href'], ENT_QUOTES);?>
-" data-thread-tile="<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+	<h3>Processes <small>one row per run in progress; the task opens where the work is done</small></h3>
+	<div class="table-wrap">
+	<table class="table">
+		<thead><tr><th>PID</th><th>User</th><th>Stat</th><th>Start</th><th>Time</th><th>Task</th><th>Command</th></tr></thead>
+		<tbody data-processes>
+<?php if(!empty($_v['data']['runs']))foreach($_v['data']['runs'] as $_v['run']){?>			<tr data-run-id="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
 ">
-			<div class="tile-head">
-				<i class="dot <?php echo htmlspecialchars($_v['thread']['state'], ENT_QUOTES);?>
-"></i>
-				<b><?php echo htmlspecialchars($_v['thread']['name'], ENT_QUOTES);?>
-</b>
-				<span class="faint mono"><?php echo htmlspecialchars($_v['thread']['place'], ENT_QUOTES);?>
-</span>
-				<span class="spacer"></span>
-				<?php $_v['data_avatar'] = $_v['thread']['who'];?>
-<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
- role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
-</span>
-			</div>
-			<div class="frame faint">Claude is working in the thread.</div>
-		</a>
-<?php }?>	</div>
+				<td class="mono nowrap" title="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['run']['pid'], ENT_QUOTES);?>
+</td>
+				<td class="nowrap"><?php echo htmlspecialchars($_v['run']['user'], ENT_QUOTES);?>
+</td>
+				<td class="nowrap"><span class="state"><i class="dot <?php echo htmlspecialchars($_v['run']['state'], ENT_QUOTES);?>
+"></i><?php echo htmlspecialchars($_v['run']['state'], ENT_QUOTES);?>
+</span></td>
+				<td class="mono nowrap"><?php echo htmlspecialchars($_v['run']['start'], ENT_QUOTES);?>
+</td>
+				<td class="mono nowrap" data-took data-started="<?php echo htmlspecialchars($_v['run']['started'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['run']['time'], ENT_QUOTES);?>
+</td>
+				<td class="key"><?php if($_v['run']['href']){?>
+<a href="<?php echo htmlspecialchars($_v['run']['href'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['run']['task'], ENT_QUOTES);?>
+</a><?php }else{ echo htmlspecialchars($_v['run']['task'], ENT_QUOTES); }?></td>
+				<td class="desc"><?php echo htmlspecialchars($_v['run']['command'], ENT_QUOTES);?>
+</td>
+			</tr>
+<?php }?>		</tbody>
+	</table>
+	</div>
+	<div class="alert" data-processes-empty<?php if($_v['data']['runs']){?>
+ hidden<?php }?>>Nothing is running. Start a job or ask a prompt and its row appears here.</div>
 </section>
-<?php }?>
-<section class="block">
-	<h3>Running now <small>one run per job, up to a run per CPU; terminals take no turn</small></h3>
-	<div class="tiles" data-tiles>
-<?php if(!empty($_v['data']['runs']))foreach($_v['data']['runs'] as $_v['run']){?>		<a class="tile" href="<?php echo htmlspecialchars($_v['run']['href'], ENT_QUOTES);?>
-" data-attach="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
-" data-tile="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
-">
-			<div class="tile-head">
-				<i class="dot <?php echo htmlspecialchars($_v['run']['state'], ENT_QUOTES);?>
-"></i>
-				<b><?php echo htmlspecialchars($_v['run']['name'], ENT_QUOTES);?>
-</b>
-				<span class="term-title" data-term-title<?php if($_v['run']['title']){?>
- title="<?php echo htmlspecialchars($_v['run']['title'], ENT_QUOTES);?>
-"<?php }?>><?php echo htmlspecialchars($_v['run']['title'], ENT_QUOTES);?>
-</span>
-				<span class="spacer"></span>
-				<span class="faint"><?php echo htmlspecialchars($_v['run']['faint'], ENT_QUOTES);?>
-</span>
-				<?php $_v['data_avatar'] = $_v['run']['who'];?>
-<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
- role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
-</span>
-			</div>
-			<div class="frame"<?php if($_v['run']['running']){?>
- data-frame="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
-"<?php }?> role="img" aria-label="Terminal of <?php echo htmlspecialchars($_v['run']['name'], ENT_QUOTES);?>
-"><?php echo $_v['run']['frame'];?>
-</div>
-		</a>
-<?php }?>	</div>
-	<div class="alert" data-tiles-empty<?php if($_v['data']['runs']){?>
- hidden<?php }?>>Nothing is running. Open a folder and press Run, or run a workflow, and its terminal appears here for everyone.</div>
-</section>
-
 </div>

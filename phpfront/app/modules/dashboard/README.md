@@ -2,9 +2,9 @@
 
 Generated from the module by `atkins docs`. DO NOT EDIT.
 
-mod_dashboard is the page the instance opens on: every terminal running right now, as a tile with the last screen of its output, and the menu of what the reader may add.
+mod_dashboard is the page the instance opens on: every run in progress as one row of a process table, and the menu of what the reader may add.
 
-The tiles follow the runs topic, so a run that starts adds one and one that ends marks it without a reload.
+The rows follow the runs topic, so a run that starts adds one and one that ends leaves it without a reload.
 
 ## Pages
 

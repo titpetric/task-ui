@@ -5549,47 +5549,82 @@
       });
     });
   }
-  // The dashboard follows the runs topic: a run that starts adds its
-  // tile, polled for its frame; one that ends marks its tile and the last
-  // frame is fetched.
-  var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
-  if (dashboard && window.EventSource) {
-    var tiles = dashboard.querySelector("[data-tiles]");
-    var tilesEmpty = dashboard.querySelector("[data-tiles-empty]");
+  // The dashboard follows the runs topic as a process table: a run that
+  // starts adds a row, one that ends leaves it. ps lists processes, not
+  // history, and a row of a thread opens the thread where its work is read.
+  var processes = document.querySelector('[data-sse="runs"] [data-processes]');
+  if (processes && window.EventSource) {
+    var processesEmpty = document.querySelector("[data-processes-empty]");
+    // processStarted and processTook read a start and a length the way the
+    // cells the page rendered do.
+    var processStarted = function (run) {
+      var at = run.started_at ? Date.parse(run.started_at) : NaN;
+      return isNaN(at) ? "" : String(at);
+    };
+    var processTook = function (run) {
+      var started = processStarted(run);
+      if (!started) return "";
+      var end = run.finished_at ? Date.parse(run.finished_at) : Date.now();
+      var s = Math.max(0, (end - Number(started)) / 1000);
+      var pad = function (n) { return ("0" + Math.floor(n)).slice(-2); };
+      if (s < 60) return s.toFixed(1) + "s";
+      if (s < 3600) return Math.floor(s / 60) + "m" + pad(s % 60) + "s";
+      return Math.floor(s / 3600) + "h" + pad((s % 3600) / 60) + "m";
+    };
+    var processClock = function (run) {
+      var at = run.started_at ? new Date(run.started_at) : null;
+      if (!at || isNaN(at)) return "";
+      return ("0" + at.getHours()).slice(-2) + ":" + ("0" + at.getMinutes()).slice(-2);
+    };
+    // processHref is where a run's work is read, as the page's own rows
+    // link it: a thread for a prompt or a note, a host's page for its
+    // command, the page of the job for anything else.
+    var processHref = function (run) {
+      if (isPromptRun(run) || isNoteRun(run)) return mount() + "/threads";
+      if (String(run.job).indexOf("@host:") === 0) {
+        var host = run.job.slice(6);
+        return mount() + (host === "*" ? "/inventory" : "/inventory/hosts/" + encodeURIComponent(host));
+      }
+      return folderHref(run.folder) + (run.dir ? "/" + run.dir : "") + "/" + encodeURIComponent(run.job);
+    };
+    var processRow = function (run) {
+      var row = document.createElement("tr");
+      row.dataset.runId = run.id;
+      row.innerHTML =
+        '<td class="mono nowrap" title="' + escapeHTML(run.id) + '">' + escapeHTML(String(run.id).slice(0, 8)) + "</td>" +
+        '<td class="nowrap">' + escapeHTML(run.user_name || "") + "</td>" +
+        '<td class="nowrap"><span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) + "</span></td>" +
+        '<td class="mono nowrap">' + escapeHTML(processClock(run)) + "</td>" +
+        '<td class="mono nowrap" data-took data-started="' + processStarted(run) + '">' + processTook(run) + "</td>" +
+        '<td class="key"><a href="' + escapeHTML(processHref(run)) + '">' + escapeHTML(runTitle(run)) + "</a></td>" +
+        '<td class="desc">' + escapeHTML(run.title || "") + "</td>";
+      return row;
+    };
+    var processesDrawn = function () {
+      if (processesEmpty) processesEmpty.hidden = processes.children.length > 0;
+    };
     onRuns(function (run) {
-      var tile = tiles.querySelector('[data-tile="' + run.id + '"]');
-      if (!tile && run.state === "running") {
-        tile = document.createElement("a");
-        tile.className = "tile";
-        tile.href = mount() + "/runs/" + run.id;
-        tile.dataset.attach = run.id;
-        tile.dataset.tile = run.id;
-        tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(runTitle(run)) + "</b>" +
-          '<span class="term-title" data-term-title></span>' +
-          '<span class="spacer"></span><span class="faint"></span>' +
-          avatarHTML(run.user_name) + "</div>" +
-          '<div class="frame" data-frame="' + escapeHTML(run.id) + '" role="img" aria-label="Terminal of ' + escapeHTML(runTitle(run)) + '"></div>';
-        tiles.insertBefore(tile, tiles.firstChild);
-        watchFrames();
-      } else if (tile) {
-        tile.querySelector(".tile-head .dot").className = "dot " + run.state;
-        var frame = tile.querySelector(".frame");
-        if (run.state !== "running" && frame.dataset.frame) {
-          delete frame.dataset.frame;
-          fetch(frameURL(run.id), { credentials: "same-origin" })
-            .then(function (res) { return res.ok ? res.text() : null; })
-            .then(function (svg) { if (svg) frame.innerHTML = svg; })
-            .catch(function () {});
-        }
+      var row = processes.querySelector('[data-run-id="' + CSS.escape(run.id) + '"]');
+      if (ended(run.state)) {
+        if (row) row.remove();
+        processesDrawn();
+        return;
       }
-      // A run that names itself in its terminal carries the name.
-      var named = tile && tile.querySelector("[data-term-title]");
-      if (named) {
-        named.textContent = run.title || "";
-        named.title = run.title || "";
+      if (!row) {
+        processes.insertBefore(processRow(run), processes.firstChild);
+        processesDrawn();
+        return;
       }
-      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
+      var state = row.querySelector(".state");
+      if (state) state.innerHTML = '<i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state);
     });
+    setInterval(function () {
+      processes.querySelectorAll("tr[data-run-id] .dot.running").forEach(function (dot) {
+        var cell = dot.closest("tr").querySelector("[data-took]");
+        var started = Number(cell.dataset.started);
+        if (started) cell.textContent = processTook({ started_at: new Date(started).toISOString() });
+      });
+    }, 1000);
   }
 
   // A table with col-hover lights the column under the pointer, every

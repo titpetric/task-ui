@@ -3,38 +3,24 @@
 {if $data.note}<div class="alert bad" role="alert"><b>{data.note.pipelines} {data.note.says} errors</b> in {foreach $data.note.workspaces as $i => $ws}{if $i}, {/if}<a href="{ws.href}">{ws.name}</a>{/foreach}. {data.note.lists} them.</div>
 {/if}
 <div data-sse="runs" data-dashboard>
-{if $data.threads}<section class="block">
-	<h3>Working threads <small>Claude conversations in progress</small></h3>
-	<div class="tiles" data-threads>
-{foreach $data.threads as $thread}		<a class="tile thread-tile" href="{thread.href}" data-thread-tile="{thread.id}">
-			<div class="tile-head">
-				<i class="dot {thread.state}"></i>
-				<b>{thread.name}</b>
-				<span class="faint mono">{thread.place}</span>
-				<span class="spacer"></span>
-				{eval $data_avatar = $thread.who}{include components/avatar.tpl}
-			</div>
-			<div class="frame faint">Claude is working in the thread.</div>
-		</a>
-{/foreach}	</div>
-</section>
-{/if}
 <section class="block">
-	<h3>Running now <small>one run per job, up to a run per CPU; terminals take no turn</small></h3>
-	<div class="tiles" data-tiles>
-{foreach $data.runs as $run}		<a class="tile" href="{run.href}" data-attach="{run.id}" data-tile="{run.id}">
-			<div class="tile-head">
-				<i class="dot {run.state}"></i>
-				<b>{run.name}</b>
-				<span class="term-title" data-term-title{if $run.title} title="{run.title}"{/if}>{run.title}</span>
-				<span class="spacer"></span>
-				<span class="faint">{run.faint}</span>
-				{eval $data_avatar = $run.who}{include components/avatar.tpl}
-			</div>
-			<div class="frame"{if $run.running} data-frame="{run.id}"{/if} role="img" aria-label="Terminal of {run.name}">{run.frame|raw}</div>
-		</a>
-{/foreach}	</div>
-	<div class="alert" data-tiles-empty{if $data.runs} hidden{/if}>Nothing is running. Open a folder and press Run, or run a workflow, and its terminal appears here for everyone.</div>
+	<h3>Processes <small>one row per run in progress; the task opens where the work is done</small></h3>
+	<div class="table-wrap">
+	<table class="table">
+		<thead><tr><th>PID</th><th>User</th><th>Stat</th><th>Start</th><th>Time</th><th>Task</th><th>Command</th></tr></thead>
+		<tbody data-processes>
+{foreach $data.runs as $run}			<tr data-run-id="{run.id}">
+				<td class="mono nowrap" title="{run.id}">{run.pid}</td>
+				<td class="nowrap">{run.user}</td>
+				<td class="nowrap"><span class="state"><i class="dot {run.state}"></i>{run.state}</span></td>
+				<td class="mono nowrap">{run.start}</td>
+				<td class="mono nowrap" data-took data-started="{run.started}">{run.time}</td>
+				<td class="key">{if $run.href}<a href="{run.href}">{run.task}</a>{else}{run.task}{/if}</td>
+				<td class="desc">{run.command}</td>
+			</tr>
+{/foreach}		</tbody>
+	</table>
+	</div>
+	<div class="alert" data-processes-empty{if $data.runs} hidden{/if}>Nothing is running. Start a job or ask a prompt and its row appears here.</div>
 </section>
-
 </div>

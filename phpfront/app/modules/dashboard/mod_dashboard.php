@@ -4,15 +4,14 @@
 
 require "ext/autoload.php";
 
-// mod_dashboard is the page the instance opens on: every terminal running
-// right now, as a tile with the last screen of its output, and the menu of
-// what the reader may add.
+// mod_dashboard is the page the instance opens on: every run in progress as
+// one row of a process table, and the menu of what the reader may add.
 //
-// The tiles follow the runs topic, so a run that starts adds one and one that
-// ends marks it without a reload.
+// The rows follow the runs topic, so a run that starts adds one and one that
+// ends leaves it without a reload.
 class mod_dashboard implements Module {
 	/** LEAD is the sentence under the heading. */
-	const LEAD = "Every running terminal, live, for everyone to see. Open one to attach, or pick a folder on the left to start a run.";
+	const LEAD = "Every run in progress, one row each: the command or the prompt it runs, who started it, and where its work is read.";
 
 	/** ADD is the label of the head's menu. */
 	const ADD = "Add a workspace, project, user, key, secret or workflow";
@@ -48,8 +47,7 @@ class mod_dashboard implements Module {
 		$view->page([
 			"head" => $head->data(),
 			"note" => $note,
-			"runs" => $this->tiles($chrome),
-			"threads" => $this->threads($chrome),
+			"runs" => $this->processes($chrome),
 		]);
 	}
 
@@ -77,106 +75,103 @@ class mod_dashboard implements Module {
 	}
 
 	/**
-	 * tiles is a tile per run in progress the reader sees, newest first.
+	 * processes is a row per run in progress the reader sees, newest first, as
+	 * ps lists one line per process.
 	 *
-	 * The runs are the ones the chrome already read for the sidebar's dot and
-	 * its Stop buttons, filtered by the same rule the Go page filters by, so
-	 * the list costs this page nothing: a session and a frame per tile is all
-	 * it asks the host for, which is what the Go page asks too.
+	 * The runner's memory holds every run in progress, whoever started it and
+	 * whatever its job, which is why the list is read here and not off the
+	 * tree: the tree keys a run by its job and keeps one of each.
 	 */
-	function tiles($chrome) {
-		$live = $chrome->liveRuns();
-		$runs = array_values($live);
-		$roles = $chrome->who()->roles;
+	function processes($chrome) {
+		$runs = new Task\Runs\Runs($chrome->db);
+		$threads = new Task\Threads\Notes($chrome->db);
+		$prompts = $chrome->allowed("prompt/view");
+		$notes = $chrome->allowed("note/view");
 		$out = [];
+		$seen = [];
 
-		usort($runs, function($one, $other) {
-			return strcmp($other->getId(), $one->getId());
+		foreach (Task\Host::running() as $each) {
+			$id = Task\Row::text($each, "id");
+
+			if ($id === "" || isset($seen[$id])) {
+				continue;
+			}
+
+			$seen[$id] = true;
+			$run = $runs->get($id);
+
+			if (!Task\Run::seen($chrome->user, $run, $prompts, $notes)) {
+				continue;
+			}
+
+			Task\Run::overlay($run, Task\Host::session($id));
+			$out[] = $this->process($run, $threads, $prompts || $notes, $chrome->workspaces());
+		}
+
+		usort($out, function($one, $other) {
+			return strcmp($other["id"], $one["id"]);
 		});
 
-		foreach ($runs as $run) {
-			if (Task\Run::isClaude($run)) {
-				continue;
-			}
-
-			$out[] = $this->tile($run, $roles);
-		}
-
 		return $out;
 	}
 
-	/** threads is a card per Claude thread in progress that the reader may read. */
-	function threads($chrome) {
-		$store = new Task\Threads\Notes;
-		$out = [];
-
-		foreach ($store->live() as $note) {
-			if (Task\Note::isPrompt($note)) {
-				if (!$chrome->allowed("prompt/view") || !Task\Note::seesPlace($chrome, $note->getDir())) {
-					continue;
-				}
-			} elseif (!$chrome->allowed("note/view")) {
-				continue;
-			}
-
-			$out[] = [
-				"id" => $note->getId(),
-				"href" => Task\Route::href("/threads/" . rawurlencode($note->getId())),
-				"name" => Task\Note::excerpt($note->getBody()),
-				"place" => $note->getDir() === "" ? "board" : $note->getDir(),
-				"state" => Task\Recent::threadState($note->getState()),
-				"run" => $note->getRunId(),
-				"who" => $chrome->who()->of($note->getUserName()),
-			];
-		}
-
-		return $out;
-	}
-
-	/**
-	 * tile is one run in progress: its state, what it is running, who started
-	 * it and the last screen of its terminal.
-	 *
-	 * The runner is ahead of the row, so the session is laid over it before a
-	 * field is read: the state the dot draws and the title beside the name are
-	 * the session's.
-	 */
-	function tile($run, $roles) {
+	/** process is one row: the run as ps lists it and where its work is read. */
+	function process($run, $threads, $threadsOK, $workspaces) {
 		$id = $run->getId();
-		$session = Task\Host::session($id);
-		$message = Task\Run::overlay($run, $session);
-		$state = $run->getState();
-		$name = $run->getUserName();
-		$role = Task\Recent::role($roles, $name);
-		$watching = Task\Row::number($session, "attached");
+		$thread = null;
+
+		if (Task\Run::isPrompt($run) || Task\Run::isNote($run)) {
+			$thread = $threads->byRun($id);
+		}
 
 		return [
 			"id" => $id,
-			"href" => Task\Route::href("/runs/" . $id),
-			"state" => $state,
-			"running" => $state === Task\Run::RUNNING,
-			"name" => Task\Run::name($run),
-			"title" => $run->getTitle(),
-			"faint" => $this->faint($state, $message, $watching),
-			"who" => Task\Who::avatar($name, $role),
-			"frame" => Task\Host::frame($id),
+			"pid" => substr($id, 0, 8),
+			"user" => $run->getUserName(),
+			"state" => $run->getState(),
+			"start" => Task\Clock::format($run->getStartedAt(), "15:04"),
+			"started" => Task\Run::started($run->getStartedAt()),
+			"time" => Task\Run::duration(Task\Run::elapsed($run)),
+			"task" => Task\Run::name($run),
+			"href" => $this->href($run, $thread, $threadsOK, $workspaces),
+			"command" => $this->command($run, $thread),
 		];
 	}
 
-	/**
-	 * faint is the grey text on the right of a tile's head: why a queued run
-	 * is waiting, else how many windows are watching it.
-	 */
-	function faint($state, $message, $watching) {
-		if ($state === Task\Run::QUEUED && $message !== "") {
-			return $message;
+	/** href is where a run's work is read: its thread, its host, or the page of its job. */
+	function href($run, $thread, $threadsOK, $workspaces) {
+		if ($thread !== null && $threadsOK) {
+			return Task\Route::href("/threads/" . rawurlencode($thread->getId()));
 		}
 
-		if ($watching > 0) {
-			return $watching . " watching";
+		if (Task\Run::isPrompt($run) || Task\Run::isNote($run)) {
+			return $threadsOK ? Task\Route::href("/threads") : "";
 		}
 
-		return "";
+		if (Task\Run::isHost($run)) {
+			$host = substr($run->getJob(), strlen(Task\Run::HOST_PREFIX));
+
+			return Task\Route::href($host === Task\Run::HOST_ALL ? "/inventory" : "/inventory/hosts/" . rawurlencode($host));
+		}
+
+		$href = Task\Run::runJobHref($run, $workspaces);
+
+		return $href === "" ? "" : Task\Route::href($href);
+	}
+
+	/** command is what a run runs: the thread's question, else the title a job gave itself. */
+	function command($run, $thread) {
+		if ($thread !== null) {
+			return Task\Note::excerpt($thread->getBody());
+		}
+
+		$title = $run->getTitle();
+
+		if ($title !== "") {
+			return $title;
+		}
+
+		return implode(" ", Task\Run::argList($run));
 	}
 }
 
