@@ -71,6 +71,11 @@ foreach (["fx-key-ann", "fx-key-bob", "fx-key-carol"] as $name) {
 
 	echo $name, ": [", implode(",", $got), "]\n";
 }
+
+// A role's key reaches every fixture's runners, so this one leaves none behind.
+$db->query("DELETE FROM key_role WHERE key_name LIKE 'fx-key-%'");
+$db->query("DELETE FROM key_user WHERE key_name LIKE 'fx-key-%'");
+$db->query("DELETE FROM key_info WHERE name LIKE 'fx-key-%'");
 ---
 fx-key-deploy
 runner
