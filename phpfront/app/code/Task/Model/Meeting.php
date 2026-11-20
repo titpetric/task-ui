@@ -26,6 +26,9 @@ class Meeting {
 		"summary_user_name",
 		"created_at",
 		"updated_at",
+		"agent",
+		"agent_id",
+		"agent_note_id",
 	];
 
 	/** primary is the primary key columns. */
@@ -63,6 +66,12 @@ class Meeting {
 	var $created_at = "";
 	/** Updated At */
 	var $updated_at = "";
+	/** Agent */
+	var $agent = "";
+	/** Agent ID */
+	var $agent_id = "";
+	/** Agent Note ID */
+	var $agent_note_id = "";
 
 	function __construct($row = []) {
 		$this->id = \Task\Row::text($row, "id");
@@ -80,6 +89,9 @@ class Meeting {
 		$this->summary_user_name = \Task\Row::text($row, "summary_user_name");
 		$this->created_at = \Task\Row::stamp($row, "created_at");
 		$this->updated_at = \Task\Row::stamp($row, "updated_at");
+		$this->agent = \Task\Row::text($row, "agent");
+		$this->agent_id = \Task\Row::text($row, "agent_id");
+		$this->agent_note_id = \Task\Row::text($row, "agent_note_id");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -243,6 +255,39 @@ class Meeting {
 	/** setUpdatedAt sets Updated At. */
 	function setUpdatedAt($value) {
 		$this->updated_at = $value;
+
+		return $this;
+	}
+	/** getAgent is Agent. */
+	function getAgent() {
+		return $this->agent;
+	}
+
+	/** setAgent sets Agent. */
+	function setAgent($value) {
+		$this->agent = $value;
+
+		return $this;
+	}
+	/** getAgentId is Agent ID. */
+	function getAgentId() {
+		return $this->agent_id;
+	}
+
+	/** setAgentId sets Agent ID. */
+	function setAgentId($value) {
+		$this->agent_id = $value;
+
+		return $this;
+	}
+	/** getAgentNoteId is Agent Note ID. */
+	function getAgentNoteId() {
+		return $this->agent_note_id;
+	}
+
+	/** setAgentNoteId sets Agent Note ID. */
+	function setAgentNoteId($value) {
+		$this->agent_note_id = $value;
 
 		return $this;
 	}

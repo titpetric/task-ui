@@ -418,6 +418,20 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: agent
+      type: text
+      comment: Agent
+      datatype: varchar
+    - name: agent_id
+      type: text
+      key: MUL
+      comment: Agent ID
+      datatype: char(26)
+    - name: agent_note_id
+      type: text
+      key: MUL
+      comment: Agent Note ID
+      datatype: char(26)
   indexes:
     - name: sqlite_autoindex_meeting_1
       columns:

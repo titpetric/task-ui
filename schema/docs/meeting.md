@@ -19,3 +19,6 @@ Meeting.
 | summary_user_name | varchar  |     | Summary User Name |
 | created_at        | datetime |     | Created At        |
 | updated_at        | datetime |     | Updated At        |
+| agent             | varchar  |     | Agent             |
+| agent_id          | char(26) | MUL | Agent ID          |
+| agent_note_id     | char(26) | MUL | Agent Note ID     |

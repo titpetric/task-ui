@@ -156,6 +156,26 @@ func (h *Handlers) finishMeeting(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"meeting": room})
 }
 
+// setMeetingAgent names the room's agent, or clears it, as its creator or an admin.
+func (h *Handlers) setMeetingAgent(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "meeting/edit") || h.meetingOff(w) {
+		return
+	}
+	var req struct {
+		Agent string `json:"agent"`
+	}
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	room, err := h.opts.Meetings.SetAgent(r.Context(), access.UserFrom(r.Context()), param(r, "id"), req.Agent)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"meeting": room})
+}
+
 // meetingSummary returns the summary an ended room has.
 func (h *Handlers) meetingSummary(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "meeting/view") || h.meetingOff(w) {

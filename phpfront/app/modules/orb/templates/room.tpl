@@ -25,6 +25,14 @@
 {/if}		</div>
 		<span class="orb-timer" data-orb-timer title="Time left"></span>
 	</div>
+{if $data.room.pick_agent}	<form class="orb-agent" data-orb-agent>
+		<label class="faint" for="orb-agent">Agent</label>
+		<select id="orb-agent" name="agent">
+			<option value="">No agent</option>
+{foreach $data.room.agent_names as $name}			<option value="{name}"{if $name == $data.room.agent} selected{/if}>{name}</option>
+{/foreach}		</select>
+		<button class="btn" type="submit">Save</button>
+	</form>{/if}
 	<p class="orb-status faint" data-orb-status aria-live="polite">{if $data.room.can_edit}Join to hear the room and speak.{else}You need <code>meeting/edit</code> to join.{/if}</p>
 	<p class="faint orb-hint">Headphones keep the room's own voices out of your microphone.</p>
 {else}	<p class="orb-status faint" data-orb-status>This meeting ended {data.room.ended}.</p>

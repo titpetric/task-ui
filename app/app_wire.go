@@ -12,6 +12,7 @@ import (
 
 	"github.com/titpetric/task-ui/app/api"
 	"github.com/titpetric/task-ui/app/model"
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/feature/inventory/hostrun"
 	"github.com/titpetric/task-ui/feature/meeting"
 	"github.com/titpetric/task-ui/feature/note"
@@ -204,6 +205,38 @@ func (a *App) wire(version string) error {
 			Timeout: 3 * time.Minute,
 		}).Summarize,
 		Logger: slog.Default(),
+		Agent: &meeting.AgentHooks{
+			Valid: func(ctx context.Context, name string) (*model.User, error) {
+				agent, err := store.Users.GetByName(ctx, name)
+				if err != nil || !agent.AgentReply || !agent.Mcp {
+					return nil, meeting.ErrAgent
+				}
+				return agent, nil
+			},
+			Ask: func(ctx context.Context, host *model.User, thread, agent, origin, body string) (string, error) {
+				asked, err := a.Board.AskAs(ctx, host, thread, model.Default, body, note.Spoken{}, agent, origin)
+				if err != nil {
+					return "", err
+				}
+				return asked.ID, nil
+			},
+			Watch: func(thread string) (<-chan model.Note, func()) {
+				events, cancel := svc.Events.Subscribe(note.ThreadTopic(thread))
+				out := make(chan model.Note, event.Buffer)
+				go func() {
+					defer close(out)
+					for ev := range events {
+						if n, ok := ev.Data.(model.Note); ok {
+							select {
+							case out <- n:
+							default:
+							}
+						}
+					}
+				}()
+				return out, cancel
+			},
+		},
 	}
 	apiHandlers := api.New(api.Options{
 		Meetings: a.Meetings,

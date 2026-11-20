@@ -43,10 +43,14 @@ type Service struct {
 	Env func(ctx context.Context, user, role string) (map[string]string, error)
 	// Summarize asks Claude about a meeting's transcript.
 	Summarize func(ctx context.Context, env map[string]string, system, prompt, document string) (string, error)
+	// Agent is the note board side of a room's agent, nil when agents are off.
+	Agent *AgentHooks
 	// Now reads the clock, time.Now unless set.
 	Now func() time.Time
 	// Logger reports the summaries that failed.
 	Logger *slog.Logger
+	// agents keeps each room's discussion the agent has not read.
+	agents agentQueues
 }
 
 // now reads the service's clock.
@@ -211,6 +215,9 @@ func (s *Service) Line(ctx context.Context, m *model.Meeting, user *model.User, 
 	if err := s.Store.AddLine(ctx, line); err != nil {
 		return nil, err
 	}
+	if current, err := s.Store.Get(ctx, m.ID); err == nil {
+		s.discuss(current, user, text)
+	}
 	return line, nil
 }
 
@@ -267,6 +274,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	_ = s.Channels.Remove(id)
+	s.stopAgent(id)
 	s.Hub.End(id)
 	return nil
 }
@@ -301,6 +309,7 @@ func (s *Service) end(ctx context.Context, m *model.Meeting, reason string) erro
 	if err := s.Store.AddLine(ctx, line); err == nil {
 		s.Hub.Broadcast(m.ID, nil, TextFrame(Message{Type: "end", Line: line}))
 	}
+	s.stopAgent(m.ID)
 	s.Hub.End(m.ID)
 	if m.SummaryState == model.SummaryWorking {
 		go s.summarize(m)

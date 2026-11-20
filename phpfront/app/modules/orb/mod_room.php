@@ -62,6 +62,18 @@ class mod_room implements Module {
 		$admin = Task\User::admin($me);
 		$open = $meeting->getState() === "open";
 		$summary = trim($meeting->getSummary());
+		$users = new Task\User;
+		$agentNames = [];
+
+		foreach ($users->agents() as $user) {
+			$agentNames[] = $user->getName();
+		}
+
+		$agent = $meeting->getAgent();
+
+		if ($agent !== "") {
+			$people = $this->withAgent($people, $meeting->getAgentId(), $agent);
+		}
 
 		$view->page([
 			"head" => $this->head($chrome, $meeting, $people, $open, $host || $admin),
@@ -82,6 +94,9 @@ class mod_room implements Module {
 				"summary_state" => $meeting->getSummaryState(),
 				"summary_message" => $meeting->getSummaryMessage(),
 				"summary_user" => $meeting->getSummaryUserName(),
+				"agent" => $agent,
+				"agent_names" => $agentNames,
+				"pick_agent" => $open && $chrome->allowed("meeting/edit") && ($host || $admin),
 				"ended" => Task\Clock::ago($meeting->getEndedAt()),
 			],
 			"people" => $people,
@@ -153,6 +168,19 @@ class mod_room implements Module {
 		}
 
 		return $out;
+	}
+
+	/** withAgent puts the room's agent in the participant rail. */
+	function withAgent($people, $id, $name) {
+		array_unshift($people, [
+			"id" => $id,
+			"name" => $name,
+			"here" => true,
+			"self" => false,
+			"joins" => 0,
+		]);
+
+		return $people;
 	}
 
 	/** lines is a room's log as it draws it: what a speaker said, and what happened. */

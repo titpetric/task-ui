@@ -273,6 +273,39 @@ func TestServiceSummaryNoSpeech(t *testing.T) {
 	}
 }
 
+// An agent is named on an open room by its creator or an admin, and cleared the same way.
+func TestService_SetAgent(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	svc, ana, bob := newService(t)
+	svc.Agent = &meeting.AgentHooks{
+		Valid: func(ctx context.Context, name string) (*model.User, error) {
+			if name != "claude" {
+				return nil, meeting.ErrAgent
+			}
+			return &model.User{ID: "agent1", Name: "claude"}, nil
+		},
+	}
+
+	room, err := svc.Create(ctx, ana, "Agent")
+	assert.NoError(t, err)
+	_, err = svc.SetAgent(ctx, bob, room.ID, "claude")
+	assert.Equal(t, meeting.ErrNotHost, err)
+
+	named, err := svc.SetAgent(ctx, ana, room.ID, "claude")
+	assert.NoError(t, err)
+	assert.Equal(t, "claude", named.Agent)
+	assert.Equal(t, "agent1", named.AgentID)
+
+	_, err = svc.SetAgent(ctx, ana, room.ID, "nobody")
+	assert.Equal(t, meeting.ErrAgent, err)
+
+	cleared, err := svc.SetAgent(ctx, ana, room.ID, "")
+	assert.NoError(t, err)
+	assert.Equal(t, "", cleared.Agent)
+	assert.Equal(t, "", cleared.AgentID)
+}
+
 // A summary is retried on an ended room alone, and a room ends on demand.
 func TestServiceRetry(t *testing.T) {
 	t.Parallel()

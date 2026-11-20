@@ -107,6 +107,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/meetings/{id}/leave", h.leaveMeeting)
 	r.Post("/meetings/{id}/heartbeat", h.heartbeatMeeting)
 	r.Post("/meetings/{id}/finish", h.finishMeeting)
+	r.Post("/meetings/{id}/agent", h.setMeetingAgent)
 	r.Get("/meetings/{id}/summary", h.meetingSummary)
 	r.Post("/meetings/{id}/summary", h.summarizeMeeting)
 	r.Get("/meetings/{id}/channels/{user}", h.meetingChannel)
@@ -283,7 +284,7 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, meeting.ErrNotHost):
 		return http.StatusForbidden
-	case errors.Is(err, meeting.ErrTitle):
+	case errors.Is(err, meeting.ErrTitle), errors.Is(err, meeting.ErrAgent):
 		return http.StatusBadRequest
 	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist), errors.Is(err, note.ErrNoPrompt), errors.Is(err, note.ErrChatOff):
 		return http.StatusNotFound

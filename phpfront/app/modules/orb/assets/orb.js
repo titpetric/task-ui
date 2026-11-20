@@ -1035,6 +1035,20 @@
     }
   });
 
+  var agentPicker = room.querySelector("[data-orb-agent]");
+
+  if (agentPicker) {
+    agentPicker.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var pick = agentPicker.querySelector("select[name=agent]");
+      api("POST", "/meetings/" + cfg.id + "/agent", { agent: pick ? pick.value : "" }).then(function () {
+        location.reload();
+      }, function (err) {
+        say(err.message, true);
+      });
+    });
+  }
+
   if (el.join) {
     el.join.addEventListener("click", join);
   }

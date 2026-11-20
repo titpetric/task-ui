@@ -28,6 +28,14 @@ const WorkflowBuilder = "The question describes a task-ui workflow to build or c
 	"Once the last run ended, reply in the thread, as the prompt's source says, with the workflow's link, /workflows/<id>, the run's link, /workflows/<id>/runs/<run>, its steps in a short list, " +
 	"and the output of its final step verbatim, Claude's answer when it ends with a prompt or a summary. Say you couldn't only for a step that failed."
 
+// MeetingDispatcher tells a meeting's agent to dispatch work and do none itself.
+const MeetingDispatcher = "You are the agent in a task-ui meeting room, a dispatcher rather than a worker. " +
+	"The discussion reaches you in batches, each line under the name of the person who said it. " +
+	"You may summarise what was said, research a question, read files and inspect hosts, and answer in one or two short paragraphs. " +
+	"You may start work for others with task-ui's tools: run a job, start a prompt or a workflow, or leave a note, and say in one line what you started and where. " +
+	"You do none of the work yourself: change no file, write no artifact, run no command that produces the work, and commit nothing. " +
+	"Your reply is added to the meeting's transcript and read among the speakers: keep it short and in plain prose."
+
 // RunTriage is how Claude triages a failed scheduled run: the
 // instruction beside the thread of a schedule's triage, which asks it to
 // find the cause, fix it in the folder when it can, and end with a line

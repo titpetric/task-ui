@@ -192,6 +192,18 @@
 <?php }?>		</div>
 		<span class="orb-timer" data-orb-timer title="Time left"></span>
 	</div>
+<?php if($_v['data']['room']['pick_agent']){?>
+	<form class="orb-agent" data-orb-agent>
+		<label class="faint" for="orb-agent">Agent</label>
+		<select id="orb-agent" name="agent">
+			<option value="">No agent</option>
+<?php if(!empty($_v['data']['room']['agent_names']))foreach($_v['data']['room']['agent_names'] as $_v['name']){?>			<option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+"<?php if($_v['name'] == $_v['data']['room']['agent']){?>
+ selected<?php }?>><?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+</option>
+<?php }?>		</select>
+		<button class="btn" type="submit">Save</button>
+	</form><?php }?>
 	<p class="orb-status faint" data-orb-status aria-live="polite"><?php if($_v['data']['room']['can_edit']){?>
 Join to hear the room and speak.<?php }else{?>
 You need <code>meeting/edit</code> to join.<?php }?></p>

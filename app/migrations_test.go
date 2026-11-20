@@ -33,6 +33,7 @@ var migrations = []string{
 	"key_role.up.sql",
 	"key_user.up.sql",
 	"meeting.up.sql",
+	"meeting_agent.up.sql",
 	"meeting_line.up.sql",
 	"meeting_participant.up.sql",
 	"module.up.sql",

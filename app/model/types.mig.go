@@ -714,6 +714,15 @@ type Meeting struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Agent
+	Agent string `db:"agent" json:"agent"`
+
+	// Agent ID
+	AgentID string `db:"agent_id" json:"agent_id"`
+
+	// Agent Note ID
+	AgentNoteID string `db:"agent_note_id" json:"agent_note_id"`
 }
 
 // GetID will return the value of ID.
@@ -806,11 +815,29 @@ func (m *Meeting) GetUpdatedAt() *time.Time { return m.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (m *Meeting) SetUpdatedAt(stamp time.Time) { m.UpdatedAt = &stamp }
 
+// GetAgent will return the value of Agent.
+func (m *Meeting) GetAgent() string { return m.Agent }
+
+// SetAgent sets Agent to the provided value.
+func (m *Meeting) SetAgent(val string) { m.Agent = val }
+
+// GetAgentID will return the value of AgentID.
+func (m *Meeting) GetAgentID() string { return m.AgentID }
+
+// SetAgentID sets AgentID to the provided value.
+func (m *Meeting) SetAgentID(val string) { m.AgentID = val }
+
+// GetAgentNoteID will return the value of AgentNoteID.
+func (m *Meeting) GetAgentNoteID() string { return m.AgentNoteID }
+
+// SetAgentNoteID sets AgentNoteID to the provided value.
+func (m *Meeting) SetAgentNoteID(val string) { m.AgentNoteID = val }
+
 // MeetingTable is the name of the table in the DB.
 const MeetingTable = "`meeting`"
 
 // MeetingFields is a list of all columns in the DB table.
-var MeetingFields = []string{"id", "title", "user_id", "user_name", "state", "started_at", "ended_at", "limit_seconds", "empty_since", "summary", "summary_state", "summary_message", "summary_user_name", "created_at", "updated_at"}
+var MeetingFields = []string{"id", "title", "user_id", "user_name", "state", "started_at", "ended_at", "limit_seconds", "empty_since", "summary", "summary_state", "summary_message", "summary_user_name", "created_at", "updated_at", "agent", "agent_id", "agent_note_id"}
 
 // MeetingPrimaryFields are the primary key fields in the DB table.
 var MeetingPrimaryFields = []string{"id"}
