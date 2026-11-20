@@ -269,7 +269,7 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 </form>
 
 <?php }?><?php if($_v['data_prompt']['threads']){?>
-	<ul class="thread-links">
+	<ul class="thread-links" data-notes>
 <?php if(!empty($_v['data_prompt']['threads']))foreach($_v['data_prompt']['threads'] as $_v['thread']){?>		<li><a href="<?php echo htmlspecialchars($_v['thread']['href'], ENT_QUOTES);?>
 "><svg class="ic"><use href="#i-note"/></svg> <?php echo htmlspecialchars($_v['thread']['title'], ENT_QUOTES);?>
 </a><?php if($_v['thread']['state']){?>

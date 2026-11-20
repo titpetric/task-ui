@@ -1,7 +1,7 @@
 <details class="promptbox"{if $data_prompt.open} open{/if}{if $data_prompt.hidden} hidden{/if}>
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>{data_prompt.title} <small>{data_prompt.note}</small></h3></summary>
 {if !$data_prompt.watch}	{eval $data_composer = $data_prompt.composer}{include components/composer.tpl}
-{/if}{if $data_prompt.threads}	<ul class="thread-links">
+{/if}{if $data_prompt.threads}	<ul class="thread-links" data-notes>
 {foreach $data_prompt.threads as $thread}		<li><a href="{thread.href}"><svg class="ic"><use href="#i-note"/></svg> {thread.title}</a>{if $thread.state} <span class="badge note-state {thread.state}">{thread.state}</span>{/if}</li>
 {/foreach}	</ul>
 {/if}</details>
