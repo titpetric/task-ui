@@ -231,7 +231,7 @@ class Conversation {
 	static function menu($note, $chrome) {
 		$menu = new \Task\Menu("Actions on this thread");
 
-		$menu->whenDanger(\Task\Note::deletes($note, $chrome), "trash", "Delete", [
+		$menu->whenDanger(\Task\Note::deletes($note, $chrome) && $note->getState() !== \Task\Note::WORKING, "trash", "Delete", [
 			"data-delete" => "/api/notes/" . $note->getId(),
 			"data-confirm" => "Delete this thread and every message in it? It leaves every listing; nobody reads it again.",
 			"data-confirm-ok" => "Delete",

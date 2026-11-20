@@ -146,7 +146,7 @@ Claude also reads what task-ui is, from `config/context.md`, with your name, rol
 
 No window opens. The box lists the last 20 threads asked in its directory, by anyone, each a link to its page at `/threads/<id>`: the question, then Claude's answer bubble, made when the run starts and filled when it ends, with the work streaming in between. Each thread links its run, which keeps the output. **Reply** in the thread asks again: Claude reads the whole thread, its earlier answers among them. The Notes board lists none of them.
 
-A thread is deleted from its menu, never rewritten: **Delete** removes it and every message in it. A message is not edited.
+A thread is deleted from its menu, never rewritten: **Delete** removes it and every message in it, and shows once no run is working. A message is not edited.
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \

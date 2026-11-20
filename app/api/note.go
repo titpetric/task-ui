@@ -18,9 +18,7 @@ func (h *Handlers) board(w http.ResponseWriter) bool {
 	return true
 }
 
-// listNotes returns the threads of the board, newest first, each with its
-// replies: ?mention= a user name, ?state= open, working, done or failed,
-// ?limit=. Empty or * matches any user, or any state.
+// listNotes answers the board's threads a filter selects, each with its replies.
 func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "note/view") {
 		return
@@ -33,8 +31,7 @@ func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
 	h.writeThreads(w, r, filter)
 }
 
-// anyMatch is a filter's value as a listing takes it: * matches
-// anything, as empty does.
+// anyMatch reads * as no filter.
 func anyMatch(value string) string {
 	if value == "*" {
 		return ""
@@ -42,8 +39,7 @@ func anyMatch(value string) string {
 	return value
 }
 
-// writeThreads answers with the threads a filter lists, each with its
-// replies.
+// writeThreads answers the threads a filter lists, each with its replies.
 func (h *Handlers) writeThreads(w http.ResponseWriter, r *http.Request, filter storage.NoteFilter, keep ...func(model.Note) bool) {
 	notes, err := h.opts.Board.Notes.List(r.Context(), filter)
 	if err != nil {
@@ -90,9 +86,7 @@ func (h *Handlers) postNote(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// commentNote replies to a note and, with a state, moves its instruction.
-// A prompt's run, by its token, replies in its own thread alone, as
-// Claude, with the asker's prompt/edit.
+// commentNote replies to a note, a run's token in its own thread alone, and moves its instruction.
 func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
 	thread := access.RunThread(r.Context())
 	if thread != "" && param(r, "id") != thread {
@@ -125,8 +119,7 @@ func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// deleteNote removes a note and its replies: its author's, or any for an
-// admin.
+// deleteNote removes a note and its replies, and refuses one a run is working.
 func (h *Handlers) deleteNote(w http.ResponseWriter, r *http.Request) {
 	if !h.board(w) {
 		return
@@ -145,6 +138,10 @@ func (h *Handlers) deleteNote(w http.ResponseWriter, r *http.Request) {
 	}
 	if !allowed || (note.UserName != user.Name && !user.CanAdmin()) {
 		fail(w, http.StatusForbidden, "only the note's author or an admin can delete it")
+		return
+	}
+	if note.State == model.NoteWorking {
+		fail(w, http.StatusConflict, "stop the run before deleting the thread")
 		return
 	}
 	if err := h.opts.Board.Notes.Delete(r.Context(), note.ID); err != nil {
