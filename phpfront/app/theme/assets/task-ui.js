@@ -4304,9 +4304,12 @@
   // topic, fetched again when a note arrives or changes. A reply form
   // being written keeps its text.
   var notesList = document.querySelector("[data-notes]");
+  // The list's own address, which stays put while a thread opens over it.
+  var notesURL = location.pathname + location.search;
+
   function refreshNotes() {
     if (!notesList) return Promise.resolve();
-    return fetch(location.pathname + location.search, { credentials: "same-origin" })
+    return fetch(notesURL, { credentials: "same-origin" })
       .then(function (res) { return res.text(); })
       .then(function (text) {
         var fresh = new DOMParser().parseFromString(text, "text/html").querySelector("[data-notes]");
