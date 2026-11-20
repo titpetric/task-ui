@@ -27,7 +27,7 @@
 {/foreach}			</datalist>
 {/if}		</form>
 
-{if $data.chats}
+{if $data.chats && !$data.filtered}
 		<h3 class="section-title">Chats</h3>
 		<ol class="timeline">
 {foreach $data.chats as $row}			{eval $data_row = $row}{include components/thread-row.tpl}

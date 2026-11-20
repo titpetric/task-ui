@@ -111,7 +111,7 @@ class mod_threads implements Module {
 			"text" => "No thread matches.",
 			"href" => Task\Route::href("/threads"),
 			"label" => "Clear",
-		] : ["tag" => "li", "text" => "Nothing here yet: ask Claude in the box beside this list."];
+		] : ["tag" => "li", "text" => "No threads yet: ask Claude in the box beside this list."];
 
 		$view->page([
 			"head" => $head->data(),

@@ -41,7 +41,7 @@
 <?php }?>			</datalist>
 <?php }?>		</form>
 
-<?php if($_v['data']['chats']){?>
+<?php if($_v['data']['chats'] && !$_v['data']['filtered']){?>
 
 		<h3 class="section-title">Chats</h3>
 		<ol class="timeline">
