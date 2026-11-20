@@ -233,6 +233,9 @@ class Conversation {
 
 	/** field is the box under the conversation, as components/editor.tpl reads it. */
 	static function field() {
-		return \Task\Note::field();
+		$field = \Task\Note::field();
+		$field["placeholder"] = "Reply in this thread...";
+
+		return $field;
 	}
 }
