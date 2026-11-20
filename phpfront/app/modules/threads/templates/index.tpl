@@ -4,7 +4,7 @@
 			<button type="button" class="btn btn-sm" data-new-thread title="Start a new thread"><svg class="ic"><use href="#i-plus"/></svg> New thread</button>
 		</div>
 		<form method="get" action="{base}/threads" class="chat-filters">
-			<input class="chat-search" type="search" name="q" value="{data.form.q}" placeholder="Search threads" aria-label="Words of a thread" title="Press / to search" spellcheck="false" autocomplete="off">
+			<input class="chat-search" type="search" name="q" value="{data.form.q}" placeholder="Search threads" aria-label="Words of a thread" aria-keyshortcuts="/" title="Press / to search" spellcheck="false" autocomplete="off">
 			<details class="chat-filters-more"{if $data.detailed} open{/if}>
 				<summary class="faint">Filters{if $data.detailed} <span class="badge signal">on</span>{/if}</summary>
 				<div class="chat-filter-fields">

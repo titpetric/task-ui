@@ -282,6 +282,21 @@
     });
   }
 
+  // pageTitle names the page the list is on, which a thread's own name joins.
+  var pageTitle = document.title;
+
+  function title(id) {
+    if (!id) {
+      document.title = pageTitle;
+      return;
+    }
+    var head = pane && pane.querySelector(".conversation-title h2");
+    var at = pageTitle.indexOf(" | ");
+    if (head) {
+      document.title = head.textContent.trim() + (at < 0 ? "" : pageTitle.slice(at));
+    }
+  }
+
   // select paints the row of the thread the pane shows.
   function select(id) {
     if (!list) {
@@ -312,6 +327,7 @@
     }
     current = id;
     select(id);
+    title(id);
     if (window.taskUI && window.taskUI.read) {
       window.taskUI.read();
     }
@@ -350,8 +366,9 @@
   }
 
   // refresh reads the same conversation again without dropping its stream,
-  // and keeps the reader where they were unless they were at the end.
-  function refresh(id) {
+  // and keeps the reader where they were unless they were at the end. A reply
+  // just sent puts the caret back in the box it left.
+  function refresh(id, focus) {
     if (!pane || !id) {
       return Promise.resolve();
     }
@@ -373,6 +390,12 @@
       pane.innerHTML = html;
       paint(id);
       window.scrollTo(0, bottom ? document.documentElement.scrollHeight : y);
+      if (focus) {
+        var area = pane.querySelector("form[data-send] textarea");
+        if (area) {
+          (area.mdeditor ? area.mdeditor.surface : area).focus();
+        }
+      }
     });
   }
 
@@ -411,7 +434,7 @@
     newThread(true);
     var area = pane.querySelector("textarea");
     if (area) {
-      area.focus();
+      (area.mdeditor ? area.mdeditor.surface : area).focus();
     }
   });
 
@@ -464,7 +487,7 @@
   // from the shared note handler.
   document.addEventListener("taskui:pane", function () {
     if (pane && current) {
-      refresh(current);
+      refresh(current, true);
     }
   });
   document.addEventListener("taskui:thread", function (event) {
@@ -485,6 +508,7 @@
     current = talk.dataset.thread || "";
     follow(talk);
     select(current);
+    title(current);
     window.scrollTo(0, document.documentElement.scrollHeight);
   }
   var form = (pane || document).querySelector("[data-agent-form]");

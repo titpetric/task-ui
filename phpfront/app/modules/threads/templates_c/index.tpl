@@ -7,7 +7,7 @@
 		<form method="get" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /threads" class="chat-filters">
 			<input class="chat-search" type="search" name="q" value="<?php echo htmlspecialchars($_v['data']['form']['q'], ENT_QUOTES);?>
-" placeholder="Search threads" aria-label="Words of a thread" title="Press / to search" spellcheck="false" autocomplete="off">
+" placeholder="Search threads" aria-label="Words of a thread" aria-keyshortcuts="/" title="Press / to search" spellcheck="false" autocomplete="off">
 			<details class="chat-filters-more"<?php if($_v['data']['detailed']){?>
  open<?php }?>>
 				<summary class="faint">Filters<?php if($_v['data']['detailed']){?>
