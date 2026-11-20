@@ -142,7 +142,7 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 		_ = claudesession.Remove(a.getenv("TASK_UI_CLAUDE_CONFIG"))
 		return err
 	}
-	transcript.status("Starting", "starting")
+	transcript.status("Starting", "starting", "")
 	streamClaudeTo(pipe, a.Stdout, out, transcript)
 	err = cmd.Wait()
 	if err != nil {
@@ -165,7 +165,7 @@ func killed(err error) bool {
 	return ok && status.Signaled()
 }
 
-// claudeBlock is one content block of a stream-json message: what Claude says, thinks, calls and reads back.
+// claudeBlock holds a stream-json content block: what Claude says, thinks, calls and reads back.
 type claudeBlock struct {
 	Type      string          `json:"type"`
 	Text      string          `json:"text"`
@@ -197,6 +197,26 @@ type claudeEvent struct {
 	MCPServers []struct {
 		Name string `json:"name"`
 	} `json:"mcp_servers"`
+	Usage        claudeUsage                 `json:"usage"`
+	ModelUsage   map[string]claudeModelUsage `json:"modelUsage"`
+	TotalCostUSD float64                     `json:"total_cost_usd"`
+}
+
+// claudeUsage holds one request's token counts.
+type claudeUsage struct {
+	InputTokens              int `json:"input_tokens"`
+	OutputTokens             int `json:"output_tokens"`
+	CacheReadInputTokens     int `json:"cache_read_input_tokens"`
+	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+}
+
+// claudeModelUsage holds one model's totals over a run.
+type claudeModelUsage struct {
+	InputTokens              int     `json:"inputTokens"`
+	OutputTokens             int     `json:"outputTokens"`
+	CacheReadInputTokens     int     `json:"cacheReadInputTokens"`
+	CacheCreationInputTokens int     `json:"cacheCreationInputTokens"`
+	CostUSD                  float64 `json:"costUSD"`
 }
 
 // streamClaude writes each message and tool Claude writes to progress, and the run's answer to answer.
@@ -231,14 +251,16 @@ func streamClaudeTo(r io.Reader, progress, answer io.Writer, transcript *transcr
 					if strings.TrimSpace(content.Text) != "" {
 						fmt.Fprintln(progress, content.Text)
 						said = true
+						transcript.status("Writing", "writing", "")
 						transcript.text(content.Text, event.Message.ID, block)
 					}
 				case "thinking":
+					transcript.status("Thinking", "thinking", "")
 					transcript.thinking(content.Thinking)
 				case "tool_use":
 					fmt.Fprintln(progress, toolLine(content.Name, content.Input))
 					transcript.toolUse(content.Name, content.ID, content.Input)
-					transcript.status("Running "+content.Name, "tool")
+					transcript.status("Running "+content.Name, "tool", content.Name)
 				}
 			}
 		case "user":
@@ -247,7 +269,7 @@ func streamClaudeTo(r io.Reader, progress, answer io.Writer, transcript *transcr
 					continue
 				}
 				transcript.toolResult(content.ToolUseID, toolResultText(content.Content), content.IsError)
-				transcript.status("Reading result", "result")
+				transcript.status("Reading result", "result", "")
 			}
 		case "result":
 			if event.Result != "" {
@@ -257,7 +279,7 @@ func streamClaudeTo(r io.Reader, progress, answer io.Writer, transcript *transcr
 				}
 			}
 			transcript.result(event)
-			transcript.status("Finished", "done")
+			transcript.status("Finished", "done", "")
 		}
 	}
 	if err := scanner.Err(); err != nil {

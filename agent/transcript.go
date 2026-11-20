@@ -18,7 +18,7 @@ const (
 	maxSystem     = 8 << 10
 )
 
-// record is one line of the transcript a run writes for its thread.
+// record holds a line of the transcript a run writes for its thread.
 type record struct {
 	V      int    `json:"v"`
 	Seq    int64  `json:"seq"`
@@ -78,9 +78,9 @@ func (t *transcript) close() {
 	_ = t.file.Close()
 }
 
-// status records what Claude is doing now.
-func (t *transcript) status(body, state string) {
-	t.write("status", body, "", map[string]string{"state": state})
+// status records what Claude is doing now, and the tool it names.
+func (t *transcript) status(body, state, tool string) {
+	t.write("status", body, "", map[string]string{"state": state, "tool": tool})
 }
 
 // system records the run's opening facts, without its environment.
@@ -132,11 +132,27 @@ func (t *transcript) toolResult(id, content string, isError bool) {
 	t.write("tool_result", body, id, map[string]bool{"is_error": isError, "truncated": cut})
 }
 
-// result records the final answer and how the run ended.
+// result records the final answer, what the run read, and how it ended.
 func (t *transcript) result(event claudeEvent) {
+	input, output := event.Usage.InputTokens, event.Usage.OutputTokens
+	cached, created, cost := event.Usage.CacheReadInputTokens, event.Usage.CacheCreationInputTokens, event.TotalCostUSD
+	if len(event.ModelUsage) > 0 {
+		input, output, cached, created = 0, 0, 0, 0
+		for _, model := range event.ModelUsage {
+			input, output = input+model.InputTokens, output+model.OutputTokens
+			cached, created = cached+model.CacheReadInputTokens, created+model.CacheCreationInputTokens
+			cost += model.CostUSD
+		}
+		if event.TotalCostUSD > 0 {
+			cost = event.TotalCostUSD
+		}
+	}
 	data := map[string]any{
 		"subtype": event.Subtype, "is_error": event.IsError,
 		"duration_ms": event.DurationMS, "num_turns": event.NumTurns,
+		"input_tokens": input, "output_tokens": output,
+		"cache_read_input_tokens": cached, "cache_creation_input_tokens": created,
+		"cost_usd": cost,
 	}
 	t.write("result", cutTextUncut(event.Result), "", data)
 }

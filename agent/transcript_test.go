@@ -29,11 +29,16 @@ func TestTranscript_WritesRecords(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	trace.status("Thinking", "thinking")
+	trace.status("Thinking", "thinking", "")
 	trace.text("on it", "msg1", 0)
 	trace.toolUse("Bash", "tool1", json.RawMessage(`{"command":"go test ./..."}`))
 	trace.toolResult("tool1", "ok", false)
-	trace.result(claudeEvent{Subtype: "success", Result: "done", DurationMS: 1200})
+	trace.result(claudeEvent{
+		Subtype: "success", Result: "done", DurationMS: 1200,
+		Usage:        claudeUsage{InputTokens: 100, OutputTokens: 20, CacheReadInputTokens: 60},
+		ModelUsage:   map[string]claudeModelUsage{"m": {InputTokens: 10, OutputTokens: 2, CacheReadInputTokens: 6, CostUSD: 0.01}},
+		TotalCostUSD: 0.02,
+	})
 	trace.error("boom")
 	trace.close()
 
@@ -44,6 +49,10 @@ func TestTranscript_WritesRecords(t *testing.T) {
 	assert.Equal(t, "tool1", records[2].ToolID)
 	assert.Equal(t, "tool_result", records[3].Kind)
 	assert.Equal(t, "result", records[4].Kind)
+	assert.Equal(t, float64(10), records[4].Data["input_tokens"])
+	assert.Equal(t, float64(2), records[4].Data["output_tokens"])
+	assert.Equal(t, float64(6), records[4].Data["cache_read_input_tokens"])
+	assert.Equal(t, 0.02, records[4].Data["cost_usd"])
 	assert.Equal(t, "error", records[5].Kind)
 	for i, record := range records {
 		assert.Equal(t, int64(i+1), record.Seq)
@@ -72,7 +81,7 @@ func TestTranscript_Empty(t *testing.T) {
 	t.Parallel()
 	trace, err := openTranscript("")
 	assert.NoError(t, err)
-	trace.status("Thinking", "thinking")
+	trace.status("Thinking", "thinking", "")
 	trace.close()
 }
 
