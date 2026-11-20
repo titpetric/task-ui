@@ -144,9 +144,9 @@ A user with Allow Edits on Prompts, `prompt/edit`, and a token in the [Claude Co
 
 Claude also reads what task-ui is, from `config/context.md`, with your name, role and permissions, which say what you may do, and the rule that a file it writes to `$TASK_UI_ARTIFACTS` stays as an artifact (see [MCP](mcp.md#what-task-ui-is)).
 
-No window opens. The question shows under the box at once, `open`, then `working` while the run goes, and Claude's answer, in markdown, lands under it when the run ends, without a reload. Each thread links its run, which keeps the output. **Reply** under a thread asks again: Claude reads the whole thread, its earlier answers among them. The box lists the last 20 threads asked in its directory, by anyone; the Notes board lists none of them.
+No window opens. The box lists the last 20 threads asked in its directory, by anyone, each a link to its page at `/threads/<id>`: the question, then Claude's answer bubble, made when the run starts and filled when it ends, with the work streaming in between. Each thread links its run, which keeps the output. **Reply** in the thread asks again: Claude reads the whole thread, its earlier answers among them. The Notes board lists none of them.
 
-Click a question, or a reply of yours, to edit it: add what you need and **Save**, or Ctrl+Enter; Esc cancels. The question runs again on the edited text, with the thread up to Claude's answer to it, and that answer changes in place: its old text stays, dimmed and marked `working`, until the new one lands. The thread gets no new reply, and the run keeps its ID: the run link opens the latest attempt; the attempt before goes with its recording and artifacts. The question shows `edited` beside its time.
+A thread is deleted from its menu, never rewritten: **Delete** removes it and every message in it. A message is not edited.
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \

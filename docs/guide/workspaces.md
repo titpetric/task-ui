@@ -247,7 +247,7 @@ A job that someone in one workspace can change can read another workspace's secr
 
 ## A prompt against a workspace
 
-A workspace's folder page, `/f/malta`, carries the **Prompt** box open for a user with Allow Edits on Prompts, `prompt/edit`, once the [Claude Code integration](settings.md#integrations) has a token for them; every other folder page, and every directory inside a folder, carries it folded until its directory holds a prompt (see [Prompt](projects.md#prompt)). The prompt runs `@claude-prompt` of the workspace as you, and Claude's answer shows under the question when the run ends.
+A workspace's folder page, `/f/malta`, carries the **Prompt** box open for a user with Allow Edits on Prompts, `prompt/edit`, once the [Claude Code integration](settings.md#integrations) has a token for them; every other folder page, and every directory inside a folder, carries it folded until its directory holds a prompt (see [Prompt](projects.md#prompt)). The prompt runs `@claude-prompt` of the workspace as you, and its page at `/threads/<id>` holds the question and Claude's answer bubble, made when the run starts and filled when it ends.
 
 ![The Prompt box on a workspace's page](https://cdn.si/titpetric/task-ui/docs/assets/workspace-prompt-dark.png)
 
