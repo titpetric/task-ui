@@ -146,7 +146,7 @@ func (b *Board) answerPlaceholder(ctx context.Context, thread *model.Note) *mode
 	if replies, err := b.Notes.Replies(ctx, []string{thread.ID}); err == nil {
 		for i := range replies[thread.ID] {
 			reply := &replies[thread.ID][i]
-			if reply.RunID != "" && reply.State == model.NoteWorking && strings.TrimSpace(reply.Body) == "" && reply.Agent == name && b.ended(ctx, reply.RunID) {
+			if reply.RunID != "" && reply.State == model.NoteWorking && strings.TrimSpace(reply.Body) == "" && b.ended(ctx, reply.RunID) {
 				if err := b.Notes.Remove(ctx, reply.ID); err != nil {
 					slog.Warn("stale answer not removed", "note", reply.ID, "err", err)
 				}
