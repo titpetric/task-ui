@@ -103,6 +103,6 @@
 				<div class="empty">No folders yet. <?php if($_v['chrome']['can']['project/edit']){?>
 <a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /settings/projects/new">Add a git repository</a><?php }else{?>
-Add a git repository in Settings<?php }?>, or put a folder with jobs under the root.</div>
+Add a git repository in Settings<?php }?>. Put a folder with jobs under the root.</div>
 <?php }?>
 			</nav>
