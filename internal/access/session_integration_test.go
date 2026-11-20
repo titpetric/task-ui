@@ -70,10 +70,15 @@ func TestSessions_ResolveCeiling(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	sessions, user, clock := newSessions(t, time.Hour, 90*time.Minute)
-	opened := *clock
 
 	token, err := sessions.Issue(ctx, user)
 	assert.NoError(t, err)
+
+	// The ceiling counts from the row's sign in, so the clock starts there.
+	row, err := sessions.Store.Find(ctx, access.HashToken(token))
+	assert.NoError(t, err)
+	opened := *row.CreatedAt
+	*clock = opened
 
 	*clock = clock.Add(30 * time.Minute)
 	_, until, err := sessions.Resolve(ctx, token)

@@ -93,10 +93,6 @@ Every pipeline in the workspace is on `splint fix --markdown`; the shared `~/.at
 
 The prose and godoc linters that landed with `feat(splint): the prose of a tree is linted and its markdown formatted` report across whole packages, and the `PostToolUse` hook refuses an edit to a file in one. Known: `phpscript` (`"so a"` at 188x the baseline), `model`, `importfmt`. Each needs a comment sweep of the kind `chore(splint): the comments state behaviour directly` was.
 
-### A flaky test
-
-`TestSessions_ResolveCeiling` in `access` failed once under the sharded integration runner and passes alone and on a re-run. It reads a clock.
-
 ## Deferred from the conversation pass
 
 - The four filter bars still write their own `<form>`: runs, artifacts, threads and the workflow page size. A `components/filters.tpl` over a `Task\Filters` scope would collapse them, once the four field sets agree on one shape.
