@@ -308,11 +308,7 @@ func (b *Board) runAs(stop context.Context, note, question *model.Note, req runn
 		}
 	}
 	if err != nil {
-		if again != nil {
-			if err := b.Notes.Release(ctx, again.ID, model.NoteFailed); err != nil {
-				slog.Warn("answer run not cleared", "note", again.ID, "err", err)
-			}
-		}
+		b.clearAnswer(ctx, again, model.NoteFailed)
 		b.finishAs(ctx, note, model.NoteFailed, what+" did not start: "+err.Error(), as, again)
 		return false
 	}

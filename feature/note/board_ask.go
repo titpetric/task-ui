@@ -180,6 +180,16 @@ func (b *Board) ended(ctx context.Context, runID string) bool {
 	return err == nil && !b.live(runID)
 }
 
+// clearAnswer drops the run an answer never started.
+func (b *Board) clearAnswer(ctx context.Context, reply *model.Note, state string) {
+	if reply == nil {
+		return
+	}
+	if err := b.Notes.Release(ctx, reply.ID, state); err != nil {
+		slog.Warn("answer run not cleared", "note", reply.ID, "err", err)
+	}
+}
+
 // discardAnswer removes the empty reply of a run that answered in the thread itself.
 func (b *Board) discardAnswer(ctx context.Context, reply *model.Note) {
 	if reply == nil || strings.TrimSpace(reply.Body) != "" {
@@ -198,6 +208,7 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 	}
 	answer, err := replyFile()
 	if err != nil {
+		b.clearAnswer(ctx, again, model.NoteFailed)
 		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error(), again)
 		return req, "", nil, false
 	}
@@ -234,6 +245,7 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 		if err != nil {
 			cleanup()
 			os.Remove(answer)
+			b.clearAnswer(ctx, again, model.NoteFailed)
 			b.finish(ctx, note, model.NoteFailed, a.what+a.id+" is not there to ask about: "+err.Error(), again)
 			return req, "", nil, false
 		}
