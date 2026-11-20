@@ -82,6 +82,12 @@
   gap: 0.3rem;
 }
 
+.cc-kill:hover {
+  --cc: var(--bad);
+  --cc-line: var(--bad);
+  --cc-wash: var(--bad-wash);
+}
+
 .cc-more {
   position: relative;
   display: inline-block;

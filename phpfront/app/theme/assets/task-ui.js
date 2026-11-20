@@ -308,6 +308,7 @@
     read: function () {
       chatRead();
     },
+    confirm: confirm,
   };
 
   // --------------------------------------------------------------- dialog
@@ -1425,6 +1426,20 @@
     }
     submit(form);
   });
+
+  // A plain form, one the page or a module posts itself, asks its question
+  // in the same dialog; the confirmed form submits once.
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-confirm]");
+    if (!form || form.dataset.confirmed === "1") return;
+    if (form.hasAttribute("data-api") || form.hasAttribute("data-send")) return;
+    event.preventDefault();
+    confirm(form.dataset.confirm, form.dataset.confirmOk).then(function (ok) {
+      if (!ok) return;
+      form.dataset.confirmed = "1";
+      if (form.requestSubmit) form.requestSubmit(); else form.submit();
+    });
+  }, true);
 
   // A button with data-dialog-open opens the dialog of that ID, and
   // one with data-dialog-close inside a dialog closes it. Its
@@ -4320,37 +4335,99 @@
         document.dispatchEvent(new CustomEvent("taskui:notes"));
       });
   }
+  // --------------------------------------------------------- one send path
+
+  // composerPayload is a composer's fields as the API reads them: the place
+  // field, where it offers one, names the folder and the directory in one.
+  function composerPayload(form) {
+    var out = {};
+    ["parent", "channel", "folder", "dir", "run", "area", "origin", "agent", "user"].forEach(function (name) {
+      var field = form.elements[name];
+      if (field && field.value) out[name] = field.value;
+    });
+    var place = form.elements.place;
+    if (place && !place.closest("[hidden]") && place.value.trim()) {
+      var at = place.value.trim().replace(/^\/+|\/+$/g, "").split("/");
+      out.folder = at.shift();
+      out.dir = at.join("/");
+    }
+    return out;
+  }
+
+  function composerMode(form) {
+    return form.dataset.send || "note";
+  }
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-composer-mode]");
+    if (!button) return;
+    var form = button.closest("form[data-send]");
+    if (!form) return;
+    var mode = button.dataset.composerMode;
+    form.dataset.send = mode;
+    form.querySelectorAll("[data-composer-mode]").forEach(function (el) {
+      el.setAttribute("aria-pressed", el === button ? "true" : "false");
+    });
+    var ask = mode === "ask";
+    form.querySelectorAll("[data-composer-agent], [data-composer-place]").forEach(function (el) {
+      el.hidden = !ask;
+    });
+    var textarea = form.elements.body;
+    if (textarea) {
+      if (ask) textarea.removeAttribute("data-mentions");
+      else textarea.setAttribute("data-mentions", "");
+      textarea.setAttribute("placeholder", ask ? "what should we work on?" : "a note to someone, @name to point at them");
+      textarea.setAttribute("aria-label", ask ? "The prompt" : "The note");
+    }
+  });
+
   document.addEventListener("submit", function (event) {
-    var form = event.target.closest("form[data-note-form]");
+    var form = event.target.closest("form[data-send]");
     if (!form) return;
     event.preventDefault();
-    var body = form.elements.body.value.trim();
+    var mode = composerMode(form);
+    var body = form.elements.body ? form.elements.body.value.trim() : "";
     if (!body) return;
     var button = form.querySelector("button[type=submit]");
-    button.disabled = true;
+    var payload = composerPayload(form);
+    var url = "/api/notes";
+    if (mode === "ask") {
+      payload.prompt = body;
+      url = form.dataset.sendUrl || "/api/prompts";
+    } else {
+      payload.body = body;
+      payload.parent_id = payload.parent || "";
+      if (mode === "chat") url = "/api/threads";
+    }
+    delete payload.parent;
+    if (button) button.disabled = true;
     formError(form, "");
-    var url = form.dataset.channel === "chat" ? "/api/threads" : "/api/notes";
-    api("POST", url, { parent_id: form.dataset.parent || "", body: body })
-      .then(function (res) {
-        button.disabled = false;
-        if (res.status >= 300) {
-          fail(form, res);
-          return;
-        }
-        form.elements.body.value = "";
-        syncEditors(form);
-        if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
-        // A reply in the Threads pane redraws the pane; a new thread opens
-        // there, and both leave the list to the fetch below.
-        if (form.dataset.pane !== undefined) {
-          document.dispatchEvent(new CustomEvent("taskui:pane", { detail: { id: form.dataset.parent || "" } }));
-        }
-        if (form.hasAttribute("data-open-thread") && res.data && res.data.id) {
-          document.dispatchEvent(new CustomEvent("taskui:thread", { detail: { id: res.data.id } }));
-        }
-        refreshNotes();
-      });
+    api("POST", url, payload).then(function (res) {
+      if (button) button.disabled = false;
+      if (res.status >= 300) {
+        fail(form, res);
+        return;
+      }
+      form.elements.body.value = "";
+      syncEditors(form);
+      if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
+      var inPane = !!form.closest("[data-thread-pane]");
+      var parent = payload.parent_id || "";
+      if (inPane && parent) {
+        document.dispatchEvent(new CustomEvent("taskui:pane", { detail: { id: parent } }));
+      } else if (inPane && res.data && res.data.id) {
+        document.dispatchEvent(new CustomEvent("taskui:thread", { detail: { id: res.data.id } }));
+      } else if (form.dataset.next) {
+        window.location.assign(filled(form.dataset.next, res.data));
+        return;
+      }
+      refreshNotes();
+    }).catch(function (err) {
+      if (button) button.disabled = false;
+      formError(form, err.message);
+    });
   });
+
   // A chat thread is read when its page opens or a message lands on it.
   function chatRead() {
     var chatThread = document.querySelector("[data-chat-thread]");
@@ -4530,7 +4607,7 @@
   document.addEventListener("keydown", function (event) {
     var area = fieldOf(event.target);
     if (!area) return;
-    var posts = area.closest("form[data-note-form]");
+    var posts = area.closest("form[data-send]");
     if (!posts || event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
     event.preventDefault();
     posts.requestSubmit();
@@ -5528,7 +5605,9 @@
     var term = slot.hasAttribute("data-interactive");
     if (run && run.state === "running") {
       return '<a class="cc' + named + ' running" href="' + mount() + "/runs/" + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
-        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
+        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>" +
+        (slot.hasAttribute("data-can") ? '<button type="button" class="cc cc-kill" data-kill="' + escapeHTML(run.id) + '" title="Kill ' + what +
+          ' and everything it started" aria-label="Kill ' + what + '"><svg class="ic"><use href="#i-trash"/></svg></button>' : "");
     }
     if (slot.hasAttribute("data-can")) {
       return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(d.folder) + '"' +

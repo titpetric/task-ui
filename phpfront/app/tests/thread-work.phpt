@@ -56,6 +56,11 @@ $db->replace("note_event", [
 	"question_id" => "fx-work-n2", "seq" => 1, "kind" => "error",
 	"tool_id" => "", "body" => "it ran out of disk", "data" => "{}",
 ]);
+$db->replace("note_event", [
+	"id" => "fx-work-e5", "note_id" => "fx-work-n1", "run_id" => "fx-work-r2",
+	"question_id" => "fx-work-n2", "seq" => 2, "kind" => "status",
+	"tool_id" => "", "body" => "Running Bash", "data" => "{\"state\":\"tool\",\"tool\":\"Bash\"}",
+]);
 
 $notes = new Task\Threads\Notes(Task\DB::writer());
 $chrome = new Task\Chrome;
@@ -68,15 +73,47 @@ echo count($work["fx-work-n1"]), " ", count($work["fx-work-n2"]), "\n";
 echo $work["fx-work-n1"][0]["events"][0]["kind"], " ", var_export(strpos($work["fx-work-n1"][0]["events"][0]["prose"], "on it") !== false, true), "\n";
 echo $work["fx-work-n1"][0]["events"][1]["tool"], " ", var_export(strpos($work["fx-work-n1"][0]["events"][1]["input"], "go test") !== false, true), "\n";
 echo var_export($work["fx-work-n2"][0]["events"][0]["error"], true), "\n";
+echo $work["fx-work-n2"][0]["status"]["body"], " ", $work["fx-work-n2"][0]["status"]["state"], " ", $work["fx-work-n2"][0]["status"]["tool"], "\n";
+echo count($work["fx-work-n2"][0]["events"]), " ", $work["fx-work-n2"][0]["events"][0]["seq"], "\n";
 echo count($messages[0]["work"]), " ", count($messages[1]["work"]), "\n";
+
+// A working thread carries the run it may end, and the last status as its
+// pinned line.
+$db->query("DELETE FROM run WHERE id LIKE 'fx-work-%'");
+$db->replace("run", [
+	"id" => "fx-work-r9", "folder" => "fx-work/app", "job" => "@claude-prompt",
+	"user_id" => "fx-work-u1", "user_name" => "fx-work-ann", "state" => "running",
+	"started_at" => "2026-11-16 10:02:00.000 +0000 UTC",
+	"created_at" => "2026-11-16 10:02:00.000 +0000 UTC",
+	"updated_at" => "2026-11-16 10:02:00.000 +0000 UTC",
+]);
+$db->replace("note", [
+	"id" => "fx-work-n3",
+	"channel" => "notes",
+	"parent_id" => "",
+	"user_id" => "fx-work-u1",
+	"user_name" => "fx-work-ann",
+	"body" => "still going",
+	"mentions" => "",
+	"state" => "working",
+	"run_id" => "fx-work-r9",
+	"created_at" => "2026-11-16 10:02:00.000 +0000 UTC",
+	"updated_at" => "2026-11-16 10:02:00.000 +0000 UTC",
+]);
+$status = Task\Threads\Conversation::status($notes->get("fx-work-n3"), [], $chrome, []);
+
+echo var_export($status["working"], true), " ", $status["run"], " ", $status["started"], " ", var_export($status["can_end"], true), "\n";
 
 $notes->forget("fx-work-n1");
 echo count($notes->events("fx-work-n1")), "\n";
 ---
-4
+5
 1 1
 text true
 Bash true
 true
+Running Bash tool Bash
 1 1
+1 1
+true fx-work-r9 1794823320000 false
 0

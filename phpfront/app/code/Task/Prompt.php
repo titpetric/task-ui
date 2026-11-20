@@ -88,7 +88,7 @@ class Prompt {
 	 */
 	static function field($placeholder) {
 		return [
-			"name" => "prompt",
+			"name" => "body",
 			"rows" => 3,
 			"label" => "The prompt",
 			"placeholder" => $placeholder,
@@ -107,6 +107,22 @@ class Prompt {
 		}
 
 		return ["names" => $names, "current" => count($names) === 0 ? "" : $names[0]];
+	}
+
+	/** links is a place's threads as components/prompt.tpl reads them. */
+	static function links($roots) {
+		$out = [];
+
+		foreach ($roots as $note) {
+			$out[] = [
+				"id" => $note->getId(),
+				"href" => Route::href("/threads/" . Route::pathEscape($note->getId())),
+				"title" => Note::excerpt(Threads\Talk::opening($note, [])),
+				"state" => $note->getState(),
+			];
+		}
+
+		return $out;
 	}
 
 	/** short is the start of a run's ID, which is what the panel's line names it by. */
@@ -170,16 +186,11 @@ class Prompt {
 	 */
 	static function asked($chrome, $api, $place, $where, $fields, $open, $seen) {
 		$notes = new Threads\Notes($chrome->db);
-		$roots = $notes->inPlace($place);
-		$replies = $notes->replies(Note::ids($roots));
 		$agents = self::agents($chrome);
-		$threads = [];
+		$roots = $notes->inPlace($place);
+		$threads = self::links($roots);
 
-		foreach ($roots as $note) {
-			$threads[] = Note::thread($note, $replies, $chrome, $seen);
-		}
-
-		return [
+		$panel = [
 			"title" => "Prompt",
 			"note" => "ask Claude Code in " . $where . "; it reads the CLAUDE.md and .claude/ there, in the folders above and in the workspace's home",
 			"open" => $open || count($threads) > 0,
@@ -199,7 +210,11 @@ class Prompt {
 			"place" => $place,
 			"area" => "",
 			"threads" => $threads,
+			"threads_href" => Route::href("/threads?place=" . rawurlencode($place)),
 		];
+		$panel["composer"] = Composer::prompt($panel);
+
+		return $panel;
 	}
 
 	/**
@@ -236,15 +251,10 @@ class Prompt {
 			return null;
 		}
 
-		$replies = $notes->replies(Note::ids($roots));
 		$agents = self::agents($chrome);
-		$threads = [];
+		$threads = self::links($roots);
 
-		foreach ($roots as $note) {
-			$threads[] = Note::thread($note, $replies, $chrome, $seen);
-		}
-
-		return [
+		$panel = [
 			"title" => "Prompt",
 			"note" => "ask Claude Code about this run and its output, in " . $where . "/",
 			"open" => true,
@@ -264,7 +274,11 @@ class Prompt {
 			"place" => $where,
 			"area" => "",
 			"threads" => $threads,
+			"threads_href" => Route::href("/threads?place=" . rawurlencode($where)),
 		];
+		$panel["composer"] = Composer::prompt($panel);
+
+		return $panel;
 	}
 
 	/**
@@ -294,13 +308,8 @@ class Prompt {
 			return null;
 		}
 
-		$replies = $notes->replies(Note::ids($roots));
 		$place = count($roots) === 0 ? $flow["promptPlace"] : $roots[0]->getDir();
-		$threads = [];
-
-		foreach ($roots as $note) {
-			$threads[] = Note::thread($note, $replies, $chrome, null);
-		}
+		$threads = self::links($roots);
 
 		return [
 			"title" => "Prompts",
@@ -322,6 +331,7 @@ class Prompt {
 			"place" => $place,
 			"area" => "",
 			"threads" => $threads,
+			"threads_href" => Route::href("/threads?place=" . rawurlencode($place)),
 		];
 	}
 }

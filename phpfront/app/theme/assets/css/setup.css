@@ -65,7 +65,7 @@
 
   & tfoot th,
   & tfoot td {
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--line);
     font-weight: 600;
   }
 }

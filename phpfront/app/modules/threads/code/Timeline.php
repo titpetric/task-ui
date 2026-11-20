@@ -17,7 +17,7 @@ class Timeline {
 	const VOICE = "voice";
 
 	/** row is one thread as components/thread-row.tpl reads it. */
-	static function row($note, $replies, $chrome, $seen = null) {
+	static function row($note, $replies, $chrome, $seen = null, $selectedID = "") {
 		$id = $note->getId();
 		$run = $note->getRunId();
 
@@ -27,9 +27,9 @@ class Timeline {
 
 		return [
 			"id" => $id,
-			"href" => \Task\Route::href("/threads?id=" . \Task\Route::queryEscape($id)),
+			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
 			"kind" => self::kind($note),
-			"author" => $chrome->who()->of($note->getUserName()),
+			"person" => $chrome->who()->of($note->getUserName()),
 			"said" => \Task\Note::excerpt(Talk::opening($note, $replies)),
 			"state" => $note->getState(),
 			"working" => $note->getState() === \Task\Note::WORKING,
@@ -40,6 +40,8 @@ class Timeline {
 			"stamp" => \Task\Clock::read(self::lastAt($note, $replies)),
 			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
 			"heard" => self::heard($note, $replies),
+			"unread" => 0,
+			"selected" => $id === $selectedID,
 		];
 	}
 
@@ -52,19 +54,27 @@ class Timeline {
 		return $chrome->allowed("note/view");
 	}
 
-	/** chat is one chat thread as the Chats section reads it. */
-	static function chat($row, $chrome) {
+	/** chat is one chat thread as components/thread-row.tpl reads it. */
+	static function chat($row, $chrome, $selectedID = "") {
 		$said = $row["last_spoken"] !== "" ? $row["last_spoken"] : $row["last_body"];
 
 		return [
 			"id" => $row["id"],
-			"href" => \Task\Route::href("/threads?id=" . \Task\Route::queryEscape($row["id"])),
-			"peer" => $chrome->who()->of($row["peer"]),
+			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($row["id"])),
+			"kind" => "chat",
+			"person" => $chrome->who()->of($row["peer"]),
 			"said" => \Task\Note::excerpt($said),
+			"state" => "",
+			"working" => false,
+			"place" => "",
+			"run" => "",
+			"short" => "",
+			"messages" => 0,
 			"ago" => \Task\Clock::ago($row["last_at"]),
 			"stamp" => \Task\Clock::read($row["last_at"]),
 			"heard" => $row["last_audio_path"] !== "",
 			"unread" => (int)$row["unread"],
+			"selected" => $row["id"] === $selectedID,
 		];
 	}
 

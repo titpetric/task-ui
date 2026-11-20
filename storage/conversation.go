@@ -4,9 +4,9 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 )
 
-// Conversation is a root note with its newest activity and reply count.
+// Conversation adds newest activity and a reply count to a root note.
 type Conversation struct {
 	model.Note
-	LastAt   string `db:"last_at"`
-	Messages int    `db:"messages"`
+	LastAt   string `db:"last_at" json:"last_at"`
+	Messages int    `db:"messages" json:"messages"`
 }

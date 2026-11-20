@@ -57,6 +57,7 @@
   --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono",
     "IBM Plex Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: var(--font);
 
   /* --ink-0 is also the theme-color meta of both front ends' heads, which no
      stylesheet reaches: change it in head.tpl and _layout.tpl too. */
@@ -146,6 +147,8 @@
   --radius-round: 50%;
   --side: 17rem;
   --rail: 17rem;
+  --chat-w: 48rem;
+  --chat-list: 18rem;
 }
 
 @media (prefers-color-scheme: light) {

@@ -63,7 +63,7 @@
 
 .refinement-delete .btn-icon {
 	opacity: 0;
-	color: var(--danger, inherit);
+	color: var(--bad);
 }
 
 .refinement-comment:hover .refinement-delete .btn-icon,

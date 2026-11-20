@@ -1,0 +1,417 @@
+/* .chat-shell is the messenger: the thread list down the leading side and the
+   conversation beside it, scrolling as one page. */
+.chat-shell {
+  display: grid;
+  grid-template-columns: minmax(13rem, var(--chat-list)) minmax(0, 1fr);
+  gap: var(--block-gap);
+  align-items: start;
+}
+
+.chat-shell.thread-page {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.chat-list {
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding-inline-end: 0.75rem;
+  border-inline-end: 1px solid var(--line);
+}
+
+.chat-list .filters {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-block: 0.5rem;
+  background: var(--ink-0);
+}
+
+.chat-list .section-title {
+  margin-top: 1rem;
+}
+
+.chat-pane {
+  min-width: 0;
+  min-height: calc(100vh - 9rem);
+}
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--chat-w);
+  min-height: inherit;
+  margin-inline: auto;
+}
+
+.conversation-back {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+}
+
+.conversation-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line);
+
+  & h2 {
+    margin: 0;
+    font-size: var(--fs-lg);
+  }
+
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}
+
+.conversation-title {
+  min-width: 0;
+
+  & p {
+    margin: 0.2rem 0 0;
+    font-size: var(--fs-xs);
+  }
+}
+
+.conversation-status {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  font-size: var(--fs-sm);
+
+  & p {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+  }
+
+  & .actions {
+    display: flex;
+    gap: 0.35rem;
+  }
+}
+
+.chat-blank {
+  max-width: 36rem;
+  margin: 12vh auto 0;
+
+  & h2 {
+    margin: 0 0 0.5rem;
+    font-size: var(--fs-xl);
+  }
+
+  & > p {
+    margin: 0 0 1.25rem;
+    color: var(--text-dim);
+  }
+}
+
+.talk {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+
+.said {
+  max-width: min(42rem, 92%);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+
+  & > header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--fs-xs);
+  }
+
+  &.mine {
+    align-self: flex-end;
+    border-color: var(--line-2);
+    background: var(--ink-3);
+  }
+
+  &.working {
+    border-color: var(--signal);
+  }
+}
+
+.said-audio {
+  width: 100%;
+  height: 2rem;
+  margin: 0.4rem 0 0;
+}
+
+.said-body {
+  margin-top: 0.4rem;
+}
+
+.work {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+  font-size: var(--fs-sm);
+}
+
+.work-run + .work-run {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+}
+
+.work-stats {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.work-status {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+}
+
+.work-text {
+  margin-top: 0.35rem;
+}
+
+.work details {
+  margin-top: 0.35rem;
+}
+
+.work summary {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.work pre {
+  max-height: 18rem;
+  margin: 0.25rem 0 0;
+  padding: 0.4rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--ink-1);
+  border-radius: var(--radius);
+  font-size: var(--fs-xs);
+}
+
+.work-tool summary code {
+  color: var(--signal);
+}
+
+.work-result.error summary,
+.work-error {
+  color: var(--bad);
+}
+
+.agent-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  & label {
+    font-size: var(--fs-xs);
+  }
+}
+
+.agent-pick.saved button {
+  color: var(--signal);
+}
+
+.agent-pick.failed button {
+  color: var(--bad);
+}
+
+.chat-pane .note-form,
+.chat-pane .composer,
+.chat-blank .composer {
+  position: sticky;
+  bottom: 0;
+  margin-bottom: 0;
+  padding-block: 0.75rem;
+  background: var(--ink-0);
+}
+
+/* .composer is the one box that sends a message: a field, what it is, where
+   it goes and Send. */
+.composer {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+
+  & textarea {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--ink-0);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-md);
+    line-height: 1.5;
+    resize: vertical;
+  }
+}
+
+.composer-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--fs-xs);
+}
+
+.composer-space {
+  flex: 1 1 auto;
+}
+
+.composer-modes {
+  display: flex;
+  gap: 0.25rem;
+
+  & [aria-pressed="true"] {
+    border-color: var(--signal);
+    color: var(--signal);
+  }
+}
+
+.composer-field {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-faint);
+
+  & input {
+    width: 12rem;
+    height: var(--control-sm);
+    padding: 0 0.45rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--ink-0);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--fs-xs);
+  }
+}
+
+/* .timeline is the list of threads: one row each, newest first. */
+.timeline {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+}
+
+.thread-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0 0.55rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  box-shadow: inset 3px 0 0 transparent;
+}
+
+.thread-row.selected {
+  box-shadow: inset 3px 0 0 var(--signal);
+}
+
+.thread-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .thread-said {
+    color: var(--signal);
+  }
+}
+
+.thread-said {
+  display: block;
+  overflow: hidden;
+  font-size: var(--fs-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+  font-size: var(--fs-xs);
+}
+
+.thread-kind {
+  color: var(--text-faint);
+}
+
+.thread-who {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 720px) {
+  .chat-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-list {
+    position: static;
+    max-height: none;
+    padding-inline-end: 0;
+    border-inline-end: 0;
+  }
+
+  .chat-shell.viewing .chat-list {
+    display: none;
+  }
+
+  .chat-pane {
+    min-height: 0;
+  }
+
+  .conversation-back {
+    display: flex;
+  }
+
+  .conversation {
+    min-height: calc(100vh - 7rem);
+  }
+
+  .chat-blank {
+    margin-top: 2rem;
+  }
+
+  .said {
+    max-width: 100%;
+  }
+}

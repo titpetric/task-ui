@@ -119,7 +119,7 @@ func (t *transcriptTail) record(line []byte) {
 	t.keep(rec.Kind, rec.Body, rec.ToolID, rec.Seq, rec.Data)
 }
 
-// keep appends one event under the run and publishes it on the thread.
+// keep appends one event for the run and publishes it on the thread.
 func (t *transcriptTail) keep(kind, body, toolID string, seq int64, data json.RawMessage) {
 	if len(data) == 0 {
 		data = json.RawMessage("{}")
@@ -136,10 +136,7 @@ func (t *transcriptTail) keep(kind, body, toolID string, seq int64, data json.Ra
 		return
 	}
 	if t.bus != nil {
-		t.bus.Publish(ThreadTopic(t.noteID), "event", ThreadEvent{
-			Note: t.noteID, Run: t.runID, Question: t.questionID,
-			Seq: event.Seq, Kind: kind, ToolID: toolID, Body: body, Data: data,
-		})
+		t.bus.Publish(ThreadTopic(t.noteID), "event", EventOf(event))
 	}
 }
 
@@ -192,10 +189,7 @@ func (b *Board) finalEvent(ctx context.Context, note, question *model.Note, runI
 		return
 	}
 	if b.Events != nil {
-		b.Events.Publish(ThreadTopic(note.ID), "event", ThreadEvent{
-			Note: note.ID, Run: runID, Question: question.ID,
-			Seq: event.Seq, Kind: event.Kind, Body: event.Body, Data: data,
-		})
+		b.Events.Publish(ThreadTopic(note.ID), "event", EventOf(event))
 	}
 }
 

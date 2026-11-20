@@ -97,6 +97,14 @@ The prose and godoc linters that landed with `feat(splint): the prose of a tree 
 
 `TestSessions_ResolveCeiling` in `access` failed once under the sharded integration runner and passes alone and on a re-run. It reads a clock.
 
+## Deferred from the conversation pass
+
+- The four filter bars still write their own `<form>`: runs, artifacts, threads and the workflow page size. A `components/filters.tpl` over a `Task\Filters` scope would collapse them, once the four field sets agree on one shape.
+- `empty.tpl` is used by the thread list and a conversation only. Runs, artifacts and workflow-run tables keep their own empty rows.
+- `/threads` orders by the newest message. Ordering by work in progress first is not built.
+- The dashboard shows a working thread in Recents but has no tile of its own for one.
+- `Task\Note::card()` and `Task\Note::thread()` are still the data layer of the board pages, beside `Task\Threads\Talk` and `Timeline`. One of the two goes.
+
 ## Reported, not fixed
 
 From the week-in-review of 2026-11-10:

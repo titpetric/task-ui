@@ -26,4 +26,25 @@
     }
   }
 
+  & .composer {
+    margin-top: 0.75rem;
+  }
+}
+
+/* .thread-links is the threads of a place, each one line. */
+.thread-links {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+  padding: 0;
+  list-style: none;
+
+  & a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  & a:hover {
+    color: var(--signal);
+  }
 }

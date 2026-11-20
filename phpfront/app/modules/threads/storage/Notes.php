@@ -229,6 +229,13 @@ class Notes {
 		return $this->db->get_all("SELECT * FROM note_event WHERE note_id = ? ORDER BY question_id, run_id, seq", $id);
 	}
 
+	/** lastEvent is a thread's newest event ID, the stream's replay cursor. */
+	function lastEvent($id) {
+		$row = $this->db->get("SELECT id FROM note_event WHERE note_id = ? ORDER BY rowid DESC LIMIT 1", $id);
+
+		return is_array($row) && isset($row["id"]) ? (string)$row["id"] : "";
+	}
+
 	/** omits what each run of a thread did from every listing and every reader. */
 	function forget($id) {
 		$this->db->query("DELETE FROM note_event WHERE note_id = ?", $id);

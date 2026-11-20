@@ -44,6 +44,31 @@ func TestNoteEventStorage_List(t *testing.T) {
 	assert.Equal(t, "second", got[1].Body)
 }
 
+// A replay answers the events after the cursor, oldest first, at most count.
+func TestNoteEventStorage_ListSince(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	events := storage.NewNoteEventStorage(newDB(t))
+
+	first := &model.NoteEvent{NoteID: "n1", RunID: "r1", Seq: 1, Kind: "text", Body: "first"}
+	second := &model.NoteEvent{NoteID: "n1", RunID: "r1", Seq: 2, Kind: "text", Body: "second"}
+	third := &model.NoteEvent{NoteID: "n1", RunID: "r1", Seq: 3, Kind: "text", Body: "third"}
+	for _, event := range []*model.NoteEvent{first, second, third} {
+		assert.NoError(t, events.Append(ctx, event))
+	}
+
+	got, err := events.ListSince(ctx, "n1", "", 2)
+	assert.NoError(t, err)
+	assert.Len(t, got, 2)
+	assert.Equal(t, "first", got[0].Body)
+
+	got, err = events.ListSince(ctx, "n1", got[0].ID, 5)
+	assert.NoError(t, err)
+	assert.Len(t, got, 2)
+	assert.Equal(t, "second", got[0].Body)
+	assert.Equal(t, "third", got[1].Body)
+}
+
 // A run's events are the tail a live page reads, oldest first.
 func TestNoteEventStorage_ListRun(t *testing.T) {
 	t.Parallel()

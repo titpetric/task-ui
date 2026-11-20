@@ -376,10 +376,10 @@ $box = Task\Prompt::panel($chrome, $one, $seen);
 echo $box["title"], " [", $box["note"], "] ", var_export($box["hidden"], true), " ", var_export($box["watch"], true), " ", $box["api"], " ", $box["place"], "\n";
 echo $box["fields"][0]["name"], " ", $box["fields"][0]["value"], " [", $box["editor"]["placeholder"], "]\n";
 echo "[", $box["lead"], "] [", $box["tail"], "]\n";
-echo count($box["threads"]), " ", $box["threads"][0]["id"], " ", count($box["threads"][0]["replies"]), "\n";
+echo count($box["threads"]), " ", $box["threads"][0]["id"], " ", $box["threads"][0]["title"], " ", $box["threads"][0]["state"], "\n";
 
-// The answer names a run of Claude's the reader sees, so the card links it.
-echo $box["threads"][0]["replies"][0]["run"], "\n";
+// The thread a place lists is a link to its page.
+echo $box["threads"][0]["href"], "\n";
 
 // A running run's box waits out of sight until a thread about it comes, and
 // offers no field: the summary is asked once the run ends.
@@ -406,7 +406,8 @@ echo $runs->root($runs->get("fx-rp-b2")), " ", $runs->root($one), "\n";
 // the folder, the directory the run ran in and the job: the run of a directory
 // inside the folder is the job that directory's own Taskfile declares, and a
 // job the catalogue resolves none of is nobody's to stop, which is what a
-// deleted job and a prompt of Claude's both are.
+// deleted job is. A prompt's run is the asker's or an admin's to end, with
+// prompt/edit, though no job page resolves it.
 echo var_export($mod->can($chrome, $one), true), " ", var_export($mod->can($chrome, $live), true), "\n";
 echo var_export($mod->can($chrome, $runs->get("fx-rp-6")), true), " ", var_export($mod->can($chrome, $claude), true), "\n";
 
@@ -562,14 +563,14 @@ Delete
 Prompt [ask Claude Code about this run and its output, in fx-rp/] false false /api/prompts fx-rp
 run fx-rp-1 [why did this run end the way it did]
 [Runs @claude-prompt as ] [ in fx-rp/, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.]
-1 fx-rp-n1 1
-fx-rp-5
+1 fx-rp-n1 why did this run end the way it did done
+/threads/fx-rp-n1
 true true 0
 NULL
 NULL
 fx-rp-b1 fx-rp-1
 true true
-false false
+false true
 true true
 true true
 false false

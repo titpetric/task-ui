@@ -23,15 +23,6 @@
 		});
 	}
 
-	// A form that deletes asks first. The question is on the form, because
-	// the one on the design says that the thread goes with it and the one on
-	// a rule says that only the request does.
-	function confirmOnSubmit(form) {
-		form.addEventListener("submit", function (event) {
-			if (!window.confirm(form.dataset.confirm)) event.preventDefault();
-		});
-	}
-
 	// The artifact index the run wrote is markdown rendered to HTML by the
 	// module, so a link in it is an ordinary link. One that names an artifact
 	// of this instance opens in the preview window the page already has.
@@ -48,7 +39,6 @@
 
 	function start() {
 		document.querySelectorAll("form.refinement-comment-form").forEach(sendOnEnter);
-		document.querySelectorAll("form[data-confirm]").forEach(confirmOnSubmit);
 		document.querySelectorAll(".refinement-report").forEach(previewArtifacts);
 	}
 

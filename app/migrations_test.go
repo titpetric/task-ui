@@ -44,6 +44,7 @@ var migrations = []string{
 	"note_area.up.sql",
 	"note_edited.up.sql",
 	"note_event.up.sql",
+	"note_event_id.up.sql",
 	"note_origin.up.sql",
 	"note_participant.up.sql",
 	"note_thread.up.sql",

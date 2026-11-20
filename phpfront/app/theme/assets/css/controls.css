@@ -111,6 +111,12 @@ select {
   font-size: var(--fs-label);
 }
 
+.btn-lg {
+  height: calc(var(--control) * 1.15);
+  padding-inline: 1.15rem;
+  font-size: var(--fs-md);
+}
+
 /* input and textarea take the frame, the padding and the font a reader types in. */
 input:is([type="text"], [type="password"]),
 textarea {

@@ -49,25 +49,128 @@ class Conversation {
 			$agent = count($agentNames) > 0 ? $agentNames[0] : "claude";
 		}
 
+		$menu = self::menu($note, $chrome);
+		$pick = !$chat && count($agentNames) > 0 && $note->getState() !== \Task\Note::WORKING && ($chrome->name() === $note->getUserName() || \Task\User::admin($chrome->user));
 		$head = new \Task\Head($title);
 
-		$head->menu(self::menu($note, $chrome)->data());
+		$head->menu($menu->data());
 		$seen = new \Task\Seen($chrome);
 
-		return [
+		$pane = [
 			"id" => $note->getId(),
 			"title" => $title,
 			"head" => $head->data(),
+			"head_view" => [
+				"id" => $note->getId(),
+				"title" => $title,
+				"meta" => self::meta($note, $agent, $chat),
+				"agents" => $agentNames,
+				"agent" => $agent,
+				"can_pick" => $pick,
+				"menu" => $menu->data(),
+			],
+			"status" => self::status($note, $work, $chrome, $under),
 			"split" => $split,
 			"channel" => $note->getChannel(),
 			"chat_thread" => $chat,
+			"prompt" => $prompt,
+			"last_event" => $store->lastEvent($note->getId()),
 			"messages" => Talk::messages($note, $under, $chrome, $seen, $work),
 			"agent" => $agent,
 			"agent_names" => $agentNames,
-			"pick_agent" => !$chat && $note->getState() !== \Task\Note::WORKING && ($chrome->name() === $note->getUserName() || \Task\User::admin($chrome->user)),
+			"pick_agent" => $pick,
 			"editor" => self::field(),
 			"replies" => $chat ? $member && $chrome->allowed("note/edit") : ($prompt ? $chrome->allowed("prompt/edit") : $chrome->allowed("note/edit")),
 			"mic" => $chrome->allowed("note/edit"),
+		];
+		$pane["composer"] = \Task\Composer::reply($pane);
+
+		return $pane;
+	}
+
+	/** meta is the line under a title: what the thread is, where, and its state. */
+	static function meta($note, $agent, $chat) {
+		$parts = [];
+
+		if ($chat) {
+			$parts[] = "chat";
+		} elseif (\Task\Note::isPrompt($note)) {
+			$parts[] = "prompt";
+		} else {
+			$parts[] = "note";
+		}
+
+		if ($note->getDir() !== "") {
+			$parts[] = $note->getDir();
+		}
+
+		if ($agent !== "" && !$chat) {
+			$parts[] = "@" . $agent;
+		}
+
+		if ($note->getState() !== "") {
+			$parts[] = $note->getState();
+		}
+
+		return implode(" · ", $parts);
+	}
+
+	/** status is the pinned line of a working thread, with the run it may end. */
+	static function status($note, $work, $chrome, $replies = []) {
+		if ($note->getState() !== \Task\Note::WORKING) {
+			return [
+				"working" => false,
+				"label" => "",
+				"state" => "",
+				"started" => "",
+				"run" => "",
+				"can_end" => false,
+			];
+		}
+
+		$label = "Working";
+		$state = "working";
+		$id = "";
+
+		foreach ($work as $runs) {
+			foreach ($runs as $run) {
+				if ($run["id"] !== "") {
+					$id = $run["id"];
+				}
+
+				if (($run["status"]["body"] ?? "") !== "") {
+					$label = $run["status"]["body"];
+					$state = ($run["status"]["state"] ?? "") !== "" ? $run["status"]["state"] : "working";
+				}
+			}
+		}
+
+		if ($id === "") {
+			$id = $note->getRunId();
+
+			foreach ($replies as $reply) {
+				if ($reply->getRunId() !== "") {
+					$id = $reply->getRunId();
+				}
+			}
+		}
+
+		$runs = new \Task\Runs\Runs;
+		$row = $runs->get($id);
+		$started = $row === null ? "" : \Task\Run::started($row->getStartedAt());
+
+		if ($started === "") {
+			$at = \Task\Clock::parse($note->getUpdatedAt());
+			$started = $at === null ? "" : (string)$at->unixMilli();
+		}
+
+		return [
+			"working" => true,
+			"label" => $label,
+			"state" => $state,
+			"started" => $started,
+			"run" => $id,
+			"can_end" => \Task\Run::canEnd($chrome, $row),
 		];
 	}
 
@@ -87,13 +190,6 @@ class Conversation {
 
 	/** field is the box under the conversation, as components/editor.tpl reads it. */
 	static function field() {
-		return [
-			"name" => "body",
-			"rows" => 2,
-			"label" => "A reply",
-			"placeholder" => "",
-			"mentions" => true,
-			"toolbar" => "inline",
-		];
+		return \Task\Note::field();
 	}
 }

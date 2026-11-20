@@ -154,7 +154,7 @@
 }
 
 .orb-status.bad {
-	color: var(--danger, #c92a2a);
+	color: var(--bad);
 }
 
 [data-orb-leave][data-joined="0"] {

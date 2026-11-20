@@ -17,9 +17,9 @@ require "ext/autoload.php";
 // thread. The right pane is the same template the thread page draws, and the
 // script swaps it through /threads/{id}?pane=1 without leaving the page.
 //
-// The box holds data-note-form, which the script posts to /api/notes, and a
-// chat's reply form posts to /api/threads; the script refreshes the list and
-// the pane in place.
+// The box is components/composer.tpl, which asks Claude or writes a note, and
+// a chat's reply posts to /api/threads; the script refreshes the list and the
+// pane in place.
 class mod_threads implements Module {
 	/** LEAD is the sentence under the heading, as HTML: it names a tag. */
 	const LEAD = 'Everything said on this instance: a note to someone with <code>@name</code>, a prompt asked from a page, and what the orb heard. If you can run jobs, a note is an instruction to the people it names, and naming several splits one request between them.';
@@ -54,6 +54,14 @@ class mod_threads implements Module {
 		}
 
 		$chrome->heading("Threads", [["text" => "Threads", "href" => ""]]);
+
+		$selectedID = trim(Task\Route::input("id"));
+
+		if ($selectedID !== "") {
+			Task\Route::go("/threads/" . Task\Route::pathEscape($selectedID));
+
+			return;
+		}
 
 		$store = new Task\Threads\Notes;
 		$users = new Task\User;
@@ -94,26 +102,6 @@ class mod_threads implements Module {
 			}
 		}
 
-		$selectedID = trim(Task\Route::input("id"));
-		$selected = null;
-		$paneError = "";
-
-		if ($selectedID !== "") {
-			$note = $store->get($selectedID);
-
-			if ($note === null || $note->getParentId() !== "") {
-				$paneError = Task\Threads\Conversation::MISSING;
-			} else {
-				$conversation = Task\Threads\Conversation::view($note, $chrome, $store, true);
-
-				if (isset($conversation["error"])) {
-					$paneError = $conversation["error"];
-				} else {
-					$selected = $conversation;
-				}
-			}
-		}
-
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
 		$head = new Task\Head("Threads", self::lead($agent));
 
@@ -125,9 +113,8 @@ class mod_threads implements Module {
 			"states" => ["open", "working", "done", "failed"],
 			"rows" => $rows,
 			"chats" => $chats,
-			"selected" => $selected,
-			"selected_id" => $selectedID,
-			"pane_error" => $paneError,
+			"composer" => Task\Composer::blank($chrome, $agent),
+			"empty" => ["tag" => "li", "text" => "Nothing said yet."],
 		]);
 	}
 

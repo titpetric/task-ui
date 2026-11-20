@@ -34,6 +34,11 @@ func (s *NoteEventStorage) List(ctx context.Context, noteID string) ([]model.Not
 	return client(s.db).Select[model.NoteEvent](ctx, "SELECT * FROM note_event WHERE note_id = ? ORDER BY question_id, run_id, seq", noteID)
 }
 
+// ListSince returns a thread's events after one ID, in insertion order, at most count.
+func (s *NoteEventStorage) ListSince(ctx context.Context, noteID, afterID string, count int) ([]model.NoteEvent, error) {
+	return client(s.db).Select[model.NoteEvent](ctx, "SELECT * FROM note_event WHERE note_id = ? AND rowid > COALESCE((SELECT rowid FROM note_event WHERE id = ?), 0) ORDER BY rowid LIMIT ?", noteID, afterID, count)
+}
+
 // ListRun returns one run's events in the order Claude produced them.
 func (s *NoteEventStorage) ListRun(ctx context.Context, runID string) ([]model.NoteEvent, error) {
 	return client(s.db).Select[model.NoteEvent](ctx, "SELECT * FROM note_event WHERE run_id = ? ORDER BY seq", runID)

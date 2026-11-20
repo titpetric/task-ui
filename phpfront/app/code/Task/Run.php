@@ -330,6 +330,39 @@ class Run {
 		return self::runFolderHref($run, $workspaces) . "/" . $run->getJob();
 	}
 
+	/** canEnd reports whether the reader may stop or kill a run. */
+	static function canEnd($chrome, $run) {
+		if ($run === null) {
+			return false;
+		}
+
+		$own = $chrome->name() === $run->getUserName() || User::admin($chrome->user);
+
+		if (self::isPrompt($run)) {
+			return $own && $chrome->allowed("prompt/edit");
+		}
+
+		if (self::isNote($run)) {
+			return $own && $chrome->allowed("note/edit");
+		}
+
+		$job = Host::job($run->getFolder(), $run->getDir(), $run->getJob());
+
+		if (!$job["found"]) {
+			return false;
+		}
+
+		if ($job["host"]) {
+			return $chrome->allowed("hosts");
+		}
+
+		if ($job["shell"] && !$chrome->allowed("shell")) {
+			return false;
+		}
+
+		return $chrome->access->run($run->getFolder(), $job["folder_allow"], $job["allow"]);
+	}
+
 	/**
 	 * pick is a filter field as a string, "" for one the caller left out.
 	 * It does not trim: storage.RunFilter narrows on the query value as it

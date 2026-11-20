@@ -304,6 +304,20 @@ class mod_run implements Module {
 
 		$rows[] = self::detail("Job", $jobHref === "" ? ["text" => $job] : ["link" => self::link(Task\Route::href($jobHref), "", $job)]);
 
+		$parentID = $run->getParentId();
+
+		if ($parentID !== "") {
+			$runs = new Task\Runs\Runs;
+			$parent = $run->getParentKind() === "run" ? $runs->get($parentID) : null;
+			$rows[] = self::detail("Started by", $parent === null ? [
+				"text" => $parentID,
+				"after" => $run->getParentKind() === "workflow_run" ? "a workflow run" : "a run",
+			] : [
+				"link" => self::link(Task\Route::href("/runs/" . $parentID), "play", Task\Run::name($parent)),
+				"after" => "a run",
+			]);
+		}
+
 		if (count($args) > 0) {
 			$rows[] = self::detail("Arguments", ["code" => $args, "after" => "after --, one argument each"]);
 		}
@@ -378,36 +392,9 @@ class mod_run implements Module {
 		];
 	}
 
-	/**
-	 * can reports whether the reader may stop or kill the run, which is
-	 * whether they may run its job.
-	 *
-	 * The run names a folder, a directory inside it and a job, and the host
-	 * resolves all three into the one job: the jobs of a directory sit in that
-	 * directory's own Taskfile, and the four every folder has it declares
-	 * nowhere. A job the catalogue does not resolve is one nobody may run,
-	 * which is the nil job the Go page gates on.
-	 *
-	 * A terminal and a job on a host are gated on a permission of their own,
-	 * and everything else on the allow lists of the job and of its folder,
-	 * both of which come with the job.
-	 */
+	/** can reports whether the reader may stop or kill the run. */
 	function can($chrome, $run) {
-		$job = Task\Host::job($run->getFolder(), $run->getDir(), $run->getJob());
-
-		if (!$job["found"]) {
-			return false;
-		}
-
-		if ($job["host"]) {
-			return $chrome->allowed("hosts");
-		}
-
-		if ($job["shell"] && !$chrome->allowed("shell")) {
-			return false;
-		}
-
-		return $chrome->access->run($run->getFolder(), $job["folder_allow"], $job["allow"]);
+		return Task\Run::canEnd($chrome, $run);
 	}
 
 	/**

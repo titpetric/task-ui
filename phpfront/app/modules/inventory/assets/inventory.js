@@ -4,14 +4,6 @@
 (function () {
 	"use strict";
 
-	// A form that removes asks first. The question is on the form, because it
-	// names the host and says whether the hub brings it back.
-	function confirmOnSubmit(form) {
-		form.addEventListener("submit", function (event) {
-			if (!window.confirm(form.dataset.confirm)) event.preventDefault();
-		});
-	}
-
 	// Entering a host waits on an ssh login, up to twenty seconds. The button
 	// says what it is waiting for while the post is out.
 	function waitOnSubmit(form) {
@@ -25,7 +17,6 @@
 	}
 
 	function start() {
-		document.querySelectorAll("form.inventory-drop[data-confirm]").forEach(confirmOnSubmit);
 		document.querySelectorAll("form.inventory-add").forEach(waitOnSubmit);
 	}
 

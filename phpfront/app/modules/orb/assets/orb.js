@@ -997,14 +997,14 @@
     var finish = event.target.closest("[data-orb-finish]");
 
     if (finish) {
-      if (!window.confirm(finish.getAttribute("data-confirm") || "End the meeting?")) {
-        return;
-      }
+      window.taskUI.confirm(finish.getAttribute("data-confirm") || "End the meeting?", "End").then(function (ok) {
+        if (!ok) return;
 
-      api("POST", "/meetings/" + cfg.id + "/finish").then(function () {
-        location.reload();
-      }, function (err) {
-        say(err.message, true);
+        api("POST", "/meetings/" + cfg.id + "/finish").then(function () {
+          location.reload();
+        }, function (err) {
+          say(err.message, true);
+        });
       });
       return;
     }
@@ -1012,14 +1012,14 @@
     var remove = event.target.closest("[data-orb-delete]");
 
     if (remove) {
-      if (!window.confirm(remove.getAttribute("data-confirm") || "Delete the meeting?")) {
-        return;
-      }
+      window.taskUI.confirm(remove.getAttribute("data-confirm") || "Delete the meeting?").then(function (ok) {
+        if (!ok) return;
 
-      api("DELETE", "/meetings/" + cfg.id).then(function () {
-        location.href = cfg.base + "/orb/";
-      }, function (err) {
-        say(err.message, true);
+        api("DELETE", "/meetings/" + cfg.id).then(function () {
+          location.href = cfg.base + "/orb/";
+        }, function (err) {
+          say(err.message, true);
+        });
       });
       return;
     }
@@ -1090,24 +1090,24 @@
         return;
       }
 
-      if (!window.confirm(remove.getAttribute("data-confirm") || "Delete the meeting?")) {
-        return;
-      }
+      window.taskUI.confirm(remove.getAttribute("data-confirm") || "Delete the meeting?").then(function (ok) {
+        if (!ok) return;
 
-      var host = remove.closest("[data-api]");
-      var api = host ? host.getAttribute("data-api") : "";
+        var host = remove.closest("[data-api]");
+        var api = host ? host.getAttribute("data-api") : "";
 
-      fetch(api + "/meetings/" + remove.getAttribute("data-orb-delete"), {
-        method: "DELETE",
-        credentials: "same-origin",
-      }).then(function (res) {
-        if (!res.ok) {
-          throw new Error("the request failed (" + res.status + ")");
-        }
+        fetch(api + "/meetings/" + remove.getAttribute("data-orb-delete"), {
+          method: "DELETE",
+          credentials: "same-origin",
+        }).then(function (res) {
+          if (!res.ok) {
+            throw new Error("the request failed (" + res.status + ")");
+          }
 
-        window.location.reload();
-      }, function (err) {
-        window.alert(err.message);
+          window.location.reload();
+        }, function (err) {
+          window.alert(err.message);
+        });
       });
     });
 

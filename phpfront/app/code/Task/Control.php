@@ -219,6 +219,7 @@ class Control {
 			"pinned" => Pin::of($this->pins, Row::text($folder, "id"), $id, $dir) !== null,
 			"what" => $what,
 			"run" => $run === null ? "" : $run->getId(),
+			"kills" => $run !== null && $can,
 			"href" => Route::href(Route::placeHref(Row::text($folder, "id"), $dir, $this->workspaces) . "/" . $id),
 			"title" => self::says($run, $what, $desc, $args, $terminal, $can),
 		];

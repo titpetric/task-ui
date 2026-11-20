@@ -65,7 +65,7 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 				return false
 			}
 			if n.IsPrompt() {
-				return prompts
+				return prompts && seesPlace(h.opts.Catalogue, user, n.Dir)
 			}
 			if n.Channel == model.ChannelChat {
 				if h.opts.Board.Chats == nil {
@@ -120,6 +120,23 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, ": connected\n\n")
 	flusher.Flush()
 
+	// A thread replays the stored events after the cursor, so a reload, a
+	// reconnect or a bus drop still reads the whole transcript.
+	sent := map[string]bool{}
+	cursor := ""
+	var sweepC <-chan time.Time
+	if kind == "thread" && h.opts.Board != nil && h.opts.Board.NoteEvents != nil {
+		cursor = r.URL.Query().Get("last_event")
+		if header := r.Header.Get("Last-Event-ID"); header != "" {
+			cursor = header
+		}
+		cursor = h.replayThread(r, w, id, cursor, sent)
+		flusher.Flush()
+		sweep := time.NewTicker(threadSweep)
+		defer sweep.Stop()
+		sweepC = sweep.C
+	}
+
 	ticker := time.NewTicker(heartbeat)
 	defer ticker.Stop()
 	for {
@@ -137,11 +154,54 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				continue
 			}
+			eventID := ""
+			if item, ok := e.Data.(note.ThreadEvent); ok {
+				eventID = item.ID
+			}
+			if eventID != "" {
+				if sent[eventID] {
+					continue
+				}
+				sent[eventID] = true
+				cursor = eventID
+				fmt.Fprintf(w, "id: %s\n", eventID)
+			}
 			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", e.Name, data)
+			flusher.Flush()
+		case <-sweepC:
+			cursor = h.replayThread(r, w, id, cursor, sent)
 			flusher.Flush()
 		case <-ticker.C:
 			fmt.Fprint(w, ": ping\n\n")
 			flusher.Flush()
 		}
 	}
+}
+
+// threadSweep is how often a thread stream reads the store for dropped events.
+const threadSweep = 2 * time.Second
+
+// replayThread writes a thread's stored events after the cursor and answers the newest ID it wrote.
+func (h *Handlers) replayThread(r *http.Request, w http.ResponseWriter, noteID, cursor string, sent map[string]bool) string {
+	if h.opts.Board == nil || h.opts.Board.NoteEvents == nil {
+		return cursor
+	}
+	rows, err := h.opts.Board.NoteEvents.ListSince(r.Context(), noteID, cursor, 500)
+	if err != nil {
+		return cursor
+	}
+	for i := range rows {
+		event := note.EventOf(&rows[i])
+		if event.ID == "" || sent[event.ID] {
+			continue
+		}
+		data, err := json.Marshal(event)
+		if err != nil {
+			continue
+		}
+		fmt.Fprintf(w, "id: %s\nevent: event\ndata: %s\n\n", event.ID, data)
+		sent[event.ID] = true
+		cursor = event.ID
+	}
+	return cursor
 }

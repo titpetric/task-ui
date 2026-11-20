@@ -19,20 +19,20 @@
     return box;
   }
 
+  // workEvent draws one event the way components/work.tpl draws it. The
+  // fields are the stream's own: a tool card carries tool and input, a result
+  // carries error and its cut body.
   function workEvent(event) {
-    var data = event.data || {};
     switch (event.kind) {
-      case "status":
-        return node("div", "work-status", event.body || "working");
       case "text":
       case "result":
         return node("div", "work-text prose", event.body || "");
       case "thinking":
         return details("work-thinking", "Thinking", event.body || "");
       case "tool_use":
-        return details("work-tool", data.name || "Tool", JSON.stringify(data.input || {}, null, 2));
+        return details("work-tool", event.tool || "Tool", event.input || "");
       case "tool_result":
-        return details("work-result" + (data.is_error ? " error" : ""), data.is_error ? "Error" : "Result", event.body || "");
+        return details("work-result" + (event.error ? " error" : ""), event.error ? "Error" : "Result", event.body || "");
       case "system":
         return details("work-system", "Session", event.body || "");
       case "error":
@@ -84,6 +84,72 @@
     }
   }
 
+  function elapsed(started) {
+    var since = Number(started);
+    if (!since) {
+      return "";
+    }
+    var seconds = Math.max(0, Math.floor((Date.now() - since) / 1000));
+    if (seconds < 60) {
+      return seconds + "s";
+    }
+    if (seconds < 3600) {
+      return Math.floor(seconds / 60) + "m" + String(seconds % 60).padStart(2, "0") + "s";
+    }
+    return Math.floor(seconds / 3600) + "h" + String(Math.floor(seconds / 60) % 60).padStart(2, "0") + "m";
+  }
+
+  // statusLine is the pinned line above the conversation, made where the page
+  // opened on a run that had not reported one yet.
+  function statusLine() {
+    var found = document.querySelector("[data-status]");
+    if (found) {
+      return found;
+    }
+    var talk = document.querySelector(".talk[data-thread]");
+    var head = document.querySelector(".conversation-head");
+    if (!talk || !head) {
+      return null;
+    }
+    var line = node("div", "conversation-status");
+    line.dataset.status = "";
+    var said = node("p");
+    said.setAttribute("aria-live", "polite");
+    said.appendChild(node("i", "dot working"));
+    said.appendChild(node("span", "", "Working"));
+    said.lastChild.dataset.statusText = "";
+    var clock = node("span", "faint");
+    clock.dataset.statusElapsed = "";
+    said.appendChild(clock);
+    line.appendChild(said);
+    head.parentNode.insertBefore(line, head.nextSibling);
+    return line;
+  }
+
+  function setStatus(event) {
+    var line = statusLine();
+    if (!line) {
+      return;
+    }
+    var label = event.body || event.tool || event.state || "Working";
+    line.dataset.state = event.state || "working";
+    if (!line.dataset.started && event.created_at) {
+      line.dataset.started = String(Date.parse(event.created_at));
+    }
+    var text = line.querySelector("[data-status-text]");
+    if (text) {
+      text.textContent = label;
+    }
+  }
+
+  function tickStatus() {
+    var elapsedText = document.querySelector("[data-status-elapsed]");
+    var line = document.querySelector("[data-status]");
+    if (elapsedText && line) {
+      elapsedText.textContent = elapsed(line.dataset.started);
+    }
+  }
+
   function mark(note) {
     var message = document.getElementById("note-" + note.id);
     if (!message) {
@@ -106,17 +172,35 @@
     }
   }
 
-  // The Threads page draws the list and the selected conversation apart, and
-  // reads a conversation in place: /threads/<id>?pane=1 answers the pane
-  // without the shell. The thread page has no pane element and reads whole.
   var pane = document.querySelector("[data-thread-pane]");
-  var list = document.querySelector(".threads-list");
-  var blank = pane && pane.querySelector(".threads-new") ? pane.innerHTML : "";
+  var shell = document.querySelector(".chat-shell");
+  var list = document.querySelector(".chat-list");
+  var blank = pane && pane.querySelector(".chat-blank") ? pane.innerHTML : "";
   var stream = null;
   var current = "";
 
-  // follow draws the work of the thread the pane shows and reads its notes.
-  // One stream is open at a time: a swap closes the one it replaces.
+  function viewing(on) {
+    if (shell) {
+      shell.classList.toggle("viewing", on);
+    }
+  }
+
+  // queueReload reads the pane once however many events ask for it: a run
+  // settles with a note, a result and a status in the same tick.
+  var reloadTimer = null;
+
+  function queueReload() {
+    if (!pane || !current || reloadTimer) {
+      return;
+    }
+    reloadTimer = setTimeout(function () {
+      reloadTimer = null;
+      refresh(current);
+    }, 150);
+  }
+
+  // follow reads the thread's work. The page's newest event is the cursor, so
+  // what the bus dropped between the page and the stream is replayed.
   function follow(talk) {
     if (stream) {
       stream.close();
@@ -126,7 +210,12 @@
       return;
     }
     var id = talk.dataset.thread;
-    var source = new EventSource("/api/sse/thread:" + encodeURIComponent(id));
+    var cursor = talk.dataset.lastEvent || "";
+    var url = "/api/sse/thread:" + encodeURIComponent(id);
+    if (cursor) {
+      url += "?last_event=" + encodeURIComponent(cursor);
+    }
+    var source = new EventSource(url);
     stream = source;
     source.addEventListener("event", function (incoming) {
       var data;
@@ -135,7 +224,14 @@
       } catch (err) {
         return;
       }
+      if (data.kind === "status") {
+        setStatus(data);
+        return;
+      }
       addWork(data);
+      if (data.kind === "result" || data.kind === "error") {
+        queueReload();
+      }
     });
     source.addEventListener("note", function (incoming) {
       var note;
@@ -145,13 +241,8 @@
         return;
       }
       mark(note);
-      if (note.parent_id && (note.state === "done" || note.state === "failed")) {
-        // The answer is a reply now, so the conversation is read again.
-        if (pane) {
-          load(id, false);
-        } else {
-          window.location.reload();
-        }
+      if (note.state === "done" || note.state === "failed" || note.state === "killed" || note.state === "stopped") {
+        queueReload();
       }
     });
   }
@@ -195,16 +286,39 @@
     }
     list.querySelectorAll(".thread-row").forEach(function (row) {
       var link = row.querySelector(".thread-open");
-      row.classList.toggle("selected", !!id && !!link && link.dataset.threadId === id);
+      var on = !!id && !!link && link.dataset.threadId === id;
+      row.classList.toggle("selected", on);
+      if (link) {
+        if (on) {
+          link.setAttribute("aria-current", "true");
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      }
     });
+    viewing(!!id);
   }
 
   // want counts what the pane was last asked to show: a read that answers
   // after the reader moved on is dropped, not drawn over the newer pane.
   var want = 0;
 
-  // load reads one conversation into the pane, dropping the editors of the
-  // one it replaces.
+  function paint(id) {
+    if (window.taskUI && window.taskUI.mount) {
+      window.taskUI.mount(pane);
+    }
+    current = id;
+    select(id);
+    if (window.taskUI && window.taskUI.read) {
+      window.taskUI.read();
+    }
+    var form = pane.querySelector("[data-agent-form]");
+    if (form) {
+      pick(form);
+    }
+  }
+
+  // load reads one conversation into the pane and follows it.
   function load(id, push) {
     if (!pane || !id) {
       return Promise.resolve();
@@ -223,22 +337,34 @@
         window.taskUI.unmount(pane);
       }
       pane.innerHTML = html;
-      if (window.taskUI && window.taskUI.mount) {
-        window.taskUI.mount(pane);
-      }
-      current = id;
-      select(id);
-      if (window.taskUI && window.taskUI.read) {
-        window.taskUI.read();
-      }
+      paint(id);
       follow(pane.querySelector(".talk[data-thread]"));
-      var form = pane.querySelector("[data-agent-form]");
-      if (form) {
-        pick(form);
-      }
       if (push) {
-        history.pushState({ thread: id }, "", "/threads?id=" + encodeURIComponent(id));
+        history.pushState({ thread: id }, "", "/threads/" + encodeURIComponent(id));
       }
+    });
+  }
+
+  // refresh reads the same conversation again without dropping its stream.
+  function refresh(id) {
+    if (!pane || !id) {
+      return Promise.resolve();
+    }
+    var seq = ++want;
+    return fetch("/threads/" + encodeURIComponent(id) + "?pane=1", {
+      credentials: "same-origin",
+      headers: { Accept: "text/html" }
+    }).then(function (res) {
+      return res.text();
+    }).then(function (html) {
+      if (seq !== want || id !== current) {
+        return;
+      }
+      if (window.taskUI && window.taskUI.unmount) {
+        window.taskUI.unmount(pane);
+      }
+      pane.innerHTML = html;
+      paint(id);
     });
   }
 
@@ -261,11 +387,7 @@
       window.taskUI.unmount(pane);
     }
     pane.innerHTML = blank;
-    if (window.taskUI && window.taskUI.mount) {
-      window.taskUI.mount(pane);
-    }
-    current = "";
-    select("");
+    paint("");
     if (push) {
       history.pushState({ thread: "" }, "", "/threads");
     }
@@ -286,7 +408,8 @@
     if (!pane) {
       return;
     }
-    var id = new URLSearchParams(location.search).get("id") || "";
+    var found = location.pathname.match(/\/threads\/([^\/]+)\/?$/);
+    var id = found ? decodeURIComponent(found[1]) : "";
     if (id === current) {
       return;
     }
@@ -301,7 +424,7 @@
   // from the shared note handler.
   document.addEventListener("taskui:pane", function () {
     if (pane && current) {
-      load(current, false);
+      refresh(current);
     }
   });
   document.addEventListener("taskui:thread", function (event) {
@@ -321,9 +444,12 @@
   if (talk) {
     current = talk.dataset.thread || "";
     follow(talk);
+    select(current);
   }
   var form = (pane || document).querySelector("[data-agent-form]");
   if (form) {
     pick(form);
   }
+  setInterval(tickStatus, 1000);
+  tickStatus();
 })();

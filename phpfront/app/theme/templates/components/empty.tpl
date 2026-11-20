@@ -1,0 +1,1 @@
+{if $data_empty.tag == 'li'}<li class="empty-state" role="status">{data_empty.text}</li>{else}<p class="empty-state" role="status">{data_empty.text}{if $data_empty.href} <a href="{data_empty.href}">{data_empty.label}</a>{/if}</p>{/if}
