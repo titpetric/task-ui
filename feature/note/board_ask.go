@@ -146,7 +146,7 @@ func (b *Board) answerPlaceholder(ctx context.Context, thread *model.Note) *mode
 	if replies, err := b.Notes.Replies(ctx, []string{thread.ID}); err == nil {
 		for i := range replies[thread.ID] {
 			reply := &replies[thread.ID][i]
-			if reply.RunID != "" && reply.State == model.NoteWorking && strings.TrimSpace(reply.Body) == "" && reply.Agent == name && !b.live(reply.RunID) {
+			if reply.RunID != "" && reply.State == model.NoteWorking && strings.TrimSpace(reply.Body) == "" && reply.Agent == name && b.ended(ctx, reply.RunID) {
 				if err := b.Notes.Remove(ctx, reply.ID); err != nil {
 					slog.Warn("stale answer not removed", "note", reply.ID, "err", err)
 				}
@@ -154,7 +154,7 @@ func (b *Board) answerPlaceholder(ctx context.Context, thread *model.Note) *mode
 		}
 	}
 	reply := &model.Note{
-		Channel: thread.Channel, ParentID: thread.ID, UserName: name, Agent: name,
+		Channel: thread.Channel, ParentID: thread.ID, UserName: name, Agent: name, RunID: model.NewID(),
 		State: model.NoteWorking, WorkspaceID: thread.WorkspaceID, Dir: thread.Dir,
 		AboutRunID: thread.AboutRunID, AboutWorkflowRunID: thread.AboutWorkflowRunID, Area: thread.Area,
 	}
@@ -169,6 +169,15 @@ func (b *Board) answerPlaceholder(ctx context.Context, thread *model.Note) *mode
 	}
 	b.publish(reply)
 	return reply
+}
+
+// ended reports whether a run the store holds has ended.
+func (b *Board) ended(ctx context.Context, runID string) bool {
+	if b.Runs == nil {
+		return false
+	}
+	_, err := b.Runs.Get(ctx, runID)
+	return err == nil && !b.live(runID)
 }
 
 // discardAnswer removes the empty reply of a run that answered in the thread itself.
