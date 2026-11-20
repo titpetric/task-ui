@@ -37,7 +37,7 @@ class Conversation {
 
 		$replies = $store->replies([$note->getId()]);
 		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
-		$title = \Task\Note::excerpt(Talk::opening($note, $under), self::TITLE);
+		$title = self::title($note, $under);
 		$work = Work::byQuestion($store->events($note->getId()), $chrome);
 		$users = new \Task\User;
 		$agentNames = [];
@@ -89,6 +89,16 @@ class Conversation {
 		$pane["composer"] = \Task\Composer::reply($pane);
 
 		return $pane;
+	}
+
+	/** title is a thread's opening as a heading: its first line, cut short. */
+	static function title($note, $replies) {
+		$opening = trim(Talk::opening($note, $replies));
+		$lines = preg_split('/\r\n|\n|\r/', $opening);
+		$first = isset($lines[0]) && $lines[0] !== "" ? $lines[0] : $opening;
+		$first = preg_replace('/^#{1,6}\s+/', "", $first);
+
+		return \Task\Note::excerpt($first, self::TITLE);
 	}
 
 	/** meta is the line under a title: what the thread is, where, and its state. */
