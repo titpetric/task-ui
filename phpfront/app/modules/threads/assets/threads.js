@@ -263,13 +263,19 @@
   }
 
   function pick(form) {
+    var select = form.querySelector("select");
+    var button = form.querySelector('button[type="submit"]');
+    if (!select) {
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      select.addEventListener("change", function () {
+        button.disabled = false;
+      });
+    }
     form.addEventListener("submit", function (event) {
       event.preventDefault();
-      var select = form.querySelector("select");
-      var button = form.querySelector("button");
-      if (!select) {
-        return;
-      }
       if (button) {
         button.disabled = true;
       }
@@ -283,10 +289,10 @@
         }
         form.classList.remove("failed");
         form.classList.add("saved");
+        queueReload();
       }).catch(function () {
         form.classList.remove("saved");
         form.classList.add("failed");
-      }).finally(function () {
         if (button) {
           button.disabled = false;
         }
