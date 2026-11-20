@@ -145,6 +145,23 @@ func TestBoard_AskAsAgent(t *testing.T) {
 	assert.Equal(t, "consuela", thread.Agent)
 	assert.Equal(t, "folder", thread.Origin)
 	assert.Equal(t, "consuela", board.AnswererOf(ctx, thread))
+
+	// The answer is made when the prompt is asked, and names the run it will hold.
+	var placeholder model.Note
+	for placeholder.ID == "" {
+		select {
+		case e := <-events:
+			if row, ok := e.Data.(model.Note); ok && row.ParentID == thread.ID && row.State == model.NoteWorking {
+				placeholder = row
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("the answer was not made")
+		}
+	}
+	assert.Equal(t, thread.ID, placeholder.ParentID)
+	assert.Equal(t, "consuela", placeholder.Agent)
+	assert.True(t, placeholder.RunID != "", "the answer names its run")
+
 	settles(t, events, thread.ID)
 
 	// The answer was made when the run started, and its body filled that reply.
