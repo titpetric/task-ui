@@ -75,7 +75,7 @@ class Conversation {
 			"chat_thread" => $chat,
 			"prompt" => $prompt,
 			"last_event" => $store->lastEvent($note->getId()),
-			"messages" => Talk::messages($note, $under, $chrome, $seen, $work, self::answers($under, $work)),
+			"messages" => Talk::messages($note, $under, $chrome, $seen, $work, self::answers($note, $under, $work)),
 			"agent" => $agent,
 			"agent_names" => $agentNames,
 			"pick_agent" => $pick,
@@ -116,8 +116,9 @@ class Conversation {
 	}
 
 	/** answers is the reply each run wrote, by run ID. */
-	static function answers($replies, $work) {
+	static function answers($note, $replies, $work) {
 		$started = [];
+		$last = [];
 
 		foreach ($work as $runs) {
 			foreach ($runs as $run) {
@@ -127,9 +128,15 @@ class Conversation {
 			}
 		}
 
+		foreach ($replies as $index => $reply) {
+			if ($reply->getRunId() !== "") {
+				$last[$reply->getRunId()] = $index;
+			}
+		}
+
 		$out = [];
 
-		foreach ($replies as $reply) {
+		foreach ($replies as $index => $reply) {
 			$run = $reply->getRunId();
 
 			if ($run === "") {
@@ -138,8 +145,9 @@ class Conversation {
 
 			$question = isset($started[$run]) ? $started[$run] : "";
 			$marked = $reply->getParentId() !== "" && $reply->getAgent() !== "";
+			$own = $run === $note->getRunId() ? $reply->getId() !== $note->getId() : $last[$run] === $index;
 
-			if ($marked || ($question !== "" && $reply->getId() !== $question)) {
+			if ($marked || ($question !== "" && $reply->getId() !== $question) || $own) {
 				$out[$run] = $reply->getId();
 			}
 		}

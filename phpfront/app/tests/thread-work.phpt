@@ -93,7 +93,7 @@ $db->replace("note", [
 	"updated_at" => "2026-11-16 10:03:00.000 +0000 UTC",
 ]);
 $replies = [$notes->get("fx-work-n2"), $notes->get("fx-work-n4")];
-$answers = Task\Threads\Conversation::answers($replies, $work);
+$answers = Task\Threads\Conversation::answers($notes->get("fx-work-n1"), $replies, $work);
 $talk = Task\Threads\Talk::messages($notes->get("fx-work-n1"), $replies, $chrome, null, $work, $answers);
 
 echo count($answers), " ", var_export($talk[0]["agent"], true), " ", var_export($talk[1]["agent"], true), " ", var_export($talk[2]["agent"], true), "\n";
