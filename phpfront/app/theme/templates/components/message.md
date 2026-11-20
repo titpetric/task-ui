@@ -7,6 +7,7 @@ Input scope: `data_message`, one message of a thread, from
 |-------|---------|
 | `id` | the note; the element is `#note-{id}` |
 | `mine` | whether the reader said it |
+| `agent` | whether the thread's agent wrote it: a run's answer, drawn on the agent's side with an `agent` chip |
 | `author` | the user scope to draw |
 | `body` | the rendered markdown |
 | `audio` | the recording's URL, empty when the message has no recording |

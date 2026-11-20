@@ -77,6 +77,26 @@ echo $work["fx-work-n2"][0]["status"]["body"], " ", $work["fx-work-n2"][0]["stat
 echo count($work["fx-work-n2"][0]["events"]), " ", $work["fx-work-n2"][0]["events"][0]["seq"], "\n";
 echo count($messages[0]["work"]), " ", count($messages[1]["work"]), "\n";
 
+// The reply a run wrote is the agent's, not the question that started the run.
+$db->replace("note", [
+	"id" => "fx-work-n4",
+	"channel" => "notes",
+	"parent_id" => "fx-work-n1",
+	"user_id" => "fx-work-u1",
+	"user_name" => "fx-work-ann",
+	"body" => "the tests pass",
+	"mentions" => "",
+	"state" => "",
+	"run_id" => "fx-work-r1",
+	"created_at" => "2026-11-16 10:03:00.000 +0000 UTC",
+	"updated_at" => "2026-11-16 10:03:00.000 +0000 UTC",
+]);
+$replies = [$notes->get("fx-work-n2"), $notes->get("fx-work-n4")];
+$answers = Task\Threads\Conversation::answers($replies, $work);
+$talk = Task\Threads\Talk::messages($notes->get("fx-work-n1"), $replies, $chrome, null, $work, $answers);
+
+echo count($answers), " ", var_export($talk[0]["agent"], true), " ", var_export($talk[1]["agent"], true), " ", var_export($talk[2]["agent"], true), "\n";
+
 // A working thread carries the run it may end, and the last status as its
 // pinned line.
 $db->query("DELETE FROM run WHERE id LIKE 'fx-work-%'");
@@ -115,5 +135,6 @@ true
 Running Bash tool Bash
 1 1
 1 1
+1 false false true
 true fx-work-r9 1794823320000 false
 0

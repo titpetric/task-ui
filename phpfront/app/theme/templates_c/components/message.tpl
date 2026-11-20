@@ -1,6 +1,7 @@
 <?php $_v=&$this->vars;?>
 <li class="said<?php if($_v['data_message']['mine']){?>
- mine<?php }?><?php if($_v['data_message']['working']){?>
+ mine<?php }?><?php if($_v['data_message']['agent']){?>
+ agent<?php }?><?php if($_v['data_message']['working']){?>
  working<?php }?>" id="note-<?php echo htmlspecialchars($_v['data_message']['id'], ENT_QUOTES);?>
 ">
 	<header>
@@ -22,7 +23,9 @@
 		<span class="faint" title="<?php echo htmlspecialchars($_v['data_message']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_message']['ago'], ENT_QUOTES);?>
 </span>
-		<?php if($_v['data_message']['state']){?>
+		<?php if($_v['data_message']['agent']){?>
+			<span class="badge agent" title="The agent's answer">agent</span>
+<?php }?><?php if($_v['data_message']['state']){?>
 			<span class="badge note-state <?php echo htmlspecialchars($_v['data_message']['state'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_message']['state'], ENT_QUOTES);?>
 </span>

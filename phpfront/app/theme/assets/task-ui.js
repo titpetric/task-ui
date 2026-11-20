@@ -911,7 +911,7 @@
   function endRun(id, how) {
     return api("POST", "/api/runs/" + encodeURIComponent(id) + "/" + how).then(function (res) {
       if (res.status >= 300) fail(null, res);
-      else if (!session && !follows) window.location.reload();
+      else if (!session && !follows && !document.querySelector("[data-thread-pane]")) window.location.reload();
     });
   }
 

@@ -75,7 +75,7 @@ class Conversation {
 			"chat_thread" => $chat,
 			"prompt" => $prompt,
 			"last_event" => $store->lastEvent($note->getId()),
-			"messages" => Talk::messages($note, $under, $chrome, $seen, $work),
+			"messages" => Talk::messages($note, $under, $chrome, $seen, $work, self::answers($under, $work)),
 			"agent" => $agent,
 			"agent_names" => $agentNames,
 			"pick_agent" => $pick,
@@ -113,6 +113,36 @@ class Conversation {
 		}
 
 		return implode(" · ", $parts);
+	}
+
+	/**
+	 * answers is the reply each run wrote, by note ID: the message that carries
+	 * the run, after the question that started it. A run that ended without a
+	 * reply names none.
+	 */
+	static function answers($replies, $work) {
+		$started = [];
+
+		foreach ($work as $runs) {
+			foreach ($runs as $run) {
+				if ($run["id"] !== "" && $run["question"] !== "") {
+					$started[$run["id"]] = $run["question"];
+				}
+			}
+		}
+
+		$out = [];
+
+		foreach ($replies as $reply) {
+			$run = $reply->getRunId();
+			$question = isset($started[$run]) ? $started[$run] : "";
+
+			if ($question !== "" && $reply->getId() !== $question) {
+				$out[$reply->getId()] = true;
+			}
+		}
+
+		return $out;
 	}
 
 	/** status is the pinned line of a working thread, with the run it may end. */

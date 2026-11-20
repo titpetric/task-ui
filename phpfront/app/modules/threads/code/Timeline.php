@@ -38,6 +38,7 @@ class Timeline {
 			"place" => $note->getDir(),
 			"run" => $run,
 			"short" => substr($run, 0, 8),
+			"can_end" => $run !== "" && $note->getState() === \Task\Note::WORKING && self::ends($chrome, $run),
 			"ago" => \Task\Clock::ago($at),
 			"stamp" => \Task\Clock::read($at),
 			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
@@ -71,6 +72,7 @@ class Timeline {
 			"place" => "",
 			"run" => "",
 			"short" => "",
+			"can_end" => false,
 			"messages" => 0,
 			"ago" => \Task\Clock::ago($row["last_at"]),
 			"stamp" => \Task\Clock::read($row["last_at"]),
@@ -78,6 +80,14 @@ class Timeline {
 			"unread" => (int)$row["unread"],
 			"selected" => $row["id"] === $selectedID,
 		];
+	}
+
+	/** ends reports whether the reader may stop the run behind a working thread. */
+	static function ends($chrome, $id) {
+		$runs = new \Task\Runs\Runs;
+		$run = $runs->get($id);
+
+		return $run !== null && !\Task\Run::ended($run->getState()) && \Task\Run::canEnd($chrome, $run);
 	}
 
 	/** kind names what started the thread: a recording, a prompt asked from a page, or a note. */

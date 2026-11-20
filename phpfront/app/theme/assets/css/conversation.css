@@ -241,9 +241,20 @@
     background: var(--ink-3);
   }
 
+  /* The agent answers the thread, not the reader, even as the reader's own user. */
+  &.agent {
+    align-self: flex-start;
+    border-color: var(--line);
+    background: var(--ink-2);
+  }
+
   &.working {
     border-color: var(--signal);
   }
+}
+
+.badge.agent {
+  color: var(--text-faint);
 }
 
 .said-audio {
@@ -482,6 +493,17 @@
 
   & .user-name {
     display: none;
+  }
+}
+
+.thread-stop {
+  flex: 0 0 auto;
+  padding-inline: 0.35rem;
+  font-size: var(--fs-xs);
+
+  &:hover {
+    color: var(--bad);
+    border-color: var(--bad);
   }
 }
 
