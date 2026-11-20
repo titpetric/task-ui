@@ -104,10 +104,11 @@ class mod_threads implements Module {
 
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
 		$head = new Task\Head("Threads", self::lead($agent));
-		$filtered = $form["place"] !== "" || $form["state"] !== "" || $form["user"] !== "";
+		$detailed = $form["place"] !== "" || $form["state"] !== "" || $form["user"] !== "";
+		$filtered = $detailed || $form["q"] !== "";
 		$empty = $filtered ? [
 			"tag" => "li",
-			"text" => "No thread matches these filters.",
+			"text" => "No thread matches.",
 			"href" => Task\Route::href("/threads"),
 			"label" => "Clear",
 		] : ["tag" => "li", "text" => "Nothing here yet: ask Claude in the box beside this list."];
@@ -124,6 +125,7 @@ class mod_threads implements Module {
 			"composer" => Task\Composer::blank($chrome, $agent),
 			"empty" => $empty,
 			"filtered" => $filtered,
+			"detailed" => $detailed,
 		]);
 	}
 

@@ -5,8 +5,8 @@
 		</div>
 		<form method="get" action="{base}/threads" class="chat-filters">
 			<input class="chat-search" type="search" name="q" value="{data.form.q}" placeholder="Search threads" aria-label="Words of a thread" title="Press / to search" spellcheck="false" autocomplete="off">
-			<details class="chat-filters-more"{if $data.filtered} open{/if}>
-				<summary class="faint">Filters{if $data.filtered} <span class="badge signal">on</span>{/if}</summary>
+			<details class="chat-filters-more"{if $data.detailed} open{/if}>
+				<summary class="faint">Filters{if $data.detailed} <span class="badge signal">on</span>{/if}</summary>
 				<div class="chat-filter-fields">
 					<label>Place <input type="text" name="place" value="{data.form.place}" list="threads-places" spellcheck="false" autocomplete="off"></label>
 					<label for="threads-state">State

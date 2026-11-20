@@ -8,9 +8,9 @@
 /threads" class="chat-filters">
 			<input class="chat-search" type="search" name="q" value="<?php echo htmlspecialchars($_v['data']['form']['q'], ENT_QUOTES);?>
 " placeholder="Search threads" aria-label="Words of a thread" title="Press / to search" spellcheck="false" autocomplete="off">
-			<details class="chat-filters-more"<?php if($_v['data']['filtered']){?>
+			<details class="chat-filters-more"<?php if($_v['data']['detailed']){?>
  open<?php }?>>
-				<summary class="faint">Filters<?php if($_v['data']['filtered']){?>
+				<summary class="faint">Filters<?php if($_v['data']['detailed']){?>
  <span class="badge signal">on</span><?php }?></summary>
 				<div class="chat-filter-fields">
 					<label>Place <input type="text" name="place" value="<?php echo htmlspecialchars($_v['data']['form']['place'], ENT_QUOTES);?>
