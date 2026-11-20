@@ -241,6 +241,9 @@
         return;
       }
       mark(note);
+      if (!document.getElementById("note-" + note.id) && note.parent_id === current) {
+        queueReload();
+      }
       if (note.state === "done" || note.state === "failed" || note.state === "killed" || note.state === "stopped") {
         queueReload();
       }
@@ -339,18 +342,22 @@
       pane.innerHTML = html;
       paint(id);
       follow(pane.querySelector(".talk[data-thread]"));
+      window.scrollTo(0, document.documentElement.scrollHeight);
       if (push) {
         history.pushState({ thread: id }, "", "/threads/" + encodeURIComponent(id));
       }
     });
   }
 
-  // refresh reads the same conversation again without dropping its stream.
+  // refresh reads the same conversation again without dropping its stream,
+  // and keeps the reader where they were unless they were at the end.
   function refresh(id) {
     if (!pane || !id) {
       return Promise.resolve();
     }
     var seq = ++want;
+    var bottom = nearBottom();
+    var y = window.scrollY;
     return fetch("/threads/" + encodeURIComponent(id) + "?pane=1", {
       credentials: "same-origin",
       headers: { Accept: "text/html" }
@@ -365,6 +372,7 @@
       }
       pane.innerHTML = html;
       paint(id);
+      window.scrollTo(0, bottom ? document.documentElement.scrollHeight : y);
     });
   }
 
@@ -388,10 +396,42 @@
     }
     pane.innerHTML = blank;
     paint("");
+    window.scrollTo(0, 0);
     if (push) {
       history.pushState({ thread: "" }, "", "/threads");
     }
   }
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-new-thread]");
+    if (!button || !pane) {
+      return;
+    }
+    event.preventDefault();
+    newThread(true);
+    var area = pane.querySelector("textarea");
+    if (area) {
+      area.focus();
+    }
+  });
+
+  // "/" focuses the search, as the list is reached before the pane.
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey || document.querySelector("dialog[open]")) {
+      return;
+    }
+    var active = document.activeElement;
+    if (active && (/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) || active.isContentEditable)) {
+      return;
+    }
+    var search = document.querySelector(".chat-search");
+    if (!search) {
+      return;
+    }
+    event.preventDefault();
+    search.focus();
+    search.select();
+  });
 
   if (list && pane) {
     list.addEventListener("click", function (event) {
@@ -445,6 +485,7 @@
     current = talk.dataset.thread || "";
     follow(talk);
     select(current);
+    window.scrollTo(0, document.documentElement.scrollHeight);
   }
   var form = (pane || document).querySelector("[data-agent-form]");
   if (form) {

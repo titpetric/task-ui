@@ -93,7 +93,7 @@ class Prompt {
 			"label" => "The prompt",
 			"placeholder" => $placeholder,
 			"mentions" => false,
-			"toolbar" => "full",
+			"toolbar" => "inline",
 		];
 	}
 
@@ -154,7 +154,7 @@ class Prompt {
 			["name" => "dir", "value" => $dir],
 		];
 
-		return self::asked($chrome, self::API, $place, $place . "/", $fields, $open, $seen);
+		return self::asked($chrome, self::API, $place, $place . "/", $fields, $open, $seen, "folder");
 	}
 
 	/**
@@ -173,7 +173,7 @@ class Prompt {
 
 		$api = "/api/workspaces/" . Route::INTERNAL . "/prompt";
 
-		return self::asked($chrome, $api, Route::INTERNAL, "the root", [], true, $seen);
+		return self::asked($chrome, $api, Route::INTERNAL, "the root", [], true, $seen, "root");
 	}
 
 	/**
@@ -184,7 +184,7 @@ class Prompt {
 	 * the form posts, how the line names the place, and whether the form
 	 * carries the place at all.
 	 */
-	static function asked($chrome, $api, $place, $where, $fields, $open, $seen) {
+	static function asked($chrome, $api, $place, $where, $fields, $open, $seen, $origin = "folder") {
 		$notes = new Threads\Notes($chrome->db);
 		$agents = self::agents($chrome);
 		$roots = $notes->inPlace($place);
@@ -209,6 +209,7 @@ class Prompt {
 			"options" => $chrome->runAs(),
 			"place" => $place,
 			"area" => "",
+			"origin" => $origin,
 			"threads" => $threads,
 			"threads_href" => Route::href("/threads?place=" . rawurlencode($place)),
 		];
@@ -273,6 +274,7 @@ class Prompt {
 			"options" => $chrome->runAs(),
 			"place" => $where,
 			"area" => "",
+			"origin" => "run",
 			"threads" => $threads,
 			"threads_href" => Route::href("/threads?place=" . rawurlencode($where)),
 		];
@@ -330,6 +332,7 @@ class Prompt {
 			"options" => ["users" => []],
 			"place" => $place,
 			"area" => "",
+			"origin" => "workflow",
 			"threads" => $threads,
 			"threads_href" => Route::href("/threads?place=" . rawurlencode($place)),
 		];

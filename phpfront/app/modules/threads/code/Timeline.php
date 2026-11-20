@@ -25,6 +25,8 @@ class Timeline {
 			$run = "";
 		}
 
+		$at = self::lastAt($note, $replies);
+
 		return [
 			"id" => $id,
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
@@ -36,8 +38,8 @@ class Timeline {
 			"place" => $note->getDir(),
 			"run" => $run,
 			"short" => substr($run, 0, 8),
-			"ago" => \Task\Clock::ago(self::lastAt($note, $replies)),
-			"stamp" => \Task\Clock::read(self::lastAt($note, $replies)),
+			"ago" => \Task\Clock::ago($at),
+			"stamp" => \Task\Clock::read($at),
 			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
 			"heard" => self::heard($note, $replies),
 			"unread" => 0,

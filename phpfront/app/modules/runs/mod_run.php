@@ -120,7 +120,8 @@ class mod_run implements Module {
 		$summarizes = $this->summarizes($chrome, $run, $report, $ended);
 		$pending = $this->pending($chrome, $run);
 		$asks = $chrome->allowed("prompt/edit");
-		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks);
+		$thread = $this->thread($run);
+		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks, $thread);
 		$code = $ended && $state !== Task\Run::OK ? (string)$run->getExitCode() : "";
 		$head = new Task\Head($name);
 
@@ -159,7 +160,7 @@ class mod_run implements Module {
 	 * row, and asks the thread's question again for a prompt's run, which no
 	 * job can repeat. A prompt's run takes prompt/edit and not the job's gate.
 	 */
-	static function buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks) {
+	static function buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks, $thread = null) {
 		$id = $run->getId();
 		$ended = Task\Run::ended($run->getState());
 		$stops = Task\Row::flag($session, "live") && !$ended && $can;
@@ -169,6 +170,7 @@ class mod_run implements Module {
 		$buttons = new Task\Buttons;
 
 		$buttons->primary("", $ended ? "View" : "Attach", ["data-attach" => $id]);
+		$buttons->when($thread !== null, "note", "Open thread", ["href" => $thread["href"], "title" => $thread["title"]]);
 		$buttons->when($again, "", "Run again", ["data-rerun" => $id, "data-title" => Task\Run::name($run)]);
 		$buttons->when($stops, "", "Stop", ["data-stop" => $id]);
 		$buttons->whenDanger($stops, "", "Kill", ["data-kill" => $id]);
@@ -240,6 +242,46 @@ class mod_run implements Module {
 		return isset($found[$id]) && $found[$id]["pending"];
 	}
 
+	/** thread is the thread a run belongs to, or null for a run nobody asked about. */
+	function thread($run) {
+		$notes = new Task\Threads\Notes;
+		$note = $notes->byRun($run->getId());
+
+		if ($note === null) {
+			return null;
+		}
+
+		return [
+			"id" => $note->getId(),
+			"href" => Task\Route::href("/threads/" . Task\Route::pathEscape($note->getId())),
+			"title" => Task\Note::excerpt(Task\Threads\Talk::opening($note, [])),
+		];
+	}
+
+	/** parent is the cell that names what started a run, linked where the page is. */
+	function parent($run, $id) {
+		$kind = $run->getParentKind();
+
+		if ($kind === "workflow_run") {
+			$flows = new Task\Workflows\Runs;
+			$flow = $flows->get($id);
+			$href = $flow === null ? "" : "/workflows/" . $flow->getWorkflowId() . "/runs/" . $id;
+
+			return $href === "" ? ["text" => $id, "after" => "a workflow run"] : [
+				"link" => self::link(Task\Route::href($href), "flow", $flow->getName()),
+				"after" => "workflow run " . substr($id, 0, 8),
+			];
+		}
+
+		$runs = new Task\Runs\Runs;
+		$found = $runs->get($id);
+
+		return $found === null ? ["text" => $id, "after" => "a run"] : [
+			"link" => self::link(Task\Route::href("/runs/" . $id), "play", Task\Run::name($found)),
+			"after" => "run " . substr($id, 0, 8),
+		];
+	}
+
 	/**
 	 * children is the runs this run dispatched that the reader sees, oldest
 	 * first: each a link, its job and how it ended.
@@ -307,15 +349,7 @@ class mod_run implements Module {
 		$parentID = $run->getParentId();
 
 		if ($parentID !== "") {
-			$runs = new Task\Runs\Runs;
-			$parent = $run->getParentKind() === "run" ? $runs->get($parentID) : null;
-			$rows[] = self::detail("Started by", $parent === null ? [
-				"text" => $parentID,
-				"after" => $run->getParentKind() === "workflow_run" ? "a workflow run" : "a run",
-			] : [
-				"link" => self::link(Task\Route::href("/runs/" . $parentID), "play", Task\Run::name($parent)),
-				"after" => "a run",
-			]);
+			$rows[] = self::detail("Started by", $this->parent($run, $parentID));
 		}
 
 		if (count($args) > 0) {

@@ -16,11 +16,12 @@
 				<select name="agent" aria-label="Answers as">{foreach $data_composer.agents as $name}<option value="{name}"{if $name == $data_composer.agent} selected{/if}>{name}</option>{/foreach}</select>
 			</label>
 {/if}{if $data_composer.show_place}			<label class="composer-field" data-composer-place>In
-				<input type="text" name="place" placeholder="folder/dir, empty is the root" spellcheck="false" autocomplete="off">
-			</label>
+				<input type="text" name="place" placeholder="folder/dir, empty is the root" spellcheck="false" autocomplete="off"{if $data_composer.places} list="composer-places"{/if}>
+{if $data_composer.places}				<datalist id="composer-places">{foreach $data_composer.places as $place}<option value="{place}">{/foreach}</datalist>
+{/if}			</label>
 {/if}			<span class="composer-space"></span>
 {if $data_composer.mic}			<button class="btn btn-icon" type="button" data-voice-reply data-parent="{data_composer.parent}" data-channel="{data_composer.channel}" title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
-{/if}			<button class="btn btn-primary" type="submit">Send</button>
+{/if}			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
 </form>

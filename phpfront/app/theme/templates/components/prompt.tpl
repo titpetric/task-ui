@@ -4,5 +4,5 @@
 {/if}{if $data_prompt.threads}	<ul class="thread-links">
 {foreach $data_prompt.threads as $thread}		<li><a href="{thread.href}"><svg class="ic"><use href="#i-note"/></svg> {thread.title}</a>{if $thread.state} <span class="badge note-state {thread.state}">{thread.state}</span>{/if}</li>
 {/foreach}	</ul>
-{/if}	<p class="faint"><a class="threads-link" href="{data_prompt.threads_href}">Threads in this place</a></p>
-</details>
+{/if}</details>
+<p class="faint threads-scope"><a class="threads-link" href="{data_prompt.threads_href}">Threads in this place</a></p>

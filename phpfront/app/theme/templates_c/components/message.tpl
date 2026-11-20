@@ -22,8 +22,10 @@
 		<span class="faint" title="<?php echo htmlspecialchars($_v['data_message']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_message']['ago'], ENT_QUOTES);?>
 </span>
-		<?php if($_v['data_message']['working']){?>
-			<span class="badge note-state working">working</span>
+		<?php if($_v['data_message']['state']){?>
+			<span class="badge note-state <?php echo htmlspecialchars($_v['data_message']['state'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_message']['state'], ENT_QUOTES);?>
+</span>
 <?php }?><?php if($_v['data_message']['run']){?>
 			<a class="faint mono" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /runs/<?php echo htmlspecialchars($_v['data_message']['run'], ENT_QUOTES);?>

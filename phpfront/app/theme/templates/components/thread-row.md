@@ -12,7 +12,7 @@ Input scope: `data_row`, one row of a thread list, from
 | `state` | `open`, `working`, `done`, `failed`, empty for a chat |
 | `unread` | a chat's unread count, zero elsewhere |
 | `place` | the directory the thread belongs to, empty at the root |
-| `messages` | how many messages follow the opening |
+| `messages` | how many messages the thread holds, drawn when more than one |
 | `heard` | whether any message has a recording |
 | `ago`, `stamp` | the newest activity, as a relative and a full stamp |
 | `person` | the user scope the row draws on the trailing side |

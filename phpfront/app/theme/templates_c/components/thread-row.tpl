@@ -19,11 +19,13 @@ note<?php }?>"/></svg>
 "><?php echo htmlspecialchars($_v['data_row']['ago'], ENT_QUOTES);?>
 </span>
 			<?php if($_v['data_row']['place']){?>
-<span class="faint mono"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
+<span class="faint mono thread-place"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
 </span><?php }?>
-			<?php if($_v['data_row']['messages']){?>
-<span class="faint"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
- messages</span><?php }?>
+			<?php if($_v['data_row']['messages'] > 1){?>
+<span class="faint thread-count" title="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+ messages" aria-label="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+ messages"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+</span><?php }?>
 			<?php if($_v['data_row']['heard']){?>
 <svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg><?php }?>
 			<?php if($_v['data_row']['unread']){?>

@@ -31,6 +31,11 @@
   }
 }
 
+.threads-scope {
+  margin: -0.5rem 0 1.25rem;
+  font-size: var(--fs-xs);
+}
+
 /* .thread-links is the threads of a place, each one line. */
 .thread-links {
   display: grid;

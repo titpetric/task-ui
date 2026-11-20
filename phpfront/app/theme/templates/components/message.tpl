@@ -2,7 +2,7 @@
 	<header>
 		<span class="author">{eval $data_user = $data_message.author}{include components/user.tpl}</span>
 		<span class="faint" title="{data_message.stamp}">{data_message.ago}</span>
-		{if $data_message.working}			<span class="badge note-state working">working</span>
+		{if $data_message.state}			<span class="badge note-state {data_message.state}">{data_message.state}</span>
 {/if}{if $data_message.run}			<a class="faint mono" href="{base}/runs/{data_message.run}" title="The run this message comes from">run {data_message.short}</a>
 {/if}	</header>
 	<div class="said-body prose">{data_message.body|raw}</div>

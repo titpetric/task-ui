@@ -4381,6 +4381,16 @@
     }
   });
 
+  // Enter sends a message and Shift+Enter writes a new line, as every chat
+  // box does; a composing input keeps its Enter for the candidate list.
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.ctrlKey || event.metaKey) return;
+    var area = event.target.closest("form[data-send] textarea");
+    if (!area) return;
+    event.preventDefault();
+    area.closest("form").requestSubmit();
+  }, true);
+
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-send]");
     if (!form) return;
@@ -4397,9 +4407,10 @@
     } else {
       payload.body = body;
       payload.parent_id = payload.parent || "";
+      delete payload.agent;
+      delete payload.parent;
       if (mode === "chat") url = "/api/threads";
     }
-    delete payload.parent;
     if (button) button.disabled = true;
     formError(form, "");
     api("POST", url, payload).then(function (res) {
@@ -4412,7 +4423,7 @@
       syncEditors(form);
       if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
       var inPane = !!form.closest("[data-thread-pane]");
-      var parent = payload.parent_id || "";
+      var parent = payload.parent_id || payload.parent || "";
       if (inPane && parent) {
         document.dispatchEvent(new CustomEvent("taskui:pane", { detail: { id: parent } }));
       } else if (inPane && res.data && res.data.id) {

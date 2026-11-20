@@ -31,11 +31,23 @@ class Composer {
 		]);
 	}
 
+	/** places is the folders a prompt may name, as the pickers list them. */
+	static function places($chrome) {
+		$places = [];
+
+		foreach ($chrome->folders() as $folder) {
+			$places[] = Row::text($folder, "id");
+		}
+
+		return $places;
+	}
+
 	/** blank is the Threads box that starts a thread, asking by default. */
 	static function blank($chrome, $agent) {
 		$agents = Prompt::agents($chrome);
 
 		return self::scope(self::ASK, Prompt::field("what should we work on?"), [
+			"places" => self::places($chrome),
 			"modes" => [
 				["key" => self::ASK, "label" => "Ask Claude"],
 				["key" => self::NOTE, "label" => "Note"],
@@ -72,6 +84,7 @@ class Composer {
 			"run" => $place["run"],
 			"area" => $place["area"],
 			"url" => $panel["api"],
+			"origin" => $panel["origin"],
 			"next" => $panel["next"],
 		]);
 	}
@@ -93,6 +106,7 @@ class Composer {
 			"origin" => "",
 			"area" => "",
 			"place" => "",
+			"places" => [],
 			"show_place" => false,
 			"mic" => false,
 			"pane" => false,

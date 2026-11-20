@@ -170,7 +170,7 @@ class Conversation {
 			"state" => $state,
 			"started" => $started,
 			"run" => $id,
-			"can_end" => \Task\Run::canEnd($chrome, $row),
+			"can_end" => $row !== null && !\Task\Run::ended($row->getState()) && \Task\Run::canEnd($chrome, $row),
 		];
 	}
 

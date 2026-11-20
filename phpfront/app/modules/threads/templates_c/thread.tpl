@@ -119,8 +119,10 @@
 		<span class="faint" title="<?php echo htmlspecialchars($_v['data_message']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_message']['ago'], ENT_QUOTES);?>
 </span>
-		<?php if($_v['data_message']['working']){?>
-			<span class="badge note-state working">working</span>
+		<?php if($_v['data_message']['state']){?>
+			<span class="badge note-state <?php echo htmlspecialchars($_v['data_message']['state'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_message']['state'], ENT_QUOTES);?>
+</span>
 <?php }?><?php if($_v['data_message']['run']){?>
 			<a class="faint mono" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /runs/<?php echo htmlspecialchars($_v['data_message']['run'], ENT_QUOTES);?>
@@ -231,14 +233,18 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 			</label>
 <?php }?><?php if($_v['data_composer']['show_place']){?>
 			<label class="composer-field" data-composer-place>In
-				<input type="text" name="place" placeholder="folder/dir, empty is the root" spellcheck="false" autocomplete="off">
-			</label>
+				<input type="text" name="place" placeholder="folder/dir, empty is the root" spellcheck="false" autocomplete="off"<?php if($_v['data_composer']['places']){?>
+ list="composer-places"<?php }?>>
+<?php if($_v['data_composer']['places']){?>
+				<datalist id="composer-places"><?php if(!empty($_v['data_composer']['places']))foreach($_v['data_composer']['places'] as $_v['place']){?><option value="<?php echo htmlspecialchars($_v['place'], ENT_QUOTES);?>
+"><?php }?></datalist>
+<?php }?>			</label>
 <?php }?>			<span class="composer-space"></span>
 <?php if($_v['data_composer']['mic']){?>
 			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
 " title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
-<?php }?>			<button class="btn btn-primary" type="submit">Send</button>
+<?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
 </form>

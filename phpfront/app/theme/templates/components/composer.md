@@ -9,6 +9,7 @@ Input scope: `data_composer`, from `Task\Composer`.
 | `editor` | the markdown field, as `components/editor.tpl` reads it |
 | `agents`, `agent` | who may answer, and who does |
 | `show_place` | whether the box has a folder to ask in |
+| `places` | the folders the place field suggests |
 | `parent` | the thread a message replies in |
 | `channel` | a chat's channel |
 | `folder`, `dir`, `run`, `area`, `origin` | where the message belongs |

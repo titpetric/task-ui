@@ -1,25 +1,45 @@
 <?php $_v=&$this->vars;?>
 <div class="chat-shell">
 	<aside class="chat-list">
+		<div class="chat-list-top">
+			<button type="button" class="btn btn-sm" data-new-thread title="Start a new thread"><svg class="ic"><use href="#i-plus"/></svg> New thread</button>
+		</div>
 		<form method="get" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
-/threads" class="filters">
-			<label>Words <input type="search" name="q" value="<?php echo htmlspecialchars($_v['data']['form']['q'], ENT_QUOTES);?>
-" spellcheck="false" autocomplete="off"></label>
-			<label>Place <input type="text" name="place" value="<?php echo htmlspecialchars($_v['data']['form']['place'], ENT_QUOTES);?>
-" spellcheck="false" autocomplete="off"></label>
-			<label for="threads-state">State
-				<select id="threads-state" name="state">
-					<option value="">any state</option>
+/threads" class="chat-filters">
+			<input class="chat-search" type="search" name="q" value="<?php echo htmlspecialchars($_v['data']['form']['q'], ENT_QUOTES);?>
+" placeholder="Search threads" aria-label="Words of a thread" title="Press / to search" spellcheck="false" autocomplete="off">
+			<details class="chat-filters-more"<?php if($_v['data']['filtered']){?>
+ open<?php }?>>
+				<summary class="faint">Filters<?php if($_v['data']['filtered']){?>
+ <span class="badge signal">on</span><?php }?></summary>
+				<div class="chat-filter-fields">
+					<label>Place <input type="text" name="place" value="<?php echo htmlspecialchars($_v['data']['form']['place'], ENT_QUOTES);?>
+" list="threads-places" spellcheck="false" autocomplete="off"></label>
+					<label for="threads-state">State
+						<select id="threads-state" name="state">
+							<option value="">any state</option>
 <?php if(!empty($_v['data']['states']))foreach($_v['data']['states'] as $_v['state']){?><option value="<?php echo htmlspecialchars($_v['state'], ENT_QUOTES);?>
 "<?php if($_v['data']['form']['state'] === $_v['state']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['state'], ENT_QUOTES);?>
 </option>
-<?php }?>				</select>
-			</label>
-			<label>By <input type="text" name="user" value="<?php echo htmlspecialchars($_v['data']['form']['user'], ENT_QUOTES);?>
+<?php }?>						</select>
+					</label>
+					<label>By <input type="text" name="user" value="<?php echo htmlspecialchars($_v['data']['form']['user'], ENT_QUOTES);?>
 " spellcheck="false" autocomplete="off"></label>
-			<button class="btn" type="submit">Filter</button>
-		</form>
+					<div class="chat-filter-actions">
+						<button class="btn btn-sm" type="submit">Apply</button>
+<?php if($_v['data']['filtered']){?>
+						<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/threads">Clear</a>
+<?php }?>					</div>
+				</div>
+			</details>
+<?php if($_v['data']['places']){?>
+			<datalist id="threads-places">
+<?php if(!empty($_v['data']['places']))foreach($_v['data']['places'] as $_v['place']){?>				<option value="<?php echo htmlspecialchars($_v['place'], ENT_QUOTES);?>
+"></option>
+<?php }?>			</datalist>
+<?php }?>		</form>
 
 <?php if($_v['data']['chats']){?>
 
@@ -46,11 +66,13 @@ note<?php }?>"/></svg>
 "><?php echo htmlspecialchars($_v['data_row']['ago'], ENT_QUOTES);?>
 </span>
 			<?php if($_v['data_row']['place']){?>
-<span class="faint mono"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
+<span class="faint mono thread-place"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
 </span><?php }?>
-			<?php if($_v['data_row']['messages']){?>
-<span class="faint"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
- messages</span><?php }?>
+			<?php if($_v['data_row']['messages'] > 1){?>
+<span class="faint thread-count" title="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+ messages" aria-label="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+ messages"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+</span><?php }?>
 			<?php if($_v['data_row']['heard']){?>
 <svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg><?php }?>
 			<?php if($_v['data_row']['unread']){?>
@@ -105,11 +127,13 @@ note<?php }?>"/></svg>
 "><?php echo htmlspecialchars($_v['data_row']['ago'], ENT_QUOTES);?>
 </span>
 			<?php if($_v['data_row']['place']){?>
-<span class="faint mono"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
+<span class="faint mono thread-place"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
 </span><?php }?>
-			<?php if($_v['data_row']['messages']){?>
-<span class="faint"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
- messages</span><?php }?>
+			<?php if($_v['data_row']['messages'] > 1){?>
+<span class="faint thread-count" title="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+ messages" aria-label="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+ messages"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+</span><?php }?>
 			<?php if($_v['data_row']['heard']){?>
 <svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg><?php }?>
 			<?php if($_v['data_row']['unread']){?>
@@ -151,10 +175,8 @@ note<?php }?>"/></svg>
 	<section class="chat-pane" data-thread-pane>
 		<div class="conversation">
 			<div class="chat-blank">
-				<h2><?php echo htmlspecialchars($_v['data']['head']['title'], ENT_QUOTES);?>
-</h2>
-				<p><?php echo $_v['data']['head']['lead'];?>
-</p>
+				<h2>What should we work on?</h2>
+				<p>Ask Claude in a folder, or leave a note for the people here. Every prompt becomes a thread and stays here.</p>
 				<?php $_v['data_composer'] = $_v['data']['composer'];?>
 <form class="composer" data-send="<?php echo htmlspecialchars($_v['data_composer']['mode'], ENT_QUOTES);?>
 "<?php if($_v['data_composer']['url']){?>
@@ -212,14 +234,18 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 			</label>
 <?php }?><?php if($_v['data_composer']['show_place']){?>
 			<label class="composer-field" data-composer-place>In
-				<input type="text" name="place" placeholder="folder/dir, empty is the root" spellcheck="false" autocomplete="off">
-			</label>
+				<input type="text" name="place" placeholder="folder/dir, empty is the root" spellcheck="false" autocomplete="off"<?php if($_v['data_composer']['places']){?>
+ list="composer-places"<?php }?>>
+<?php if($_v['data_composer']['places']){?>
+				<datalist id="composer-places"><?php if(!empty($_v['data_composer']['places']))foreach($_v['data_composer']['places'] as $_v['place']){?><option value="<?php echo htmlspecialchars($_v['place'], ENT_QUOTES);?>
+"><?php }?></datalist>
+<?php }?>			</label>
 <?php }?>			<span class="composer-space"></span>
 <?php if($_v['data_composer']['mic']){?>
 			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
 " title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
-<?php }?>			<button class="btn btn-primary" type="submit">Send</button>
+<?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
 </form>

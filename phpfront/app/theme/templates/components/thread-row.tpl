@@ -4,8 +4,8 @@
 		<span class="thread-meta">
 			<svg class="ic thread-kind" aria-label="{data_row.kind}"><use href="#i-{if $data_row.kind == 'voice'}mic{elseif $data_row.kind == 'prompt'}prompt{else}note{/if}"/></svg>
 			<span class="faint" title="{data_row.stamp}">{data_row.ago}</span>
-			{if $data_row.place}<span class="faint mono">{data_row.place}</span>{/if}
-			{if $data_row.messages}<span class="faint">{data_row.messages} messages</span>{/if}
+			{if $data_row.place}<span class="faint mono thread-place">{data_row.place}</span>{/if}
+			{if $data_row.messages > 1}<span class="faint thread-count" title="{data_row.messages} messages" aria-label="{data_row.messages} messages">{data_row.messages}</span>{/if}
 			{if $data_row.heard}<svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg>{/if}
 			{if $data_row.unread}<span class="badge unread">{data_row.unread}</span>{/if}
 			{if $data_row.state}<span class="badge note-state {data_row.state}">{data_row.state}</span>{/if}

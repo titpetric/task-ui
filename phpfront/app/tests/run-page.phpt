@@ -33,6 +33,7 @@ $rows = [
 	["id" => "fx-rp-5", "job" => "@claude-prompt", "state" => "ok", "parent" => "fx-rp-1", "from" => at("10:05:00.000"), "to" => at("10:05:30.000")],
 	["id" => "fx-rp-6", "job" => "ghost", "state" => "ok", "from" => at("10:06:00.000"), "to" => at("10:06:01.000")],
 	["id" => "fx-rp-7", "job" => "build", "state" => "ok", "from" => at("10:09:00.000"), "to" => at("10:09:01.000")],
+	["id" => "fx-rp-8", "job" => "build", "state" => "ok", "parent" => "fx-rp-wr", "parent_kind" => "workflow_run", "from" => at("10:10:00.000"), "to" => at("10:10:01.000")],
 	["id" => "fx-rp-b1", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:07:00.000"), "to" => at("10:07:01.000")],
 	["id" => "fx-rp-b2", "job" => "build", "state" => "ok", "batch" => "fx-rp-batch", "from" => at("10:08:00.000"), "to" => at("10:08:01.000")],
 ];
@@ -56,11 +57,26 @@ foreach ($rows as $row) {
 		"message" => "the row's own word",
 		"batch_id" => isset($row["batch"]) ? $row["batch"] : "",
 		"parent_id" => isset($row["parent"]) ? $row["parent"] : "",
-		"parent_kind" => isset($row["parent"]) ? "run" : "",
+		"parent_kind" => isset($row["parent"]) ? (isset($row["parent_kind"]) ? $row["parent_kind"] : "run") : "",
 		"started_at" => isset($row["from"]) ? $row["from"] : null,
 		"finished_at" => isset($row["to"]) ? $row["to"] : null,
 	]);
 }
+
+// The workflow run that started one of them.
+$db->replace("workflow_run", [
+	"id" => "fx-rp-wr",
+	"workflow_id" => "fx-rp-wf",
+	"name" => "release",
+	"user_id" => "fx-rp-u1",
+	"user_name" => "fx-rp-ann",
+	"state" => "ok",
+	"message" => "",
+	"started_at" => at("10:09:30.000"),
+	"finished_at" => at("10:10:02.000"),
+	"created_at" => at("10:09:30.000"),
+	"updated_at" => at("10:10:02.000"),
+]);
 
 // The files the run left, newest first.
 $db->replace("artifact", [
@@ -347,6 +363,14 @@ $claude = $runs->get("fx-rp-5");
 
 echo "[", cell($mod->details($claude, $chrome, ""), "Job")["link"]["href"], "] ", cell($mod->details($claude, $chrome, ""), "Job")["text"], "\n";
 
+// What started a run is a link: the run itself, or the workflow run of a
+// workflow, which the cell names.
+$started = cell($mod->details($claude, $chrome, ""), "Started by");
+$byFlow = cell($mod->details($runs->get("fx-rp-8"), $chrome, ""), "Started by");
+
+echo $started["link"]["href"], " ", $started["link"]["icon"], " ", $started["link"]["text"], " ", $started["after"], "\n";
+echo $byFlow["link"]["href"], " ", $byFlow["link"]["icon"], " ", $byFlow["link"]["text"], " ", $byFlow["after"], "\n";
+
 // The files the run left, newest first, each read from the API at the root.
 $files = $mod->artifacts($chrome, $one);
 
@@ -553,6 +577,8 @@ Folder,Job,By,Started,Finished,Duration,Result,Reason,Terminal,ID
 the window of the job is closed bad out of hours
 true true 2
 [] @claude-prompt
+/runs/fx-rp-1 play fx-rp / build run fx-rp-1
+/workflows/fx-rp-wf/runs/fx-rp-wr flow release workflow run fx-rp-wr
 Artifacts [files left under $TASK_UI_ARTIFACTS] []
 report.html /api/artifacts/fx-rp-a1 2.0 KB text/html
 build.log 300 B
