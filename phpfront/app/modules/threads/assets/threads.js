@@ -309,9 +309,10 @@
       return;
     }
     var head = pane && pane.querySelector(".conversation-title h2");
+    var working = pane && pane.querySelector(".conversation-status") ? "Working · " : "";
     var at = pageTitle.indexOf(" | ");
     if (head) {
-      document.title = head.textContent.trim() + (at < 0 ? "" : pageTitle.slice(at));
+      document.title = working + head.textContent.trim() + (at < 0 ? "" : pageTitle.slice(at));
     }
   }
 

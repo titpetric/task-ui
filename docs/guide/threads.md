@@ -8,7 +8,7 @@ The Threads page is a list and a conversation side by side: the threads the read
 
 The box is one component on every page that starts a message: the Threads page, a folder, a run, a workspace and a workflow. It asks Claude by default, with a **Note** switch on the Threads page, names the place it asks in and sets the agent a reply is posted as. The agent is a user with **Agent reply** and **MCP** set; it names who answers, and the thread keeps it for every later question. The run still works as the user who asked, with that user's permissions and token, so picking an agent never grants the agent's rights.
 
-Every form marked `data-send` posts one message. An ask posts `/api/prompts` with `folder`, `dir`, `prompt`, `agent` and `origin`; a note posts `/api/notes`; a chat posts `/api/threads`. The page goes to the note the API answers, which is the thread's page. A prompt box links to the threads of its place with **Threads in this place**, and lists none inline.
+Every form marked `data-send` posts one message. An ask posts `/api/prompts` with `folder`, `dir`, `prompt`, `agent` and `origin`; a note posts `/api/notes`; a chat posts `/api/threads`. The page goes to the note the API answers, which is the thread's page. A prompt box lists the last 20 threads of its place, and **Threads in this place** opens the filtered Threads page.
 
 ## The Claude run
 
