@@ -4,14 +4,6 @@ What is open as of 2026-11-11, written down because the packages are about to mo
 
 ## Asked for and not started
 
-### Threads index as a messenger view
-
-`/threads` is a list. It should be a 20/80 split: the previous threads down the left, the selected thread as a chat on the right, switching between them without leaving the page. No thread selected is a new thread.
-
-The button under the box reads `Post note` and should read `Send`. Review every other submit button against the same question: a box that sends a message takes `Send` and nothing more specific.
-
-Files: `modules/threads/templates/index.tpl`, `modules/threads/mod_threads.php`, `modules/threads/assets/threads.css`.
-
 ### A module is enabled or disabled
 
 Nearly every module under `phpfront/app/modules/` ships no `modinfo.php`. There is no page that lists them and no way to turn one off.

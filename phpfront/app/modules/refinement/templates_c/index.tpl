@@ -157,7 +157,7 @@
 "<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
 "></textarea>
 		<div class="form-foot">
-			<button class="btn btn-primary" type="submit">Start a thread</button>
+			<button class="btn btn-primary" type="submit">Send</button>
 		</div>
 	</form>
 <?php if($_v['data']['table']['body']){ $_v['data_table'] = $_v['data']['table'];?>

@@ -169,7 +169,7 @@
  placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
 "<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
 "></textarea>
-				<div class="form-foot note"><span></span><button class="btn" type="submit">Reply</button></div>
+				<div class="form-foot note"><span></span><button class="btn" type="submit">Send</button></div>
 			</form>
 		</details>
 	</article>

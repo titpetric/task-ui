@@ -20,7 +20,7 @@
 			<summary>Reply</summary>
 			<form class="note-form" data-note-form data-parent="{data_note.id}">
 				{eval $data_markdown = $data_note.editor}{include components/editor.tpl}
-				<div class="form-foot note"><span></span><button class="btn" type="submit">Reply</button></div>
+				<div class="form-foot note"><span></span><button class="btn" type="submit">Send</button></div>
 			</form>
 		</details>
 	</article>
