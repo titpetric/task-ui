@@ -12,6 +12,9 @@ class Conversation {
 	/** MISSING is what a pane says for a thread that is not there. */
 	const MISSING = "No thread with that ID. Someone may have deleted it.";
 
+	/** TITLE is how much of the opening a page heading shows. */
+	const TITLE = 72;
+
 	/** view is one thread as pane.tpl reads it, or an error the pane shows. */
 	static function view($note, $chrome, $store, $split = false) {
 		$prompt = \Task\Note::isPrompt($note);
@@ -34,7 +37,7 @@ class Conversation {
 
 		$replies = $store->replies([$note->getId()]);
 		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
-		$title = \Task\Note::excerpt(Talk::opening($note, $under));
+		$title = \Task\Note::excerpt(Talk::opening($note, $under), self::TITLE);
 		$work = Work::byQuestion($store->events($note->getId()), $chrome);
 		$users = new \Task\User;
 		$agentNames = [];

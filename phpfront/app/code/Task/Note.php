@@ -241,7 +241,7 @@ class Note {
 	 * as the reference. Both are the cost of having no binding of the Go page's
 	 * own excerpt; see docs/phpfront.md.
 	 */
-	static function excerpt($body) {
+	static function excerpt($body, $max = self::EXCERPT) {
 		$html = Host::markdown($body);
 		$whole = preg_replace(self::FRACTION, '$1/$2', $html);
 		$spaced = preg_replace('/<[^>]*>/', " ", $whole);
@@ -249,11 +249,11 @@ class Note {
 		$words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
 		$line = implode(" ", $words);
 
-		if (mb_strlen($line) <= self::EXCERPT) {
+		if (mb_strlen($line) <= $max) {
 			return $line;
 		}
 
-		return rtrim(mb_substr($line, 0, self::EXCERPT), " ") . "…";
+		return rtrim(mb_substr($line, 0, $max), " ") . "…";
 	}
 
 	/** isPrompt reports whether a note is a prompt, which belongs to a page and not to the board. */
