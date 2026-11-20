@@ -102,6 +102,26 @@ echo count($talk[0]["work"]), " ", count($talk[1]["work"]), " ", count($talk[2][
 // The answer carries the run, so the question no longer shows it working.
 echo var_export($talk[0]["working"], true), " ", var_export($talk[0]["run"], true), " ", $talk[2]["run"], "\n";
 
+// A thread with no transcript still names its answer by the run both hold.
+$db->replace("note", [
+	"id" => "fx-work-n5", "channel" => "notes", "parent_id" => "",
+	"user_id" => "fx-work-u1", "user_name" => "fx-work-ann", "body" => "no transcript",
+	"mentions" => "", "state" => "done", "run_id" => "fx-work-r5",
+	"created_at" => "2026-11-16 10:04:00.000 +0000 UTC",
+	"updated_at" => "2026-11-16 10:04:00.000 +0000 UTC",
+]);
+$db->replace("note", [
+	"id" => "fx-work-n6", "channel" => "notes", "parent_id" => "fx-work-n5",
+	"user_id" => "fx-work-u1", "user_name" => "fx-work-ann", "body" => "the answer",
+	"mentions" => "", "state" => "", "run_id" => "fx-work-r5",
+	"created_at" => "2026-11-16 10:05:00.000 +0000 UTC",
+	"updated_at" => "2026-11-16 10:05:00.000 +0000 UTC",
+]);
+$quiet = Task\Threads\Conversation::answers($notes->get("fx-work-n5"), [$notes->get("fx-work-n6")], []);
+$said = Task\Threads\Talk::messages($notes->get("fx-work-n5"), [$notes->get("fx-work-n6")], $chrome, null, [], $quiet);
+
+echo count($quiet), " ", var_export($said[1]["agent"], true), " ", var_export($said[0]["run"], true), "\n";
+
 // A working thread carries the run it may end, and the last status as its
 // pinned line.
 $db->query("DELETE FROM run WHERE id LIKE 'fx-work-%'");
@@ -153,6 +173,7 @@ Running Bash tool Bash
 1 false false true
 0 1 1
 false '' fx-work-r1
+1 true ''
 true fx-work-r9 1794823320000 false
 true true fx-work-r9
 false false done
