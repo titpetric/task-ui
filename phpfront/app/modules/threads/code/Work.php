@@ -129,12 +129,12 @@ class Work {
 		return $out;
 	}
 
-	/** withoutStatus is a run's events without the statuses the head line shows. */
+	/** withoutStatus drops the records the page draws elsewhere. */
 	static function withoutStatus($events) {
 		$out = [];
 
 		foreach ($events as $event) {
-			if ($event["kind"] !== "status") {
+			if ($event["kind"] !== "status" && $event["kind"] !== "result") {
 				$out[] = $event;
 			}
 		}

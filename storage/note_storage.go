@@ -63,13 +63,18 @@ const Live = "deleted_at IS NULL"
 
 // Create inserts a note, with the mentions of its body.
 func (s *NoteStorage) Create(ctx context.Context, note *model.Note) error {
-	return insertNote(ctx, client(s.db), note)
+	return insertNote(ctx, client(s.db), note, false)
+}
+
+// CreateAnswer inserts the reply a run fills when it ends, which starts empty.
+func (s *NoteStorage) CreateAnswer(ctx context.Context, note *model.Note) error {
+	return insertNote(ctx, client(s.db), note, true)
 }
 
 // insertNote inserts a note on a client, filling its mentions and timestamps.
-func insertNote(ctx context.Context, c conn, note *model.Note) error {
+func insertNote(ctx context.Context, c conn, note *model.Note, empty bool) error {
 	note.Body = strings.TrimSpace(note.Body)
-	if note.Body == "" || note.UserName == "" {
+	if note.UserName == "" || (note.Body == "" && !empty) {
 		return errors.New("a note needs an author and some text")
 	}
 	if note.Channel == "" {
@@ -233,6 +238,11 @@ func (s *NoteStorage) SetState(ctx context.Context, id, state, runID string) err
 // SetAgent sets the agent a root note's runs answer as, ErrNotFound off a reply.
 func (s *NoteStorage) SetAgent(ctx context.Context, id, agent string) error {
 	return s.change(ctx, "UPDATE note SET agent = ?, updated_at = ? WHERE id = ? AND parent_id = ''", agent, stamp(), id)
+}
+
+// Remove deletes one empty reply, the placeholder of a run that answered elsewhere.
+func (s *NoteStorage) Remove(ctx context.Context, id string) error {
+	return s.change(ctx, "DELETE FROM note WHERE id = ? AND parent_id != '' AND TRIM(body) = ''", id)
 }
 
 // Release sets a note's state and lets go of its run, for someone who works on it over MCP.

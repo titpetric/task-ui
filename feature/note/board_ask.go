@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,8 +31,7 @@ func (b *Board) AskAs(ctx context.Context, user *model.User, parentID, dir, body
 	return b.ask(ctx, user, parentID, dir, "", "", body, heard, agent, origin)
 }
 
-// AskArea puts a prompt of an area's page, such as model.AreaWorkflows, to Claude in dir, as Ask does.
-// The thread names the area, and its runs read the area's instruction. It takes prompt/edit.
+// AskArea puts an area's prompt to Claude in dir, as Ask does; it takes prompt/edit.
 func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body string) (*model.Note, error) {
 	return b.AskAreaAs(ctx, user, area, dir, body, "")
 }
@@ -44,14 +44,7 @@ func (b *Board) AskAreaAs(ctx context.Context, user *model.User, area, dir, body
 	return b.ask(ctx, user, "", dir, "", area, body, Spoken{}, agent, "area:"+area)
 }
 
-// ask puts a prompt to Claude in dir, a folder and a directory under that folder
-// as Run.Where names them, or internal for the root, and answers with the note:
-// open, of the folder's workspace, about the run aboutRun names and of
-// the area when they name one. With parentID it replies in a prompt's
-// thread instead, in the thread's place, keeps its run and area, and
-// opens it again. Either way the board starts the prompt job on the
-// thread as the user and replies with Claude's answer when the run ends.
-// Asking takes prompt/edit.
+// ask sends a prompt to dir, or replies in the prompt parentID names, and answers with its note.
 func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, area, body string, heard Spoken, agent, origin string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
@@ -125,11 +118,14 @@ func (b *Board) reask(ctx context.Context, note *model.Note) {
 	b.dispatchPrompt(note, note, req, nil)
 }
 
-// dispatchPrompt starts the prompt job on a prompt's thread, in the
-// background, and replies with Claude's answer when the run ends: in a
-// new reply, or in again, the reply to rewrite, from the thread before
-// it.
+// dispatchPrompt starts a thread's prompt run and fills its answer when the run ends.
 func (b *Board) dispatchPrompt(thread, question *model.Note, req runner.Request, again *model.Note) {
+	if question == nil {
+		question = thread
+	}
+	if again == nil {
+		again = b.answerPlaceholder(context.Background(), thread)
+	}
 	req, answer, cleanup, ok := b.promptEnv(thread, req, again)
 	if !ok {
 		return
@@ -141,15 +137,51 @@ func (b *Board) dispatchPrompt(thread, question *model.Note, req runner.Request,
 	}()
 }
 
-// promptEnv puts a prompt's thread and the file its answer goes to in
-// the request's environment, and returns the request, that file, and a
-// cleanup for the files it made. A thread about a run gets the run in a
-// file, TASK_UI_PROMPT_RUN, because the output can exceed the size of an
-// environment variable, a workflow run's prompt the run's steps in
-// TASK_UI_PROMPT_WORKFLOW, and the summary of Run and summarize its
-// shape in TASK_UI_PROMPT_INSTRUCTIONS; a run with task-ui's MCP tools
-// gets the thread it answers in TASK_UI_PROMPT_SOURCE, to reply there.
-// A run it cannot describe, or a reply file it cannot make, fails the note, and promptEnv returns false.
+// answerPlaceholder drops the empty reply a crash left and returns the one a run fills.
+func (b *Board) answerPlaceholder(ctx context.Context, thread *model.Note) *model.Note {
+	name := b.AnswererOf(ctx, thread)
+	if name == "" {
+		name = answerer
+	}
+	if replies, err := b.Notes.Replies(ctx, []string{thread.ID}); err == nil {
+		for i := range replies[thread.ID] {
+			reply := &replies[thread.ID][i]
+			if reply.RunID != "" && reply.State == model.NoteWorking && strings.TrimSpace(reply.Body) == "" && reply.Agent == name && !b.live(reply.RunID) {
+				if err := b.Notes.Remove(ctx, reply.ID); err != nil {
+					slog.Warn("stale answer not removed", "note", reply.ID, "err", err)
+				}
+			}
+		}
+	}
+	reply := &model.Note{
+		Channel: thread.Channel, ParentID: thread.ID, UserName: name, Agent: name,
+		State: model.NoteWorking, WorkspaceID: thread.WorkspaceID, Dir: thread.Dir,
+		AboutRunID: thread.AboutRunID, AboutWorkflowRunID: thread.AboutWorkflowRunID, Area: thread.Area,
+	}
+	if b.Users != nil {
+		if agent, err := b.Users.GetByName(ctx, name); err == nil {
+			reply.UserID = agent.ID
+		}
+	}
+	if err := b.Notes.CreateAnswer(ctx, reply); err != nil {
+		slog.Warn("answer placeholder not made", "note", thread.ID, "err", err)
+		return nil
+	}
+	b.publish(reply)
+	return reply
+}
+
+// discardAnswer removes the empty reply of a run that answered in the thread itself.
+func (b *Board) discardAnswer(ctx context.Context, reply *model.Note) {
+	if reply == nil || strings.TrimSpace(reply.Body) != "" {
+		return
+	}
+	if err := b.Notes.Remove(ctx, reply.ID); err != nil {
+		return
+	}
+}
+
+// promptEnv writes the thread, about and reply files and returns the request and its cleanup.
 func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Note) (runner.Request, string, func(), bool) {
 	ctx := context.Background()
 	if req.ClaudeSession == "" && !req.Resume {
@@ -222,9 +254,7 @@ func (b *Board) resolveAgent(ctx context.Context, name string) (string, error) {
 	return answerer, nil
 }
 
-// hosts is the inventory a prompt's run gets, TASK_UI_HOSTS: the hosts,
-// or a line saying why task-ui got none, so the prompt runs
-// either way; nothing when there is no inventory.
+// hosts returns TASK_UI_HOSTS for a prompt's run, or the line saying why it got none.
 func (b *Board) hosts(ctx context.Context) []string {
 	if b.Hosts == nil {
 		return nil
@@ -241,14 +271,7 @@ func (b *Board) hosts(ctx context.Context) []string {
 	return []string{"TASK_UI_HOSTS=" + hosts}
 }
 
-// promptRequest resolves where a prompt runs, as the user: the prompt
-// job, @claude-prompt, of the place dir names, a folder and a directory
-// in it, a workspace's directory, internal for the root, or, with none,
-// no workspace at the workspaces root, with the directory in
-// TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run is
-// the place's, as its @shell run is, with the place's secrets. The user
-// sees the place; the prompt job runs by prompt/edit, which the callers
-// check, and the folder's allow lists play no part.
+// promptRequest resolves the place dir names and returns the prompt job's request for it.
 func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string, none bool) (runner.Request, error) {
 	var req runner.Request
 	if b.Catalogue == nil || b.Runner == nil {
@@ -308,9 +331,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string,
 	return req, nil
 }
 
-// sees reports whether a user sees the place of a prompt: the folder dir
-// resolves to, a workspace's directory by its name, and the root for a
-// user who sees every folder.
+// sees reports whether a user sees the place dir names.
 func sees(user *model.User, f *folder.Folder, dir string) bool {
 	switch {
 	case f != nil:
@@ -330,8 +351,7 @@ func (b *Board) isWorkspace(ctx context.Context, id string) bool {
 	return err == nil
 }
 
-// underRoot returns a directory's slash path below b.Root, "" for the root itself.
-// It returns false for a directory b.Root does not contain.
+// underRoot returns dir below the root as a slash path, and false for a directory outside it.
 func (b *Board) underRoot(dir string) (string, bool) {
 	root, err := filepath.EvalSymlinks(b.Root)
 	if err != nil {

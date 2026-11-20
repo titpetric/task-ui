@@ -25,8 +25,9 @@
   function workEvent(event) {
     switch (event.kind) {
       case "text":
-      case "result":
         return node("div", "work-text prose", event.body || "");
+      case "result":
+        return null;
       case "thinking":
         return details("work-thinking", "Thinking", event.body || "");
       case "tool_use":
@@ -59,15 +60,26 @@
     return run;
   }
 
-  function addWork(data) {
-    var message = document.getElementById("note-" + data.question);
+  // workNode is the work block of the message a run writes in: its answer,
+  // which stands in the thread while the run goes, or the question itself.
+  function workNode(run, question) {
+    var answer = run ? document.querySelector('.talk .said.agent[data-run="' + run + '"]') : null;
+    var message = answer || document.getElementById("note-" + question);
     if (!message) {
-      return;
+      return null;
     }
     var work = message.querySelector(".work");
     if (!work) {
       work = node("div", "work");
       message.insertBefore(work, message.querySelector(".said-audio"));
+    }
+    return work;
+  }
+
+  function addWork(data) {
+    var work = workNode(data.run, data.question);
+    if (!work) {
+      return;
     }
     var run = runOf(work, data.run);
     if (run.querySelector('[data-seq="' + data.seq + '"]')) {

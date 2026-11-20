@@ -104,7 +104,6 @@ The prose and godoc linters that landed with `feat(splint): the prose of a tree 
 - `/threads` orders by the newest message. Ordering by work in progress first is not built.
 - The dashboard shows a working thread in Recents but has no tile of its own for one.
 - `Task\Note::card()` and `Task\Note::thread()` are still the data layer of the board pages, beside `Task\Threads\Talk` and `Timeline`. One of the two goes.
-- A prompt's work is drawn under the question that started the run, because the answer note is made when the run ends. Starting the answer as a placeholder when the run starts would stream the tool cards into the agent's own bubble.
 
 ## Reported, not fixed
 

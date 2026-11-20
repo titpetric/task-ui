@@ -19,7 +19,7 @@ func NewChatStorage(db DB) *ChatStorage {
 // CreateRoot inserts a chat root and both participants atomically.
 func (s *ChatStorage) CreateRoot(ctx context.Context, note *model.Note, participants []Participant) error {
 	return inTx(ctx, s.db, func(c conn) error {
-		if err := insertNote(ctx, c, note); err != nil {
+		if err := insertNote(ctx, c, note, false); err != nil {
 			return err
 		}
 		for _, participant := range participants {
@@ -35,7 +35,7 @@ func (s *ChatStorage) CreateRoot(ctx context.Context, note *model.Note, particip
 // Reply inserts a chat reply and moves its author's read marker atomically.
 func (s *ChatStorage) Reply(ctx context.Context, note *model.Note, userID string) error {
 	return inTx(ctx, s.db, func(c conn) error {
-		if err := insertNote(ctx, c, note); err != nil {
+		if err := insertNote(ctx, c, note, false); err != nil {
 			return err
 		}
 		return c.Exec(ctx, "UPDATE note_participant SET last_read_at = ? WHERE note_id = ? AND user_id = ?", stamp(), note.ParentID, userID)

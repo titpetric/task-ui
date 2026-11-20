@@ -320,7 +320,13 @@ func (b *Board) runAs(stop context.Context, note, question *model.Note, req runn
 	note.State, note.RunID = model.NoteWorking, held
 	b.publish(note)
 	if again != nil {
-		if err := b.Notes.Answer(ctx, again.ID, again.Body, model.NoteWorking, session.ID()); err != nil {
+		var err error
+		if strings.TrimSpace(again.Body) == "" {
+			err = b.Notes.SetState(ctx, again.ID, model.NoteWorking, session.ID())
+		} else {
+			err = b.Notes.Answer(ctx, again.ID, again.Body, model.NoteWorking, session.ID())
+		}
+		if err != nil {
 			slog.Warn("answer state not saved", "note", again.ID, "err", err)
 		}
 		again.State, again.RunID = model.NoteWorking, session.ID()
@@ -348,6 +354,7 @@ func (b *Board) runAs(stop context.Context, note, question *model.Note, req runn
 	if b.takeReplied(note.ID) {
 		// Claude replied in the thread over MCP: its final message is no
 		// second reply.
+		b.discardAnswer(ctx, again)
 		b.settle(ctx, note, state)
 		return true
 	}

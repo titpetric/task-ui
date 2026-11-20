@@ -16,5 +16,6 @@ Input scope: `data_message`, one message of a thread, from
 | `work` | runs to draw under the message, each a `data_work` |
 | `ago`, `stamp` | the message's time, relative and full |
 
-The component draws one message and nothing about the list it sits in; the
-owner supplies the `ol.talk` and the `data-talk` marker.
+A run's work sits under the reply it filled, or under the question until one
+exists. The component draws one message and nothing about the list it sits in;
+the owner supplies the `ol.talk` and the `data-talk` marker.

@@ -364,3 +364,38 @@ func TestNoteStorage_Refuses(t *testing.T) {
 	assert.NoError(t, notes.DeleteAboutRun(ctx, "r1"))
 	assert.NoError(t, notes.DeleteAboutWorkflowRun(ctx, "w1"))
 }
+
+// A run's answer is a reply that starts empty, takes its run while it works
+// and its text when it ends.
+func TestNoteStorage_CreateAnswer(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+	root := &model.Note{UserName: "ops", Body: "why did it fail"}
+	assert.NoError(t, notes.Create(ctx, root))
+
+	answer := &model.Note{UserName: "claude", ParentID: root.ID, State: model.NoteWorking, Agent: "claude"}
+	assert.NoError(t, notes.CreateAnswer(ctx, answer))
+	assert.NotEqual(t, "", answer.ID)
+
+	replies, err := notes.Replies(ctx, []string{root.ID})
+	assert.NoError(t, err)
+	assert.Len(t, replies[root.ID], 1)
+	assert.Equal(t, "", replies[root.ID][0].Body)
+
+	assert.NoError(t, notes.SetState(ctx, answer.ID, model.NoteWorking, "run1"))
+	assert.NoError(t, notes.Answer(ctx, answer.ID, "the answer", "", "run1"))
+	got, err := notes.Get(ctx, answer.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "the answer", got.Body)
+	assert.Equal(t, "run1", got.RunID)
+	assert.Equal(t, "", got.State)
+
+	// A run that answered over MCP leaves no empty reply behind.
+	spare := &model.Note{UserName: "claude", ParentID: root.ID, State: model.NoteWorking}
+	assert.NoError(t, notes.CreateAnswer(ctx, spare))
+	assert.NoError(t, notes.Remove(ctx, spare.ID))
+	_, err = notes.Get(ctx, spare.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	assert.ErrorIs(t, notes.Remove(ctx, answer.ID), storage.ErrNotFound, "an answer with text stays")
+}

@@ -28,15 +28,13 @@ class Talk {
 	 */
 	static function messages($note, $replies, $chrome, $seen = null, $work = [], $answers = []) {
 		$out = [self::message($note, $chrome, $seen)];
-		$out[0]["work"] = isset($work[$note->getId()]) ? $work[$note->getId()] : [];
 		$spoken = self::spokenFor($note, count($replies));
 		$at = 0;
 
 		foreach ($replies as $reply) {
 			$at = $at + 1;
 			$said = self::message($reply, $chrome, $seen);
-			$said["work"] = isset($work[$reply->getId()]) ? $work[$reply->getId()] : [];
-			$said["agent"] = isset($answers[$reply->getId()]);
+			$said["agent"] = $said["agent"] || in_array($reply->getId(), $answers, true);
 
 			if ($said["audio"] === "" && isset($spoken[$at])) {
 				$said["audio"] = $spoken[$at];
@@ -51,7 +49,48 @@ class Talk {
 			$out[] = $said;
 		}
 
+		self::hand($out, $answers);
+		self::attach($out, $work, $answers);
+
 		return $out;
+	}
+
+	/** hand hides a question's run once its answer carries it. */
+	static function hand(&$out, $answers) {
+		foreach ($out as $index => $message) {
+			$run = $message["run"];
+
+			if ($run !== "" && isset($answers[$run]) && $answers[$run] !== $message["id"]) {
+				$out[$index]["state"] = "";
+				$out[$index]["working"] = false;
+				$out[$index]["run"] = "";
+				$out[$index]["short"] = "";
+			}
+		}
+	}
+
+	/** attach puts each run's work under the answer it wrote, or the question. */
+	static function attach(&$out, $work, $answers) {
+		$at = [];
+
+		foreach ($out as $index => $message) {
+			$at[$message["id"]] = $index;
+			$out[$index]["work"] = [];
+		}
+
+		foreach ($work as $question => $runs) {
+			foreach ($runs as $run) {
+				$id = isset($answers[$run["id"]]) ? $answers[$run["id"]] : $question;
+
+				if (!isset($at[$id])) {
+					$id = $question;
+				}
+
+				if (isset($at[$id])) {
+					$out[$at[$id]]["work"][] = $run;
+				}
+			}
+		}
 	}
 
 	/** joins reports whether a note and the reply after it are one recording. */
@@ -115,7 +154,7 @@ class Talk {
 			"audio" => self::audio($note),
 			"state" => $note->getState(),
 			"working" => $note->getState() === \Task\Note::WORKING,
-			"agent" => false,
+			"agent" => $note->getParentId() !== "" && $note->getAgent() !== "",
 			"run" => $run,
 			"short" => substr($run, 0, 8),
 			"work" => [],

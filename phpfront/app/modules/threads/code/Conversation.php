@@ -115,11 +115,7 @@ class Conversation {
 		return implode(" · ", $parts);
 	}
 
-	/**
-	 * answers is the reply each run wrote, by note ID: the message that carries
-	 * the run, after the question that started it. A run that ended without a
-	 * reply names none.
-	 */
+	/** answers is the reply each run wrote, by run ID. */
 	static function answers($replies, $work) {
 		$started = [];
 
@@ -135,10 +131,16 @@ class Conversation {
 
 		foreach ($replies as $reply) {
 			$run = $reply->getRunId();
-			$question = isset($started[$run]) ? $started[$run] : "";
 
-			if ($question !== "" && $reply->getId() !== $question) {
-				$out[$reply->getId()] = true;
+			if ($run === "") {
+				continue;
+			}
+
+			$question = isset($started[$run]) ? $started[$run] : "";
+			$marked = $reply->getParentId() !== "" && $reply->getAgent() !== "";
+
+			if ($marked || ($question !== "" && $reply->getId() !== $question)) {
+				$out[$run] = $reply->getId();
 			}
 		}
 

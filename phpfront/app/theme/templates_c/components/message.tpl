@@ -3,6 +3,7 @@
  mine<?php }?><?php if($_v['data_message']['agent']){?>
  agent<?php }?><?php if($_v['data_message']['working']){?>
  working<?php }?>" id="note-<?php echo htmlspecialchars($_v['data_message']['id'], ENT_QUOTES);?>
+" data-run="<?php echo htmlspecialchars($_v['data_message']['run'], ENT_QUOTES);?>
 ">
 	<header>
 		<span class="author"><?php $_v['data_user'] = $_v['data_message']['author'];?>
@@ -35,9 +36,10 @@
 " title="The run this message comes from">run <?php echo htmlspecialchars($_v['data_message']['short'], ENT_QUOTES);?>
 </a>
 <?php }?>	</header>
+<?php if($_v['data_message']['body']){?>
 	<div class="said-body prose"><?php echo $_v['data_message']['body'];?>
 </div>
-<?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run'];?>
+<?php }?><?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run'];?>
 <div class="work-run" data-run="<?php echo htmlspecialchars($_v['data_work']['id'], ENT_QUOTES);?>
 ">
 <?php if($_v['data_work']['stats']){?>

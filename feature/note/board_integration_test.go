@@ -146,6 +146,18 @@ func TestBoard_AskAsAgent(t *testing.T) {
 	assert.Equal(t, "folder", thread.Origin)
 	assert.Equal(t, "consuela", board.AnswererOf(ctx, thread))
 	settles(t, events, thread.ID)
+
+	// The answer was made when the run started, and its body filled that reply.
+	thread, err = board.Notes.Get(ctx, thread.ID)
+	assert.NoError(t, err)
+	replies, err := board.Notes.Replies(ctx, []string{thread.ID})
+	assert.NoError(t, err)
+	assert.Len(t, replies[thread.ID], 1)
+	answer := replies[thread.ID][0]
+	assert.Equal(t, thread.ID, answer.ParentID)
+	assert.Equal(t, "consuela", answer.Agent)
+	assert.Equal(t, thread.RunID, answer.RunID)
+	assert.True(t, strings.TrimSpace(answer.Body) != "", "the answer has its body")
 }
 
 // A prompt with no agent names the first agent, and refuses a user who is none.

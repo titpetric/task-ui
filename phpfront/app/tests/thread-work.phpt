@@ -18,7 +18,8 @@ $db->replace("note", [
 	"user_name" => "fx-work-ann",
 	"body" => "why did the build fail",
 	"mentions" => "",
-	"state" => "done",
+	"state" => "working",
+	"run_id" => "fx-work-r1",
 	"workspace_id" => "fx-work-ws",
 	"dir" => "fx-work/app",
 	"created_at" => "2026-11-16 10:00:00.000 +0000 UTC",
@@ -96,6 +97,10 @@ $answers = Task\Threads\Conversation::answers($replies, $work);
 $talk = Task\Threads\Talk::messages($notes->get("fx-work-n1"), $replies, $chrome, null, $work, $answers);
 
 echo count($answers), " ", var_export($talk[0]["agent"], true), " ", var_export($talk[1]["agent"], true), " ", var_export($talk[2]["agent"], true), "\n";
+echo count($talk[0]["work"]), " ", count($talk[1]["work"]), " ", count($talk[2]["work"]), "\n";
+
+// The answer carries the run, so the question no longer shows it working.
+echo var_export($talk[0]["working"], true), " ", var_export($talk[0]["run"], true), " ", $talk[2]["run"], "\n";
 
 // A working thread carries the run it may end, and the last status as its
 // pinned line.
@@ -124,6 +129,16 @@ $status = Task\Threads\Conversation::status($notes->get("fx-work-n3"), [], $chro
 
 echo var_export($status["working"], true), " ", $status["run"], " ", $status["started"], " ", var_export($status["can_end"], true), "\n";
 
+// A working row names the run its reader may stop; a finished thread names none.
+Task\Host::$whoami = "fx-work-ann";
+$chrome = new Task\Chrome;
+$row = Task\Threads\Timeline::row($notes->get("fx-work-n3"), [], $chrome);
+$done = Task\Threads\Timeline::row($notes->get("fx-work-n2"), [], $chrome);
+Task\Host::$whoami = "";
+
+echo var_export($row["working"], true), " ", var_export($row["can_end"], true), " ", $row["run"], "\n";
+echo var_export($done["working"], true), " ", var_export($done["can_end"], true), " ", $done["state"], "\n";
+
 $notes->forget("fx-work-n1");
 echo count($notes->events("fx-work-n1")), "\n";
 ---
@@ -136,5 +151,9 @@ Running Bash tool Bash
 1 1
 1 1
 1 false false true
+0 1 1
+false '' fx-work-r1
 true fx-work-r9 1794823320000 false
+true true fx-work-r9
+false false done
 0
