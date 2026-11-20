@@ -1,4 +1,4 @@
-<?php $_v=&$this->vars; $_v['data_head'] = $_v['data']['head'];?>
+<?php $_v=&$this->vars; $_v['data_pane'] = $_v['data'];$_v['data_head'] = $_v['data_pane']['head'];?>
 
 <div class="page-head">
 	<div>
@@ -142,24 +142,24 @@
 <?php }?></div>
 
 
-<?php if($_v['data']['pick_agent']){?>
-<form class="agent-pick" data-agent-form data-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+<?php if($_v['data_pane']['pick_agent']){?>
+<form class="agent-pick" data-agent-form data-thread="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
 ">
 	<label class="faint" for="thread-agent">Agent</label>
 	<select id="thread-agent" name="agent">
-<?php if(!empty($_v['data']['agent_names']))foreach($_v['data']['agent_names'] as $_v['name']){?>		<option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
-"<?php if($_v['name'] == $_v['data']['agent']){?>
+<?php if(!empty($_v['data_pane']['agent_names']))foreach($_v['data_pane']['agent_names'] as $_v['name']){?>		<option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
+"<?php if($_v['name'] == $_v['data_pane']['agent']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
 </option>
 <?php }?>	</select>
 	<button class="btn" type="submit">Save</button>
 </form><?php }?>
 
-<ol class="talk" data-notes data-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
-"<?php if($_v['data']['chat_thread']){?>
- data-chat-thread="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
+<ol class="talk" data-notes data-thread="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_pane']['chat_thread']){?>
+ data-chat-thread="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
 "<?php }?>>
-<?php if(!empty($_v['data']['messages']))foreach($_v['data']['messages'] as $_v['message']){?>	<li class="said<?php if($_v['message']['mine']){?>
+<?php if(!empty($_v['data_pane']['messages']))foreach($_v['data_pane']['messages'] as $_v['message']){?>	<li class="said<?php if($_v['message']['mine']){?>
  mine<?php }?><?php if($_v['message']['working']){?>
  working<?php }?>" id="note-<?php echo htmlspecialchars($_v['message']['id'], ENT_QUOTES);?>
 ">
@@ -203,7 +203,7 @@
 				<div class="work-text prose"><?php echo $_v['event']['prose'];?>
 </div>
 <?php }elseif($_v['event']['kind'] == 'thinking'){?>
-				<details class="work-thinking"><summary>Thinking</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
+				<details class="work-thinking"><summary>Thinking<pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
 </pre></details>
 <?php }elseif($_v['event']['kind'] == 'tool_use'){?>
 				<details class="work-tool"><summary><code><?php echo htmlspecialchars($_v['event']['tool'], ENT_QUOTES);?>
@@ -230,11 +230,12 @@ Result<?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['body'], 
 	</li>
 <?php }?></ol>
 
-<?php if($_v['data']['replies']){?>
-<form class="note-form" data-note-form data-parent="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
-" data-channel="<?php echo htmlspecialchars($_v['data']['channel'], ENT_QUOTES);?>
-">
-	<?php $_v['data_markdown'] = $_v['data']['editor'];?>
+<?php if($_v['data_pane']['replies']){?>
+<form class="note-form" data-note-form data-parent="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
+" data-channel="<?php echo htmlspecialchars($_v['data_pane']['channel'], ENT_QUOTES);?>
+"<?php if($_v['data_pane']['split']){?>
+ data-pane<?php }?>>
+	<?php $_v['data_markdown'] = $_v['data_pane']['editor'];?>
 <textarea name="<?php echo htmlspecialchars($_v['data_markdown']['name'], ENT_QUOTES);?>
 " rows="<?php echo htmlspecialchars($_v['data_markdown']['rows'], ENT_QUOTES);?>
 " spellcheck="false" data-markdown data-toolbar="<?php echo htmlspecialchars($_v['data_markdown']['toolbar'], ENT_QUOTES);?>
@@ -243,8 +244,9 @@ Result<?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['body'], 
  placeholder="<?php echo htmlspecialchars($_v['data_markdown']['placeholder'], ENT_QUOTES);?>
 "<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
 "></textarea>
-	<div class="form-foot note"><span class="faint">Ctrl+Enter posts.</span><?php if($_v['data']['mic']){?>
-<button class="btn btn-ghost" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data']['id'], ENT_QUOTES);?>
-" data-channel="<?php echo htmlspecialchars($_v['data']['channel'], ENT_QUOTES);?>
-" title="Record a reply" aria-label="Record a reply"><svg class="ic"><use href="#i-mic"/></svg></button><?php }?><button class="btn btn-primary" type="submit">Reply</button></div>
+	<div class="form-foot note"><span class="faint">Ctrl+Enter sends.</span><?php if($_v['data_pane']['mic']){?>
+<button class="btn btn-ghost" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
+" data-channel="<?php echo htmlspecialchars($_v['data_pane']['channel'], ENT_QUOTES);?>
+" title="Record a reply" aria-label="Record a reply"><svg class="ic"><use href="#i-mic"/></svg></button><?php }?><button class="btn btn-primary" type="submit">Send</button></div>
 </form><?php }?>
+

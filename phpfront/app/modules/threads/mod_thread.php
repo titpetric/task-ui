@@ -12,13 +12,12 @@ require "ext/autoload.php";
 // they were said, the reader's own on one side and everyone else's on the
 // other, each with the recording it was spoken into where there is one.
 //
+// The page is the same conversation the Threads pane draws, and `?pane=1`
+// answers that pane alone: the markup and no shell, for the script to swap in.
 // A prompt belongs to the page it was asked from, so reading one takes
 // prompt/view as well; a note takes note/view alone, and a chat takes one of
 // its participants or an admin.
 class mod_thread implements Module {
-	/** MISSING is what the page of a thread that is not there says. */
-	const MISSING = "No thread with that ID. Someone may have deleted it.";
-
 	function name() {
 		return "threads";
 	}
@@ -47,106 +46,53 @@ class mod_thread implements Module {
 
 		$store = new Task\Threads\Notes;
 		$note = $store->get(Task\Route::param("id"));
+		$pane = Task\Route::input("pane") === "1";
 
 		if ($note === null || $note->getParentId() !== "") {
-			$view->missing(self::MISSING);
+			$this->problem($view, $pane, Task\Threads\Conversation::MISSING);
 
 			return;
 		}
 
-		$prompt = Task\Note::isPrompt($note);
+		$conversation = Task\Threads\Conversation::view($note, $chrome, $store, $pane);
 
-		if ($prompt && (!$chrome->allowed("prompt/view") || !Task\Note::seesPlace($chrome, $note->getDir()))) {
-			$view->refused();
-
-			return;
-		}
-
-		if (!$prompt && !Task\Note::isChat($note) && !$chrome->allowed("note/view")) {
-			$view->refused();
+		if (isset($conversation["error"])) {
+			$this->problem($view, $pane, $conversation["error"]);
 
 			return;
 		}
 
-		$chat = Task\Note::isChat($note);
-		$userID = $chrome->user === null ? "" : $chrome->user->getID();
-		$member = $chat && $store->participant($note->getId(), $userID);
-
-		if ($chat && !$member && !Task\User::admin($chrome->user)) {
-			$view->missing(self::MISSING);
+		if ($pane) {
+			header("Content-Type: text/html; charset=utf-8");
+			echo $view->partial("pane.tpl", ["data_pane" => $conversation]);
 
 			return;
 		}
 
-		$replies = $store->replies([$note->getId()]);
-		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
-		$title = Task\Note::excerpt(Task\Threads\Talk::opening($note, $under));
-		$work = Task\Threads\Work::byQuestion($store->events($note->getId()), $chrome);
-		$users = new Task\User;
-		$agentNames = [];
-		foreach ($users->agents() as $user) {
-			$agentNames[] = $user->getName();
-		}
-
-		$agent = $note->getAgent();
-
-		if ($agent === "" && $prompt) {
-			$agent = count($agentNames) > 0 ? $agentNames[0] : "claude";
-		}
-
-		$chrome->heading($title, [
+		$chrome->heading($conversation["title"], [
 			["text" => "Threads", "href" => "/threads"],
-			["text" => $title, "href" => ""],
+			["text" => $conversation["title"], "href" => ""],
 		]);
 
-		$head = new Task\Head($title);
-		$seen = new Task\Seen($chrome);
-
-		$head->buttons($this->menu($note, $chrome)->data());
-
-		$view->page([
-			"head" => $head->data(),
-			"id" => $note->getId(),
-			"channel" => $note->getChannel(),
-			"chat_thread" => $chat,
-			"messages" => Task\Threads\Talk::messages($note, $under, $chrome, $seen, $work),
-			"agent" => $agent,
-			"agent_names" => $agentNames,
-			"pick_agent" => !$chat && $note->getState() !== Task\Note::WORKING && ($chrome->name() === $note->getUserName() || Task\User::admin($chrome->user)),
-			"editor" => self::field(),
-			"replies" => $chat ? $member && $chrome->allowed("note/edit") : ($prompt ? $chrome->allowed("prompt/edit") : $chrome->allowed("note/edit")),
-			"mic" => $chrome->allowed("note/edit"),
-		], "thread.tpl");
+		$view->page($conversation, "thread.tpl");
 	}
 
-	/** menu is the thread's own actions: a thread is deleted, never rewritten. */
-	function menu($note, $chrome) {
-		$menu = new Task\Menu("Actions on this thread");
+	/** problem answers a pane with its message, or a page with the whole shell. */
+	function problem($view, $pane, $why) {
+		if ($pane) {
+			header("Content-Type: text/html; charset=utf-8");
+			echo '<p class="empty-state">' . htmlspecialchars($why, ENT_QUOTES) . "</p>";
 
-		$menu->whenDanger(Task\Note::deletes($note, $chrome), "trash", "Delete", [
-			"data-delete" => "/api/notes/" . $note->getId(),
-			"data-confirm" => "Delete this thread and every message in it? It leaves every listing; nobody reads it again.",
-			"data-confirm-ok" => "Delete",
-			"data-next" => Task\Route::href("/threads"),
-		]);
+			return;
+		}
 
-		return $menu;
-	}
+		if ($why === Task\Threads\Conversation::MISSING) {
+			$view->missing($why);
 
-	/**
-	 * field is the box under the conversation, as components/editor.tpl reads
-	 * it: two rows and no placeholder, with an `@` opening the list of users,
-	 * because a reply is where an agent is named.
-	 */
-	static function field() {
-		return [
-			"name" => "body",
-			"rows" => 2,
-			"label" => "A reply",
-			"placeholder" => "",
-			"mentions" => true,
-			"toolbar" => "inline",
-		];
+			return;
+		}
+
+		$view->refused();
 	}
 }
 

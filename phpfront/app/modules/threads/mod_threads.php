@@ -8,17 +8,18 @@ require "ext/autoload.php";
 // an alias and leaves the import behind, so a file writes what the formatter
 // would leave.
 
-// mod_threads is the timeline: every board thread the reader may see, newest
-// first, the chats the reader is in, and the box that starts a note.
+// mod_threads is the messenger: every thread the reader may see down the left,
+// newest first, and the selected conversation on the right.
 //
 // A thread is a note of the board, a prompt asked from a page, a question put
-// to the orb, or a chat with another user: one table, one list, one page per
-// thread. The list is rows and not the threads themselves, because a thread is
-// read on its own page, where the messages take sides and a recording plays.
+// to the orb, or a chat with another user: one table, one split. The selection
+// is the `id` parameter, and a reader with none gets the box that starts a
+// thread. The right pane is the same template the thread page draws, and the
+// script swaps it through /threads/{id}?pane=1 without leaving the page.
 //
-// The page reads and does not write. The box holds data-note-form, which the
-// script posts to /api/notes, and a chat's reply form posts to /api/threads;
-// either refreshes the list in place.
+// The box holds data-note-form, which the script posts to /api/notes, and a
+// chat's reply form posts to /api/threads; the script refreshes the list and
+// the pane in place.
 class mod_threads implements Module {
 	/** LEAD is the sentence under the heading, as HTML: it names a tag. */
 	const LEAD = 'Everything said on this instance: a note to someone with <code>@name</code>, a prompt asked from a page, and what the orb heard. If you can run jobs, a note is an instruction to the people it names, and naming several splits one request between them.';
@@ -93,6 +94,26 @@ class mod_threads implements Module {
 			}
 		}
 
+		$selectedID = trim(Task\Route::input("id"));
+		$selected = null;
+		$paneError = "";
+
+		if ($selectedID !== "") {
+			$note = $store->get($selectedID);
+
+			if ($note === null || $note->getParentId() !== "") {
+				$paneError = Task\Threads\Conversation::MISSING;
+			} else {
+				$conversation = Task\Threads\Conversation::view($note, $chrome, $store, true);
+
+				if (isset($conversation["error"])) {
+					$paneError = $conversation["error"];
+				} else {
+					$selected = $conversation;
+				}
+			}
+		}
+
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
 		$head = new Task\Head("Threads", self::lead($agent));
 
@@ -104,6 +125,9 @@ class mod_threads implements Module {
 			"states" => ["open", "working", "done", "failed"],
 			"rows" => $rows,
 			"chats" => $chats,
+			"selected" => $selected,
+			"selected_id" => $selectedID,
+			"pane_error" => $paneError,
 		]);
 	}
 

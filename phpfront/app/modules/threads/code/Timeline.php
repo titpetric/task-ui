@@ -27,7 +27,7 @@ class Timeline {
 
 		return [
 			"id" => $id,
-			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
+			"href" => \Task\Route::href("/threads?id=" . \Task\Route::queryEscape($id)),
 			"kind" => self::kind($note),
 			"author" => $chrome->who()->of($note->getUserName()),
 			"said" => \Task\Note::excerpt(Talk::opening($note, $replies)),
@@ -58,7 +58,7 @@ class Timeline {
 
 		return [
 			"id" => $row["id"],
-			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($row["id"])),
+			"href" => \Task\Route::href("/threads?id=" . \Task\Route::queryEscape($row["id"])),
 			"peer" => $chrome->who()->of($row["peer"]),
 			"said" => \Task\Note::excerpt($said),
 			"ago" => \Task\Clock::ago($row["last_at"]),

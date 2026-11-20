@@ -124,6 +124,7 @@ return array(
     'Task\\StepSpace' => $baseDir . '/code/Task/StepSpace.php',
     'Task\\Table' => $baseDir . '/code/Task/Table.php',
     'Task\\Text' => $baseDir . '/code/Task/Text.php',
+    'Task\\Threads\\Conversation' => $baseDir . '/modules/threads/code/Conversation.php',
     'Task\\Threads\\Notes' => $baseDir . '/modules/threads/storage/Notes.php',
     'Task\\Threads\\Talk' => $baseDir . '/modules/threads/code/Talk.php',
     'Task\\Threads\\Timeline' => $baseDir . '/modules/threads/code/Timeline.php',

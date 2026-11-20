@@ -147,6 +147,7 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
         'Task\\StepSpace' => __DIR__ . '/../..' . '/code/Task/StepSpace.php',
         'Task\\Table' => __DIR__ . '/../..' . '/code/Task/Table.php',
         'Task\\Text' => __DIR__ . '/../..' . '/code/Task/Text.php',
+        'Task\\Threads\\Conversation' => __DIR__ . '/../..' . '/modules/threads/code/Conversation.php',
         'Task\\Threads\\Notes' => __DIR__ . '/../..' . '/modules/threads/storage/Notes.php',
         'Task\\Threads\\Talk' => __DIR__ . '/../..' . '/modules/threads/code/Talk.php',
         'Task\\Threads\\Timeline' => __DIR__ . '/../..' . '/modules/threads/code/Timeline.php',

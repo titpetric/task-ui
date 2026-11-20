@@ -57,6 +57,22 @@ class View {
 		return $tpl->get();
 	}
 
+	/** partial renders one module template over named variables, for a pane a script swaps in. */
+	function partial($template, $vars) {
+		$paths = [$this->templates(), self::THEME];
+		$tpl = new \MiniTPL\Template($paths);
+
+		$tpl->load($template);
+		$tpl->assign("base", Host::base());
+		$tpl->assign("chrome", $this->chrome->data());
+
+		foreach ($vars as $name => $value) {
+			$tpl->assign($name, $value);
+		}
+
+		return $tpl->get();
+	}
+
 	/**
 	 * missing answers for a page that is not there, or one the reader may not
 	 * see: the status, the heading, what is missing and the theme's own body

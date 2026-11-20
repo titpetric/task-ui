@@ -4315,6 +4315,9 @@
         mountEditors(notesList);
         mentionFields(notesList);
         chatRead();
+        // The list the fetch drew names no thread of its own: a page that
+        // swaps panes marks the row it shows.
+        document.dispatchEvent(new CustomEvent("taskui:notes"));
       });
   }
   document.addEventListener("submit", function (event) {
