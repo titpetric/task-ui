@@ -12,14 +12,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// startPrompt puts a prompt to Claude in a folder, or in a directory
-// inside one: a note of the folder's workspace, which the board answers
-// by running @claude-prompt there as the user, the caller or the one an
-// admin names with user, as promptUser picks them, with the thread in
-// TASK_UI_PROMPT and the directory in TASK_UI_PROMPT_DIR. It answers with
-// the note; Claude's answer is a reply to it once the run ends. With
-// run, the prompt asks about that run, in its folder and directory, and
-// Claude gets the run and the end of its output.
+// startPrompt puts a prompt to the board in its place and answers 201 with the note.
 func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/edit") || !h.board(w) {
 		return
@@ -54,9 +47,7 @@ func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 	h.ask(w, r, req, where)
 }
 
-// promptPlace returns where a prompt in a folder, or in dir inside it,
-// runs, as a note's Dir holds it: internal for the default workspace, the root.
-// The second result says what is wrong when the place is none.
+// promptPlace resolves folder and dir to a note's Dir, or names what is wrong.
 func (h *Handlers) promptPlace(r *http.Request, folderID, dir string) (string, string) {
 	dir = strings.Trim(dir, "/")
 	folderID = model.Canonical(folderID)
@@ -74,9 +65,7 @@ func (h *Handlers) promptPlace(r *http.Request, folderID, dir string) (string, s
 	return model.Run{Folder: f.ID, Dir: dir}.Where(), ""
 }
 
-// ask puts the request's prompt to the board in where, as the user
-// promptUser picks, or as a reply in its parent's thread, and answers
-// 201 with the note.
+// ask puts the request's prompt to the board and answers 201 with its note.
 func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest, where string) {
 	prompt := strings.TrimSpace(req.Prompt)
 	if prompt == "" {
@@ -96,9 +85,7 @@ func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// askArea puts the request's prompt of an area's page to the board, in
-// its folder and directory, the root unless given, and answers 201 with
-// the note; 400 for an area there is none of.
+// askArea puts an area's prompt to the board and answers 201 with its note.
 func (h *Handlers) askArea(w http.ResponseWriter, r *http.Request, req PromptRequest) {
 	if req.Area != model.AreaWorkflows {
 		fail(w, http.StatusBadRequest, "no area "+req.Area)
@@ -130,9 +117,7 @@ func (h *Handlers) askArea(w http.ResponseWriter, r *http.Request, req PromptReq
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// askRun puts the request's prompt about its run to the board, as the
-// user promptUser picks, and answers 201 with the note; 404 for a run
-// the caller does not see.
+// askRun puts a prompt about its run to the board and answers 201 with its note.
 func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequest) {
 	prompt := strings.TrimSpace(req.Prompt)
 	if prompt == "" {
@@ -157,11 +142,7 @@ func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequ
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// listPrompts returns the prompt threads of a folder, or of ?dir= inside
-// it, ?folder=internal for the root, or those about a run the user sees, ?run=,
-// those of an area's page, ?area=workflows,
-// or the prompt's of a workflow run the user sees, ?workflow_run=,
-// newest first, each with its replies: ?limit=. Takes prompt/view.
+// listPrompts answers the prompt threads a filter selects, each with its replies.
 func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/view") || !h.board(w) {
 		return
@@ -199,8 +180,7 @@ func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
 	h.writeThreads(w, r, storage.NoteFilter{Prompts: true, Dir: where, Limit: queryInt(r, "limit", 20)})
 }
 
-// seesPlace reports whether the user sees the place a prompt ran in:
-// the folder it lies in, or the root for one who sees every folder.
+// seesPlace reports whether the user sees the place a prompt ran in.
 func seesPlace(c folder.Catalogue, user *model.User, place string) bool {
 	if place == model.Default {
 		return user != nil && len(user.FolderList()) == 0
