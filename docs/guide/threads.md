@@ -20,7 +20,7 @@ The page follows the thread over Server-Sent Events at `/api/sse/thread/<id>`. E
 
 ## The list
 
-`/threads` lists every thread the reader may see, newest activity first: board notes with `note/view`, prompts with `prompt/view` in a place the reader sees, and chats they are in. The search box narrows the list by words of the body, and **+ Filters** adds a place, a state and a user. Press `/` to reach the search box. A selected row is marked in the list, and **All threads** on a thread's own page returns to it. Recents and the dashboard show a working thread at the top with a pulsing marker, and they do not also list its Claude run.
+`/threads` lists every thread the reader may see, the working threads first and the rest newest first: board notes with `note/view`, prompts with `prompt/view` in a place the reader sees, and chats they are in. The search box narrows the list by words of the body, and **+ Filters** adds a place, a state and a user. Press `/` to reach the search box. A selected row is marked in the list, and **All threads** on a thread's own page returns to it. Recents and the dashboard show a working thread at the top with a pulsing marker, and they do not also list its Claude run.
 
 `GET /threads?id=<id>` answers a redirect to `/threads/<id>`, so an old link and a stale history entry both land on the conversation.
 

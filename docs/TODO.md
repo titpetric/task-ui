@@ -29,14 +29,6 @@ WARN a module did not register err="/data/modules/titpetric/refinement/modinfo.p
 
 `/m/titpetric/refinement` answers 404 and `/refinement` answers 200, so nothing is broken by it. Moving or deleting that directory is a write to the live container and was refused by the sandbox classifier; it needs naming.
 
-### Deploy 112d721c
-
-`fix(phpfront): a file the build drops leaves the extracted tree` is pushed and not deployed. Until it is, `/data/phpfront/modules/notes/` keeps registering `GET /notes` and the router refuses the threads module's route as a duplicate:
-
-```text
-WARN duplicate route "GET /notes" in modules/threads/mod_notes.php; previously registered by modules/notes/mod_notes.php
-```
-
 ### gopkg.in/yaml.v3
 
 splint's `blacklist` linter reports four files. `app/telemetry.go` is a drop-in swap for `github.com/goccy/go-yaml`; the other three use the `yaml.Node` AST or the strict decoder, which goccy spells differently.
@@ -97,7 +89,6 @@ The prose and godoc linters that landed with `feat(splint): the prose of a tree 
 
 - The four filter bars still write their own `<form>`: runs, artifacts, threads and the workflow page size. A `components/filters.tpl` over a `Task\Filters` scope would collapse them, once the four field sets agree on one shape.
 - `empty.tpl` is used by the thread list and a conversation only. Runs, artifacts and workflow-run tables keep their own empty rows.
-- `/threads` orders by the newest message. Ordering by work in progress first is not built.
 - The dashboard shows a working thread in Recents but has no tile of its own for one.
 - `Task\Note::card()` and `Task\Note::thread()` are still the data layer of the board pages, beside `Task\Threads\Talk` and `Timeline`. One of the two goes.
 

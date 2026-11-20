@@ -44,9 +44,9 @@ class Notes {
 	}
 
 	/**
-	 * feed is every board thread and prompt, newest first, narrowed by a
-	 * place and the directories under it, a user, a state, an origin or words
-	 * of the body. A chat is listed by chats().
+	 * feed is every board thread and prompt, the working ones first and the
+	 * rest newest first, narrowed by a place and the directories under it, a
+	 * user, a state, an origin or words of the body. A chat is listed by chats().
 	 */
 	function feed($filter = [], $limit = self::LIMIT) {
 		$where = "";
@@ -78,7 +78,7 @@ class Notes {
 
 		$args[] = $limit;
 
-		$sql = "SELECT * FROM note WHERE parent_id = '' AND channel = ? AND " . self::LIVE . $where . " ORDER BY rowid DESC LIMIT ?";
+		$sql = "SELECT * FROM note WHERE parent_id = '' AND channel = ? AND " . self::LIVE . $where . " ORDER BY CASE WHEN state = 'working' THEN 0 ELSE 1 END, rowid DESC LIMIT ?";
 
 		return \Task\Model\Note::rows(\Task\DB::all($this->db, $sql, $args));
 	}

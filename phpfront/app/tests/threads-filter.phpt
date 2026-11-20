@@ -26,7 +26,7 @@ foreach ([
 	]);
 }
 
-// ids is the threads a filter answers, newest first, as one line.
+// ids is the threads a filter answers, working first, as one line.
 function ids($rows) {
 	$out = [];
 
@@ -46,7 +46,7 @@ echo ids($notes->feed(["state" => "done"] + $base)), "\n";
 echo ids($notes->feed(["user" => "fx-filter-bob"] + $base)), "\n";
 echo ids($notes->feed(["origin" => "threads"] + $base)), "\n";
 ---
-fx-filter-c3,fx-filter-c2,fx-filter-c1
+fx-filter-c2,fx-filter-c3,fx-filter-c1
 fx-filter-c2,fx-filter-c1
 fx-filter-c3,fx-filter-c1
 fx-filter-c2
