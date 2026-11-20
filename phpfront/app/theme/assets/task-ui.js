@@ -3627,6 +3627,8 @@
       var roomH = body.clientHeight - padTop - padBottom;
       var over = width > roomW || height > roomH;
       previewDialog.classList.toggle("zoomed", over);
+      previewImage.style.maxWidth = "none";
+      previewImage.style.maxHeight = "none";
       previewImage.style.width = width + "px";
       previewImage.style.height = height + "px";
       var left = padLeft + Math.max(0, (roomW - width) / 2);
@@ -3641,6 +3643,8 @@
       previewDialog.classList.remove("zoomed");
       previewImage.style.width = "";
       previewImage.style.height = "";
+      previewImage.style.maxWidth = "";
+      previewImage.style.maxHeight = "";
       previewImage.title = "Tap to zoom in";
       zoom = null;
       body.scrollLeft = 0;
@@ -3754,6 +3758,8 @@
       previewImage.removeAttribute("src");
       previewImage.style.width = "";
       previewImage.style.height = "";
+      previewImage.style.maxWidth = "";
+      previewImage.style.maxHeight = "";
       previewDialog.classList.remove("zoomed");
       zoom = null;
       pointers.clear();
