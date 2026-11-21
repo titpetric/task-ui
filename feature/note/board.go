@@ -408,13 +408,18 @@ func (b *Board) thread(ctx context.Context, note, again *model.Note) string {
 			}
 		}
 	}
-	if len(replies) == 0 {
-		return note.Body
-	}
 	var text strings.Builder
 	text.WriteString(note.UserName + ":\n" + note.Body)
+	empty := true
 	for _, reply := range replies {
+		if strings.TrimSpace(reply.Body) == "" {
+			continue
+		}
+		empty = false
 		text.WriteString("\n\n" + reply.UserName + ":\n" + reply.Body)
+	}
+	if empty {
+		return note.Body
 	}
 	return text.String()
 }
