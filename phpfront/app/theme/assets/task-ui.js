@@ -3618,6 +3618,7 @@
     var previewSave = document.getElementById("preview-save");
     var previewCancel = document.getElementById("preview-cancel");
     var previewPush = document.getElementById("preview-push");
+    var previewCommit = document.getElementById("preview-commit");
     // Whether this reader may write a file of the tree, which is what the
     // body says and what the API refuses whatever the body says.
     var edits = document.body.hasAttribute("data-artifact-edit");
@@ -3980,6 +3981,8 @@
       editingKind = "";
       previewSave.hidden = true;
       previewCancel.hidden = true;
+      previewCommit.hidden = true;
+      previewCommit.value = "";
     }
 
     // beginEditing opens a textarea in the window's body and answers it; a
@@ -4001,6 +4004,10 @@
       previewCancel.hidden = false;
       previewVersion.hidden = true;
       previewActions.innerHTML = "";
+      // A file of a checkout is committed by the Save, so the message it is
+      // committed with is written before the button is pressed.
+      previewCommit.hidden = editingKind !== "checkout";
+      previewCommit.value = "";
     }
 
     var editArtifact = function (rel) {
@@ -4057,16 +4064,23 @@
         .catch(function (status) { toast("The file did not open, HTTP " + status, "bad"); });
     };
 
-    // saveCheckout writes the file and commits it as the checkout's user;
-    // Push is the action the saved window offers next.
+    // saveCheckout writes the file and commits it with the message the
+    // reader wrote; Push is the action the saved window offers next. A
+    // change is not saved without a message to describe it.
     var saveCheckout = function (href, rel) {
       if (!editing) return;
+      var message = previewCommit.value.trim();
+      if (!message) {
+        toast("Write a commit message to save " + rel, "bad");
+        previewCommit.focus();
+        return;
+      }
       previewSave.disabled = true;
       fetch("/api" + href, {
         method: "PUT",
         credentials: "same-origin",
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-        body: editing.value,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editing.value, message: message }),
       })
         .then(function (res) {
           return res.text().then(function (text) {
@@ -4105,6 +4119,12 @@
     previewSave.addEventListener("click", function () {
       if (editingKind === "checkout") saveCheckout(editingHref, editingRel);
       else saveArtifact(previewPath);
+    });
+    // Enter in the message field saves, as the button does.
+    previewCommit.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" || event.isComposing || editingKind !== "checkout") return;
+      event.preventDefault();
+      saveCheckout(editingHref, editingRel);
     });
     previewCancel.addEventListener("click", function () {
       var kind = editingKind;

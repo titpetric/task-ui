@@ -21,9 +21,11 @@ document and Save puts the markdown back at the same path.
 
 A file of a folder's checkout opens the same way where the body says
 `data-file-edit`: Edit draws the editor over the file, Cancel puts the
-preview back, and Save writes the file and commits it with the checkout's
-git user. Markdown keeps the rich editor; every other kind opens as source,
-in the code face and coloured by the extension. The saved window offers Push,
+preview back, and Save writes the file and commits it. Markdown keeps the
+rich editor; every other kind opens as source, in the code face and coloured
+by the extension. The foot's commit message is what the change is committed
+with: Save refuses an empty one, and Enter in the field saves. The commit is
+the reader's, with task-ui's git identity. The saved window offers Push,
 which sends the checkout to its remote with the instance key.
 
 The window offers no Download. A file is read in task-ui, which is the

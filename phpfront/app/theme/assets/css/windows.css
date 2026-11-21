@@ -70,6 +70,14 @@ dialog.preview #preview-version {
   max-width: 22rem;
 }
 
+/* The message a checkout's edit is committed with takes the foot's room,
+   since the Save beside it is what writes the commit. */
+dialog.preview #preview-commit {
+  width: 100%;
+  min-width: 10rem;
+  font-family: var(--font-ui);
+}
+
 dialog.preview .preview-actions {
   display: contents;
 }
