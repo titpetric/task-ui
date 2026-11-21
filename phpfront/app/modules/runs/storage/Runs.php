@@ -303,7 +303,6 @@ class Runs {
 	/** hydrate is one row as a run, its timestamps the text the column holds. */
 	static function hydrate($row) {
 		$run = new \Task\Model\Run($row);
-
 		$run->setStartedAt(\Task\Row::stamp($row, "started_text"));
 		$run->setFinishedAt(\Task\Row::stamp($row, "finished_text"));
 

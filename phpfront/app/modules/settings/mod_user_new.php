@@ -73,7 +73,6 @@ class mod_user_new implements Module {
 		$head = new Task\Head("Add user", self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::USERS);
 		$choices = Task\Folders::choices($chrome->all(), []);
-
 		$view->page([
 			"head" => $head->data(),
 			"pattern" => self::NAME,
@@ -93,6 +92,5 @@ class mod_user_new implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_user_new;
-
 	$mod->serve();
 }

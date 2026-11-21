@@ -55,6 +55,5 @@ class mod_search_ask implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_search_ask;
-
 	$mod->serve();
 }

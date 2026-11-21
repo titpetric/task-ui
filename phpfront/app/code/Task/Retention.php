@@ -348,7 +348,6 @@ class Retention {
 
 		if ($limit > 0 && !in_array($limit, $sizes, true)) {
 			$sizes[] = $limit;
-
 			sort($sizes);
 		}
 

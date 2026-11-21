@@ -91,7 +91,6 @@ class mod_schedule_edit implements Module {
 		]);
 
 		$head = new Task\Head(self::TITLE, self::LEAD);
-
 		$view->page([
 			"head" => $head->data(),
 			"edit" => true,
@@ -197,6 +196,5 @@ class mod_schedule_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_schedule_edit;
-
 	$mod->serve();
 }

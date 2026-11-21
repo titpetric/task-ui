@@ -116,6 +116,5 @@ class mod_settings implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_settings;
-
 	$mod->serve();
 }

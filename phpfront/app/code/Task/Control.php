@@ -329,7 +329,6 @@ class Control {
 
 		if (isset($this->summaries[$key])) {
 			$found = $this->summaries[$key];
-
 			$menu->item("summary", "Summary of " . $job_id, ["href" => Route::href($found["href"]), "title" => $found["preview"]]);
 		}
 
@@ -341,7 +340,6 @@ class Control {
 
 		if ($idle && $can && $hours !== "") {
 			$forced = ["data-force" => "", "title" => "Run out of hours, with a reason"];
-
 			$menu->danger("play", "Run force " . $job_id, array_merge($forced, $start));
 		}
 

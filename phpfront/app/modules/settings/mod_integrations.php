@@ -192,7 +192,6 @@ class mod_integrations implements Module {
 	function menu($service) {
 		$title = $service["title"];
 		$menu = new Task\Menu("Actions on " . $title);
-
 		$menu->danger("trash", "Clear", [
 			"data-delete" => "/api/integrations/" . $service["id"],
 			"data-confirm" => "Clear every setting of " . $title . "?",
@@ -439,6 +438,5 @@ class mod_integrations implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_integrations;
-
 	$mod->serve();
 }

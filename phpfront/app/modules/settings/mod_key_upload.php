@@ -62,7 +62,6 @@ class mod_key_upload implements Module {
 		$for = Task\Key::forUser();
 		$field = Task\Key::policies([], [$for], $everyone);
 		$open = Task\Key::openName($for);
-
 		$view->page([
 			"head" => $head->data(),
 			"name" => Task\Key::nameField($open),
@@ -89,6 +88,5 @@ class mod_key_upload implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_key_upload;
-
 	$mod->serve();
 }

@@ -3,7 +3,6 @@
 // @startup
 
 $module = new Task\Module;
-
 $module->setName("taskui/schedules");
 $module->setTitle("Scheduled");
 $module->setDescription("The jobs a clock starts, and what each one ran as");

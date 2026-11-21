@@ -105,7 +105,6 @@ class Schedule {
 		$id = $schedule->getId();
 		$expression = $schedule->getExpression();
 		$menu = new Menu("Actions on the schedule " . $expression);
-
 		$menu->when($edits, "edit", "Edit", ["href" => Route::href("/schedules/edit/" . Route::pathEscape($id))]);
 		$menu->danger("trash", "Delete", [
 			"data-delete" => "/api/schedules/" . $id,

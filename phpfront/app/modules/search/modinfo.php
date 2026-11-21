@@ -3,7 +3,6 @@
 // @startup
 
 $module = new Task\Module;
-
 $module->setName("taskui/search");
 $module->setTitle("Search");
 $module->setDescription("Ask a question over the documentation and job targets of every project");

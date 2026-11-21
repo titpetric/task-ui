@@ -48,7 +48,6 @@ class View {
 	function body($template, $data, $chrome) {
 		$paths = [$this->templates(), self::THEME];
 		$tpl = new \MiniTPL\Template($paths);
-
 		$tpl->load($template);
 		$tpl->assign("base", Host::base());
 		$tpl->assign("chrome", $chrome);
@@ -61,7 +60,6 @@ class View {
 	function partial($template, $vars) {
 		$paths = [$this->templates(), self::THEME];
 		$tpl = new \MiniTPL\Template($paths);
-
 		$tpl->load($template);
 		$tpl->assign("base", Host::base());
 		$tpl->assign("chrome", $this->chrome->data());
@@ -152,7 +150,6 @@ class View {
 
 		$paths = [self::THEME];
 		$shell = new \MiniTPL\Template($paths);
-
 		$shell->load("index.tpl");
 		$shell->assign("base", $chrome["base"]);
 		$shell->assign("chrome", $chrome);

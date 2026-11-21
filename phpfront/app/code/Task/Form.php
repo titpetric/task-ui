@@ -426,7 +426,6 @@ class Form {
 	static function html($block, $chrome) {
 		$paths = [View::THEME];
 		$tpl = new \MiniTPL\Template($paths);
-
 		$tpl->load("components/form-block.tpl");
 		$tpl->assign("data_form", self::block($block, $chrome));
 
@@ -562,7 +561,6 @@ class Form {
 				return $out;
 			case "user":
 				$names = array_keys($chrome->roles());
-
 				sort($names);
 
 				return $names;

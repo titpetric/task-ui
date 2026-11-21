@@ -83,7 +83,6 @@ class mod_profile implements Module {
 		$seen = new Task\Seen($chrome);
 		$workspaces = $chrome->workspaces();
 		$edits = $own || $chrome->allowed("user/edit");
-
 		$view->page([
 			"who" => $this->who($chrome, $user, $own),
 			"buttons" => $this->buttons($chrome, $user, $own, $edits),
@@ -199,7 +198,6 @@ class mod_profile implements Module {
 		$name = $user->getName();
 		$id = $user->getId();
 		$menu = new Task\Menu("Actions on " . $name);
-
 		$menu->item("list", "Runs by this user", ["href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))]);
 		$menu->whenDanger($this->deletes($chrome, $user), "trash", "Delete", [
 			"data-delete" => "/api/users/" . $id,
@@ -280,7 +278,6 @@ class mod_profile implements Module {
 		$label = Task\Run::name($run);
 		$href = Task\Run::runJobHref($run, $workspaces);
 		$menu = new Task\Menu("Actions on the run of " . $job);
-
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Task\Clock::read($run->getStartedAt()));
 		$menu->item("file", "Open the run's page", ["href" => Task\Route::href("/runs/" . $id)]);
@@ -493,6 +490,5 @@ class mod_profile implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_profile;
-
 	$mod->serve();
 }

@@ -33,7 +33,6 @@ class mod_runs implements Module {
 
 	function serve() {
 		$chrome = new Task\Chrome;
-
 		$chrome->heading("Runs", [["text" => "Runs", "href" => ""]]);
 
 		$runs = new Task\Runs\Runs;
@@ -82,7 +81,6 @@ class mod_runs implements Module {
 
 		$view = new Task\View($this, $chrome);
 		$head = new Task\Head("Runs", self::LEAD);
-
 		$view->page([
 			"head" => $head->data(),
 			"form" => $form,
@@ -168,7 +166,6 @@ class mod_runs implements Module {
 		$ended = Task\Run::ended($state);
 		$job = $run->getJob();
 		$menu = new Task\Menu("Actions on the run of " . $job);
-
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Task\Clock::read($run->getStartedAt()));
 		$menu->item("file", "Open the run's page", ["href" => Task\Route::href("/runs/" . $id)]);
@@ -222,7 +219,6 @@ class mod_runs implements Module {
 	/** users is the names of the users, sorted, for the filter. */
 	function users($chrome) {
 		$out = array_keys($chrome->who()->roles);
-
 		sort($out);
 
 		return $out;
@@ -234,6 +230,5 @@ class mod_runs implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_runs;
-
 	$mod->serve();
 }

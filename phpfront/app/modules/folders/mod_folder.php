@@ -231,14 +231,12 @@ class mod_folder implements Module {
 		$named = $row !== null;
 		$title = $named ? Task\Row::text($row, "title") : self::INTERNAL;
 		$description = $named ? Task\Row::text($row, "description") : "";
-
 		$this->chrome->heading($title, Task\Route::crumbs($id, "", $this->workspaces));
 		$this->chrome->at($id);
 
 		$folders = $this->chrome->folders();
 		$subs = $this->projects($folders);
 		$head = new Task\Head($title);
-
 		$head->said($description);
 		$head->icon("folder-open");
 		$head->always();
@@ -249,7 +247,6 @@ class mod_folder implements Module {
 		if ($named) {
 			$place = Task\Place::root();
 			$place->projects = count($subs);
-
 			$head->buttons($place->buttons($this->chrome));
 			$head->menu($place->menu($this->chrome, $title, [], [], true));
 		}
@@ -276,7 +273,6 @@ class mod_folder implements Module {
 			"home" => $home,
 			"detail" => null,
 		];
-
 		$this->view->page($scope, "folder.tpl");
 	}
 
@@ -373,7 +369,6 @@ class mod_folder implements Module {
 	function folder($id) {
 		$place = Task\Host::place($id, "");
 		$title = Task\Row::text($place, "title");
-
 		$this->chrome->heading($title, Task\Route::crumbs($id, "", $this->workspaces));
 		$this->chrome->at($id);
 		$this->chrome->asks($id);
@@ -392,7 +387,6 @@ class mod_folder implements Module {
 
 		$pins = $this->chrome->user === null ? [] : $this->chrome->pins();
 		$head = new Task\Head($title);
-
 		$head->said(Task\Row::text($place, "description"));
 		$head->icon("folder-open");
 		$head->always();
@@ -422,7 +416,6 @@ class mod_folder implements Module {
 			"home" => $home,
 			"detail" => $this->detail($id, $place, $checkout),
 		];
-
 		$this->view->page($scope, "folder.tpl");
 	}
 
@@ -445,7 +438,6 @@ class mod_folder implements Module {
 		$place = Task\Host::place($id, $rel);
 		$name = Task\Folders::nameOf($rel);
 		$where = $id . "/" . $rel;
-
 		$this->chrome->heading($name, Task\Route::crumbs($where, "", $this->workspaces));
 		$this->chrome->at($id);
 		$this->chrome->asks($id, $rel);
@@ -455,7 +447,6 @@ class mod_folder implements Module {
 		$sources = Task\Row::items($place, "sources");
 		$status = Task\Host::status(Task\Row::text($place, "dir"));
 		$head = new Task\Head($name, $this->leads($id, $rel, count($sources) > 0, count($groups) > 0));
-
 		$head->icon("folder-open");
 		$head->always();
 
@@ -484,7 +475,6 @@ class mod_folder implements Module {
 			"home" => null,
 			"detail" => null,
 		];
-
 		$this->view->page($scope, "folder.tpl");
 	}
 
@@ -674,7 +664,6 @@ class mod_folder implements Module {
 	 */
 	function job($id, $dir, $name, $job) {
 		$page = new Task\Job($this->chrome, $this->view);
-
 		$page->serve($id, $dir, $name, $job);
 	}
 }
@@ -684,6 +673,5 @@ class mod_folder implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_folder;
-
 	$mod->serve();
 }

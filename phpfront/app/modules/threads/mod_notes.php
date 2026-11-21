@@ -33,6 +33,5 @@ class mod_notes implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_notes;
-
 	$mod->serve();
 }

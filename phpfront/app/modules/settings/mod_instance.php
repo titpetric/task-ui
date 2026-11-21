@@ -106,7 +106,6 @@ class mod_instance implements Module {
 		$head = new Task\Head(Task\Setup::INSTANCE, self::lead($admin));
 		$steps = Task\Setup::steps($chrome, Task\Setup::INSTANCE);
 		$tools = new Task\Toolset;
-
 		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
@@ -348,6 +347,5 @@ class mod_instance implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_instance;
-
 	$mod->serve();
 }

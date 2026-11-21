@@ -110,7 +110,6 @@ class mod_secrets implements Module {
 		$steps = Task\Setup::steps($chrome, Task\Setup::SECRETS);
 		$head = new Task\Head(self::TITLE, self::LEAD);
 		$buttons = new Task\Buttons;
-
 		$buttons->primary("plus", self::ADD, self::action($key["instance"], $only));
 		$head->buttons($buttons->data());
 
@@ -245,7 +244,6 @@ class mod_secrets implements Module {
 		$name = $secret->getName();
 		$menu = new Task\Menu("Actions on " . $name);
 		$edit = Task\Secret::PAGE . "/edit?id=" . Task\Route::queryEscape($id);
-
 		$menu->detail("Changed", Task\Clock::read($secret->getUpdatedAt()));
 		$menu->when($chrome->allowed("secret/edit"), "edit", "Edit", ["href" => Task\Route::href($edit)]);
 		$menu->item("list", "Reads", ["href" => Task\Route::href(Task\Secret::PAGE . "/" . $id . "/reads")]);
@@ -287,6 +285,5 @@ class mod_secrets implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_secrets;
-
 	$mod->serve();
 }

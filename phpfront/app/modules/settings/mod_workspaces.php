@@ -68,7 +68,6 @@ class mod_workspaces implements Module {
 		$instance = Task\Host::instance(false);
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
 		$admin = Task\User::admin($chrome->user);
-
 		$view->page([
 			"head" => $this->head($admin),
 			"rows" => $this->rows($chrome, $rows, $nested, $counts, $homes, $named),
@@ -89,7 +88,6 @@ class mod_workspaces implements Module {
 	function head($admin) {
 		$buttons = new Task\Buttons;
 		$head = new Task\Head(Task\Setup::WORKSPACES, self::LEAD);
-
 		$buttons->when($admin, "upload", "Import", ["data-dialog-open" => "import-dialog"]);
 		$buttons->primary("plus", "Add workspace", ["href" => Task\Route::href(Task\Workspace::PAGE . "/new")]);
 		$head->buttons($buttons->data());
@@ -179,7 +177,6 @@ class mod_workspaces implements Module {
 		$menu = new Task\Menu("Actions on " . $folder);
 		$default = $folder === Task\Route::INTERNAL;
 		$deletes = $chrome->allowed("workspace/delete");
-
 		$menu->item("folder-open", "Open", ["href" => $links["href"]]);
 		$menu->item("edit", "Edit workspace", ["href" => $links["edit"]]);
 		$menu->when($chrome->allowed("project/edit"), "plus", "Add project", ["href" => $links["add"]]);
@@ -205,6 +202,5 @@ class mod_workspaces implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workspaces;
-
 	$mod->serve();
 }

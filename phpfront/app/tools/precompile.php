@@ -29,7 +29,6 @@ function roots() {
 /** sources are the templates of one directory, the components among them. */
 function sources($root) {
 	$found = array_merge(glob($root . "*.tpl"), glob($root . "components/*.tpl"));
-
 	sort($found);
 
 	return $found;

@@ -48,13 +48,11 @@ class mod_my_keys implements Module {
 	function serve() {
 		$chrome = new Task\Chrome;
 		$view = new Task\View($this, $chrome);
-
 		$chrome->heading("Your SSH keys", [["text" => "Your SSH keys", "href" => ""]]);
 
 		$folder = Task\Key::folder();
 		$keys = Task\Key::mine($folder["keys"], $chrome->user);
 		$head = new Task\Head("Your SSH keys");
-
 		$head->said(sprintf(self::LEAD, self::role($chrome)));
 
 		$view->page([
@@ -110,6 +108,5 @@ class mod_my_keys implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_my_keys;
-
 	$mod->serve();
 }

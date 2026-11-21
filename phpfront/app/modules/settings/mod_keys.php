@@ -61,7 +61,6 @@ class mod_keys implements Module {
 		$steps = Task\Setup::steps($chrome, Task\Setup::KEYS);
 		$users = new Task\User($chrome->db);
 		$everyone = $users->all();
-
 		$view->page([
 			"head" => $this->head($chrome),
 			"scopes" => $this->scopes($chrome, $folder),
@@ -391,6 +390,5 @@ class mod_keys implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_keys;
-
 	$mod->serve();
 }

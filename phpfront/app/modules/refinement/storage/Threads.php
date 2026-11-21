@@ -90,7 +90,6 @@ class Threads {
 		$now = \Task\Clock::stamp();
 		$thread = \Task\Id::make();
 		$comment = \Task\Id::make();
-
 		$this->db->insert("refinement_thread", [
 			"id" => $thread,
 			"title" => Thread::title($want),
@@ -122,7 +121,6 @@ class Threads {
 		$now = \Task\Clock::stamp();
 		$comment = \Task\Id::make();
 		$before = $this->latest($thread);
-
 		$this->db->insert("refinement_comment", [
 			"id" => $comment,
 			"thread_id" => $thread,
@@ -159,7 +157,6 @@ class Threads {
 	function apply($thread, $user, $body) {
 		$now = \Task\Clock::stamp();
 		$comment = \Task\Id::make();
-
 		$this->db->insert("refinement_comment", [
 			"id" => $comment,
 			"thread_id" => $thread,
@@ -190,7 +187,6 @@ class Threads {
 		foreach ($this->rules($from) as $rule) {
 			$now = \Task\Clock::stamp();
 			$comment = \Task\Id::make();
-
 			$this->db->insert("refinement_comment", [
 				"id" => $comment,
 				"thread_id" => $into,

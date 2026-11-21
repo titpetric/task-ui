@@ -136,7 +136,6 @@ class mod_users implements Module {
 		$reader = $chrome->user;
 		$drops = $adds && $chrome->allowed("user/delete") && !Task\User::admin($user);
 		$menu = new Task\Menu("Actions on " . $name);
-
 		$menu->item("edit", "Edit", ["href" => Task\Route::href("/users/" . $name . "/edit")]);
 		$menu->item("users", "Profile", ["href" => Task\Route::href("/users/" . $name)]);
 		$menu->item("list", "Runs by this user", ["href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))]);
@@ -183,6 +182,5 @@ class mod_users implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_users;
-
 	$mod->serve();
 }

@@ -67,6 +67,5 @@ class mod_user_by_id implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_user_by_id;
-
 	$mod->serve();
 }

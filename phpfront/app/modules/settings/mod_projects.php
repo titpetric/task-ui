@@ -60,7 +60,6 @@ class mod_projects implements Module {
 		$instance = Task\Host::instance(false);
 		$groups = Task\Project::groups($entries, $named);
 		$steps = Task\Setup::steps($chrome, Task\Setup::PROJECTS);
-
 		$view->page([
 			"head" => $this->head($chrome),
 			"groups" => $this->blocks($chrome, $groups, $spaces, Task\Row::text($instance, "root")),
@@ -125,6 +124,5 @@ class mod_projects implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_projects;
-
 	$mod->serve();
 }

@@ -3,7 +3,6 @@
 // @startup
 
 $module = new Task\Module;
-
 $module->setName("taskui/settings");
 $module->setTitle("Settings");
 $module->setDescription("What the server runs with, section by section");

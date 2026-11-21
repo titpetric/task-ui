@@ -85,7 +85,6 @@ class Pin {
 	 */
 	static function item($menu, $pins, $folder, $job, $dir, $what) {
 		$pin = self::pin($pins, $folder, $job, $dir, $what);
-
 		$menu->item("pin", $pin["label"], $pin["attrs"]);
 
 		return $menu;
@@ -100,7 +99,6 @@ class Pin {
 	 */
 	static function button($buttons, $pins, $folder, $job, $dir, $what) {
 		$pin = self::pin($pins, $folder, $job, $dir, $what);
-
 		$buttons->small("pin", $pin["label"], $pin["attrs"]);
 
 		return $buttons;

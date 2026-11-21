@@ -77,13 +77,11 @@ class Folders {
 		// by their last commit, and a pin can put a folder in the tree that no
 		// default listed. One crossing each, not one per row; see warm.
 		$side = $this->defaults($folders);
-
 		$this->warm($this->places($side));
 
 		$limited = $this->limited($side);
 		$pins = $this->pins($folders);
 		$placed = $this->placed($limited, $pins);
-
 		$this->warm($this->places($placed));
 
 		$groups = $this->group($placed, 0, true);

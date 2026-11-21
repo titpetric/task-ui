@@ -445,7 +445,6 @@ class Route {
 	 */
 	static function seeOther($path) {
 		$target = self::href($path);
-
 		header("Location: " . $target);
 		http_response_code(303);
 
@@ -465,7 +464,6 @@ class Route {
 	 */
 	static function found($path) {
 		$target = self::href($path);
-
 		header("Location: " . $target);
 		http_response_code(302);
 

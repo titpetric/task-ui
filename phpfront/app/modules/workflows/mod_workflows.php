@@ -77,7 +77,6 @@ class mod_workflows implements Module {
 		$runs = $this->recent($chrome, $flows);
 		$buttons = new Task\Buttons;
 		$head = new Task\Head("Workflows", self::LEAD);
-
 		$buttons->primary("plus", "Add workflow", ["href" => Task\Route::href("/workflows/new")]);
 		$head->buttons($buttons->data());
 
@@ -120,7 +119,6 @@ class mod_workflows implements Module {
 		$id = $flow["id"];
 		$last = $flow["last"];
 		$menu = new Task\Menu("Actions on " . $flow["name"]);
-
 		$menu->when($flow["canChange"], "edit", "Edit", ["href" => Task\Route::href("/workflows/" . $id . "/edit")]);
 		$menu->when($flow["running"] !== "", "eye", "The run going", ["href" => Task\Route::href("/workflows/" . $id . "/runs/" . $flow["running"])]);
 
@@ -333,6 +331,5 @@ class mod_workflows implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workflows;
-
 	$mod->serve();
 }

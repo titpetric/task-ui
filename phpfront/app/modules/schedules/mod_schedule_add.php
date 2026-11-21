@@ -65,14 +65,12 @@ class mod_schedule_add implements Module {
 		$catalogue = Task\Schedules\Catalogue::of($chrome, $folder, $job);
 		$workflows = Task\Schedules\Catalogue::workflows($chrome);
 		$users = $chrome->runAsUsers();
-
 		$chrome->heading(self::TITLE, [
 			["text" => "Scheduled", "href" => "/schedules"],
 			["text" => self::TITLE, "href" => ""],
 		]);
 
 		$head = new Task\Head(self::TITLE, self::LEAD);
-
 		$view->page([
 			"head" => $head->data(),
 			"edit" => false,
@@ -114,6 +112,5 @@ class mod_schedule_add implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_schedule_add;
-
 	$mod->serve();
 }

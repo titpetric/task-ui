@@ -85,6 +85,5 @@ class mod_refinement_apply implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement_apply;
-
 	$mod->serve();
 }

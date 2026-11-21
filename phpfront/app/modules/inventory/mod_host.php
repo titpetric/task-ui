@@ -81,7 +81,6 @@ class mod_host implements Module {
 
 		$now = Task\Clock::now();
 		$scope = $this->scope($facts, $now);
-
 		$view->page($scope, "host.tpl");
 	}
 
@@ -257,7 +256,6 @@ class mod_host implements Module {
 	/** mounts are the filesystems of the records as series, by name and each in its own colour. */
 	static function mounts($disks) {
 		$names = array_keys($disks);
-
 		sort($names);
 
 		$series = [];
@@ -403,6 +401,5 @@ class mod_host implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_host;
-
 	$mod->serve();
 }

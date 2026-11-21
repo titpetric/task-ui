@@ -56,6 +56,5 @@ class mod_login implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_login;
-
 	$mod->serve();
 }

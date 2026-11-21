@@ -97,7 +97,6 @@ class mod_workflow_run implements Module {
 		$steps = Task\Step::seen($seen, $ran);
 		$links = Task\Chain::of($steps, $workspaces);
 		$framed = Task\Chain::frames($links, $chrome->db, $names, $workspaces, true, $seen);
-
 		$view->page([
 			"flow" => ["name" => $flow["name"]],
 			"run" => self::run($run),
@@ -134,6 +133,5 @@ class mod_workflow_run implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workflow_run;
-
 	$mod->serve();
 }

@@ -34,16 +34,13 @@ class mod_dashboard implements Module {
 
 	function serve() {
 		$chrome = new Task\Chrome;
-
 		$chrome->heading("Dashboard");
 
 		$head = new Task\Head("Dashboard", self::LEAD);
-
 		$head->menu($this->add($chrome));
 
 		$view = new Task\View($this, $chrome);
 		$note = Task\Findings::note($chrome->folders(), $chrome->workspaces());
-
 		$view->page([
 			"head" => $head->data(),
 			"note" => $note,
@@ -62,7 +59,6 @@ class mod_dashboard implements Module {
 	 */
 	function add($chrome) {
 		$menu = new Task\Menu(self::ADD);
-
 		$menu->when($chrome->allowed("workspace/edit"), "folder-open", "Add workspace", ["href" => Task\Route::href("/settings/workspaces/new")]);
 		$menu->when($chrome->allowed("project/edit"), "folder", "Add project", ["href" => Task\Route::href("/settings/projects/new")]);
 		$menu->when($chrome->allowed("user/edit"), "users", "Add user", ["href" => Task\Route::href("/settings/users/new")]);
@@ -182,6 +178,5 @@ class mod_dashboard implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_dashboard;
-
 	$mod->serve();
 }

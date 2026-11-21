@@ -136,7 +136,6 @@ class mod_workflow_edit implements Module {
 
 		$head->menu($menu);
 		$flow = $this->moved($chrome, $space, $flow);
-
 		$view->page([
 			"head" => $head->data(),
 			"editor" => $editor->data($flow, "/api/workflows/", "PUT", "/workflows/" . $id, "Save"),
@@ -205,7 +204,6 @@ class mod_workflow_edit implements Module {
 
 		$move = $space->move($flow["steps"], $ws);
 		$flow["steps"] = $move["steps"];
-
 		$chrome->notes($move["missed"] === 0 ? self::MOVED : self::MISSED . $move["missed"] . self::LACKS);
 
 		return $flow;
@@ -218,7 +216,6 @@ class mod_workflow_edit implements Module {
 	function menu($space, $flow) {
 		$id = $flow["id"];
 		$menu = new Task\Menu("Actions on " . $flow["name"]);
-
 		$menu->item("flow", "Open", ["href" => Task\Route::href("/workflows/" . $id)]);
 		$space->moveItems($menu, $id);
 		$menu->danger("trash", "Delete", [
@@ -289,6 +286,5 @@ class mod_workflow_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workflow_edit;
-
 	$mod->serve();
 }

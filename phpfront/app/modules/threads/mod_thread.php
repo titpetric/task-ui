@@ -98,6 +98,5 @@ class mod_thread implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_thread;
-
 	$mod->serve();
 }

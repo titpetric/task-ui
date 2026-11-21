@@ -61,7 +61,6 @@ class mod_workspace_key_generate implements Module {
 		$next = Task\Workspace::PAGE . "/" . $folder;
 		$head = new Task\Head(self::TITLE, self::lead($folder, $dir));
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
-
 		$view->page([
 			"head" => $head->data(),
 			"form" => Task\Key::wsGenerate($folder, $dir, $next, false),
@@ -87,6 +86,5 @@ class mod_workspace_key_generate implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workspace_key_generate;
-
 	$mod->serve();
 }

@@ -86,12 +86,10 @@ class mod_telemetry implements Module {
 		$admin = Task\User::admin($chrome->user) && Task\Row::flag($opts, "wired");
 		$head = new Task\Head(Task\Setup::TELEMETRY, self::lead($admin));
 		$buttons = new Task\Buttons;
-
 		$buttons->item("", self::DASHBOARD, ["href" => $path, "title" => self::TRACES]);
 		$head->buttons($buttons->data());
 
 		$steps = Task\Setup::steps($chrome, Task\Setup::TELEMETRY);
-
 		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
@@ -158,6 +156,5 @@ class mod_telemetry implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_telemetry;
-
 	$mod->serve();
 }

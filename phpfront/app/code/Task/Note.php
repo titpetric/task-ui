@@ -171,7 +171,6 @@ class Note {
 
 		$what = $reply ? "reply" : "note";
 		$menu = new Menu("Actions on the " . $what . " of " . $author);
-
 		$menu->when($run !== "", "terminal", "Open its run", ["href" => Route::href("/runs/" . $run)]);
 		$menu->whenDanger(self::deletes($note, $chrome), "trash", "Delete", [
 			"data-delete" => "/api/notes/" . $id,

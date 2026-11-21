@@ -403,7 +403,6 @@ function render($module, $template, $data) {
 	$own = "modules/" . $module . "/";
 	$paths = [$own, "tools/templates/"];
 	$tpl = new MiniTPL\Template($paths);
-
 	$tpl->load($template);
 	$tpl->assign("nl", "\n");
 

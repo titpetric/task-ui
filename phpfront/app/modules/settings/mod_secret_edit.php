@@ -86,7 +86,6 @@ class mod_secret_edit implements Module {
 
 		$secret = $row->getIsSecret() !== 0;
 		$title = self::TITLE . $row->getName();
-
 		$chrome->heading($title, [
 			["text" => "Settings", "href" => "/settings"],
 			["text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE],
@@ -96,7 +95,6 @@ class mod_secret_edit implements Module {
 		$workspaces = new Task\Workspace($chrome->db);
 		$head = new Task\Head($title, self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::SECRETS);
-
 		$view->page([
 			"head" => $head->data(),
 			"id" => $row->getId(),
@@ -119,6 +117,5 @@ class mod_secret_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_secret_edit;
-
 	$mod->serve();
 }

@@ -40,13 +40,11 @@ class mod_search implements Module {
 		$chrome->heading("Search", [["text" => "Search", "href" => ""]]);
 
 		$head = new Task\Head("Search", self::LEAD);
-
 		$view->page(["head" => $head->data()]);
 	}
 }
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_search;
-
 	$mod->serve();
 }

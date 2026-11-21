@@ -139,7 +139,6 @@ foreach ($schema as $table) {
 	$tpl->assign("columns", columns($table));
 
 	$target = TREE . "/code/Task/Model/" . $class . ".php";
-
 	file_put_contents($target, $tpl->get());
 	$names[] = $class;
 }

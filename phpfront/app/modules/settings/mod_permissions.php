@@ -202,6 +202,5 @@ class mod_permissions implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_permissions;
-
 	$mod->serve();
 }

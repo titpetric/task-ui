@@ -111,7 +111,6 @@ class mod_workspace_edit implements Module {
 		$title = "Edit " . $folder;
 		$here = Task\Workspace::PAGE . "/" . $folder;
 		$href = Task\Route::folderHref($folder, $named);
-
 		$chrome->heading($title, [
 			["text" => "Settings", "href" => "/settings"],
 			["text" => Task\Setup::WORKSPACES, "href" => Task\Workspace::PAGE],
@@ -137,7 +136,6 @@ class mod_workspace_edit implements Module {
 		$edit = $chrome->allowed("workspace/edit");
 		$admin = Task\User::admin($chrome->user);
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
-
 		$view->page([
 			"head" => $this->head($chrome, $folder, $title, $ids, $found, $href, $dir !== "" && $admin),
 			"settings" => $this->settings($row, $folder, $root),
@@ -203,7 +201,6 @@ class mod_workspace_edit implements Module {
 		$menu = new Task\Menu("Actions on " . $folder);
 		$deletes = $chrome->allowed("workspace/delete");
 		$secrets = Task\Route::href(Task\Place::SECRETS) . "?workspace=" . Task\Route::queryEscape($folder);
-
 		$menu->item("folder-open", "Open", ["href" => Task\Route::href($href)]);
 		$menu->when($deletes && $found > 0, "secret", Task\Workspace::blocked($found), ["href" => $secrets]);
 		$menu->whenDanger($deletes && $found === 0, "trash", "Delete", [
@@ -355,7 +352,6 @@ class mod_workspace_edit implements Module {
 	function keys($chrome, $keys, $here, $folder, $adds) {
 		$buttons = new Task\Buttons(true);
 		$found = count($keys);
-
 		$buttons->when($adds, "upload", "Upload key", ["data-dialog-open" => "key-upload-dialog"]);
 		$buttons->when($adds, "key", "Generate key", ["data-dialog-open" => "key-generate-dialog"]);
 
@@ -376,6 +372,5 @@ class mod_workspace_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workspace_edit;
-
 	$mod->serve();
 }

@@ -113,7 +113,6 @@ class Pager {
 
 		$fields = self::query();
 		$fields[$key] = $id;
-
 		ksort($fields);
 
 		$query = [];

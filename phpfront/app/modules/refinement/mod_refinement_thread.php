@@ -65,7 +65,6 @@ class mod_refinement_thread implements Module {
 		$thread = Task\Refinement\Work::sync($store, $thread);
 		$comments = $store->comments(Task\Row::text($thread, "id"));
 		$title = Task\Row::text($thread, "title");
-
 		$chrome->heading($title, [
 			["text" => "Refinement", "href" => "/refinement"],
 			["text" => $title, "href" => ""],
@@ -83,7 +82,6 @@ class mod_refinement_thread implements Module {
 		$folder = Task\Row::text($thread, "id");
 		$report = Task\Refinement\Thread::split(Task\Row::text($thread, "report_markdown"));
 		$head = new Task\Head(Task\Row::text($thread, "title"));
-
 		$head->buttons($this->links($folder)->data());
 
 		return [
@@ -130,14 +128,12 @@ class mod_refinement_thread implements Module {
 	function links($folder) {
 		$buttons = new Task\Buttons;
 		$files = Task\Route::href("/artifacts?path=" . Task\Route::queryEscape($folder));
-
 		$buttons->item("box", "The files of this thread", ["href" => $files]);
 
 		$pad = $folder . "/" . Task\Refinement\Prompt::SCRATCHPAD;
 
 		if (Task\Host::artifact($pad) !== "") {
 			$href = Task\Refinement\Thread::FILES . Task\Route::escapePath($pad);
-
 			$buttons->item("file", "The scratch pad", ["href" => $href]);
 		}
 
@@ -182,6 +178,5 @@ class mod_refinement_thread implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement_thread;
-
 	$mod->serve();
 }

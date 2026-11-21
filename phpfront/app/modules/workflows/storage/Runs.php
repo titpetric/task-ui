@@ -187,7 +187,6 @@ class Runs {
 	/** hydrate is one row as a workflow run, its timestamps the text the column holds. */
 	static function hydrate($row) {
 		$run = new \Task\Model\WorkflowRun($row);
-
 		$run->setStartedAt(\Task\Row::stamp($row, "started_text"));
 		$run->setFinishedAt(\Task\Row::stamp($row, "finished_text"));
 

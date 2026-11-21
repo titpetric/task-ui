@@ -84,13 +84,11 @@ class mod_retention implements Module {
 
 		if ($admin) {
 			$buttons = new Task\Buttons;
-
 			$buttons->item("", "Clean up now", self::cleans());
 			$head->buttons($buttons->data());
 		}
 
 		$steps = Task\Setup::steps($chrome, Task\Setup::RETENTION);
-
 		$view->page([
 			"head" => $head->data(),
 			"admin" => $admin,
@@ -192,6 +190,5 @@ class mod_retention implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_retention;
-
 	$mod->serve();
 }

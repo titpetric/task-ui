@@ -245,7 +245,6 @@ class Project {
 
 		if ($adds) {
 			$href = Route::href(self::PAGE . "/new") . "?workspace=" . Route::queryEscape($workspace);
-
 			$buttons->item("plus", "Add project", ["href" => $href]);
 		}
 
@@ -317,7 +316,6 @@ class Project {
 		$id = Row::text($entry, "id");
 		$menu = new Menu("Actions on " . $id);
 		$href = Route::folderHref($id, $chrome->workspaces());
-
 		$menu->item("folder-open", "Open", ["href" => Route::href($href)]);
 		$menu->item("edit", "Edit project", ["href" => Route::href(self::PAGE . "/" . $id)]);
 

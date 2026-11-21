@@ -155,7 +155,6 @@ class mod_workflow implements Module {
 
 		$head = new Task\Head($flow["name"]);
 		$buttons = new Task\Buttons;
-
 		$head->said($flow["description"]);
 		$head->faint($steps);
 		$head->live();
@@ -175,7 +174,6 @@ class mod_workflow implements Module {
 
 		if ($flow["canChange"]) {
 			$edit = Task\Route::href("/workflows/" . $flow["id"] . "/edit");
-
 			$buttons->item("edit", "Edit", ["href" => $edit]);
 		}
 
@@ -259,7 +257,6 @@ class mod_workflow implements Module {
 		$ran = Task\Step::ofRun($runs->steps($id), $names);
 		$steps = Task\Step::seen($seen, $ran);
 		$menu = new Task\Menu("Actions on the run of " . $flow["name"]);
-
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Task\Clock::read($run->getStartedAt()));
 		$menu->item("file", "Open the run's page", ["href" => Task\Route::href($href)]);
@@ -304,6 +301,5 @@ class mod_workflow implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workflow;
-
 	$mod->serve();
 }

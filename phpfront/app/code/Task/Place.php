@@ -137,7 +137,6 @@ class Place {
 		$menu = new Menu("Actions on " . $title);
 		$edits = $chrome->allowed("project/edit");
 		$reads = $chrome->allowed("workspace/view");
-
 		$menu->when($this->workspace && $edits, "plus", "Add project", ["href" => $this->addProjectPage()]);
 		$menu->when($this->workspace && $reads, "edit", "Edit workspace", ["href" => $this->settings()]);
 		$menu->when($this->workspace && $reads, "key", "SSH keys", ["href" => $this->keysPage()]);
@@ -149,7 +148,6 @@ class Place {
 		}
 
 		$placed = $this->workspace || $this->project;
-
 		$menu->when(!$root && $placed && $chrome->allowed("schedule/edit"), "clock", "Add schedule", ["href" => $this->schedulesPage()]);
 
 		if ($this->pull !== null && Folders::allows($chrome->access, $this->place(), $this->pull)) {

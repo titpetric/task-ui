@@ -59,7 +59,6 @@ class mod_workspace_keys implements Module {
 
 		$title = "Keys of " . $folder;
 		$here = Task\Workspace::PAGE . "/" . $folder . "/keys";
-
 		$chrome->heading($title, Task\Workspace::crumbs($folder, self::CRUMB));
 		$chrome->asks($folder);
 
@@ -68,7 +67,6 @@ class mod_workspace_keys implements Module {
 		$keys = Task\Key::ofWorkspace($found["keys"], Task\Row::text($row, "id"));
 		$edit = $chrome->allowed("workspace/edit");
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
-
 		$view->page([
 			"head" => $this->head($chrome, $folder, $title, $edit && $dir !== ""),
 			"dir" => $dir,
@@ -113,7 +111,6 @@ class mod_workspace_keys implements Module {
 	function menu($chrome, $folder) {
 		$menu = new Task\Menu("Actions on " . $folder);
 		$href = Task\Route::folderHref($folder, $chrome->workspaces());
-
 		$menu->item("folder-open", "Open", ["href" => Task\Route::href($href)]);
 		$menu->item("settings", "Edit workspace", ["href" => Task\Route::href(Task\Workspace::PAGE . "/" . $folder)]);
 		$menu->when($chrome->allowed("secret/view"), "secret", "Secrets", [
@@ -141,6 +138,5 @@ class mod_workspace_keys implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workspace_keys;
-
 	$mod->serve();
 }

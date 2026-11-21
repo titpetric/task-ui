@@ -65,7 +65,6 @@ class mod_secret_reads implements Module {
 
 		$name = $secret->getName();
 		$title = "Reads of " . $name;
-
 		$chrome->heading($title, [
 			["text" => "Settings", "href" => "/settings"],
 			["text" => Task\Setup::SECRETS, "href" => Task\Secret::PAGE],
@@ -87,7 +86,6 @@ class mod_secret_reads implements Module {
 
 		$head = new Task\Head($title);
 		$buttons = new Task\Buttons;
-
 		$head->badge($secret->getScope());
 		$head->said(self::said($name));
 		$buttons->item("", self::BACK, ["href" => Task\Route::href(Task\Secret::PAGE)]);
@@ -95,7 +93,6 @@ class mod_secret_reads implements Module {
 
 		$steps = Task\Setup::steps($chrome, Task\Setup::SECRETS);
 		$path = Task\Secret::PAGE . "/" . $id . "/reads";
-
 		$view->page([
 			"head" => $head->data(),
 			"heading" => self::HEADING,
@@ -159,6 +156,5 @@ class mod_secret_reads implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_secret_reads;
-
 	$mod->serve();
 }

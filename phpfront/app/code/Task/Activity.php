@@ -288,7 +288,6 @@ class Activity {
 
 		$this->bars = $bars;
 		$this->stats = $stats;
-
 		usort($finished, ["Task\\Activity", "earlier"]);
 
 		return $finished;

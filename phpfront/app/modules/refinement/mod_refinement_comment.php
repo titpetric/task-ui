@@ -75,6 +75,5 @@ class mod_refinement_comment implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement_comment;
-
 	$mod->serve();
 }

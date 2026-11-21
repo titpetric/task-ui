@@ -390,7 +390,6 @@ class Key {
 		$remove = $owned ? "/api/workspaces/" . $workspace . "/keys/" . $name : "/api/keys/" . $name;
 		$canRemove = $owned ? $chrome->allowed("workspace/edit") : $chrome->allowed("key/delete");
 		$menu = new Menu("Actions on " . $name);
-
 		$menu->detail("Fingerprint", $key["fingerprint"], true);
 
 		if ($key["created_at"] !== "") {

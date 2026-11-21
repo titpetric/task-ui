@@ -83,7 +83,6 @@ class StepSpace {
 
 		$named = array_keys($seen);
 		$ranks = $this->ranks;
-
 		usort($named, function($one, $other) use ($ranks) {
 			return Folders::byRank($one, $other, $ranks);
 		});
@@ -312,7 +311,6 @@ class StepSpace {
 
 		foreach ($spaces as $space) {
 			$href = "/workflows/" . $id . "/edit?workspace=" . Route::queryEscape($space["id"]);
-
 			$menu->item("folder", "Move to " . $space["title"], ["href" => Route::href($href)]);
 		}
 

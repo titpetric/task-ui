@@ -85,7 +85,6 @@ class mod_project_edit implements Module {
 		}
 
 		$named = $chrome->workspaces();
-
 		$chrome->heading(self::TITLE . $id, Task\Project::crumbs($id, $named, self::CRUMB));
 		$chrome->at($id);
 		$chrome->asks($id);
@@ -98,7 +97,6 @@ class mod_project_edit implements Module {
 		$allow = Task\Text::items(Task\Row::text($row, "allow"));
 		$jobs = Task\Text::map(Task\Row::text($row, "job_allow"));
 		$steps = Task\Setup::steps($chrome, Task\Setup::PROJECTS);
-
 		$view->page([
 			"head" => $this->head($chrome, $id, $checkout),
 			"api" => "/api/projects/" . $id,
@@ -126,7 +124,6 @@ class mod_project_edit implements Module {
 		}
 
 		$menu = new Task\Menu("Actions on " . $id);
-
 		$menu->danger("trash", "Remove checkout", self::removes($id, $checkout));
 		$head->menu($menu->data());
 
@@ -228,7 +225,6 @@ class mod_project_edit implements Module {
 			$id = Task\Row::text($job, "id");
 			$named = isset($allow[$id]) ? $allow[$id] : [];
 			$who = new Task\WhoField("job_allow." . $id, "set", $named, $named, $users, self::JOBS);
-
 			$who->tight();
 
 			$out[] = [
@@ -308,6 +304,5 @@ class mod_project_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_project_edit;
-
 	$mod->serve();
 }

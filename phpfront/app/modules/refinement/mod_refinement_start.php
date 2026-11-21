@@ -45,7 +45,6 @@ class mod_refinement_start implements Module {
 
 		if (!$chrome->allowed("module") || !$chrome->allowed("prompt/edit")) {
 			$view = new Task\View($this, $chrome);
-
 			$view->refused();
 
 			return;
@@ -80,6 +79,5 @@ class mod_refinement_start implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement_start;
-
 	$mod->serve();
 }

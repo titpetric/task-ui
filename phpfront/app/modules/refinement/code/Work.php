@@ -43,7 +43,6 @@ class Work {
 	 */
 	static function start($store, $thread, $comment, $body) {
 		$note = \Task\Host::dispatch($body, self::ACTION, $thread);
-
 		$store->note($comment, $note);
 
 		return $note;

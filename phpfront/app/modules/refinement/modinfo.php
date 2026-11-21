@@ -3,7 +3,6 @@
 // @startup
 
 $module = new Task\Module;
-
 $module->setName("taskui/refinement");
 $module->setTitle("Refinement");
 $module->setDescription("Refine a design through a thread of comments, each one a Claude run");

@@ -55,7 +55,6 @@ class Hosts {
 		}
 
 		$id = \Task\Id::make();
-
 		$this->db->insert("host", [
 			"id" => $id,
 			"name" => $name === "" ? $address : $name,

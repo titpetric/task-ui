@@ -55,7 +55,6 @@ class Run {
 		}
 
 		$said = Row::text($session, "message");
-
 		$run->setState(Row::text($session, "state"));
 		$run->setExitCode(Row::number($session, "exit_code"));
 		$run->setTitle(Row::text($session, "title"));

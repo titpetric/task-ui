@@ -75,6 +75,5 @@ class mod_refinement_delete implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement_delete;
-
 	$mod->serve();
 }

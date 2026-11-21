@@ -63,7 +63,6 @@ class Job {
 		$jobDir = Row::text($job, "dir");
 		$jobName = Row::text($job, "name");
 		$where = Route::place($id, $jobDir);
-
 		$this->chrome->heading($where . " / " . $jobName, Route::crumbs($where, $jobName, $this->workspaces));
 		$this->chrome->at($id, Row::text($job, "key"));
 		$this->chrome->asks($id, $jobDir);
@@ -98,7 +97,6 @@ class Job {
 			"can" => $can,
 			"schedules" => $jobDir === "" ? $this->schedules($id, $job, $can, $users) : null,
 		];
-
 		$this->view->page($scope, "job.tpl");
 	}
 
@@ -115,7 +113,6 @@ class Job {
 	function head($place, $job, $running, $can, $control) {
 		$head = new Head(Row::text($job, "name"));
 		$buttons = new Buttons;
-
 		$head->said(Row::text($job, "description"));
 		$head->leads();
 		$head->always();
@@ -127,7 +124,6 @@ class Job {
 
 		if ($running !== null) {
 			$id = $running->getId();
-
 			$buttons->primary("", "Attach", ["href" => Route::href("/runs/" . $id), "data-attach" => $id]);
 			$buttons->whenDanger($can, "", "Kill", ["data-kill" => $id]);
 		} elseif ($can) {
@@ -369,7 +365,6 @@ class Job {
 	function menu($run, $report, $job, $can, $control, $ended) {
 		$id = $run->getId();
 		$menu = new Menu("Actions on the run of " . $run->getJob());
-
 		$menu->detail("Run", $id, true);
 		$menu->detail("Started", Clock::read($run->getStartedAt()));
 		$menu->item("file", "Open the run's page", ["href" => Route::href("/runs/" . $id)]);

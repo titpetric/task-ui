@@ -56,7 +56,6 @@ class mod_orb implements Module {
 		}
 
 		$head = new Task\Head("Meetings", self::LEAD);
-
 		$view->page([
 			"head" => $head->data(),
 			"rows" => $rows,
@@ -94,6 +93,5 @@ class mod_orb implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_orb;
-
 	$mod->serve();
 }

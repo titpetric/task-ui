@@ -66,7 +66,6 @@ class mod_project_new implements Module {
 		$chosen = Task\Route::input("workspace");
 		$back = self::back($chosen);
 		$steps = Task\Setup::steps($chrome, Task\Setup::PROJECTS);
-
 		$view->page([
 			"head" => $this->head(),
 			"options" => self::options($rows, $chosen),
@@ -137,6 +136,5 @@ class mod_project_new implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_project_new;
-
 	$mod->serve();
 }

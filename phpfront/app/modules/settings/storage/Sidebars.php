@@ -42,7 +42,6 @@ class Sidebars {
 	/** order writes the position and the hidden flag of each link, in one transaction. */
 	function order($hrefs, $hidden) {
 		$now = \Task\Clock::stamp();
-
 		$this->db->begin();
 
 		// A runtime failure in the loop is not catchable: an Error and a

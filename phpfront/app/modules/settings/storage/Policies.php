@@ -61,7 +61,6 @@ class Policies {
 		}
 
 		$row = new \Task\Model\PermissionPolicy;
-
 		$row->setId(\Task\Id::make());
 		$row->setSubjectKind($kind);
 		$row->setSubject($subject);

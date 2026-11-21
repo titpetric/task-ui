@@ -58,7 +58,6 @@ class mod_report implements Module {
 		}
 
 		$name = Task\Run::name($run);
-
 		$chrome->heading($name . " report", [
 			["text" => "Runs", "href" => "/runs"],
 			["text" => $name, "href" => "/runs/" . $run->getId()],
@@ -67,7 +66,6 @@ class mod_report implements Module {
 		$chrome->asksOfRun($run);
 
 		$scope = $this->scope($chrome, $runs, $seen, $run, $report);
-
 		$view->page($scope, "report.tpl");
 	}
 
@@ -80,7 +78,6 @@ class mod_report implements Module {
 		$summary = Task\Report::isSummary($report);
 		$buttons = self::buttons($chrome, $run, $about);
 		$head = new Task\Head(Task\Run::name($about));
-
 		$head->said(self::lead($about, $report, $summary));
 		$head->badge("report");
 		$head->buttons($buttons->data());
@@ -123,7 +120,6 @@ class mod_report implements Module {
 		$id = $about->getId();
 		$jobHref = Task\Run::runJobHref($about, $chrome->workspaces());
 		$buttons = new Task\Buttons;
-
 		$buttons->item("", "Run", ["href" => Task\Route::href("/runs/" . $id)]);
 		$buttons->when($id !== $run->getId(), "", "Claude's run", ["href" => Task\Route::href("/runs/" . $run->getId())]);
 		$buttons->when($jobHref !== "", "", "Job", ["href" => Task\Route::href($jobHref)]);
@@ -164,6 +160,5 @@ class mod_report implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_report;
-
 	$mod->serve();
 }

@@ -66,7 +66,6 @@ class mod_workspace_new implements Module {
 
 		$head = new Task\Head(self::TITLE, self::LEAD);
 		$steps = Task\Setup::steps($chrome, Task\Setup::WORKSPACES);
-
 		$view->page([
 			"head" => $head->data(),
 			"next" => self::NEXT,
@@ -82,6 +81,5 @@ class mod_workspace_new implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workspace_new;
-
 	$mod->serve();
 }

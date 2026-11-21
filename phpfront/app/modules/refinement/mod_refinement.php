@@ -55,7 +55,6 @@ class mod_refinement implements Module {
 		$store = new Task\Refinement\Threads;
 		$threads = $store->all();
 		$table = self::table($threads);
-
 		$view->page([
 			"head" => $head->data(),
 			"table" => $table->data(),
@@ -84,7 +83,6 @@ class mod_refinement implements Module {
 	/** table is the threads: the title, how many comments it holds, when it started, and the way in. */
 	static function table($threads) {
 		$table = new Task\Table;
-
 		$table->head([
 			Task\Table::cell("Thread"),
 			Task\Table::cell("Comments", "num"),
@@ -96,7 +94,6 @@ class mod_refinement implements Module {
 			$id = Task\Row::text($thread, "id");
 			$href = Task\Route::href("/refinement/threads/" . Task\Route::pathEscape($id));
 			$open = '<a class="btn btn-sm" href="' . htmlspecialchars($href, ENT_QUOTES) . '">Open</a>';
-
 			$table->row([
 				Task\Table::link($href, Task\Row::text($thread, "title"), "key"),
 				Task\Table::cell(Task\Row::number($thread, "comments"), "num mono"),
@@ -111,6 +108,5 @@ class mod_refinement implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement;
-
 	$mod->serve();
 }

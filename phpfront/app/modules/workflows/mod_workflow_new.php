@@ -63,7 +63,6 @@ class mod_workflow_new implements Module {
 		$space = new Task\StepSpace($chrome);
 		$editor = new Task\Editor($chrome, $space, $flows);
 		$head = new Task\Head("Add workflow", self::LEAD);
-
 		$view->page([
 			"head" => $head->data(),
 			"editor" => $editor->data(null, "/api/workflows", "POST", "/workflows", "Add workflow"),
@@ -76,6 +75,5 @@ class mod_workflow_new implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_workflow_new;
-
 	$mod->serve();
 }

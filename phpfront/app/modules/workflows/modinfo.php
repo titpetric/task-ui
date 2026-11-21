@@ -3,7 +3,6 @@
 // @startup
 
 $module = new Task\Module;
-
 $module->setName("taskui/workflows");
 $module->setTitle("Workflows");
 $module->setDescription("A pipeline of steps, its runs and the answers each step took");

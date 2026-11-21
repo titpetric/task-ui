@@ -54,13 +54,11 @@ class mod_run implements Module {
 		}
 
 		$name = Task\Run::name($run);
-
 		$chrome->heading($name, [["text" => "Runs", "href" => "/runs"], ["text" => $name, "href" => ""]]);
 		$this->at($chrome, $run);
 		$chrome->asksOfRun($run);
 
 		$scope = $this->scope($chrome, $run, $seen);
-
 		$view->page($scope, "run.tpl");
 	}
 
@@ -90,7 +88,6 @@ class mod_run implements Module {
 
 		$job = Task\Host::job($id, $run->getDir(), $run->getJob());
 		$key = Task\Row::flag($job, "found") ? Task\Row::text($job, "key") : "";
-
 		$chrome->at($id, $key);
 	}
 
@@ -124,7 +121,6 @@ class mod_run implements Module {
 		$buttons = self::buttons($run, $report, $expired, $can, $session, $summarizes, $pending, $asks, $thread);
 		$code = $ended && $state !== Task\Run::OK ? (string)$run->getExitCode() : "";
 		$head = new Task\Head($name);
-
 		$head->said(self::lead($run, $expired, $can));
 		$head->badge($code === "" ? $state : $state . " " . $code, Task\Run::tone($state));
 		$head->note($run->getTitle());
@@ -168,7 +164,6 @@ class mod_run implements Module {
 		$again = $ended && ($claude ? $asks : $can);
 		$href = $report === null ? "" : Task\Route::href(Task\Report::href($report));
 		$buttons = new Task\Buttons;
-
 		$buttons->primary("", $ended ? "View" : "Attach", ["data-attach" => $id]);
 		$buttons->when($thread !== null, "note", "Open thread", ["href" => $thread["href"], "title" => $thread["title"]]);
 		$buttons->when($again, "", "Run again", ["data-rerun" => $id, "data-title" => Task\Run::name($run)]);
@@ -396,7 +391,6 @@ class mod_run implements Module {
 			$name = $file->getName();
 			$href = self::ARTIFACT_API . $file->getId();
 			$menu = new Task\Menu("Actions on " . $name);
-
 			$menu->whenDanger($deletes, "trash", "Delete", [
 				"data-delete" => $href,
 				"data-confirm" => "Delete " . $name . "?",
@@ -505,6 +499,5 @@ class mod_run implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_run;
-
 	$mod->serve();
 }

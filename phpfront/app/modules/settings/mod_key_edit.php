@@ -59,7 +59,6 @@ class mod_key_edit implements Module {
 
 		$name = $key["name"];
 		$next = self::next();
-
 		$chrome->heading("Edit " . $name, [
 			["text" => "Settings", "href" => "/settings"],
 			["text" => Task\Setup::KEYS, "href" => self::PAGE],
@@ -72,7 +71,6 @@ class mod_key_edit implements Module {
 		$users = new Task\User($chrome->db);
 		$everyone = $users->all();
 		$field = Task\Key::policies($key["roles"], $key["users"], $everyone);
-
 		$view->page([
 			"head" => $head->data(),
 			"api" => "/api/keys/" . $name,
@@ -138,6 +136,5 @@ class mod_key_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_key_edit;
-
 	$mod->serve();
 }

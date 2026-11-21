@@ -104,7 +104,6 @@ class mod_user_edit implements Module {
 	function head($name) {
 		$buttons = new Task\Buttons;
 		$head = new Task\Head("Edit " . $name);
-
 		$buttons->item("users", "View profile", ["href" => Task\Route::href("/users/" . $name)]);
 		$head->said(sprintf(self::LEAD, $name));
 		$head->buttons($buttons->data());
@@ -310,6 +309,5 @@ class mod_user_edit implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_user_edit;
-
 	$mod->serve();
 }

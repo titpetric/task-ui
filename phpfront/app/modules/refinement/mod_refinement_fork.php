@@ -77,7 +77,6 @@ class mod_refinement_fork implements Module {
 		$user = $chrome->name();
 		$opened = $store->start($user, $want);
 		$id = $opened["id"];
-
 		$store->carry($from, $id, $opened["comment_id"]);
 
 		// The first run of the fork is the flattened request, not the subject
@@ -95,6 +94,5 @@ class mod_refinement_fork implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_refinement_fork;
-
 	$mod->serve();
 }

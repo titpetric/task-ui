@@ -35,14 +35,12 @@ class mod_host_drop implements Module {
 
 		if (!$chrome->allowed("inventory/delete")) {
 			$view = new Task\View($this, $chrome);
-
 			$view->refused();
 
 			return;
 		}
 
 		$store = new Task\Inventory\Hosts($db);
-
 		$store->drop(Task\Route::param("id"));
 		Task\Route::notice(self::PAGE, "The host is out of the inventory.");
 	}
@@ -50,6 +48,5 @@ class mod_host_drop implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_host_drop;
-
 	$mod->serve();
 }

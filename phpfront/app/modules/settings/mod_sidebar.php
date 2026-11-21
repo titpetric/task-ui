@@ -60,7 +60,6 @@ class mod_sidebar implements Module {
 
 		$admin = Task\User::admin($chrome->user);
 		$store = new Task\Sidebar(Task\DB::writer());
-
 		$store->seed();
 		$items = $store->all();
 		$head = new Task\Head(Task\Setup::SIDEBAR, self::lead($admin));
@@ -103,7 +102,6 @@ class mod_sidebar implements Module {
 	 */
 	static function menu($row) {
 		$menu = new Task\Menu("Actions on " . $row["title"]);
-
 		$menu->detail("Link", $row["href"], true);
 		$menu->detail("Kind", $row["kind"]);
 		$menu->item("up", "Move up", ["data-row-move" => "up"]);
@@ -118,6 +116,5 @@ class mod_sidebar implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_sidebar;
-
 	$mod->serve();
 }
