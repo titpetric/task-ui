@@ -1,9 +1,11 @@
 <?php $_v=&$this->vars; if($_v['data_sched']['rows']){?>
+	<div data-flags>
 	<div class="table-wrap fit">
 	<table class="table fit-cards">
-		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
+		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>Enabled</th><th>Triage</th><th></th></tr></thead>
 		<tbody>
-<?php if(!empty($_v['data_sched']['rows']))foreach($_v['data_sched']['rows'] as $_v['row']){?>			<tr>
+<?php if(!empty($_v['data_sched']['rows']))foreach($_v['data_sched']['rows'] as $_v['row']){?>			<tr data-flag-row data-flag-api="/api/schedules/<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
+">
 				<td class="key" data-label="Expression"><code><?php echo htmlspecialchars($_v['row']['expression'], ENT_QUOTES);?>
 </code></td>
 				<td data-label="Next run"><?php if($_v['row']['on']){ if(!empty($_v['row']['next']))foreach($_v['row']['next'] as $_v['part']){?><span class="nowrap"><?php echo htmlspecialchars($_v['part'], ENT_QUOTES);?>
@@ -40,15 +42,21 @@
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
 </span><?php }?></span>
 <?php }?></td>
-				<td data-label="State"><?php if($_v['row']['on']){?>
-<span class="badge ok">enabled</span><?php }else{?>
-<span class="badge">disabled</span><?php }?><?php if($_v['row']['triage']){?>
- <span class="badge signal" title="Claude triages a failed run">triage</span><?php }?></td>
+				<td class="flags" data-label="Enabled"><input type="checkbox" name="enabled" data-flag="enabled" data-was="<?php if($_v['row']['on']){?>
+1<?php }else{?>
+0<?php }?>"<?php if($_v['row']['on']){?>
+ checked<?php }?><?php if(!$_v['row']['can']){?>
+ disabled<?php }?> aria-label="Enabled"></td>
+				<td class="flags" data-label="Triage"><input type="checkbox" name="triage" data-flag="triage" data-was="<?php if($_v['row']['triage']){?>
+1<?php }else{?>
+0<?php }?>"<?php if($_v['row']['triage']){?>
+ checked<?php }?><?php if(!$_v['row']['can']){?>
+ disabled<?php }?> aria-label="Triage failures with Claude"></td>
 				<td class="actions"><?php if($_v['data_sched']['can']){ $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -68,8 +76,8 @@
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -77,8 +85,8 @@
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>
@@ -90,4 +98,7 @@
 <?php }?>		</tbody>
 	</table>
 	</div>
+<?php if($_v['data_sched']['can']){?>
+	<div class="table-actions"><button class="btn btn-primary" type="button" data-flag-save data-notice="Schedules saved" disabled>Save</button></div>
+<?php }?>	</div>
 <?php }?>

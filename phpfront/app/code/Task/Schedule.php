@@ -46,7 +46,8 @@ class Schedule {
 
 		foreach ($schedules as $schedule) {
 			$row = self::cells($chrome, $schedule, "", $users);
-			$row["menu"] = self::menu($schedule, $row["on"], $what, $can);
+			$row["can"] = $can;
+			$row["menu"] = self::menu($schedule, $what, $can);
 			$rows[] = $row;
 		}
 
@@ -71,6 +72,7 @@ class Schedule {
 		$last = $schedule->getLastRunAt();
 
 		return [
+			"id" => $schedule->getId(),
 			"expression" => $schedule->getExpression(),
 			"on" => $on,
 			"next" => $on ? explode(" ", Clock::read($schedule->getNextRunAt())) : [],
@@ -89,8 +91,8 @@ class Schedule {
 
 	/**
 	 * menu is a row's [...]: Edit, where edits says the reader may change a
-	 * schedule, then Enable or Disable, by on, whether the schedule runs, and
-	 * Delete, whose confirm names what the schedule is for.
+	 * schedule, and Delete, whose confirm names what the schedule is for.
+	 * Whether it runs and triages is a column of the table, saved with it.
 	 *
 	 * Edit is a page of its own, /schedules/edit/{id}, so the expression is
 	 * changed where the target is named and a form on the page is not reused
@@ -99,19 +101,12 @@ class Schedule {
 	 * The endpoints are the API's at the root and carry no mount, as every
 	 * data-* endpoint of a page does.
 	 */
-	static function menu($schedule, $on, $what, $edits = true) {
+	static function menu($schedule, $what, $edits = true) {
 		$id = $schedule->getId();
 		$expression = $schedule->getExpression();
 		$menu = new Menu("Actions on the schedule " . $expression);
 
 		$menu->when($edits, "edit", "Edit", ["href" => Route::href("/schedules/edit/" . Route::pathEscape($id))]);
-		$menu->item($on ? "stop" : "play", $on ? "Disable" : "Enable", [
-			"data-api" => "/api/schedules/" . $id,
-			"data-method" => "PUT",
-			"data-body" => $on ? '{"enabled":false}' : '{"enabled":true}',
-			"data-next" => "reload",
-			"data-notice" => $on ? "Schedule disabled" : "Schedule enabled",
-		]);
 		$menu->danger("trash", "Delete", [
 			"data-delete" => "/api/schedules/" . $id,
 			"data-confirm" => "Delete the schedule " . $expression . " for " . $what . "?",

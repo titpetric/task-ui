@@ -148,6 +148,7 @@ class mod_workflow_edit implements Module {
 				"buttons" => $buttons->data(),
 			],
 			"schedules" => $this->rows($chrome, $rows, $flow, $canSchedule),
+			"can" => $canSchedule,
 		], "workflow_edit.tpl");
 	}
 
@@ -238,7 +239,7 @@ class mod_workflow_edit implements Module {
 	/**
 	 * rows are the workflow's schedules as the table draws them: the
 	 * expression, when it runs next and last, who it runs as and whether it is
-	 * on, with the menu that turns it off or removes it.
+	 * on, a toggle the table saves, with the menu that removes it.
 	 *
 	 * A workflow with a user of its own runs its schedules as that user, so the
 	 * column states it and offers no pick: changing the schedule would not
@@ -255,6 +256,7 @@ class mod_workflow_edit implements Module {
 			$last = $schedule->getLastRunAt();
 
 			$out[] = [
+				"id" => $schedule->getId(),
 				"expression" => $schedule->getExpression(),
 				"on" => $on,
 				"next" => $on ? explode(" ", Task\Clock::read($schedule->getNextRunAt())) : [],
@@ -269,16 +271,16 @@ class mod_workflow_edit implements Module {
 				"api" => "/api/schedules/" . $schedule->getId(),
 				"triage" => Task\Schedule::triages($schedule),
 				"can" => $can,
-				"menu" => $this->menuOf($schedule, $on, $flow["name"], $can),
+				"menu" => $this->menuOf($schedule, $flow["name"], $can),
 			];
 		}
 
 		return $out;
 	}
 
-	/** menuOf is a schedule's [...]: Edit, then Enable or Disable, by whether it runs, and Delete. */
-	function menuOf($schedule, $on, $what, $edits = true) {
-		return Task\Schedule::menu($schedule, $on, $what, $edits);
+	/** menuOf is a schedule's [...]: Edit and Delete; its flags are columns of the table. */
+	function menuOf($schedule, $what, $edits = true) {
+		return Task\Schedule::menu($schedule, $what, $edits);
 	}
 }
 

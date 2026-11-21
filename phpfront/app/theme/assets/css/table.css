@@ -73,6 +73,25 @@ table.table {
     }
   }
 
+  /* td.flags centers the toggle of a flag column, saved with the table. */
+  & td.flags {
+    text-align: center;
+    white-space: nowrap;
+    width: 1%;
+
+    & input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      margin: 0;
+      accent-color: var(--signal);
+      cursor: pointer;
+    }
+
+    & input[disabled] {
+      cursor: default;
+    }
+  }
+
   & td.key {
     color: var(--text);
     font-weight: 600;
@@ -221,6 +240,13 @@ table.table-kv th {
   & .markdown-doc table {
     width: auto;
   }
+}
+
+/* .table-actions holds the Save of a table of flags, under the rows it applies to. */
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.75rem;
 }
 
 /* .table.projects styles the Projects table, where the origin takes the slack. */

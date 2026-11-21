@@ -108,8 +108,8 @@ echo Task\Schedules\Catalogue::picked("fx-sched/seen", "", []), "\n";
 echo "[", Task\Schedules\Catalogue::picked("", "", []), "]\n";
 
 // A row's menu: Edit, where the page drew the form that saves a schedule,
-// Disable where it runs and Enable where it does not, then Delete, which asks
-// about what the schedule is for.
+// then Delete, which asks about what the schedule is for. Whether it runs is
+// a column of the table, saved with it.
 function labels($menu) {
 	$out = [];
 
@@ -122,9 +122,8 @@ function labels($menu) {
 	return implode(",", $out);
 }
 
-echo labels($mod->menu($job, true, "infra / plan")), "\n";
-echo labels($mod->menu($job, false, "infra / plan")), "\n";
-echo labels($mod->menu($job, true, "infra / plan", false)), "\n";
+echo labels($mod->menu($job, "infra / plan")), "\n";
+echo labels($mod->menu($job, "infra / plan", false)), "\n";
 
 // The rest of the page reads the chrome: who is reading decides which folders
 // the form offers and which schedules the table lists. The reader is resolved
@@ -311,9 +310,8 @@ fx-sched/hidden
 internal
 fx-sched/seen
 []
-Edit,Disable,Delete
-Edit,Enable,Delete
-Disable,Delete
+Edit,Delete
+Delete
 fx-sched/seen,fx-sched/hidden*,fx-sched/shut | fx-sched/seen/plan=plan,fx-sched/seen/apply=apply,fx-sched/hidden/dump=dump,fx-sched/shut/task:lock=lock
 fx-sched/seen | fx-sched/seen/plan=plan
 fx-sched-ann/admin,fx-sched-bob/runner
@@ -322,10 +320,10 @@ false malta/deploy /f/malta/deploy plan /f/malta/deploy/plan
 @daily [--full] [] /api/schedules/fx-sch-1
 2 10 true true true
 fx-sched-bob runner FS
-Edit,Disable,Delete
+Edit,Delete
 true [] fx Mixed /workflows/fx-sch-w2
 0 false false fx-sched-ann
-Edit,Enable,Delete
+Edit,Delete
 fx-sch-s2,fx-sch-s1
 fx-sch-s1
 fx-sch-w1

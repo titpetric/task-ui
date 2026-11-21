@@ -1,7 +1,7 @@
 <form class="form" data-api="{data.api}" data-method="{data.method}" data-next="{data.next}" data-sched>
 {if $data.edit}	<div class="field">
 		<span class="label">Target</span>
-		<p>{if $data.target === "workflow"}<svg class="ic lead"><use href="#i-flow"/></svg>{if $data.workflowHref}<a href="{data.workflowHref}">{data.workflowName}</a>{else}{data.workflowName}{/if}{else}{if $data.targetHref}<a href="{data.targetHref}">{data.folder} / {data.job}</a>{else}{data.folder} / {data.job}{/if}{/if}</p>
+		<p>{if $data.target === "workflow"}<i class="ic ic-flow lead" aria-hidden="true"></i>{if $data.workflowHref}<a href="{data.workflowHref}">{data.workflowName}</a>{else}{data.workflowName}{/if}{else}{if $data.targetHref}<a href="{data.targetHref}">{data.folder} / {data.job}</a>{else}{data.folder} / {data.job}{/if}{/if}</p>
 		<small class="faint">What a schedule is for cannot change; delete it and add another.</small>
 	</div>
 {if $data.target === "workflow"}	<input type="hidden" name="workflow" value="{data.workflow}">

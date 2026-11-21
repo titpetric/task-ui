@@ -7,7 +7,7 @@
 	<div class="field">
 		<span class="label">Target</span>
 		<p><?php if($_v['data']['target'] === "workflow"){?>
-<svg class="ic lead"><use href="#i-flow"/></svg><?php if($_v['data']['workflowHref']){?>
+<i class="ic ic-flow lead" aria-hidden="true"></i><?php if($_v['data']['workflowHref']){?>
 <a href="<?php echo htmlspecialchars($_v['data']['workflowHref'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data']['workflowName'], ENT_QUOTES);?>
 </a><?php }else{ echo htmlspecialchars($_v['data']['workflowName'], ENT_QUOTES); }?><?php }else{ if($_v['data']['targetHref']){?>

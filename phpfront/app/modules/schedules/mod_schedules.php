@@ -80,6 +80,7 @@ class mod_schedules implements Module {
 		$view->page([
 			"head" => $head->data(),
 			"schedules" => $rows,
+			"can" => $edits,
 			"block" => [
 				"title" => "Schedules",
 				"note" => "",
@@ -161,7 +162,8 @@ class mod_schedules implements Module {
 			"jobHref" => $this->jobHref($schedule, $workspaces),
 			"args" => Task\Schedule::argLine($schedule->getJob(), $schedule->getArgs()),
 			"source" => $schedule->getSource(),
-			"menu" => $this->menu($schedule, $cells["on"], $what, $edits),
+			"can" => $edits,
+			"menu" => $this->menu($schedule, $what, $edits),
 		];
 
 		return array_merge($own, $cells);
@@ -200,14 +202,14 @@ class mod_schedules implements Module {
 	}
 
 	/**
-	 * menu is a row's [...]: Edit, where the reader may change a schedule,
-	 * then Enable or Disable, by whether it runs, and Delete.
+	 * menu is a row's [...]: Edit and Delete, where the reader may change a
+	 * schedule; the flags it runs under are columns of the table.
 	 *
 	 * It is the same [...] a job's page draws over its own schedules, so the
 	 * entries are written once, where the table is read.
 	 */
-	function menu($schedule, $on, $what, $edits = true) {
-		return Task\Schedule::menu($schedule, $on, $what, $edits);
+	function menu($schedule, $what, $edits = true) {
+		return Task\Schedule::menu($schedule, $what, $edits);
 	}
 }
 
