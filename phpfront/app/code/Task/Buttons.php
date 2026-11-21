@@ -112,6 +112,21 @@ class Buttons {
 	/** add is one button, its attribute values escaped. */
 	function add($icon, $label, $attrs, $primary, $danger, $bare = false, $small = false) {
 		$item = $this->pairs->build($icon, $label, $attrs, $danger);
+		$classes = ["btn"];
+
+		if ($this->small || $small) {
+			$classes[] = "btn-sm";
+		}
+
+		if ($primary) {
+			$classes[] = "btn-primary";
+		}
+
+		if ($danger) {
+			$classes[] = "btn-danger";
+		}
+
+		$item["className"] = implode(" ", $classes);
 		$item["primary"] = $primary;
 		$item["bare"] = $bare;
 		$item["small"] = $small;

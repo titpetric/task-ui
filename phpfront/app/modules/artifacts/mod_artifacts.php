@@ -65,7 +65,6 @@ class mod_artifacts implements Module {
 		$dir = self::clean(Task\Route::input("path"));
 		$form = ["folder" => Task\Route::input("folder"), "job" => Task\Route::input("job")];
 		$browse = $dir === "" ? "" : $dir . "/";
-
 		$chrome->heading("Artifacts", self::crumbs($dir));
 
 		$artifacts = new Task\Artifacts\Artifacts;
@@ -109,7 +108,6 @@ class mod_artifacts implements Module {
 	 */
 	static function block($browse, $archive) {
 		$buttons = new Task\Buttons(true);
-
 		$buttons->item("download", ($browse === "" ? "Everything" : "This folder") . " as .tgz", ["href" => $archive, "download" => ""]);
 		$buttons->icon("copy", [
 			"data-copy" => $archive,
@@ -131,7 +129,6 @@ class mod_artifacts implements Module {
 	 */
 	static function actions() {
 		$menu = new Task\Menu("Actions on every artifact");
-
 		$menu->danger("trash", "Delete all", [
 			"data-delete" => self::API,
 			"data-confirm" => "Delete all artifacts? This removes every file, its history and the record of every version.",
@@ -206,6 +203,7 @@ class mod_artifacts implements Module {
 
 		return [
 			"dir" => $dir,
+			"iconClass" => $dir ? "ic ic-folder dir" : "ic ic-file",
 			"name" => $name,
 			"href" => $href,
 			"path" => $path,
@@ -448,6 +446,5 @@ class mod_artifacts implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_artifacts;
-
 	$mod->serve();
 }

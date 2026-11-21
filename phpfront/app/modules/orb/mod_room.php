@@ -53,7 +53,6 @@ class mod_room implements Module {
 		}
 
 		$title = $meeting->getTitle();
-
 		$chrome->heading($title, [["text" => "Meetings", "href" => "/orb"], ["text" => $title, "href" => ""]]);
 
 		$people = $this->people($chrome, $store->participants($meeting->getId()));
@@ -110,7 +109,6 @@ class mod_room implements Module {
 	 */
 	function head($chrome, $meeting, $people, $open, $host) {
 		$head = new Task\Head($meeting->getTitle());
-
 		$head->icon("mic");
 		$head->badge($open ? "live" : "ended", $open ? "ok" : "");
 
@@ -124,7 +122,6 @@ class mod_room implements Module {
 		$head->faint($said);
 
 		$buttons = new Task\Buttons;
-
 		$buttons->item("copy", "Copy link", ["data-orb-copy" => $meeting->getId()]);
 
 		if ($open && $chrome->allowed("meeting/edit")) {
@@ -158,11 +155,14 @@ class mod_room implements Module {
 		foreach ($participants as $person) {
 			$here = $person->getLeftAt() === "";
 
+			$self = $me !== null && $person->getUserId() === $me->getId();
+
 			$out[] = [
 				"id" => $person->getUserId(),
 				"name" => $person->getUserName(),
+				"className" => self::className($self, $here),
 				"here" => $here,
-				"self" => $me !== null && $person->getUserId() === $me->getId(),
+				"self" => $self,
 				"joins" => (int)$person->getJoins(),
 			];
 		}
@@ -175,12 +175,26 @@ class mod_room implements Module {
 		array_unshift($people, [
 			"id" => $id,
 			"name" => $name,
+			"className" => self::className(false, true),
 			"here" => true,
 			"self" => false,
 			"joins" => 0,
 		]);
 
 		return $people;
+	}
+
+	/** className is the class of a participant: one reading, and one here or gone. */
+	static function className($self, $here) {
+		$classes = ["orb-person"];
+
+		if ($self) {
+			$classes[] = "self";
+		}
+
+		$classes[] = $here ? "here" : "gone";
+
+		return implode(" ", $classes);
 	}
 
 	/** lines is a room's log as it draws it: what a speaker said, and what happened. */
@@ -208,6 +222,5 @@ class mod_room implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_room;
-
 	$mod->serve();
 }

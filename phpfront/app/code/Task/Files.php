@@ -141,6 +141,8 @@ class Files {
 
 		$row = [
 			"name" => Row::text($entry, "name"),
+			"className" => $dir ? "dir" : "file",
+			"iconClass" => $dir ? "ic ic-folder dir" : "ic ic-file",
 			"dir" => $dir,
 			"sealed" => Row::flag($entry, "sealed"),
 			"exec" => Row::flag($entry, "exec"),
@@ -162,7 +164,6 @@ class Files {
 	/** menu is the [...] of a file: when it changed, and the way to open it. */
 	static function menu($row) {
 		$menu = new Menu("Actions on " . $row["name"]);
-
 		$menu->detail("Changed", $row["stamp"]);
 		$menu->item("eye", "Preview", ["href" => $row["href"], "data-file" => $row["path"]]);
 
@@ -217,6 +218,8 @@ class Files {
 
 		return [
 			"name" => Folders::nameOf($id),
+			"className" => "dir",
+			"iconClass" => "ic ic-folder dir",
 			"dir" => true,
 			"sealed" => false,
 			"exec" => false,

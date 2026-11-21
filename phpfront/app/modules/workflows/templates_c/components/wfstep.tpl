@@ -1,7 +1,6 @@
 <?php $_v=&$this->vars;?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>

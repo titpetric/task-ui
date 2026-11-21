@@ -1,4 +1,4 @@
-<li class="node{if $data_sub.state} {data_sub.state}{/if}{if $data_sub.disabled} disabled{/if}" data-step="{data_sub.pos}">
+<li class="{data_sub.className}" data-step="{data_sub.pos}">
 	<span class="rail"><i class="dot{if $data_sub.state} {data_sub.state}{/if}"></i></span>
 	<div class="what">
 		<div class="step-head">

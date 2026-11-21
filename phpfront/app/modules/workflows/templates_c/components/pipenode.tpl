@@ -1,7 +1,6 @@
 <?php $_v=&$this->vars;?>
-<li class="node<?php if($_v['data_node']['state']){?>
- <?php echo htmlspecialchars($_v['data_node']['state'], ENT_QUOTES); }?><?php if($_v['data_node']['disabled']){?>
- disabled<?php }?>" data-step="<?php echo htmlspecialchars($_v['data_node']['pos'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_node']['className'], ENT_QUOTES);?>
+" data-step="<?php echo htmlspecialchars($_v['data_node']['pos'], ENT_QUOTES);?>
 ">
 	<span class="rail"><i class="dot<?php if($_v['data_node']['state']){?>
  <?php echo htmlspecialchars($_v['data_node']['state'], ENT_QUOTES); }?>"></i></span>
@@ -40,9 +39,8 @@
 		<ol class="pipeline sub" data-sub="<?php echo htmlspecialchars($_v['data_node']['subId'], ENT_QUOTES);?>
 " data-workflow="<?php echo htmlspecialchars($_v['data_node']['workflowId'], ENT_QUOTES);?>
 ">
-<?php if(!empty($_v['data_node']['sub']))foreach($_v['data_node']['sub'] as $_v['data_sub']){?><li class="node<?php if($_v['data_sub']['state']){?>
- <?php echo htmlspecialchars($_v['data_sub']['state'], ENT_QUOTES); }?><?php if($_v['data_sub']['disabled']){?>
- disabled<?php }?>" data-step="<?php echo htmlspecialchars($_v['data_sub']['pos'], ENT_QUOTES);?>
+<?php if(!empty($_v['data_node']['sub']))foreach($_v['data_node']['sub'] as $_v['data_sub']){?><li class="<?php echo htmlspecialchars($_v['data_sub']['className'], ENT_QUOTES);?>
+" data-step="<?php echo htmlspecialchars($_v['data_sub']['pos'], ENT_QUOTES);?>
 ">
 	<span class="rail"><i class="dot<?php if($_v['data_sub']['state']){?>
  <?php echo htmlspecialchars($_v['data_sub']['state'], ENT_QUOTES); }?>"></i></span>

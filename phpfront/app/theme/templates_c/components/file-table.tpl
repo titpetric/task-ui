@@ -19,15 +19,12 @@
 			<td></td>
 		</tr>
 <?php }else{?>
-		<tr class="<?php if($_v['row']['dir']){?>
-dir<?php }else{?>
-file<?php }?>">
+		<tr class="<?php echo htmlspecialchars($_v['row']['className'], ENT_QUOTES);?>
+">
 			<td class="key"><?php if($_v['row']['exec']){?>
 <i class="shebang" aria-hidden="true">#!</i><?php }else{?>
-<i class="ic ic-<?php if($_v['row']['dir']){?>
-folder<?php }else{?>
-file<?php }?><?php if($_v['row']['dir']){?>
- dir<?php }?>" aria-hidden="true"></i><?php }?><?php if($_v['row']['href']){?>
+<i class="<?php echo htmlspecialchars($_v['row']['iconClass'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php if($_v['row']['href']){?>
  <a href="<?php echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
 "<?php if(!$_v['row']['dir']){?>
  data-file="<?php echo htmlspecialchars($_v['row']['path'], ENT_QUOTES);?>

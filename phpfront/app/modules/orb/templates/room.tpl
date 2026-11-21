@@ -10,7 +10,7 @@
 	data-started="{data.room.started}" data-limit="{data.room.limit}"
 	data-api="{base}/api" data-base="{base}">
 	<div class="orb-people" data-people>
-{foreach $data.people as $person}		<span class="orb-person{if $person.self} self{/if}{if $person.here} here{else} gone{/if}" data-person="{person.id}" data-here="{if $person.here}1{else}0{/if}">
+{foreach $data.people as $person}		<span class="{person.className}" data-person="{person.id}" data-here="{if $person.here}1{else}0{/if}">
 			<span class="orb-dot"></span><span class="orb-name">{person.name}</span>{if $person.joins > 1} <span class="orb-joins" title="Times joined">{person.joins}</span>{/if}
 		</span>
 {/foreach}	</div>

@@ -9,8 +9,8 @@
 			<td class="hide-sm nowrap" title="{row.stamp}">{row.ago}</td>
 			<td></td>
 		</tr>
-{else}		<tr class="{if $row.dir}dir{else}file{/if}">
-			<td class="key">{if $row.exec}<i class="shebang" aria-hidden="true">#!</i>{else}<i class="ic ic-{if $row.dir}folder{else}file{/if}{if $row.dir} dir{/if}" aria-hidden="true"></i>{/if}{if $row.href} <a href="{row.href}"{if !$row.dir} data-file="{row.path}"{/if}>{row.name}</a>{else} <span>{row.name}</span>{/if}{if $row.exec} <span class="badge exec" title="Runs: executable, or a shebang on its first line">exec</span>{/if}</td>
+{else}		<tr class="{row.className}">
+			<td class="key">{if $row.exec}<i class="shebang" aria-hidden="true">#!</i>{else}<i class="{row.iconClass}" aria-hidden="true"></i>{/if}{if $row.href} <a href="{row.href}"{if !$row.dir} data-file="{row.path}"{/if}>{row.name}</a>{else} <span>{row.name}</span>{/if}{if $row.exec} <span class="badge exec" title="Runs: executable, or a shebang on its first line">exec</span>{/if}</td>
 			<td class="num nowrap">{row.size}</td>
 			<td class="hide-sm nowrap" title="{row.stamp}">{row.ago}</td>
 			<td class="actions">{if $row.menu}{eval $data_menu = $row.menu}{include components/menu.tpl}{/if}</td>

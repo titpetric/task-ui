@@ -72,10 +72,8 @@
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
 <?php }elseif($_v['button']['href']){?>
-	<a class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
+	<a class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
@@ -83,10 +81,8 @@
 " aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
-	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>"<?php if($_v['button']['disabled']){?>
+	<button type="button" class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+"<?php if($_v['button']['disabled']){?>
  disabled<?php if($_v['button']['note']){?>
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>
@@ -217,9 +213,8 @@
 			<button type="button" class="btn btn-sm" data-steps-fold aria-pressed="false">Expand all</button>
 		</div>
 		<ol class="wf-rail" data-steps>
-<?php if(!empty($_v['data_editor']['steps']))foreach($_v['data_editor']['steps'] as $_v['data_step']){?><li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<?php if(!empty($_v['data_editor']['steps']))foreach($_v['data_editor']['steps'] as $_v['data_step']){?><li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -490,9 +485,8 @@ false<?php }?>">
 			</div>
 		</div>
 		<template data-step-template="job"><?php $_v['data_step'] = $_v['data_editor']['blankJob'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -743,9 +737,8 @@ false<?php }?>">
 </template>
 <?php if($_v['data_editor']['shell']){?>
 		<template data-step-template="script"><?php $_v['data_step'] = $_v['data_editor']['blankScript'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -996,9 +989,8 @@ false<?php }?>">
 </template>
 <?php }?><?php if($_v['data_editor']['asks']){?>
 		<template data-step-template="prompt"><?php $_v['data_step'] = $_v['data_editor']['blankPrompt'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -1248,9 +1240,8 @@ false<?php }?>">
 </li>
 </template>
 		<template data-step-template="summary"><?php $_v['data_step'] = $_v['data_editor']['blankSummary'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -1500,9 +1491,8 @@ false<?php }?>">
 </li>
 </template>
 <?php }?>		<template data-step-template="check"><?php $_v['data_step'] = $_v['data_editor']['blankCheck'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -1782,10 +1772,8 @@ false<?php }?>">
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
 <?php }elseif($_v['button']['href']){?>
-	<a class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
+	<a class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
@@ -1793,10 +1781,8 @@ false<?php }?>">
 " aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
-	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>"<?php if($_v['button']['disabled']){?>
+	<button type="button" class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+"<?php if($_v['button']['disabled']){?>
  disabled<?php if($_v['button']['note']){?>
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>

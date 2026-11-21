@@ -14,7 +14,7 @@
 		<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 		<tbody>
 {foreach $data.files as $row}			<tr>
-				<td class="key"><i class="ic ic-{if $row.dir}folder{else}file{/if}{if $row.dir} dir{/if}" aria-hidden="true"></i>{if $row.dir} <a href="{row.href}">{row.name}/</a>{else} <a href="{row.href}" data-artifact="{row.path}">{row.name}</a>{/if}</td>
+				<td class="key"><i class="{row.iconClass}" aria-hidden="true"></i>{if $row.dir} <a href="{row.href}">{row.name}/</a>{else} <a href="{row.href}" data-artifact="{row.path}">{row.name}</a>{/if}</td>
 				<td class="num nowrap">{row.size}</td>
 				<td class="hide-sm nowrap" title="{row.stamp}">{row.ago}</td>
 				<td class="actions">{eval $data_menu = $row.menu}

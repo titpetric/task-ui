@@ -1,7 +1,6 @@
 <?php $_v=&$this->vars;?>
-<li class="node<?php if($_v['data_sub']['state']){?>
- <?php echo htmlspecialchars($_v['data_sub']['state'], ENT_QUOTES); }?><?php if($_v['data_sub']['disabled']){?>
- disabled<?php }?>" data-step="<?php echo htmlspecialchars($_v['data_sub']['pos'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_sub']['className'], ENT_QUOTES);?>
+" data-step="<?php echo htmlspecialchars($_v['data_sub']['pos'], ENT_QUOTES);?>
 ">
 	<span class="rail"><i class="dot<?php if($_v['data_sub']['state']){?>
  <?php echo htmlspecialchars($_v['data_sub']['state'], ENT_QUOTES); }?>"></i></span>

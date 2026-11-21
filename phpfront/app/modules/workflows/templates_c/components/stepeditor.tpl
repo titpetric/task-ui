@@ -72,9 +72,8 @@
 			<button type="button" class="btn btn-sm" data-steps-fold aria-pressed="false">Expand all</button>
 		</div>
 		<ol class="wf-rail" data-steps>
-<?php if(!empty($_v['data_editor']['steps']))foreach($_v['data_editor']['steps'] as $_v['data_step']){?><li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<?php if(!empty($_v['data_editor']['steps']))foreach($_v['data_editor']['steps'] as $_v['data_step']){?><li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -345,9 +344,8 @@ false<?php }?>">
 			</div>
 		</div>
 		<template data-step-template="job"><?php $_v['data_step'] = $_v['data_editor']['blankJob'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -598,9 +596,8 @@ false<?php }?>">
 </template>
 <?php if($_v['data_editor']['shell']){?>
 		<template data-step-template="script"><?php $_v['data_step'] = $_v['data_editor']['blankScript'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -851,9 +848,8 @@ false<?php }?>">
 </template>
 <?php }?><?php if($_v['data_editor']['asks']){?>
 		<template data-step-template="prompt"><?php $_v['data_step'] = $_v['data_editor']['blankPrompt'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -1103,9 +1099,8 @@ false<?php }?>">
 </li>
 </template>
 		<template data-step-template="summary"><?php $_v['data_step'] = $_v['data_editor']['blankSummary'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
@@ -1355,9 +1350,8 @@ false<?php }?>">
 </li>
 </template>
 <?php }?>		<template data-step-template="check"><?php $_v['data_step'] = $_v['data_editor']['blankCheck'];?>
-<li class="wf-step kind-<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES); if($_v['data_step']['disabled']){?>
- off<?php }?><?php if($_v['data_step']['open']){?>
- open<?php }?>" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_step']['className'], ENT_QUOTES);?>
+" data-step data-kind="<?php echo htmlspecialchars($_v['data_step']['kind'], ENT_QUOTES);?>
 "<?php if($_v['data_step']['disabled']){?>
  data-off<?php }?>>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>

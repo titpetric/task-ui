@@ -1,4 +1,4 @@
-<li class="wf-step kind-{data_step.kind}{if $data_step.disabled} off{/if}{if $data_step.open} open{/if}" data-step data-kind="{data_step.kind}"{if $data_step.disabled} data-off{/if}>
+<li class="{data_step.className}" data-step data-kind="{data_step.kind}"{if $data_step.disabled} data-off{/if}>
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
 	<div class="wf-card">
 		<div class="wf-card-head">

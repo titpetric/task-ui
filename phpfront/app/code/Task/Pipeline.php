@@ -53,9 +53,20 @@ class Pipeline {
 			}
 		}
 
+		$classes = ["node"];
+
+		if ($state !== "") {
+			$classes[] = $state;
+		}
+
+		if ($link["disabled"]) {
+			$classes[] = "disabled";
+		}
+
 		return [
 			"pos" => $i,
 			"then" => $i > 0,
+			"className" => implode(" ", $classes),
 			"state" => $state,
 			"disabled" => $link["disabled"],
 			"href" => $link["href"],

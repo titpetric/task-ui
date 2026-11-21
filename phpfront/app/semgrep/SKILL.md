@@ -103,6 +103,21 @@ Ours, not mobius's, and both rules retire the day the runtime is fixed. Each mes
 
 Both are the kind of defect a linter cannot see: `fmt` and `lint` are clean on either, and the page draws wrong or 500s. The float rule matches only a literal in a value position — after an operator, a paren, a comma, a `=>` or a `return` — because a generic match reads inside a string too, and `Clock::stamp()` carries the Go time layout `2006-01-02 15:04:05.000000`, whose fractional seconds are not a float.
 
+## templates.yml, at zero
+
+One rule on how a template names a class. A class chained from conditionals
+is logic in the markup: each branch is written into an attribute, the view
+already holds the fields the branches test, and the class a page draws cannot
+be read without evaluating the template.
+
+| Rule                         | What it refuses                                              |
+|------------------------------|--------------------------------------------------------------|
+| `front.class-chained`        | Two or more `{if}` in one `class` value on a line              |
+
+The view answers `className` and the template writes it once, as
+`class="{data_message.className}"`. The rule counts the conditionals in a
+class value; a conditional elsewhere on the same line is not what it refuses.
+
 ## Writing one
 
 The protocol is `rules/SKILL.md`, Writing one, and the shared skill it names, `/dev:semgrep`. A path glob here is written against this directory, not the repository root: `**/*.php` is every PHP file of the app, and `code/Task/**` is the one package that owns a statement.

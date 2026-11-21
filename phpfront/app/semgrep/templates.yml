@@ -1,0 +1,29 @@
+# How a template names a class: one field, chosen by the view.
+#
+# A class chained from conditionals is logic in the markup: every branch sits
+# in the attribute the browser reads, the branches know field names the view
+# already knows, and a reader cannot see the class the page draws without
+# evaluating the template by hand. The view answers `className`, and the
+# template writes it once.
+#
+# The rule counts {if} in a class value on one line, which is the shape the
+# chains took. A conditional elsewhere on the line is not what it refuses.
+#
+# History:
+#   2026-11-21  Written at zero, after threads, files, buttons and pipelines
+#               moved their class choice into their views.
+rules:
+  - id: task-ui.front.class-chained
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A class is chosen by the view, not chained from conditionals: answer a
+      className field and write it once in the attribute.
+    paths:
+      include:
+        - "**/*.tpl"
+      exclude:
+        - "**/templates_c/**"
+        - "ext/**"
+        - "tests/**"
+    pattern-regex: 'class="[^"]*\{if [^{}"]+\}[^"]*\{if '

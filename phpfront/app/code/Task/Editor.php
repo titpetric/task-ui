@@ -119,6 +119,21 @@ class Editor {
 		return $this->card($step, true);
 	}
 
+	/** className is the class of a step card: its kind, whether it runs and whether it is open. */
+	static function className($kind, $disabled, $open) {
+		$classes = ["wf-step", "kind-" . $kind];
+
+		if ($disabled) {
+			$classes[] = "off";
+		}
+
+		if ($open) {
+			$classes[] = "open";
+		}
+
+		return implode(" ", $classes);
+	}
+
 	/**
 	 * card is one step of the form: its kind, the one line its head shows while
 	 * folded, and the fields of its kind under it.
@@ -142,6 +157,7 @@ class Editor {
 		}
 
 		return [
+			"className" => self::className($kind, $step["disabled"], $open),
 			"kind" => $kind,
 			"disabled" => $step["disabled"],
 			"open" => $open,
@@ -294,7 +310,6 @@ class Editor {
 	 */
 	function menu($disabled) {
 		$menu = new Menu("Actions on the step");
-
 		$menu->item("up", "Move up", ["data-step-move" => "up"]);
 		$menu->item("down", "Move down", ["data-step-move" => "down"]);
 		$menu->sep();

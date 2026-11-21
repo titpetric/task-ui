@@ -6,10 +6,8 @@
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
 <?php }elseif($_v['button']['href']){?>
-	<a class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
+	<a class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
@@ -17,10 +15,8 @@
 " aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
-	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>"<?php if($_v['button']['disabled']){?>
+	<button type="button" class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+"<?php if($_v['button']['disabled']){?>
  disabled<?php if($_v['button']['note']){?>
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>
