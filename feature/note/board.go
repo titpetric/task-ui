@@ -241,7 +241,10 @@ func (b *Board) working(ctx context.Context, note *model.Note) *model.Note {
 func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 	ctx := context.Background()
 	own := *note
-	fail := func(reason string) { b.finishAs(ctx, &own, model.NoteFailed, reason, agent.Name, again) }
+	fail := func(reason string) {
+		own.RunID = ""
+		b.finishAs(ctx, &own, model.NoteFailed, reason, agent.Name, again)
+	}
 	f, job := b.agentJob()
 	if f == nil || job == nil {
 		fail("The Notes agent " + folder.NoteID + " has no root to run in.")
@@ -309,6 +312,7 @@ func (b *Board) runAs(stop context.Context, note, question *model.Note, req runn
 	}
 	if err != nil {
 		b.clearAnswer(ctx, again, model.NoteFailed)
+		note.RunID = ""
 		b.finishAs(ctx, note, model.NoteFailed, what+" did not start: "+err.Error(), as, again)
 		return false
 	}

@@ -209,6 +209,7 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 	answer, err := replyFile()
 	if err != nil {
 		b.clearAnswer(ctx, again, model.NoteFailed)
+		note.RunID = ""
 		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error(), again)
 		return req, "", nil, false
 	}
@@ -246,6 +247,7 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 			cleanup()
 			os.Remove(answer)
 			b.clearAnswer(ctx, again, model.NoteFailed)
+			note.RunID = ""
 			b.finish(ctx, note, model.NoteFailed, a.what+a.id+" is not there to ask about: "+err.Error(), again)
 			return req, "", nil, false
 		}
