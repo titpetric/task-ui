@@ -218,6 +218,41 @@
     stats.textContent = count + (count === 1 ? " tool call" : " tool calls");
   }
 
+  // addTodos replaces the live answer's checklist with the one TodoWrite last wrote.
+  function addTodos(event) {
+    if (event.tool !== "TodoWrite" || !event.input) {
+      return;
+    }
+    var input;
+    try {
+      input = JSON.parse(event.input);
+    } catch (err) {
+      return;
+    }
+    if (!input || !input.todos) {
+      return;
+    }
+    var box = liveBox();
+    var state = box && box.querySelector(".said-state");
+    if (!state) {
+      return;
+    }
+    var list = box.querySelector("[data-status-todos]");
+    if (!list) {
+      list = node("ul", "status-todos");
+      list.setAttribute("data-status-todos", "");
+      state.parentNode.insertBefore(list, state.nextSibling);
+    }
+    list.textContent = "";
+    input.todos.forEach(function (todo) {
+      var status = todo.status || "pending";
+      var line = node("li", "todo " + status);
+      line.appendChild(node("i", "dot " + (status === "completed" ? "ok" : status === "in_progress" ? "running" : "pending")));
+      line.appendChild(node("span", "", status === "in_progress" && todo.activeForm ? todo.activeForm : todo.content));
+      list.appendChild(line);
+    });
+  }
+
   function mark(note) {
     var message = document.getElementById("note-" + note.id);
     if (!message) {
@@ -305,6 +340,7 @@
         if (data.tool === "Task" || data.tool === "Agent") {
           addAgent(data);
         }
+        addTodos(data);
       }
       if (data.kind === "tool_result") {
         settleAgent(data);

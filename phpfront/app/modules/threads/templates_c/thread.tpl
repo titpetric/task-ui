@@ -130,7 +130,14 @@
 <span class="actions"><button class="btn-icon" type="button" data-stop="<?php echo htmlspecialchars($_v['data_working']['run'], ENT_QUOTES);?>
 " title="Stop this run and let it settle" aria-label="Stop this run"><i class="ic ic-stop" aria-hidden="true"></i></button><button class="btn-icon danger" type="button" data-kill="<?php echo htmlspecialchars($_v['data_working']['run'], ENT_QUOTES);?>
 " title="Kill this run and everything it started" aria-label="Kill this run and everything it started"><i class="ic ic-trash" aria-hidden="true"></i></button></span><?php }?></p>
-<?php if($_v['data_working']['agents']){?>
+<?php if($_v['data_working']['todos']){?>
+	<ul class="status-todos" data-status-todos>
+<?php if(!empty($_v['data_working']['todos']))foreach($_v['data_working']['todos'] as $_v['todo']){?>		<li class="todo <?php echo htmlspecialchars($_v['todo']['state'], ENT_QUOTES);?>
+"><i class="<?php echo htmlspecialchars($_v['todo']['className'], ENT_QUOTES);?>
+" aria-hidden="true"></i> <span><?php echo htmlspecialchars($_v['todo']['text'], ENT_QUOTES);?>
+</span></li>
+<?php }?>	</ul>
+<?php }?><?php if($_v['data_working']['agents']){?>
 	<ul class="status-agents" data-status-agents>
 <?php if(!empty($_v['data_working']['agents']))foreach($_v['data_working']['agents'] as $_v['agent']){?>		<li><details class="<?php echo htmlspecialchars($_v['agent']['className'], ENT_QUOTES);?>
 " data-agent="<?php echo htmlspecialchars($_v['agent']['id'], ENT_QUOTES);?>

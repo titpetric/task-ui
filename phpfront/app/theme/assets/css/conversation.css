@@ -286,6 +286,28 @@ body:has(.chat-shell) aside.rail {
   font-size: var(--fs-xs);
 }
 
+/* .status-todos is the checklist the run last wrote, replaced as it changes. */
+.status-todos {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+
+  & li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  & .todo.completed span {
+    color: var(--text-faint);
+    text-decoration: line-through;
+  }
+}
+
 /* .status-agents lists the subagents a run started, one line each. */
 .status-agents {
   display: grid;

@@ -114,6 +114,7 @@ class Talk {
 			"run" => $run["id"],
 			"canEnd" => !empty($status["can_end"]),
 			"agents" => $run["agents"],
+			"todos" => isset($run["todos"]) ? $run["todos"] : [],
 			"progress" => $progress,
 			"progressHtml" => $progress === "" ? "" : self::quote($progress),
 			"progressClass" => "said-text" . ($progress === "" ? " faint" : ""),

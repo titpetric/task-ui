@@ -34,6 +34,7 @@ class Work {
 			$runs[$key]["progress"] = self::progress($run["events"]);
 			$runs[$key]["status"] = self::status($run["events"]);
 			$runs[$key]["agents"] = self::agents($run["events"]);
+			$runs[$key]["todos"] = self::todos($run["events"]);
 			$runs[$key]["trace"] = self::trace($run["events"]);
 			$runs[$key]["events"] = self::withoutStatus($run["events"]);
 		}
@@ -61,6 +62,7 @@ class Work {
 				"tool" => "",
 			],
 			"agents" => [],
+			"todos" => [],
 			"trace" => self::noTrace(),
 		];
 	}
@@ -95,6 +97,58 @@ class Work {
 		foreach ($out as $index => $agent) {
 			$out[$index]["className"] = "status-agent " . $agent["state"];
 			$out[$index]["badge"] = $agent["state"] === "working" ? "badge signal" : ($agent["state"] === "failed" ? "badge bad" : "badge ok");
+		}
+
+		return $out;
+	}
+
+	/** todoList is the checklist a TodoWrite call wrote, as the answer draws it. */
+	static function todoList($input) {
+		$out = [];
+
+		if (!is_array($input) || !isset($input["todos"]) || !is_array($input["todos"])) {
+			return $out;
+		}
+
+		foreach ($input["todos"] as $todo) {
+			if (!is_array($todo)) {
+				continue;
+			}
+
+			$state = isset($todo["status"]) ? (string)$todo["status"] : "pending";
+
+			if (!in_array($state, ["pending", "in_progress", "completed"], true)) {
+				$state = "pending";
+			}
+
+			$text = isset($todo["content"]) ? (string)$todo["content"] : "";
+
+			if ($state === "in_progress" && !empty($todo["activeForm"])) {
+				$text = (string)$todo["activeForm"];
+			}
+
+			if ($text === "") {
+				continue;
+			}
+
+			$out[] = [
+				"text" => $text,
+				"state" => $state,
+				"className" => "dot " . ($state === "completed" ? "ok" : ($state === "in_progress" ? "running" : "pending")),
+			];
+		}
+
+		return $out;
+	}
+
+	/** todos is the checklist a run wrote last, which replaces the one before it. */
+	static function todos($events) {
+		$out = [];
+
+		foreach ($events as $event) {
+			if (!empty($event["todo"])) {
+				$out = $event["todo"];
+			}
 		}
 
 		return $out;
@@ -434,6 +488,7 @@ class Work {
 			"tool_id" => isset($row["tool_id"]) ? $row["tool_id"] : "",
 			"input" => "",
 			"agent" => "",
+			"todo" => [],
 			"error" => false,
 			"state" => "",
 		];
@@ -455,6 +510,10 @@ class Work {
 				// Task and Agent start a subagent, whose fields the card shows.
 				if ($out["tool"] === "Task" || $out["tool"] === "Agent") {
 					$out["agent"] = self::agent(isset($data["input"]) ? $data["input"] : []);
+				}
+
+				if ($out["tool"] === "TodoWrite") {
+					$out["todo"] = self::todoList(isset($data["input"]) ? $data["input"] : []);
 				}
 
 				break;
