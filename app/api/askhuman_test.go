@@ -10,17 +10,17 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// A reply's form blocks come back parsed, in order, and a block the
+// A reply's ask fences come back parsed, in order, and a block the
 // dialect refuses comes back as the reason: a client draws the question
 // or the error without reading yaml itself.
-func TestForms_List(t *testing.T) {
+func TestAsks_List(t *testing.T) {
 	t.Parallel()
 	h := api.New(api.Options{}).Routes()
 	admin := &model.User{ID: "1", Name: "root", Admin: true, Role: model.RoleRunner}
-	body := "Shall I?\n\n```form\n" +
+	body := "Shall I?\n\n```ask\n" +
 		"fields:\n  - key: cache\n    label: Cache the list page?\n    component: bool\n" +
 		"submit:\n  label: Answer\n  prompt: \"cache: {{cache}}\"\n" +
-		"```\n\nand one that is wrong:\n\n```form\nfields: []\n```\n"
+		"```\n\nand one that is wrong:\n\n```ask\nfields: []\n```\n"
 	rec := voiceDo(h, admin, http.MethodPost, "/forms", body)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -63,4 +63,17 @@ func TestForms_List(t *testing.T) {
 	rec = voiceDo(h, viewer, http.MethodPost, "/forms", body)
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 	assert.Contains(t, rec.Body.String(), "prompt/view")
+}
+
+// A submission to an instance with no board names no note it can write.
+func TestAsks_SubmitNoBoard(t *testing.T) {
+	t.Parallel()
+	h := api.New(api.Options{}).Routes()
+	admin := &model.User{ID: "1", Name: "root", Admin: true, Role: model.RoleRunner}
+	body := `{"note":"01hz","block":0,"values":{"cache":"true"}}`
+	var req api.AskSubmitRequest
+	assert.NoError(t, json.Unmarshal([]byte(body), &req))
+	assert.Equal(t, "01hz", req.Note)
+	rec := voiceDo(h, admin, http.MethodPost, "/forms/submit", body)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
 }

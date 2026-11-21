@@ -295,6 +295,8 @@
       return !!(session && session.ws && session.ws.readyState === 1 && session.run && session.run.can_run);
     },
     toast: toast,
+    // markdown is the renderer the reply previews use, for a module that draws a text it was streamed.
+    markdown: markdownHTML,
     // mount draws the editors and the mention layers of a part of the page
     // that arrived after load, and unmount drops the ones about to go.
     mount: function (root) {
@@ -4535,7 +4537,7 @@
   });
   // ------------------------------------------------------- forms in a note
 
-  // A ```form fence of a note's body draws a form whose one button starts
+  // An ```ask fence of a note's body draws a form whose one button starts
   // a run. Each field names its key, its component and its when, so the
   // next choice reveals what it names without a round trip. The run goes
   // to /api/runs for a form that names a job and to /api/prompts for one
@@ -4554,8 +4556,13 @@
     if (field.dataset.component === "hidden") return field.value;
     var boxes = Array.prototype.slice.call(field.querySelectorAll("input[type=checkbox]"));
     if (field.dataset.component === "bool") return boxes.length && boxes[0].checked ? "true" : "false";
-    if (field.dataset.component === "multi") {
+    if (field.dataset.component === "multi" || field.dataset.component === "checklist") {
       return boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; }).join(", ");
+    }
+    var radios = Array.prototype.slice.call(field.querySelectorAll("input[type=radio]"));
+    if (radios.length) {
+      var on = radios.filter(function (radio) { return radio.checked; })[0];
+      return on ? on.value : "";
     }
     var control = field.querySelector("input, select, textarea");
     return control ? control.value : "";
@@ -4584,7 +4591,10 @@
   function runFormValues(form) {
     var out = {};
     runFormFields(form).forEach(function (field) {
-      if (!field.hidden) out[field.dataset.key] = runFormValue(field).trim();
+      if (field.hidden) return;
+      out[field.dataset.key] = runFormValue(field).trim();
+      var free = field.querySelector("[data-free-text]");
+      if (free) out[field.dataset.key + ".text"] = free.value.trim();
     });
     return out;
   }
@@ -4673,6 +4683,31 @@
     var form = event.target.closest("form[data-run-form]");
     if (form) runFormShow(form);
   });
+  // runFormAnswer submits an ask to its sink, which writes the record and
+  // resumes the agent, and leaves the link to what it started.
+  function runFormAnswer(form, button, values) {
+    var body = { note: form.dataset.note, block: Number(form.dataset.block || 0), values: values };
+    var note = form.querySelector("[name=general_note]");
+    if (note && note.value.trim()) body.note_text = note.value.trim();
+    return api("POST", "/api/forms/submit", body).then(function (res) {
+      button.disabled = false;
+      if (res.status >= 300) {
+        runFormSays(form, errorText(res));
+        return;
+      }
+      if (res.data.run) {
+        runFormClose(form, mount() + "/runs/" + encodeURIComponent(res.data.run.id), "run " + res.data.run.id.slice(0, 8));
+        return;
+      }
+      if (res.data.note && res.data.note.id) {
+        runFormClose(form, mount() + "/threads/" + encodeURIComponent(res.data.note.id), "the agent's answer");
+        return;
+      }
+      runFormSays(form, "Submitted.");
+      form.reset();
+    });
+  }
+
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-run-form]");
     if (!form) return;
@@ -4686,7 +4721,8 @@
     var values = runFormValues(form);
     button.disabled = true;
     runFormSays(form, "starting");
-    if (form.dataset.job) runFormRun(form, button, values);
+    if (form.dataset.note) runFormAnswer(form, button, values);
+    else if (form.dataset.job) runFormRun(form, button, values);
     else runFormAsk(form, button, values);
   });
 
@@ -5302,7 +5338,7 @@
   // markdownHTML renders the markdown Claude answers in: headings, lists,
   // fences, **bold**, `code` and paragraphs. The text is escaped first.
   function markdownHTML(text) {
-    var out = [], list = null, fence = null, para = [];
+    var out = [], list = null, fence = null, para = [], quote = [];
     function inline(line) {
       return escapeHTML(line)
         .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -5311,6 +5347,7 @@
     }
     function flush() {
       if (para.length) { out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; }
+      if (quote.length) { out.push("<blockquote><p>" + quote.map(inline).join("<br>") + "</p></blockquote>"); quote = []; }
       if (list) { out.push("</" + list + ">"); list = null; }
     }
     text.replace(/\r/g, "").split("\n").forEach(function (line) {
@@ -5322,9 +5359,15 @@
       var m;
       if (/^```/.test(line)) { flush(); fence = []; }
       else if ((m = /^(#{1,6})\s+(.*)$/.exec(line))) { flush(); out.push("<h5>" + inline(m[2]) + "</h5>"); }
+      else if ((m = /^\s*>\s?(.*)$/.exec(line))) {
+        if (para.length) { out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; }
+        if (list) { out.push("</" + list + ">"); list = null; }
+        quote.push(m[1]);
+      }
       else if ((m = /^\s*(?:[-*+]|(\d+)[.)])\s+(.*)$/.exec(line))) {
         var kind = m[1] ? "ol" : "ul";
         if (para.length) { out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; }
+        if (quote.length) { out.push("<blockquote><p>" + quote.map(inline).join("<br>") + "</p></blockquote>"); quote = []; }
         if (list !== kind) { if (list) out.push("</" + list + ">"); out.push("<" + kind + ">"); list = kind; }
         out.push("<li>" + inline(m[2]) + "</li>");
       }

@@ -118,6 +118,19 @@ and summary steps. API: `/api/prompts`; MCP: `ask_prompt`.
 `prompt/edit` asks, `prompt/view` reads other users' prompts and their
 runs.
 
+An answer that needs a decision asks for it in an ```ask fenced block of
+yaml, never as a plain list of questions. It declares `fields` (or
+`questions`) with a `key`, a `label`, a `component` (`text`, `textarea`,
+`number`, `bool`, `choice`, `multi`, `checklist`), `options` for the ones
+that pick, `required`, and `when: <key>=<value>` for a question that
+follows from an answer; `sections` groups them, `context` and
+`prerequisites` say what the reader holds before answering, and
+`submit.prompt` is the sentence the values are read back in, `{{key}}`
+for each. The page draws the block as a form; its Submit writes
+`ask/<note>/<form>.answers.json` and `.decisions.md` and resumes the
+agent that asked. Ask once, in one block, and never ask the same
+questions again; the sink refuses a form that redeclares one.
+
 ## Workflows (`workflow`)
 
 A workflow is a named chain of steps, each of a kind: `job`, a job of

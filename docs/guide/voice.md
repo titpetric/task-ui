@@ -83,13 +83,13 @@ The bell beside the header shows the count of unread chat threads, each person's
 
 ## Questions back
 
-A reply that ends with a [form block](forms.md) is a question. The card opens over the window with one field on it, the options as buttons you press to select, and **Submit** and **Cancel**. What you answered goes back into the thread as the next thing said, so Claude reads it before asking anything else.
+A reply that ends with an [ask block](forms.md) is a question. The card opens over the window with one field on it, the options as buttons you press to select, and **Submit** and **Cancel**. What you answered goes back into the thread as the next thing said, so Claude reads it before asking anything else.
 
 The thread's opening instruction tells Claude how: one field per question, `bool` for a yes or no, `choice` with `options` for a pick, `multi` for several, `text` for words. This is the same dialect the form block of a note's reply renders on a page, so one block works in both places.
 
 A questionnaire is one block of many short fields. The card draws them one at a time and counts them, `4 of 23`, and sends once, so feature mapping costs one reply and not twenty. `when: <key>=<value>` on a field draws it only where the field it names holds that value, so a hundred declared questions are the dozen that follow from what you said. `submit.prompt` is the sentence the values are read back in, `{{key}}` for each; a form that names none sends `label: value` a line at a time.
 
-```form
+```ask
 title: The list page
 fields:
   - key: cache

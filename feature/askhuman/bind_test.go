@@ -1,26 +1,26 @@
-package form_test
+package askhuman_test
 
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/askhuman"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpfront/form"
 )
 
 // bindForm is a form of one field per thing Bind does to a value.
-func bindForm() *form.Form {
-	return &form.Form{
+func bindForm() *askhuman.Form {
+	return &askhuman.Form{
 		Title: "Deploy",
-		Fields: []form.Field{
+		Fields: []askhuman.Field{
 			{Key: "folder", Label: "Folder", Component: "folder", Source: "folders", Required: true},
 			{Key: "count", Label: "Count", Component: "number", Default: "1"},
 			{Key: "dry", Label: "Dry run", Component: "bool"},
-			{Key: "mode", Label: "Mode", Component: "choice", Options: []form.Option{{Value: "plan"}, {Value: "apply"}}},
+			{Key: "mode", Label: "Mode", Component: "choice", Options: []askhuman.Option{{Value: "plan"}, {Value: "apply"}}},
 			{Key: "team", Label: "Team", Component: "choice", Source: "teams"},
 			{Key: "hosts", Label: "Hosts", Component: "multi", Source: "hosts"},
 			{Key: "note", Label: "Note", Component: "textarea"},
 		},
-		Submit: form.Submit{Label: "Run"},
+		Submit: askhuman.Submit{Label: "Run"},
 	}
 }
 
@@ -113,7 +113,7 @@ func TestForm_Bind_Errors(t *testing.T) {
 		},
 	} {
 		s, err := f.Bind(test.values)
-		assert.ErrorIs(t, err, form.ErrInvalid, name)
+		assert.ErrorIs(t, err, askhuman.ErrInvalid, name)
 		assert.Equal(t, test.want, s.Errors, name)
 		for key, message := range test.want {
 			assert.Contains(t, err.Error(), key+": "+message, name)
@@ -124,25 +124,25 @@ func TestForm_Bind_Errors(t *testing.T) {
 
 func TestForm_Bind_Options(t *testing.T) {
 	t.Parallel()
-	f := &form.Form{Fields: []form.Field{
-		{Key: "hosts", Component: "multi", Required: true, Options: []form.Option{{Value: "one"}, {Value: "two"}}},
+	f := &askhuman.Form{Fields: []askhuman.Field{
+		{Key: "hosts", Component: "multi", Required: true, Options: []askhuman.Option{{Value: "one"}, {Value: "two"}}},
 	}}
 	s, err := f.Bind(map[string]string{"hosts": "two,one"})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"two", "one"}, s.List["hosts"])
 
 	s, err = f.Bind(map[string]string{"hosts": "one,three"})
-	assert.ErrorIs(t, err, form.ErrInvalid)
+	assert.ErrorIs(t, err, askhuman.ErrInvalid)
 	assert.Equal(t, `"three" is no option of it`, s.Errors["hosts"])
 
 	s, err = f.Bind(nil)
-	assert.ErrorIs(t, err, form.ErrInvalid)
+	assert.ErrorIs(t, err, askhuman.ErrInvalid)
 	assert.Equal(t, "a value is needed", s.Errors["hosts"])
 }
 
 func TestForm_Bind_Hidden(t *testing.T) {
 	t.Parallel()
-	f, err := form.Parse([]byte("fields:\n" +
+	f, err := askhuman.Parse([]byte("fields:\n" +
 		"  - {key: mode, component: choice, options: [{value: plan}, {value: apply, next: confirm}]}\n" +
 		"  - {key: confirm, component: text, when: mode=apply, required: true}\n"))
 	assert.NoError(t, err)
@@ -152,7 +152,7 @@ func TestForm_Bind_Hidden(t *testing.T) {
 	assert.Equal(t, map[string]string{"mode": "plan"}, s.Values)
 
 	s, err = f.Bind(map[string]string{"mode": "apply"})
-	assert.ErrorIs(t, err, form.ErrInvalid)
+	assert.ErrorIs(t, err, askhuman.ErrInvalid)
 	assert.Equal(t, map[string]string{"confirm": "a value is needed"}, s.Errors)
 
 	s, err = f.Bind(map[string]string{"mode": "apply", "confirm": "malta/apps"})

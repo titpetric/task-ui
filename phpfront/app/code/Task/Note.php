@@ -181,7 +181,7 @@ class Note {
 
 		return [
 			"id" => $id,
-			"body" => $chrome->message($note->getBody()),
+			"body" => $chrome->message($note->getBody(), $id),
 			"raw" => $note->getBody(),
 			"author" => $chrome->who()->of($author),
 			"state" => $note->getState(),

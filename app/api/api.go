@@ -136,6 +136,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/voice/ready", h.voiceReady)
 	r.Post("/voice/note", h.voiceNote)
 	r.Post("/forms", h.listForms)
+	r.Post("/forms/submit", h.submitAsk)
 	r.Get("/spotify/now-playing", h.spotifyNowPlaying)
 	r.Get("/spotify/search", h.spotifySearch)
 	r.Get("/spotify/playlists", h.spotifyPlaylists)

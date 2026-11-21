@@ -122,19 +122,19 @@ class Chrome {
 
 	/**
 	 * message renders a note's text, linking the mentions the reader may open
-	 * and drawing a ```form fence of it as the form it declares.
+	 * and drawing an ```ask fence of it as the form it declares.
 	 *
 	 * The body comes out as a sequence - markdown, the form, markdown - so the
 	 * renderer stays a markdown renderer and knows nothing of forms. The split
 	 * is Task\Form::blocks(), the Go page's form.Blocks().
 	 */
-	function message($text) {
+	function message($text, $note = "") {
 		$out = "";
 		$at = 0;
 
-		foreach (Form::blocks($text) as $block) {
+		foreach (Form::blocks($text) as $index => $block) {
 			$out .= $this->markdown(substr($text, $at, $block["start"] - $at));
-			$out .= Form::html($block, $this);
+			$out .= Form::html($block, $this, $note, $index);
 			$at = $block["end"];
 		}
 

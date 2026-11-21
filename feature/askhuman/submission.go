@@ -1,4 +1,4 @@
-package form
+package askhuman
 
 // Submission is a bound submission: what each visible field holds, what a multi holds, and what is wrong.
 type Submission struct {

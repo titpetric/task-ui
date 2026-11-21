@@ -43,7 +43,7 @@ Every list marks a job, a workflow or a run with `#!`: faint until it has run, t
 | [Settings](guide/settings.md)          | The user menu, Settings                  | Projects, workspaces, users, secrets and env, SSH keys, integrations                                                        |
 | [Meetings](guide/orb.md)               | Meetings                                 | Rooms with live voice, a transcript under the name of each speaker and Claude's summary                                     |
 | [Dictation](guide/voice.md)            | The orb, bottom right of every page      | Recording, what send does with it, the Claude session it opens, and the questions it asks back                              |
-| [Forms](guide/forms.md)                | A form block of a note's reply           | The yaml dialect: fields, components, options, when, and what the button does                                               |
+| [Asks](guide/forms.md)                 | An ask block of a note's reply           | The yaml dialect: questions, sections, components, options, when, the sink and the artifacts it writes                     |
 | [MCP](guide/mcp.md)                    |                                          | Tokens, and the tools an agent runs jobs with                                                                               |
 | [Screenshots](screenshots.md)          |                                          | Every view, in both themes and on a phone                                                                                   |
 

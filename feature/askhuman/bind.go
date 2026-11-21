@@ -1,4 +1,4 @@
-package form
+package askhuman
 
 import (
 	"errors"
@@ -19,7 +19,13 @@ func (f *Form) Bind(values map[string]string) (*Submission, error) {
 		if value == "" {
 			value = strings.TrimSpace(field.Default)
 		}
-		if message := field.bind(s, value); message != "" {
+		said := strings.TrimSpace(values[field.Key+textSuffix])
+		if field.MaxFreeTextBytes > 0 && len(said) > field.MaxFreeTextBytes {
+			s.Errors[field.Key] = "the reason is longer than the form takes"
+			bad = append(bad, field.Key+": the reason is longer than the form takes")
+			continue
+		}
+		if message := field.bind(s, value, said); message != "" {
 			s.Errors[field.Key] = message
 			bad = append(bad, field.Key+": "+message)
 		}
@@ -30,13 +36,13 @@ func (f *Form) Bind(values map[string]string) (*Submission, error) {
 	return s, nil
 }
 
-// bind writes one field's value to the submission, returning the message of a value the field refuses.
-func (f *Field) bind(s *Submission, value string) string {
-	if f.Component == componentMulti {
-		return f.bindMulti(s, value)
+// bind writes one field's value to the submission, the reason beside it satisfying a required question.
+func (f *Field) bind(s *Submission, value, said string) string {
+	if f.Component == componentMulti || f.Component == componentChecklist {
+		return f.bindMulti(s, value, said)
 	}
 	if value == "" {
-		if f.Required {
+		if f.Required && said == "" {
 			return "a value is needed"
 		}
 		if f.Component != componentBool {
@@ -66,15 +72,15 @@ func (f *Field) bind(s *Submission, value string) string {
 	return ""
 }
 
-// bindMulti splits a multi on the line breaks and the commas, dropping what is empty.
-func (f *Field) bindMulti(s *Submission, value string) string {
+// bindMulti splits a multi or a checklist on the line breaks and the commas, dropping what is empty.
+func (f *Field) bindMulti(s *Submission, value, said string) string {
 	var parts []string
 	for _, part := range strings.FieldsFunc(value, func(r rune) bool { return r == '\n' || r == ',' }) {
 		if part = strings.TrimSpace(part); part != "" {
 			parts = append(parts, part)
 		}
 	}
-	if len(parts) == 0 && f.Required {
+	if len(parts) == 0 && f.Required && said == "" {
 		return "a value is needed"
 	}
 	if len(f.Options) > 0 {

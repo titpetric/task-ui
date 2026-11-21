@@ -1,10 +1,10 @@
-package form_test
+package askhuman_test
 
 import (
 	"testing"
 
+	"github.com/titpetric/task-ui/feature/askhuman"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpfront/form"
 )
 
 // sample is the dialect as the documentation writes it.
@@ -43,12 +43,12 @@ submit:
 
 func TestParse(t *testing.T) {
 	t.Parallel()
-	f, err := form.Parse([]byte(sample))
+	f, err := askhuman.Parse([]byte(sample))
 	assert.NoError(t, err)
 	assert.Equal(t, "Pick a target", f.Title)
 	assert.Equal(t, "run", f.Table)
 	assert.Len(t, f.Fields, 4)
-	assert.Equal(t, form.Field{
+	assert.Equal(t, askhuman.Field{
 		Key:         "folder",
 		Label:       "Folder",
 		Component:   "folder",
@@ -57,13 +57,13 @@ func TestParse(t *testing.T) {
 		Source:      "folders",
 		Required:    true,
 	}, f.Fields[0])
-	assert.Equal(t, []form.Option{
+	assert.Equal(t, []askhuman.Option{
 		{Value: "plan", Label: "Plan only"},
 		{Value: "apply", Label: "Apply", Next: "confirm"},
 	}, f.Fields[1].Options)
 	assert.Equal(t, "multi", f.Fields[2].Component)
 	assert.Equal(t, "mode=apply", f.Fields[3].When)
-	assert.Equal(t, form.Submit{
+	assert.Equal(t, askhuman.Submit{
 		Label:  "Run",
 		Job:    "@claude-prompt",
 		Folder: "malta/apps",
@@ -78,7 +78,7 @@ func TestParse_Label(t *testing.T) {
 		"no label":    "fields:\n  - {key: a, component: text}\nsubmit: {job: \"@shell\"}\n",
 		"empty label": "fields:\n  - {key: a, component: text}\nsubmit: {label: \"\"}\n",
 	} {
-		f, err := form.Parse([]byte(source))
+		f, err := askhuman.Parse([]byte(source))
 		assert.NoError(t, err, name)
 		assert.Equal(t, "Run", f.Submit.Label, name)
 	}
@@ -91,7 +91,7 @@ func TestParse_Errors(t *testing.T) {
 		want   string
 	}{
 		"empty":              {"", "declares nothing"},
-		"not yaml":           {"fields: [", "form:"},
+		"not yaml":           {"fields: [", "ask:"},
 		"an unknown key":     {"nope: 1\nfields:\n  - {key: a, component: text}\n", "nope"},
 		"an unknown field":   {"fields:\n  - {key: a, component: text, colour: red}\n", "colour"},
 		"no fields":          {"title: a\n", "declares no field"},
@@ -102,7 +102,7 @@ func TestParse_Errors(t *testing.T) {
 		"a key twice":        {"fields:\n  - {key: a, component: text}\n  - {key: a, component: bool}\n", `field "a": declared twice`},
 		"no component":       {"fields:\n  - {key: a}\n", `field "a": it names no component`},
 		"a bad component":    {"fields:\n  - {key: a, component: slider}\n", `field "a": no component "slider"`},
-		"options on a text":  {"fields:\n  - {key: a, component: text, options: [{value: x}]}\n", `field "a": options are for choice and multi`},
+		"options on a text":  {"fields:\n  - {key: a, component: text, options: [{value: x}]}\n", `field "a": options are for choice, multi and checklist`},
 		"options and source": {"fields:\n  - {key: a, component: choice, source: modes, options: [{value: x}]}\n", `field "a": source "modes" supplies the options`},
 		"a choice with none": {"fields:\n  - {key: a, component: choice}\n", `field "a": a choice needs options or a source`},
 		"a multi with none":  {"fields:\n  - {key: a, component: multi}\n", `field "a": a multi needs options or a source`},
@@ -123,7 +123,7 @@ func TestParse_Errors(t *testing.T) {
 		"a prompt to nowhere": {"fields:\n  - {key: a, component: text}\nsubmit: {prompt: \"run {{nope}}\"}\n",
 			`submit: prompt {{nope}} names no field "nope"`},
 	} {
-		f, err := form.Parse([]byte(test.source))
+		f, err := askhuman.Parse([]byte(test.source))
 		assert.Nil(t, f, name)
 		assert.ErrorContains(t, err, test.want, name)
 	}
@@ -131,7 +131,7 @@ func TestParse_Errors(t *testing.T) {
 
 func TestForm_Visible(t *testing.T) {
 	t.Parallel()
-	f, err := form.Parse([]byte("fields:\n" +
+	f, err := askhuman.Parse([]byte("fields:\n" +
 		"  - {key: mode, component: choice, options: [{value: plan}, {value: apply, next: confirm}]}\n" +
 		"  - {key: confirm, component: choice, when: mode=apply, options: [{value: yes, next: reason}, {value: no}]}\n" +
 		"  - {key: reason, component: text, when: confirm=yes}\n"))
@@ -160,7 +160,7 @@ func TestForm_Visible(t *testing.T) {
 // 0 and Bind writes true or false.
 func TestForm_VisibleBool(t *testing.T) {
 	t.Parallel()
-	f, err := form.Parse([]byte("fields:\n" +
+	f, err := askhuman.Parse([]byte("fields:\n" +
 		"  - {key: deploy, component: bool}\n" +
 		"  - {key: reason, component: text, when: deploy=true}\n"))
 	assert.NoError(t, err)
@@ -183,7 +183,7 @@ func TestForm_VisibleBool(t *testing.T) {
 	}
 
 	// A when over a bool that names no truth is a parse error.
-	_, err = form.Parse([]byte("fields:\n" +
+	_, err = askhuman.Parse([]byte("fields:\n" +
 		"  - {key: deploy, component: bool}\n" +
 		"  - {key: reason, component: text, when: deploy=maybe}\n"))
 	assert.ErrorContains(t, err, "is no yes or no")
@@ -191,7 +191,7 @@ func TestForm_VisibleBool(t *testing.T) {
 
 func TestForm_Render(t *testing.T) {
 	t.Parallel()
-	f, err := form.Parse([]byte("fields:\n" +
+	f, err := askhuman.Parse([]byte("fields:\n" +
 		"  - {key: folder, component: folder, source: folders}\n" +
 		"  - {key: mode, component: choice, options: [{value: apply}]}\n" +
 		"  - {key: hosts, component: multi, source: hosts}\n" +

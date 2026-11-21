@@ -151,7 +151,7 @@
     "your replies in this thread from 1, then run the speak job of titpetric/stt so the window has the",
     "audio. The window plays <base>.N.reply.wav and nothing else, so a reply without one is never heard.",
     "",
-    "To ask me something, end the reply with a ```form block: one field per question, component bool for",
+    "To ask me something, end the reply with a ```ask block: one field per question, component bool for",
     "a yes or no, choice with options for a pick, multi for several, text for words. The window draws it",
     "a question at a time as buttons and sends the answers back as my next message. Ask a questionnaire",
     "as one block of many short fields, with when: <key>=<value> on a field that follows from an answer,",
@@ -1910,7 +1910,7 @@
     dress();
     tell(STAGES[2]);
     audio(mine, stamp + "." + played, 0);
-    if (body.indexOf("```form") < 0) return;
+    if (body.indexOf("```ask") < 0) return;
     forms(body).then(function (found) {
       if (mine !== gen || !found.length || quizzing) return;
       ask(found[0].form);

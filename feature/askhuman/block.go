@@ -1,16 +1,17 @@
-package form
+package askhuman
 
 import (
+	"fmt"
 	"strings"
 )
 
-// The fence of a form block: three backticks at the least, and the word the info string opens on.
+// The fence of an ask block: three backticks at the least, and the word the info string opens on.
 const (
 	minTicks = 3
-	infoWord = "form"
+	infoWord = "ask"
 )
 
-// Block is one form fence of a markdown body: where it is, the yaml in it and what Parse made of it.
+// Block is one ask fence of a markdown body: where it is, the yaml in it and what Parse made of it.
 type Block struct {
 	// Start is the byte offset the fence opens at, its backticks included.
 	Start int
@@ -24,7 +25,7 @@ type Block struct {
 	Err error
 }
 
-// Blocks returns every form fence of a markdown body in order, each with Parse's result.
+// Blocks returns every ask fence of a markdown body in order, each with Parse's result.
 func Blocks(markdown string) []Block {
 	var blocks []Block
 	for pos := 0; pos < len(markdown); {
@@ -44,7 +45,19 @@ func Blocks(markdown string) []Block {
 	return blocks
 }
 
-// fence is a fence's opening line: how it is indented, how many backticks it took, whether it says form.
+// BlockAt returns the form at an index of a body's ask fences, or why there is none.
+func BlockAt(markdown string, index int) (*Form, error) {
+	blocks := Blocks(markdown)
+	if index < 0 || index >= len(blocks) {
+		return nil, fmt.Errorf("ask: the body holds no ask %d", index+1)
+	}
+	if blocks[index].Err != nil {
+		return nil, blocks[index].Err
+	}
+	return blocks[index].Form, nil
+}
+
+// fence is a fence's opening line: how it is indented, how many backticks it took, whether it says ask.
 type fence struct {
 	indent string
 	ticks  int

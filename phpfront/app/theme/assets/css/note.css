@@ -209,7 +209,7 @@ a.mention:hover {
   }
 }
 
-/* .run-form styles the form a ```form fence of a note's body draws. */
+/* .run-form styles the form a ```ask fence of a note's body draws. */
 .run-form {
   cursor: auto;
   margin: 0.6rem 0;
@@ -218,6 +218,41 @@ a.mention:hover {
     margin: 0 0 0.6rem;
     font-size: var(--fs-md);
     font-weight: 600;
+  }
+
+  & .form-subtitle {
+    margin: -0.4rem 0 0.6rem;
+  }
+
+  & .form-context {
+    margin: 0 0 0.6rem;
+    font-size: var(--fs-sm);
+  }
+
+  & .form-prerequisites {
+    margin: 0 0 0.8rem;
+    padding-inline-start: 1.1rem;
+    font-size: var(--fs-sm);
+  }
+
+  & .form-section {
+    margin: 1rem 0 0.2rem;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  & .form-section-note {
+    margin: 0 0 0.6rem;
+  }
+
+  /* .form-note takes a line about the answers, beside them and not in one. */
+  & .form-note {
+    margin-top: 0.6rem;
+
+    & textarea {
+      width: 100%;
+      min-height: 2.6rem;
+    }
   }
 
   & .form-state {
@@ -231,6 +266,11 @@ a.mention:hover {
     font-size: var(--fs-xs);
     font-family: var(--font-mono);
   }
+}
+
+/* .free-text takes the reason a chosen option leaves room for. */
+.free-text {
+  margin-top: 0.4rem;
 }
 
 /* .form-started is what the form leaves behind: the link to the run. */

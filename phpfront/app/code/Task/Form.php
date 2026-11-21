@@ -2,7 +2,7 @@
 
 namespace Task;
 
-// Form is the ```form fence of a note's body: where it is, the form its yaml
+// Form is the ```ask fence of a note's body: where it is, the form its yaml
 // declares, and the markup the theme draws for it.
 //
 // It is the port of the Go form package, and the two are read as one pair: the
@@ -23,6 +23,7 @@ class Form {
 		"hidden",
 		"choice",
 		"multi",
+		"checklist",
 		"folder",
 		"job",
 		"role",
@@ -30,6 +31,12 @@ class Form {
 		"key",
 		"workspace",
 	];
+
+	/** KINDS are the askhuman question kinds a field names instead of a component. */
+	const KINDS = ["free_text", "qcm_free_text", "boolean_checklist"];
+
+	/** FREE_TEXT is the max bytes a reason beside a qcm takes when the field names none. */
+	const FREE_TEXT = 32768;
 
 	/** PICKERS are the components that take their options from a source of their own name. */
 	const PICKERS = ["folder", "job", "role", "user", "key", "workspace"];
@@ -42,23 +49,50 @@ class Form {
 
 	/** TICKS is the least backticks a fence opens with, and WORD the first word after them. */
 	const TICKS = 3;
-	const WORD = "form";
+	const WORD = "ask";
 
 	/** KEYS are the keys each level of the dialect takes, and nothing else. */
-	const FORM_KEYS = ["title", "table", "fields", "submit"];
+	const FORM_KEYS = [
+		"id",
+		"project",
+		"workflow_id",
+		"workstep_id",
+		"title",
+		"subtitle",
+		"context",
+		"context_summary",
+		"prerequisites",
+		"sections",
+		"table",
+		"fields",
+		"questions",
+		"submit",
+	];
 	const FIELD_KEYS = [
 		"key",
+		"id",
 		"label",
+		"title",
 		"component",
+		"kind",
+		"axis",
+		"section",
 		"help",
+		"context",
 		"placeholder",
 		"default",
 		"source",
 		"when",
 		"required",
+		"multi_select",
+		"free_text",
+		"free_text_label",
+		"free_text_placeholder",
+		"max_free_text_bytes",
 		"options",
 	];
-	const OPTION_KEYS = ["value", "label", "next"];
+	const OPTION_KEYS = ["value", "id", "label", "title", "rationale", "recommended", "default_checked", "next"];
+	const SECTION_KEYS = ["id", "title", "description"];
 	const SUBMIT_KEYS = ["label", "job", "folder", "dir", "prompt"];
 
 	/** KEY_PATTERN is the word a field's key is, and PROMPT_PATTERN a placeholder of a prompt. */
@@ -106,15 +140,15 @@ class Form {
 		try {
 			$document = yaml_decode($yaml);
 		} catch (\Throwable $e) {
-			return ["form" => null, "err" => "form: " . $e->getMessage()];
+			return ["form" => null, "err" => "ask: " . $e->getMessage()];
 		}
 
 		if ($document === null) {
-			return ["form" => null, "err" => "form: it declares nothing"];
+			return ["form" => null, "err" => "ask: it declares nothing"];
 		}
 
 		if (!is_array($document)) {
-			return ["form" => null, "err" => "form: it declares nothing"];
+			return ["form" => null, "err" => "ask: it declares nothing"];
 		}
 
 		$form = self::shape($document);
@@ -130,14 +164,52 @@ class Form {
 	/** shape is the document read into the dialect's own keys, each one filled. */
 	static function shape($document) {
 		$submit = Row::items($document, "submit");
+		$declared = Row::items($document, "fields");
+
+		if (count($declared) === 0) {
+			$declared = Row::items($document, "questions");
+		}
+
 		$fields = [];
 
-		foreach (Row::items($document, "fields") as $declared) {
-			$fields[] = self::shapeField($declared);
+		foreach ($declared as $field) {
+			$fields[] = self::shapeField($field);
+		}
+
+		$sections = [];
+
+		foreach (Row::items($document, "sections") as $section) {
+			$sections[] = [
+				"id" => self::scalar($section, "id"),
+				"title" => self::scalar($section, "title"),
+				"description" => self::scalar($section, "description"),
+			];
+		}
+
+		$prerequisites = [];
+
+		foreach (Row::items($document, "prerequisites") as $item) {
+			if (!is_array($item) && trim((string)$item) !== "") {
+				$prerequisites[] = (string)$item;
+			}
+		}
+
+		$context = self::scalar($document, "context");
+
+		if ($context === "") {
+			$context = self::scalar($document, "context_summary");
 		}
 
 		return [
+			"id" => self::scalar($document, "id"),
+			"project" => self::scalar($document, "project"),
+			"workflow_id" => self::scalar($document, "workflow_id"),
+			"workstep_id" => self::scalar($document, "workstep_id"),
 			"title" => self::scalar($document, "title"),
+			"subtitle" => self::scalar($document, "subtitle"),
+			"context" => $context,
+			"prerequisites" => $prerequisites,
+			"sections" => $sections,
 			"table" => self::scalar($document, "table"),
 			"fields" => $fields,
 			"submit" => [
@@ -150,30 +222,97 @@ class Form {
 		];
 	}
 
-	/** shapeField is one declared field read into the dialect's own keys. */
+	/** shapeField is one declared field read into the dialect's own keys, the kind naming its component. */
 	static function shapeField($declared) {
 		$options = [];
+		$default = self::scalar($declared, "default");
+		$multi = Row::flag($declared, "multi_select");
 
 		foreach (Row::items($declared, "options") as $option) {
+			$value = self::scalar($option, "value");
+
+			if ($value === "") {
+				$value = self::scalar($option, "id");
+			}
+
+			$label = self::scalar($option, "label");
+
+			if ($label === "") {
+				$label = self::scalar($option, "title");
+			}
+
+			if (Row::flag($option, "default_checked") && $default === "" && !$multi) {
+				$default = $value;
+			}
+
 			$options[] = [
-				"value" => self::scalar($option, "value"),
-				"label" => self::scalar($option, "label"),
+				"value" => $value,
+				"label" => $label,
+				"rationale" => self::scalar($option, "rationale"),
+				"recommended" => Row::flag($option, "recommended"),
+				"default_checked" => Row::flag($option, "default_checked"),
 				"next" => self::scalar($option, "next"),
 			];
 		}
 
+		$key = self::scalar($declared, "key");
+
+		if ($key === "") {
+			$key = self::scalar($declared, "id");
+		}
+
+		$label = self::scalar($declared, "label");
+
+		if ($label === "") {
+			$label = self::scalar($declared, "title");
+		}
+
+		$help = self::scalar($declared, "help");
+
+		if ($help === "") {
+			$help = self::scalar($declared, "context");
+		}
+
 		return [
-			"key" => self::scalar($declared, "key"),
-			"label" => self::scalar($declared, "label"),
-			"component" => self::scalar($declared, "component"),
-			"help" => self::scalar($declared, "help"),
+			"key" => $key,
+			"label" => $label,
+			"component" => self::component($declared, $multi),
+			"kind" => self::scalar($declared, "kind"),
+			"axis" => self::scalar($declared, "axis"),
+			"section" => self::scalar($declared, "section"),
+			"help" => $help,
 			"placeholder" => self::scalar($declared, "placeholder"),
-			"default" => self::scalar($declared, "default"),
+			"default" => $default,
 			"source" => self::scalar($declared, "source"),
 			"when" => self::scalar($declared, "when"),
 			"required" => Row::flag($declared, "required"),
+			"free_text" => Row::flag($declared, "free_text"),
+			"free_text_label" => self::scalar($declared, "free_text_label"),
+			"free_text_placeholder" => self::scalar($declared, "free_text_placeholder"),
+			"max_free_text_bytes" => Row::number($declared, "max_free_text_bytes", self::FREE_TEXT),
 			"options" => $options,
 		];
+	}
+
+	/** component is the input a field names, or the one its question kind draws. */
+	static function component($field, $multi) {
+		$component = self::scalar($field, "component");
+
+		if ($component !== "") {
+			return $component;
+		}
+
+		switch (self::scalar($field, "kind")) {
+
+			case "free_text":
+				return "textarea";
+			case "qcm_free_text":
+				return $multi ? "multi" : "choice";
+			case "boolean_checklist":
+				return "checklist";
+		}
+
+		return "";
 	}
 
 	/** validate is the first thing the dialect refuses, the references and the prompt last. */
@@ -185,7 +324,11 @@ class Form {
 		}
 
 		if (count($form["fields"]) === 0) {
-			return "form: it declares no field";
+			return "ask: it declares no field";
+		}
+
+		if (count(Row::items($document, "fields")) > 0 && count(Row::items($document, "questions")) > 0) {
+			return "ask: it declares fields and questions";
 		}
 
 		$keys = [];
@@ -198,7 +341,7 @@ class Form {
 			}
 
 			if (isset($keys[$field["key"]])) {
-				return "form: field " . self::quote($field["key"]) . ": declared twice";
+				return "ask: field " . self::quote($field["key"]) . ": declared twice";
 			}
 
 			$keys[$field["key"]] = $field;
@@ -212,25 +355,68 @@ class Form {
 			}
 		}
 
+		$err = self::validateSections($form);
+
+		if ($err !== "") {
+			return $err;
+		}
+
 		return self::validatePrompt($form, $keys);
+	}
+
+	/** validateSections is a section with no ID or one twice, and a field under a section nobody declares. */
+	static function validateSections($form) {
+		$seen = [];
+
+		foreach ($form["sections"] as $index => $section) {
+			if ($section["id"] === "") {
+				return "ask: section " . ($index + 1) . ": it has no id";
+			}
+
+			if (isset($seen[$section["id"]])) {
+				return "ask: section " . self::quote($section["id"]) . ": declared twice";
+			}
+
+			$seen[$section["id"]] = true;
+		}
+
+		foreach ($form["fields"] as $field) {
+			if ($field["section"] !== "" && !isset($seen[$field["section"]])) {
+				return "ask: field " . self::quote($field["key"]) . ": section " . self::quote($field["section"]) . " is not declared";
+			}
+		}
+
+		return "";
 	}
 
 	/** validateField is what a field itself gets wrong, its index naming one with no usable key. */
 	static function validateField($field, $index) {
 		if ($field["key"] === "") {
-			return "form: field " . ($index + 1) . ": it has no key";
+			return "ask: field " . ($index + 1) . ": it has no key";
 		}
 
 		if (preg_match(self::KEY_PATTERN, $field["key"]) !== 1) {
-			return "form: field " . ($index + 1) . ": key " . self::quote($field["key"]) . " is no [a-z0-9_-] word";
+			return "ask: field " . ($index + 1) . ": key " . self::quote($field["key"]) . " is no [a-z0-9_-] word";
+		}
+
+		if ($field["kind"] !== "" && !in_array($field["kind"], self::KINDS, true)) {
+			return "ask: field " . self::quote($field["key"]) . ": no kind " . self::quote($field["kind"]) . "; one of " . implode(", ", self::KINDS);
 		}
 
 		if ($field["component"] === "") {
-			return "form: field " . self::quote($field["key"]) . ": it names no component";
+			return "ask: field " . self::quote($field["key"]) . ": it names no component";
 		}
 
 		if (!in_array($field["component"], self::COMPONENTS, true)) {
-			return "form: field " . self::quote($field["key"]) . ": no component " . self::quote($field["component"]) . "; one of " . implode(", ", self::COMPONENTS);
+			return "ask: field " . self::quote($field["key"]) . ": no component " . self::quote($field["component"]) . "; one of " . implode(", ", self::COMPONENTS);
+		}
+
+		if ($field["free_text"] && $field["component"] !== "choice" && $field["component"] !== "multi") {
+			return "ask: field " . self::quote($field["key"]) . ": free text follows a choice or a multi, not " . $field["component"];
+		}
+
+		if ($field["max_free_text_bytes"] < 0) {
+			return "ask: field " . self::quote($field["key"]) . ": max_free_text_bytes is no count";
 		}
 
 		return self::validateOptions($field);
@@ -238,30 +424,34 @@ class Form {
 
 	/** validateOptions is the options a component may not hold, a source that supplies them, and a value twice. */
 	static function validateOptions($field) {
-		$picks = $field["component"] === "choice" || $field["component"] === "multi";
+		$picks = in_array($field["component"], ["choice", "multi", "checklist"], true);
 		$count = count($field["options"]);
 
 		if ($count > 0 && !$picks) {
-			return "form: field " . self::quote($field["key"]) . ": options are for choice and multi, not " . $field["component"];
+			return "ask: field " . self::quote($field["key"]) . ": options are for choice, multi and checklist, not " . $field["component"];
+		}
+
+		if ($field["kind"] === "qcm_free_text" && $count < 2 && $field["source"] === "") {
+			return "ask: field " . self::quote($field["key"]) . ": a qcm_free_text needs two options";
 		}
 
 		if ($count > 0 && $field["source"] !== "") {
-			return "form: field " . self::quote($field["key"]) . ": source " . self::quote($field["source"]) . " supplies the options, so it declares none";
+			return "ask: field " . self::quote($field["key"]) . ": source " . self::quote($field["source"]) . " supplies the options, so it declares none";
 		}
 
 		if ($picks && $count === 0 && $field["source"] === "") {
-			return "form: field " . self::quote($field["key"]) . ": a " . $field["component"] . " needs options or a source";
+			return "ask: field " . self::quote($field["key"]) . ": a " . $field["component"] . " needs options or a source";
 		}
 
 		$seen = [];
 
 		foreach ($field["options"] as $index => $option) {
 			if ($option["value"] === "") {
-				return "form: field " . self::quote($field["key"]) . ": option " . ($index + 1) . ": it has no value";
+				return "ask: field " . self::quote($field["key"]) . ": option " . ($index + 1) . ": it has no value";
 			}
 
 			if (isset($seen[$option["value"]])) {
-				return "form: field " . self::quote($field["key"]) . ": option " . self::quote($option["value"]) . " twice";
+				return "ask: field " . self::quote($field["key"]) . ": option " . self::quote($option["value"]) . " twice";
 			}
 
 			$seen[$option["value"]] = true;
@@ -274,7 +464,7 @@ class Form {
 	static function validateRefs($field, $keys) {
 		foreach ($field["options"] as $option) {
 			if ($option["next"] !== "" && !isset($keys[$option["next"]])) {
-				return "form: field " . self::quote($field["key"]) . ": option " . self::quote($option["value"]) . ": next names no field " . self::quote($option["next"]);
+				return "ask: field " . self::quote($field["key"]) . ": option " . self::quote($option["value"]) . ": next names no field " . self::quote($option["next"]);
 			}
 		}
 
@@ -285,17 +475,17 @@ class Form {
 		$cut = self::cut($field["when"]);
 
 		if (!$cut["ok"] || $cut["key"] === "" || $cut["value"] === "") {
-			return "form: field " . self::quote($field["key"]) . ": when " . self::quote($field["when"]) . " is no <key>=<value>";
+			return "ask: field " . self::quote($field["key"]) . ": when " . self::quote($field["when"]) . " is no <key>=<value>";
 		}
 
 		if (!isset($keys[$cut["key"]])) {
-			return "form: field " . self::quote($field["key"]) . ": when names no field " . self::quote($cut["key"]);
+			return "ask: field " . self::quote($field["key"]) . ": when names no field " . self::quote($cut["key"]);
 		}
 
 		$named = $keys[$cut["key"]];
 
 		if (count($named["options"]) > 0 && !self::hasOption($named, $cut["value"])) {
-			return "form: field " . self::quote($field["key"]) . ": when " . self::quote($cut["value"]) . " is no option of field " . self::quote($cut["key"]);
+			return "ask: field " . self::quote($field["key"]) . ": when " . self::quote($cut["value"]) . " is no option of field " . self::quote($cut["key"]);
 		}
 
 		return "";
@@ -313,7 +503,7 @@ class Form {
 			$name = trim($name);
 
 			if (!isset($keys[$name])) {
-				return "form: submit: prompt " . $found[0][$index] . " names no field " . self::quote($name);
+				return "ask: submit: prompt " . $found[0][$index] . " names no field " . self::quote($name);
 			}
 		}
 
@@ -341,19 +531,33 @@ class Form {
 			return $err;
 		}
 
-		foreach (Row::items($document, "fields") as $index => $declared) {
-			$err = self::unknownIn($declared, self::FIELD_KEYS, "field " . ($index + 1));
+		$declared = Row::items($document, "fields");
+
+		if (count($declared) === 0) {
+			$declared = Row::items($document, "questions");
+		}
+
+		foreach ($declared as $index => $field) {
+			$err = self::unknownIn($field, self::FIELD_KEYS, "field " . ($index + 1));
 
 			if ($err !== "") {
 				return $err;
 			}
 
-			foreach (Row::items($declared, "options") as $at => $option) {
+			foreach (Row::items($field, "options") as $at => $option) {
 				$err = self::unknownIn($option, self::OPTION_KEYS, "field " . ($index + 1) . ", option " . ($at + 1));
 
 				if ($err !== "") {
 					return $err;
 				}
+			}
+		}
+
+		foreach (Row::items($document, "sections") as $index => $section) {
+			$err = self::unknownIn($section, self::SECTION_KEYS, "section " . ($index + 1));
+
+			if ($err !== "") {
+				return $err;
 			}
 		}
 
@@ -368,7 +572,7 @@ class Form {
 
 		foreach (array_keys($mapping) as $key) {
 			if (!in_array($key, $allowed, true)) {
-				return "form: " . $where . ": no key " . self::quote((string)$key);
+				return "ask: " . $where . ": no key " . self::quote((string)$key);
 			}
 		}
 
@@ -423,29 +627,35 @@ class Form {
 	}
 
 	/** html is a fence as the body holds it: the form it declares, or the error it failed to parse with. */
-	static function html($block, $chrome) {
+	static function html($block, $chrome, $note = "", $index = 0) {
 		$paths = [View::THEME];
 		$tpl = new \MiniTPL\Template($paths);
 		$tpl->load("components/form-block.tpl");
-		$tpl->assign("data_form", self::block($block, $chrome));
+		$tpl->assign("data_form", self::block($block, $chrome, $note, $index));
 
 		return $tpl->get();
 	}
 
-	/** block is a fence as components/form-block.tpl reads it, the defaults deciding which field is hidden. */
-	static function block($block, $chrome) {
+	/** block is a fence as components/form-block.tpl reads it, the fields grouped by their section. */
+	static function block($block, $chrome, $note = "", $index = 0) {
 		$form = isset($block["form"]) ? $block["form"] : null;
 
 		if ($form === null) {
 			return [
 				"err" => Row::text($block, "err"),
 				"title" => "",
+				"subtitle" => "",
+				"context" => "",
+				"prerequisites" => [],
 				"label" => "",
 				"folder" => "",
 				"dir" => "",
 				"job" => "",
 				"prompt" => "",
 				"fields" => [],
+				"sections" => [],
+				"note" => $note,
+				"index" => $index,
 			];
 		}
 
@@ -457,20 +667,53 @@ class Form {
 
 		$shown = self::visible($form, $values);
 		$fields = [];
+		$grouped = [];
 
 		foreach ($form["fields"] as $field) {
-			$fields[] = self::field($field, !isset($shown[$field["key"]]), $chrome);
+			$drawn = self::field($field, !isset($shown[$field["key"]]), $chrome);
+			$fields[] = $drawn;
+			$grouped[$field["section"]][] = $drawn;
+		}
+
+		$sections = [];
+
+		foreach ($form["sections"] as $section) {
+			if (!isset($grouped[$section["id"]])) {
+				continue;
+			}
+
+			$sections[] = [
+				"id" => $section["id"],
+				"title" => $section["title"],
+				"description" => $section["description"],
+				"fields" => $grouped[$section["id"]],
+			];
+		}
+
+		if (isset($grouped[""])) {
+			$sections[] = [
+				"id" => "",
+				"title" => "",
+				"description" => "",
+				"fields" => $grouped[""],
+			];
 		}
 
 		return [
 			"err" => "",
 			"title" => $form["title"],
+			"subtitle" => $form["subtitle"],
+			"context" => $form["context"],
+			"prerequisites" => $form["prerequisites"],
 			"label" => $form["submit"]["label"],
 			"folder" => $form["submit"]["folder"],
 			"dir" => $form["submit"]["dir"],
 			"job" => $form["submit"]["job"],
 			"prompt" => $form["submit"]["prompt"],
 			"fields" => $fields,
+			"sections" => $sections,
+			"note" => $note,
+			"index" => $index,
 		];
 	}
 
@@ -482,8 +725,10 @@ class Form {
 			$options[] = [
 				"value" => $option["value"],
 				"label" => $option["label"] === "" ? $option["value"] : $option["label"],
+				"rationale" => $option["rationale"],
+				"recommended" => $option["recommended"],
 				"next" => $option["next"],
-				"selected" => $option["value"] === $field["default"],
+				"selected" => $option["default_checked"] || $option["value"] === $field["default"],
 			];
 		}
 
@@ -495,6 +740,9 @@ class Form {
 			"key" => $field["key"],
 			"label" => $field["label"] === "" ? $field["key"] : $field["label"],
 			"component" => $field["component"],
+			"kind" => $field["kind"],
+			"axis" => $field["axis"],
+			"section" => $field["section"],
 			"help" => $field["help"],
 			"placeholder" => $field["placeholder"],
 			"value" => $field["default"],
@@ -502,6 +750,10 @@ class Form {
 			"required" => $field["required"],
 			"hidden" => $hidden,
 			"checked" => in_array(strtolower(trim($field["default"])), self::TRUTHS, true),
+			"free_text" => $field["free_text"],
+			"free_text_label" => $field["free_text_label"] === "" ? "Why?" : $field["free_text_label"],
+			"free_text_placeholder" => $field["free_text_placeholder"],
+			"max_free_text_bytes" => $field["max_free_text_bytes"],
 			"options" => $options,
 		];
 	}
