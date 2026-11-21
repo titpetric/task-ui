@@ -90,8 +90,12 @@ class Talk {
 
 				if (isset($at[$id])) {
 					$out[$at[$id]]["work"][] = $run;
+
 					if ($out[$at[$id]]["working"]) {
 						$out[$at[$id]]["working_view"] = self::live($run, $status);
+					} elseif ($out[$at[$id]]["body"] === "" && $run["progress"] !== "") {
+						// A run that ended without an answer still printed its last text.
+						$out[$at[$id]]["body"] = \Task\Host::markdown($run["progress"]);
 					}
 				}
 			}
@@ -101,6 +105,7 @@ class Talk {
 	/** live is a working run as its answer draws it: state, latest text, tools and subagents. */
 	static function live($run, $status) {
 		$label = isset($status["label"]) && $status["label"] !== "" ? $status["label"] : "Working";
+		$progress = $run["progress"];
 
 		return [
 			"label" => $label,
@@ -109,11 +114,17 @@ class Talk {
 			"run" => $run["id"],
 			"canEnd" => !empty($status["can_end"]),
 			"agents" => $run["agents"],
-			"progress" => $run["progress"],
-			"progressClass" => "said-text prose" . ($run["progress"] === "" ? " faint" : ""),
+			"progress" => $progress,
+			"progressHtml" => $progress === "" ? "" : self::quote($progress),
+			"progressClass" => "said-text" . ($progress === "" ? " faint" : ""),
 			"stats" => $run["stats"],
 			"tools" => $run["tools"],
 		];
+	}
+
+	/** quote is the latest text of a live run drawn as one block quote, each line cited. */
+	static function quote($text) {
+		return \Task\Host::markdown("> " . str_replace("\n", "\n> ", trim($text)));
 	}
 
 	/** joins reports whether a note and the reply after it are one recording. */
@@ -196,7 +207,7 @@ class Talk {
 			"className" => self::className($mine, $agent, $working),
 			"mine" => $mine,
 			"author" => $chrome->who()->of($author),
-			"body" => $chrome->message(self::said($note)),
+			"body" => $chrome->message(self::said($note), $note->getId()),
 			"audio" => self::audio($note),
 			"state" => $note->getState(),
 			"working" => $working,

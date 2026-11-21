@@ -196,7 +196,11 @@
       return;
     }
     text.classList.remove("faint");
-    text.textContent = event.body;
+    if (window.taskUI && window.taskUI.markdown) {
+      text.innerHTML = window.taskUI.markdown("> " + event.body.replace(/\n/g, "\n> "));
+    } else {
+      text.textContent = event.body;
+    }
     if (nearBottom()) {
       scrollEnd();
     }

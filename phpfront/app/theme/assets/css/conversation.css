@@ -254,10 +254,30 @@ body:has(.chat-shell) aside.rail {
   }
 }
 
-/* .said-text is the last text the run printed, replaced as the next arrives. */
+/* .said-text cites the last text a run printed, replaced as the next arrives. */
 .said-text {
   margin-top: 0.35rem;
-  white-space: pre-wrap;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+
+  /* Markdown draws the run's own paragraphs and lists, which a quote wraps. */
+  & > :is(p, ul, ol, pre, blockquote) {
+    margin: 0;
+  }
+
+  & > :is(p, ul, ol, pre) + :is(p, ul, ol, pre) {
+    margin-top: 0.35rem;
+  }
+}
+
+.said-text > p,
+.said-text > blockquote {
+  border-inline-start: 1px solid var(--signal);
+  padding-inline-start: 0.75rem;
+}
+
+.said-text:empty {
+  display: none;
 }
 
 .said-live-foot {

@@ -2,13 +2,13 @@
 <div class="said-live" data-status data-state="<?php echo htmlspecialchars($_v['data_working']['state'], ENT_QUOTES);?>
 " data-started="<?php echo htmlspecialchars($_v['data_working']['started'], ENT_QUOTES);?>
 ">
+	<div class="<?php echo htmlspecialchars($_v['data_working']['progressClass'], ENT_QUOTES);?>
+" data-work-progress><?php if($_v['data_working']['progressHtml']){ echo $_v['data_working']['progressHtml']; }?></div>
 	<p class="said-state" aria-live="polite"><i class="dot working"></i> <span data-status-text><?php echo htmlspecialchars($_v['data_working']['label'], ENT_QUOTES);?>
 </span> <span class="faint" data-status-elapsed></span><?php if($_v['data_working']['canEnd']){?>
 <span class="actions"><button class="btn-icon" type="button" data-stop="<?php echo htmlspecialchars($_v['data_working']['run'], ENT_QUOTES);?>
 " title="Stop this run and let it settle" aria-label="Stop this run"><i class="ic ic-stop" aria-hidden="true"></i></button><button class="btn-icon danger" type="button" data-kill="<?php echo htmlspecialchars($_v['data_working']['run'], ENT_QUOTES);?>
 " title="Kill this run and everything it started" aria-label="Kill this run and everything it started"><i class="ic ic-trash" aria-hidden="true"></i></button></span><?php }?></p>
-	<div class="<?php echo htmlspecialchars($_v['data_working']['progressClass'], ENT_QUOTES);?>
-" data-work-progress><?php if($_v['data_working']['progress']){ echo $_v['data_working']['progress']; }?></div>
 <?php if($_v['data_working']['agents']){?>
 	<ul class="status-agents" data-status-agents>
 <?php if(!empty($_v['data_working']['agents']))foreach($_v['data_working']['agents'] as $_v['agent']){?>		<li><details class="<?php echo htmlspecialchars($_v['agent']['className'], ENT_QUOTES);?>
