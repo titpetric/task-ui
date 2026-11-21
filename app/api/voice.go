@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/titpetric/task-ui/feature/orb/stt"
+	"github.com/titpetric/task-ui/feature/voice/stt"
 	"github.com/titpetric/task-ui/internal/access"
 )
 

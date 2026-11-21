@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/feature/orb/stt"
+	"github.com/titpetric/task-ui/feature/voice/stt"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 

@@ -24,7 +24,7 @@ import (
 	"github.com/titpetric/task-ui/feature/inventory/hostrun"
 	"github.com/titpetric/task-ui/feature/meeting"
 	"github.com/titpetric/task-ui/feature/note"
-	"github.com/titpetric/task-ui/feature/orb/recording"
+	"github.com/titpetric/task-ui/feature/recording"
 	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/integration/beszel"

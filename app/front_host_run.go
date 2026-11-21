@@ -7,7 +7,7 @@ import (
 	"sort"
 
 	"github.com/titpetric/task-ui/app/model"
-	"github.com/titpetric/task-ui/feature/orb/recording"
+	"github.com/titpetric/task-ui/feature/recording"
 	"github.com/titpetric/task-ui/internal/access"
 	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/runner"

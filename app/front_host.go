@@ -7,7 +7,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/feature/artifacts"
 	"github.com/titpetric/task-ui/feature/inventory/hostinfo"
-	"github.com/titpetric/task-ui/feature/orb/recording"
+	"github.com/titpetric/task-ui/feature/recording"
 	"github.com/titpetric/task-ui/feature/secret"
 	"github.com/titpetric/task-ui/feature/workflow"
 	"github.com/titpetric/task-ui/integration"
