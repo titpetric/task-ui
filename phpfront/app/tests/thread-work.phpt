@@ -94,8 +94,28 @@ echo count($messages[0]["work"]), " ", count($messages[1]["work"]), "\n";
 // sums both over every run.
 echo $work["fx-work-n1"][0]["tools"], " ", var_export(strpos($work["fx-work-n1"][0]["progress"], "on it") !== false, true), " ", var_export(strpos($work["fx-work-n1"][0]["stats"], "2 tool calls") !== false, true), "\n";
 
+// The trace is the agent's: a question somebody wrote carries neither the work nor its state.
+echo "[", $messages[0]["working_view"]["label"], "]", " ", count($messages[0]["work"]), "\n";
+
 // The working answer draws the run's state, text and tools inside its bubble.
-echo $messages[0]["working_view"]["label"], " ", $messages[0]["working_view"]["tools"], " ", count($messages[0]["working_view"]["agents"]), " ", var_export(strpos($messages[0]["working_view"]["progress"], "on it") !== false, true), "\n";
+$db->replace("note", [
+	"id" => "fx-work-n7",
+	"channel" => "notes",
+	"parent_id" => "fx-work-n1",
+	"user_id" => "fx-work-u1",
+	"user_name" => "fx-work-ann",
+	"agent" => "claude",
+	"body" => "",
+	"mentions" => "",
+	"state" => "working",
+	"run_id" => "fx-work-r1",
+	"created_at" => "2026-11-16 10:06:00.000 +0000 UTC",
+	"updated_at" => "2026-11-16 10:06:00.000 +0000 UTC",
+]);
+$answer = [$notes->get("fx-work-n7")];
+$live = Task\Threads\Conversation::answers($notes->get("fx-work-n1"), $answer, $work);
+$liveTalk = Task\Threads\Talk::messages($notes->get("fx-work-n1"), $answer, $chrome, null, $work, $live);
+echo $liveTalk[1]["working_view"]["label"], " ", $liveTalk[1]["working_view"]["tools"], " ", count($liveTalk[1]["working_view"]["agents"]), " ", var_export(strpos($liveTalk[1]["working_view"]["progress"], "on it") !== false, true), "\n";
 $usage = Task\Threads\Work::usage($events);
 echo $usage["tools"], " ", $usage["tokens"], " ", $usage["output"], "\n";
 
@@ -191,12 +211,13 @@ Bash true
 true
 Running Bash tool Bash
 1 1
-1 1
+0 0
 2 true true
+[] 0
 Working 2 1 true
 2 0 0
 1 false false true
-0 1 1
+0 0 1
 said | said agent
 false '' fx-work-r1
 1 true ''

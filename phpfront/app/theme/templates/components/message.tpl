@@ -8,6 +8,6 @@
 {/if}	</header>
 {if $data_message.body}	<div class="said-body prose">{data_message.body|raw}</div>
 {/if}{if $data_message.working}{eval $data_working = $data_message.working_view}{include components/working.tpl}
-{else}{foreach $data_message.work as $run}{eval $data_work = $run}{include components/work.tpl}
-{/foreach}{/if}{if $data_message.audio}	<audio class="said-audio" controls preload="none" src="{data_message.audio}"></audio>
+{else}{if $data_message.agent}{foreach $data_message.work as $run}{eval $data_work = $run}{include components/work.tpl}
+{/foreach}{/if}{/if}{if $data_message.audio}	<audio class="said-audio" controls preload="none" src="{data_message.audio}"></audio>
 {/if}</li>

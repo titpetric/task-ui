@@ -161,7 +161,7 @@
 </span></p>
 </div>
 
-<?php }else{ if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run']; if($_v['data_work']['stats'] || $_v['data_work']['trace']['states']){?>
+<?php }else{ if($_v['data_message']['agent']){ if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run']; if($_v['data_work']['stats'] || $_v['data_work']['trace']['states']){?>
 <div class="work-run" data-run-id="<?php echo htmlspecialchars($_v['data_work']['id'], ENT_QUOTES);?>
 ">
 <?php if($_v['data_work']['trace']['states']){?>
@@ -189,7 +189,7 @@
 <?php }?><?php if($_v['data_work']['stats']){?>
 	<div class="work-stats"><?php echo htmlspecialchars($_v['data_work']['stats'], ENT_QUOTES);?>
 </div>
-<?php }?></div><?php }}?><?php }?><?php if($_v['data_message']['audio']){?>
+<?php }?></div><?php }}?><?php }?><?php }?><?php if($_v['data_message']['audio']){?>
 	<audio class="said-audio" controls preload="none" src="<?php echo htmlspecialchars($_v['data_message']['audio'], ENT_QUOTES);?>
 "></audio>
 <?php }?></li>

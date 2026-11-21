@@ -88,7 +88,8 @@ class Talk {
 					$id = $question;
 				}
 
-				if (isset($at[$id])) {
+				// The trace is the agent's work: a message somebody wrote is never enriched with it.
+				if (isset($at[$id]) && $out[$at[$id]]["agent"]) {
 					$out[$at[$id]]["work"][] = $run;
 
 					if ($out[$at[$id]]["working"]) {
@@ -196,8 +197,9 @@ class Talk {
 		$author = $note->getUserName();
 		$run = $note->getRunId();
 		$mine = $author === $chrome->name();
-		$working = $note->getState() === \Task\Note::WORKING;
 		$agent = $note->getParentId() !== "" && $note->getAgent() !== "";
+		// A question carries the working state of the run it started; only the agent's answer is written by it.
+		$working = $agent && $note->getState() === \Task\Note::WORKING;
 
 		if ($seen !== null && !$seen->run($run)) {
 			$run = "";
