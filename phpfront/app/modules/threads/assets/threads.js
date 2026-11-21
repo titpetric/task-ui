@@ -256,6 +256,10 @@
       if (!document.getElementById("note-" + note.id) && note.parent_id === current) {
         queueReload();
       }
+      // A run that started after the page drew its line gives the line its actions.
+      if (note.id === current && note.state === "working" && !document.querySelector(".conversation-status .actions")) {
+        queueReload();
+      }
       if (note.state === "done" || note.state === "failed" || note.state === "killed" || note.state === "stopped") {
         queueReload();
       }
