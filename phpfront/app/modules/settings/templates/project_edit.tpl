@@ -38,7 +38,7 @@
 			<thead><tr><th>Job</th><th>Who can run</th></tr></thead>
 			<tbody>
 {foreach $data.jobs as $job}			<tr>
-				<td class="key">{job.name}</td>
+				<td class="key"><a href="{job.href}">{job.name}</a></td>
 				<td data-label="Who can run">{eval $data_whofield = $job.who}{include components/who-field.tpl}</td>
 			</tr>
 {/foreach}			</tbody>

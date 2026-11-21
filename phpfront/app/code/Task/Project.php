@@ -319,7 +319,7 @@ class Project {
 		$href = Route::folderHref($id, $chrome->workspaces());
 
 		$menu->item("folder-open", "Open", ["href" => Route::href($href)]);
-		$menu->item("settings", "Edit project", ["href" => Route::href(self::PAGE . "/" . $id)]);
+		$menu->item("edit", "Edit project", ["href" => Route::href(self::PAGE . "/" . $id)]);
 
 		if ($pull !== null) {
 			$menu->item("download", "Pull now", self::pulls($id, $pull));

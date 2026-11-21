@@ -14,7 +14,7 @@
 		<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 		<tbody>
 {foreach $data.files as $row}			<tr>
-				<td class="key"><svg class="ic{if $row.dir} dir{/if}"><use href="#i-{if $row.dir}folder{else}file{/if}"/></svg>{if $row.dir} <a href="{row.href}">{row.name}/</a>{else} <a href="{row.href}" data-artifact="{row.path}">{row.name}</a>{/if}</td>
+				<td class="key"><i class="ic ic-{if $row.dir}folder{else}file{/if}{if $row.dir} dir{/if}" aria-hidden="true"></i>{if $row.dir} <a href="{row.href}">{row.name}/</a>{else} <a href="{row.href}" data-artifact="{row.path}">{row.name}</a>{/if}</td>
 				<td class="num nowrap">{row.size}</td>
 				<td class="hide-sm nowrap" title="{row.stamp}">{row.ago}</td>
 				<td class="actions">{eval $data_menu = $row.menu}
@@ -50,7 +50,7 @@
 				<td>{if $row.jobHref}<a href="{row.jobHref}">{row.job}</a>{else}{row.job}{/if}</td>
 				<td><a class="faint mono" href="{row.runHref}" title="{row.run}">{row.short}</a></td>
 {else}				<td colspan="3" class="dim">written over MCP or the API by {eval $data_user = $row.user}{include components/user.tpl}</td>
-{/if}				<td class="key">{if $row.commit}<a href="{row.nameHref}" data-artifact="{row.path}" data-version="{row.commit}" title="View this version">{row.name}</a>{else}<a href="{row.nameHref}">{row.name}</a>{/if}</td>
+{/if}				<td class="key">{if $row.commit}<a href="{row.nameHref}" data-artifact="{row.path}" data-version="{row.commit}" title="View this version">{row.name}</a>{elseif $row.nameHref}<a href="{row.nameHref}">{row.name}</a>{else}{row.name}{/if}</td>
 				<td class="hide-sm">{if $row.commit}<span class="faint mono" title="{row.commit}">{row.version}</span>{else}<span class="faint">kept apart</span>{/if}</td>
 				<td class="nowrap">{row.size}</td>
 				<td class="actions">{eval $data_menu = $row.menu}

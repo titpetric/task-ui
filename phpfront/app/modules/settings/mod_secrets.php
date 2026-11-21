@@ -188,9 +188,11 @@ class mod_secrets implements Module {
 		$secret_value = $secret->getIsSecret() !== 0;
 		$value = isset($values[$id]) ? $values[$id] : "";
 		$menu = $this->menu($secret, $chrome, $applies);
+		$edit = Task\Secret::PAGE . "/edit?id=" . Task\Route::queryEscape($id);
 
 		return [
 			"name" => $name,
+			"href" => $chrome->allowed("secret/edit") ? Task\Route::href($edit) : "",
 			"secret" => $secret_value,
 			"value" => $secret_value ? "" : $value,
 			"mask" => self::MASK,

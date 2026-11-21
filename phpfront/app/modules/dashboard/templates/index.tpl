@@ -10,8 +10,8 @@
 		<thead><tr><th>PID</th><th>User</th><th>Stat</th><th>Start</th><th>Time</th><th>Task</th><th>Command</th></tr></thead>
 		<tbody data-processes>
 {foreach $data.runs as $run}			<tr data-run-id="{run.id}">
-				<td class="mono nowrap" title="{run.id}">{run.pid}</td>
-				<td class="nowrap">{run.user}</td>
+				<td class="mono nowrap"><a href="{run.run_href}" title="{run.id}">{run.pid}</a></td>
+				<td class="nowrap"><a href="{run.user_href}">{run.user}</a></td>
 				<td class="nowrap"><span class="state"><i class="dot {run.state}"></i>{run.state}</span></td>
 				<td class="mono nowrap">{run.start}</td>
 				<td class="mono nowrap" data-took data-started="{run.started}">{run.time}</td>

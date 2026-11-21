@@ -68,7 +68,7 @@ class mod_dashboard implements Module {
 		$menu->when($chrome->allowed("user/edit"), "users", "Add user", ["href" => Task\Route::href("/settings/users/new")]);
 		$menu->when($chrome->allowed("key/edit"), "key", "Generate key", ["href" => Task\Route::href("/settings/keys/generate")]);
 		$menu->when($chrome->allowed("key/edit"), "upload", "Upload key", ["href" => Task\Route::href("/settings/keys/upload")]);
-		$menu->when($chrome->allowed("secret/edit"), "secret", "Add variable", ["href" => Task\Route::href("/settings/secrets/new")]);
+		$menu->when($chrome->allowed("secret/edit"), "secret", "Add secret", ["href" => Task\Route::href("/settings/secrets/new")]);
 		$menu->when($chrome->allowed("workflow/edit"), "flow", "Add workflow", ["href" => Task\Route::href("/workflows/new")]);
 
 		return $menu->data();
@@ -127,7 +127,9 @@ class mod_dashboard implements Module {
 		return [
 			"id" => $id,
 			"pid" => substr($id, 0, 8),
+			"run_href" => Task\Route::href("/runs/" . rawurlencode($id)),
 			"user" => $run->getUserName(),
+			"user_href" => Task\Route::href("/users/" . rawurlencode($run->getUserName())),
 			"state" => $run->getState(),
 			"start" => Task\Clock::format($run->getStartedAt(), "15:04"),
 			"started" => Task\Run::started($run->getStartedAt()),

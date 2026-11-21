@@ -109,7 +109,7 @@ class mod_project_edit implements Module {
 			"move" => $this->move($projects, $workspaces, $id, $named),
 			"recursive" => ["id" => self::FIELD, "checked" => !Task\Row::flag($row, "shallow")],
 			"sidebar" => !Task\Row::flag($row, "sidebar_hidden"),
-			"jobs" => self::perJob($found, $jobs, $users),
+			"jobs" => self::perJob($found, $jobs, $users, $id, $workspaces),
 			"trail" => Task\Setup::trail($steps),
 		], "project_edit.tpl");
 	}
@@ -220,8 +220,9 @@ class mod_project_edit implements Module {
 	 * A folder the catalogue does not hold declares none and the page draws no
 	 * table at all.
 	 */
-	static function perJob($found, $allow, $users) {
+	static function perJob($found, $allow, $users, $folder, $workspaces) {
 		$out = [];
+		$at = Task\Route::folderHref($folder, $workspaces);
 
 		foreach (Task\Row::items($found, "jobs") as $job) {
 			$id = Task\Row::text($job, "id");
@@ -230,7 +231,11 @@ class mod_project_edit implements Module {
 
 			$who->tight();
 
-			$out[] = ["name" => Task\Row::text($job, "name"), "who" => $who->data()];
+			$out[] = [
+				"name" => Task\Row::text($job, "name"),
+				"href" => Task\Route::href($at . "/" . $id),
+				"who" => $who->data(),
+			];
 		}
 
 		return $out;

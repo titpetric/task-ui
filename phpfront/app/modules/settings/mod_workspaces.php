@@ -181,7 +181,7 @@ class mod_workspaces implements Module {
 		$deletes = $chrome->allowed("workspace/delete");
 
 		$menu->item("folder-open", "Open", ["href" => $links["href"]]);
-		$menu->item("settings", "Edit workspace", ["href" => $links["edit"]]);
+		$menu->item("edit", "Edit workspace", ["href" => $links["edit"]]);
 		$menu->when($chrome->allowed("project/edit"), "plus", "Add project", ["href" => $links["add"]]);
 		$menu->when($chrome->allowed("workspace/view"), "key", "SSH keys", ["href" => $links["keys"]]);
 		$menu->when($chrome->allowed("secret/view"), "secret", "Secrets", ["href" => $links["secrets"]]);

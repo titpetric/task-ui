@@ -346,7 +346,7 @@ class Control {
 		}
 
 		if (!$idle && $can) {
-			$menu->danger("stop", "Kill " . $job_id, ["data-kill" => $this->live[$key]->getId()]);
+			$menu->danger("trash", "Kill " . $job_id, ["data-kill" => $this->live[$key]->getId()]);
 		}
 
 		return $menu;

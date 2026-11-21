@@ -139,10 +139,10 @@ class Place {
 		$reads = $chrome->allowed("workspace/view");
 
 		$menu->when($this->workspace && $edits, "plus", "Add project", ["href" => $this->addProjectPage()]);
-		$menu->when($this->workspace && $reads, "settings", "Edit workspace", ["href" => $this->settings()]);
+		$menu->when($this->workspace && $reads, "edit", "Edit workspace", ["href" => $this->settings()]);
 		$menu->when($this->workspace && $reads, "key", "SSH keys", ["href" => $this->keysPage()]);
 		$menu->when($this->workspace && $chrome->allowed("secret/view"), "secret", "Secrets", ["href" => $this->secretsPage()]);
-		$menu->when($this->project && $chrome->allowed("project/view"), "settings", "Edit project", ["href" => $this->settings()]);
+		$menu->when($this->project && $chrome->allowed("project/view"), "edit", "Edit project", ["href" => $this->settings()]);
 
 		if (!$root && $chrome->user !== null) {
 			Pin::item($menu, $pins, $this->id, "", "", $this->kind());

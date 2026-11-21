@@ -8,7 +8,7 @@
 		<thead><tr><th>Folder</th><th>Title</th><th>Home repository</th><th class="hide-sm">Projects</th><th class="hide-sm">Secrets</th><th></th></tr></thead>
 		<tbody>
 {foreach $data.rows as $row}			<tr>
-				<td class="key nowrap"><a href="{row.href}"><svg class="ic"><use href="#i-folder-open"/></svg> {row.folder}</a></td>
+				<td class="key nowrap"><a href="{row.href}"><i class="ic ic-folder-open" aria-hidden="true"></i> {row.folder}</a></td>
 				<td class="desc">{row.title}{if $row.description} <span class="faint">{row.description}</span>{/if}</td>
 				<td class="origin">{if $row.home}<span class="remote mono" title="{row.home}">{row.home}</span>{else}<span class="faint">empty</span>{/if}</td>
 				<td class="hide-sm num">{if $row.projects}<a href="{row.edit}" title="{row.names}">{row.projects}</a>{else}<span class="faint">none</span>{if $row.adds} <a href="{row.add}" aria-label="Add a project to {row.folder}">add</a>{/if}{/if}</td>

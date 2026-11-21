@@ -15,7 +15,7 @@
 				<td class="key nowrap"><span class="user-ref">{eval $data_avatar = $row.avatar}{include components/avatar.tpl} <a class="user-name" href="{row.href}">{row.name}</a></span></td>
 				<td data-label="Role"><a class="badge{if $row.admin} signal{/if}" href="{row.roleHref}" title="What {row.role} may do">{row.role}</a></td>
 				<td class="nowrap" data-label="Flags">{if $row.mcp}<span class="badge" title="MCP agent user">mcp</span>{/if}{if $row.reply} <span class="badge" title="Runs instance Claude when mentioned">agent</span>{/if}{if !$row.mcp}<span class="faint">none</span>{/if}</td>
-				<td class="desc" data-label="Folders">{if $row.folders}{row.folders}{else}<span class="faint">all</span>{/if}</td>
+				<td class="desc" data-label="Folders">{if $row.folderLinks}{foreach $row.folderLinks as $i => $folder}{if $i}, {/if}<a href="{folder.href}">{folder.id}</a>{/foreach}{else}<span class="faint">all</span>{/if}</td>
 				<td class="nowrap" data-label="Since" title="{row.at}">{row.ago}</td>
 				<td class="actions">{eval $data_menu = $row.menu}{include components/menu.tpl}</td>
 			</tr>

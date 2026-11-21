@@ -385,7 +385,7 @@ class Job {
 			"data-question" => Report::SUMMARY,
 			"title" => self::SUMMARIZE,
 		]);
-		$menu->whenDanger(!$ended && $can, "stop", "Kill", ["data-kill" => $id]);
+		$menu->whenDanger(!$ended && $can, "trash", "Kill", ["data-kill" => $id]);
 
 		return $menu->data();
 	}

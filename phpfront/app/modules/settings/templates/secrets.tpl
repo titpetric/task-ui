@@ -10,7 +10,7 @@
 		<thead><tr><th>Name</th><th>Value</th><th>Applies to</th><th>Reads</th><th class="actions" aria-label="Actions"></th></tr></thead>
 		<tbody>
 {foreach $data.rows as $row}			<tr>
-				<td class="key">{row.name}{if $row.secret} <span class="badge" title="The value is encrypted and never shown">secret</span>{else} <span class="badge" title="The value is shown on this page">env</span>{/if}</td>
+				<td class="key">{if $row.href}<a href="{row.href}">{row.name}</a>{else}{row.name}{/if}{if $row.secret} <span class="badge" title="The value is encrypted and never shown">secret</span>{else} <span class="badge" title="The value is shown on this page">env</span>{/if}</td>
 				<td>{if $row.secret}<span class="faint" title="The value is never shown">{row.mask}</span>{elseif $row.value}<code>{row.value}</code>{else}<span class="faint">empty</span>{/if}</td>
 				<td class="scope faint">{row.applies}</td>
 				<td class="nowrap">{if $row.reads}<a href="{row.readsHref}" title="The runs that got this variable">{row.reads}</a>{else}<span class="faint">0</span>{/if} {if $row.read.run}<a class="faint" href="{row.read.href}" title="{row.read.title}">{row.read.ago}</a>{else}<span class="faint" title="No run has got this variable">never</span>{/if}</td>

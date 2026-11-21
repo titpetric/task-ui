@@ -90,6 +90,15 @@ class mod_users implements Module {
 		$folders = Task\User::folders($user);
 		$created = $user->getCreatedAt();
 		$menu = $this->menu($chrome, $user, $adds);
+		$workspaces = $chrome->workspaces();
+		$folderLinks = [];
+
+		foreach ($folders as $folder) {
+			$folderLinks[] = [
+				"id" => $folder,
+				"href" => Task\Route::href(Task\Route::folderHref($folder, $workspaces)),
+			];
+		}
 
 		return [
 			"name" => $name,
@@ -101,6 +110,7 @@ class mod_users implements Module {
 			"mcp" => $user->getMcp(),
 			"reply" => $user->getAgentReply(),
 			"folders" => implode(", ", $folders),
+			"folderLinks" => $folderLinks,
 			"ago" => Task\Clock::ago($created),
 			"at" => Task\Clock::read($created),
 			"menu" => $menu->data(),

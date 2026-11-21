@@ -19,7 +19,7 @@
 {foreach $data.form.picks as $pick}				<label class="host-pick"><input type="checkbox" name="hosts" value="{pick.host}" checked><span>{pick.login}</span></label>
 {/foreach}			</div>
 		</div>
-		<div class="form-foot note"><span></span><span class="actions">{if $data.form.summarize}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{/if}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
+		<div class="form-foot note"><span></span><span class="actions">{if $data.form.summarize}<button class="btn" type="submit" name="summarize" value="1"><i class="ic ic-note" aria-hidden="true"></i>Run and summarize</button>{/if}<button class="btn btn-primary" type="submit"><i class="ic ic-play" aria-hidden="true"></i>Run</button></span></div>
 	</form>
 		<div class="inventory-results" data-inventory-results>
 {if $data.batch}			<div class="block-head"{if $data.batch.live} data-batch-live{/if}>
@@ -70,14 +70,14 @@
 		<input type="text" id="host-name" name="name" spellcheck="false" placeholder="the address">
 		<small class="faint">What the pages call it. Empty is the address.</small>
 	</div>
-	<div class="form-foot"><span></span><span class="actions"><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add the host</button></span></div>
+	<div class="form-foot"><span></span><span class="actions"><button class="btn btn-primary" type="submit"><i class="ic ic-plus" aria-hidden="true"></i>Add the host</button></span></div>
 </form>
 {/if}<div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th>{if $data.logins}<th>SSH</th>{/if}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory <small>GB</small></th><th colspan="2">Disk <small>GB</small></th><th class="actions" aria-label="Actions"></th></tr></thead>
 	<tbody>
 {foreach $data.rows as $row}		<tr{if $row.open} class="host-row" data-host-row="{row.name}" data-host-url="{row.href}" tabindex="0" aria-expanded="false"{/if}>
-			<td class="key nowrap" title="{row.host}, {row.status}">{if $row.open}<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg>{/if}<svg class="ic host-state {if $row.up}up{else}down{/if}" role="img" aria-label="{row.status}"><use href="#i-server"/></svg> {row.name}</td>
+			<td class="key nowrap" title="{row.host}, {row.status}">{if $row.open}<i class="ic ic-chev chev" aria-hidden="true"></i>{/if}<i class="ic ic-server host-state {if $row.up}up{else}down{/if}" role="img" aria-label="{row.status}"></i> <a href="{row.href}">{row.name}</a></td>
 {if $data.logins}			<td class="nowrap">{if $row.login}{eval $data_copy = $row.copy}{include components/copyable.tpl}{else}<span class="faint">-</span>{/if}</td>
 {/if}			<td class="center">{if $row.cpus}{row.cpus}{else}<span class="faint">-</span>{/if}</td>
 			<td>{eval $data_meter = $row.cpu}{include components/meter.tpl}			</td>
@@ -85,7 +85,7 @@
 			<td class="size faint nowrap">{if $row.measured}{row.memoryUsed} / {row.memoryTotal}{/if}</td>
 			<td>{eval $data_meter = $row.disk}{include components/meter.tpl}			</td>
 			<td class="size faint nowrap">{if $row.measured}{row.diskUsed} / {row.diskTotal}{/if}</td>
-			<td class="actions">{if $row.drop}<form class="inline inventory-drop" method="post" action="{row.drop}" data-confirm="{row.asked}"><button class="btn-icon" type="submit" title="Remove from the inventory" aria-label="Remove {row.name} from the inventory"><svg class="ic"><use href="#i-trash"/></svg></button></form>{/if}{eval $data_menu = $row.menu}{include components/menu.tpl}			</td>
+			<td class="actions">{if $row.drop}<form class="inline inventory-drop" method="post" action="{row.drop}" data-confirm="{row.asked}"><button class="btn-icon danger" type="submit" title="Remove from the inventory" aria-label="Remove {row.name} from the inventory"><i class="ic ic-trash" aria-hidden="true"></i></button></form>{/if}{eval $data_menu = $row.menu}{include components/menu.tpl}			</td>
 		</tr>
 {else}		<tr class="empty"><td colspan="9">No hosts yet.{if $data.add} Add one above.{/if}</td></tr>
 {/foreach}	</tbody>
