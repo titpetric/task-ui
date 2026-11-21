@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/titpetric/task-ui/app/model"
 	"github.com/titpetric/task-ui/feature/voice/stt"
 	"github.com/titpetric/task-ui/internal/access"
 )
@@ -29,6 +30,36 @@ func (h *Handlers) voiceTranscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"text": said})
+}
+
+// voiceDraft keeps a dictated prompt as an artifact and answers its words and its path.
+func (h *Handlers) voiceDraft(w http.ResponseWriter, r *http.Request) {
+	if !h.voiceAllowed(w, r) {
+		return
+	}
+	if h.opts.STT == nil {
+		fail(w, http.StatusServiceUnavailable, stt.ErrOff.Error())
+		return
+	}
+	clip, err := io.ReadAll(http.MaxBytesReader(w, r.Body, stt.MaxClip+1))
+	if err != nil {
+		fail(w, http.StatusRequestEntityTooLarge, stt.ErrLarge.Error())
+		return
+	}
+	said, err := h.opts.STT.Text(r.Context(), clip)
+	if err != nil {
+		fail(w, voiceStatusOf(err), err.Error())
+		return
+	}
+	audio := ""
+	if h.opts.ArtifactStore != nil {
+		audio = "voice/draft-" + model.NewID() + ".wav"
+		if _, err := h.opts.ArtifactStore.Write(r.Context(), audio, clip, access.UserFrom(r.Context()).Name); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"text": said, "audio": audio})
 }
 
 // voiceReady reports whether the server transcribes, so the orb knows whether to post.

@@ -61,6 +61,13 @@ func TestVoice_Transcribe(t *testing.T) {
 	// A clip with nothing in it is the caller's mistake.
 	rec = voiceDo(h, admin, http.MethodPost, "/voice/transcribe", "")
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+	// A dictated prompt answers its words, and an instance that keeps no
+	// artifacts answers no path for the clip.
+	rec = voiceDo(h, admin, http.MethodPost, "/voice/draft", "RIFFclip")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), `"text":"Deploy the api."`)
+	assert.Contains(t, rec.Body.String(), `"audio":""`)
 }
 
 // A server with no transcriber answers 503, and the orb stops posting on
