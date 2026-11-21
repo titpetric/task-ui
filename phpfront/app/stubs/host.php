@@ -465,6 +465,10 @@ class Host {
 		return isset(self::$reach[$address]) ? self::$reach[$address] : "";
 	}
 
+	static function reachAs($address, $user) {
+		return self::reach($address);
+	}
+
 	/**
 	 * The hosts a command can be run on, largest capacity first: the ones
 	 * Beszel monitors that task-ui has an ssh login to, by the address it

@@ -21,23 +21,7 @@
 		</div>
 		<div class="form-foot note"><span></span><span class="actions">{if $data.form.summarize}<button class="btn" type="submit" name="summarize" value="1"><i class="ic ic-note" aria-hidden="true"></i>Run and summarize</button>{/if}<button class="btn btn-primary" type="submit"><i class="ic ic-play" aria-hidden="true"></i>Run</button></span></div>
 	</form>
-		<div class="inventory-results" data-inventory-results>
-{if $data.batch}			<div class="block-head"{if $data.batch.live} data-batch-live{/if}>
-				<h4>Your last run <small><code>{data.batch.args}</code> on {data.batch.count} host{if $data.batch.count !== 1}s{/if}, {data.batch.ago}</small></h4>{if $data.batch.id}<a class="btn btn-sm" href="{base}/runs?batch={data.batch.id}">In Runs</a>{/if}
-			</div>
-			<div class="table-wrap">
-			<table class="table run-results">
-				<thead><tr><th>Host</th><th>Result</th><th>Output</th></tr></thead>
-				<tbody>
-{foreach $data.batch.rows as $run}					<tr>
-						<td class="nowrap"><a href="{base}/runs/{run.id}"><code>{run.target}</code></a></td>
-						<td class="nowrap">{eval $data_state = $run.state}{include components/state.tpl} <span class="faint">{run.duration}</span> <button type="button" class="btn btn-sm" data-attach="{run.id}">{run.attach}</button></td>
-						<td class="run-output">{if $run.queued}<span class="faint">Queued: waits for the run on {run.target} before it.</span>{elseif $run.running}<div class="frame" role="img" aria-label="Terminal of {run.target}">{run.frame|raw}</div>{elseif $run.cast}<pre class="output" data-output="{run.id}" data-cols="{run.cols}" data-rows="{run.rows}"><span class="faint">Reading the recording</span></pre>{else}<span class="faint">No recording.</span>{/if}</td>
-					</tr>
-{/foreach}				</tbody>
-			</table>
-			</div>
-{/if}		</div>
+		<div class="inventory-results" data-inventory-results></div>
 {if $data.prompt}{eval $data_prompt = $data.prompt}{include components/prompt.tpl}{/if}</section>
 {/if}<section class="block" data-hosts-live>
 {if $data.cluster}<div class="cluster">
@@ -59,20 +43,7 @@
 {/if}{if $data.cluster.charts}	<div class="charts">{foreach $data.cluster.charts as $chart}{eval $data_line_chart = $chart}{include components/line-chart.tpl}{/foreach}	</div>
 {/if}</div>
 {/if}<h3>Hosts</h3>
-{if $data.add}<form class="form inline inventory-add" method="post" action="{data.add}">
-	<div class="field">
-		<label for="host-address">Address</label>
-		<input type="text" id="host-address" name="address" required spellcheck="false" placeholder="dev1 or 10.0.0.2">
-		<small class="faint">task-ui signs in over ssh before it keeps the host, which takes a moment.</small>
-	</div>
-	<div class="field">
-		<label for="host-name">Name</label>
-		<input type="text" id="host-name" name="name" spellcheck="false" placeholder="the address">
-		<small class="faint">What the pages call it. Empty is the address.</small>
-	</div>
-	<div class="form-foot"><span></span><span class="actions"><button class="btn btn-primary" type="submit"><i class="ic ic-plus" aria-hidden="true"></i>Add the host</button></span></div>
-</form>
-{/if}<div class="table-wrap">
+<div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th>{if $data.logins}<th>SSH</th>{/if}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory <small>GB</small></th><th colspan="2">Disk <small>GB</small></th><th class="actions" aria-label="Actions"></th></tr></thead>
 	<tbody>

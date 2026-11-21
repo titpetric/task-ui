@@ -99,12 +99,19 @@ func (l *Local) Logins(ctx context.Context) ([]string, error) {
 	return names, nil
 }
 
-// LoginAgent serves the instance's SSH keys in an ssh agent, for a
-// probe of a host; nil with none.
+// LoginAgent serves every SSH key the instance holds in an ssh agent, for a
+// probe of a host; nil with none. A host may be reachable by a workspace's
+// key alone, and @shell already offers that key to a run.
 func (l *Local) LoginAgent(ctx context.Context) (*sshagent.Agent, error) {
-	names, err := l.Logins(ctx)
+	keys, err := l.List(ctx)
 	if err != nil {
 		return nil, err
+	}
+	var names []string
+	for _, key := range keys {
+		if key.Purpose == PurposeSSH {
+			names = append(names, key.Name)
+		}
 	}
 	return l.Materialize(ctx, names)
 }

@@ -24,7 +24,7 @@ class mod_host_add implements Module {
 	const HELD = "The inventory holds that address already.";
 
 	/** CLOSED is what an address no login reaches is told. */
-	const CLOSED = "No ssh login of the instance signs in to that address. task-ui keeps a host it reaches, so check the keys under Settings, Keys and that the host accepts them for debian or root.";
+	const CLOSED = "No ssh login of the instance signs in to that address. task-ui tried debian and root with every key under Settings, Keys; check that the host accepts one of those users.";
 
 	function name() {
 		return "inventory";
@@ -48,7 +48,6 @@ class mod_host_add implements Module {
 
 		if (!$chrome->allowed("inventory/edit")) {
 			$view = new Task\View($this, $chrome);
-
 			$view->refused();
 
 			return;
@@ -63,15 +62,24 @@ class mod_host_add implements Module {
 			return;
 		}
 
+		// A page may write user@host: the host is what the inventory holds,
+		// and the user is tried before the instance's own.
+		$host = $address;
+		$user = "";
+
+		if (strpos($address, "@") !== false) {
+			list($user, $host) = explode("@", $address, 2);
+		}
+
 		$store = new Task\Inventory\Hosts($db);
 
-		if (is_array($store->find($address))) {
+		if (is_array($store->find($host))) {
 			Task\Route::fail(self::PAGE, self::HELD);
 
 			return;
 		}
 
-		$login = Task\Host::reach($address);
+		$login = $user === "" ? Task\Host::reach($host) : Task\Host::reachAs($host, $user);
 
 		if ($login === "") {
 			Task\Route::fail(self::PAGE, self::CLOSED);
@@ -86,6 +94,5 @@ class mod_host_add implements Module {
 
 if (PHP_SAPI === "http") {
 	$mod = new mod_host_add;
-
 	$mod->serve();
 }

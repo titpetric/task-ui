@@ -80,10 +80,10 @@ class mod_inventory implements Module {
 		}
 
 		$logins = $facts["logins"];
-		$last = ["batch" => null, "prompt" => null];
+		$prompt = null;
 
 		if ($hosts) {
-			$last = $this->batch($chrome);
+			$prompt = $this->prompt($chrome);
 		}
 
 		$now = Task\Clock::now();
@@ -95,14 +95,18 @@ class mod_inventory implements Module {
 
 		$head = new Task\Head("Inventory", self::LEAD);
 
+		if ($chrome->allowed("inventory/edit")) {
+			$buttons = new Task\Buttons;
+			$buttons->item("plus", "Add a host", ["href" => Task\Route::href("/inventory/hosts/new")]);
+			$head->buttons($buttons->data());
+		}
+
 		$view->page([
 			"head" => $head->data(),
 			"off" => $facts["off"],
 			"integrations" => $chrome->allowed("integration/view"),
-			"add" => $chrome->allowed("inventory/edit") ? Task\Route::href("/inventory/hosts") : "",
 			"form" => $this->form($facts, $logins, $hosts),
-			"batch" => $last["batch"],
-			"prompt" => $last["prompt"],
+			"prompt" => $prompt,
 			"cluster" => $this->cluster($facts, $now),
 			"logins" => count($logins) > 0,
 			"rows" => $rows,
@@ -207,7 +211,11 @@ class mod_inventory implements Module {
 	 * The runner is ahead of the table, so a session is laid over each row
 	 * before a cell of it is read.
 	 */
-	function batch($chrome) {
+	/**
+	 * prompt is the box under the hosts that asks Claude about the reader's last
+	 * run on them, or null for a reader who ran none.
+	 */
+	function prompt($chrome) {
 		$runs = new Task\Runs\Runs;
 		$last = $runs->find([
 			"folder" => Task\Route::INTERNAL,
@@ -217,78 +225,12 @@ class mod_inventory implements Module {
 		]);
 
 		if (count($last) === 0) {
-			return ["batch" => null, "prompt" => null];
+			return null;
 		}
 
-		$found = [];
-
-		if ($last[0]->getBatchId() !== "") {
-			$of = $runs->find(["batch" => $last[0]->getBatchId(), "limit" => Task\Runs\Runs::BATCH_LIMIT]);
-			$found = array_reverse($of);
-		}
-
-		if (count($found) === 0) {
-			$found = $last;
-		}
-
-		$rows = [];
-		$live = false;
-
-		foreach ($found as $run) {
-			$session = Task\Host::session($run->getId());
-
-			Task\Run::overlay($run, $session);
-
-			if (!Task\Run::ended($run->getState())) {
-				$live = true;
-			}
-
-			$rows[] = $this->result($run);
-		}
-
-		$first = $found[0];
 		$seen = new Task\Seen($chrome);
 
-		return [
-			"batch" => [
-				"live" => $live,
-				"args" => implode("", Task\Run::argList($first)),
-				"count" => count($found),
-				"ago" => Task\Clock::ago($first->getStartedAt()),
-				"id" => $first->getBatchId(),
-				"rows" => $rows,
-			],
-			"prompt" => Task\Prompt::panel($chrome, $first, $seen),
-		];
-	}
-
-	/**
-	 * result is one run of the batch: the host it ran on, how it ended, how
-	 * long it took and its output.
-	 *
-	 * A queued run says what it waits for, a running one draws the last screen
-	 * of its terminal, and one that ended has its recording read by the script.
-	 * Only a running run has a screen, so only one is asked for.
-	 */
-	function result($run) {
-		$id = $run->getId();
-		$state = $run->getState();
-		$ended = Task\Run::ended($state);
-		$running = !$ended && $state !== Task\Run::QUEUED;
-
-		return [
-			"id" => $id,
-			"target" => $run->getTarget(),
-			"state" => Task\Run::label($run),
-			"duration" => Task\Run::duration(Task\Run::elapsed($run)),
-			"attach" => $ended ? "View" : "Attach",
-			"queued" => $state === Task\Run::QUEUED,
-			"running" => $running,
-			"frame" => $running ? Task\Host::frame($id) : "",
-			"cast" => $run->getCastPath(),
-			"cols" => $run->getTermCols(),
-			"rows" => $run->getTermRows(),
-		];
+		return Task\Prompt::panel($chrome, $last[0], $seen);
 	}
 
 	/**
@@ -483,7 +425,6 @@ class mod_inventory implements Module {
 		$menu = new Task\Menu("Actions on " . $name);
 
 		$status = $system["status"] === "" ? "no measures" : $system["status"];
-
 		$menu->detail("Address", $host, true);
 		$menu->detail("Status", $status);
 
@@ -524,6 +465,5 @@ class mod_inventory implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_inventory;
-
 	$mod->serve();
 }

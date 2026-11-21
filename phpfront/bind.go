@@ -345,6 +345,12 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 		}
 		return opts.Host.Reach(ctx, address), nil
 	})
+	rt.RegisterFunc(HostClass+"::reachAs", func(ctx context.Context, address, user string) (string, error) {
+		if opts.Host == nil {
+			return "", nil
+		}
+		return opts.Host.ReachAs(ctx, address, user), nil
+	})
 	rt.RegisterFunc(HostClass+"::host", func(ctx context.Context, name string, hosts bool) (*model.Array, error) {
 		if opts.Host == nil {
 			return facts(HostFacts{}), nil

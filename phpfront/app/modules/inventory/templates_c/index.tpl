@@ -72,10 +72,8 @@
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
 <?php }elseif($_v['button']['href']){?>
-	<a class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
+	<a class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+" href="<?php echo htmlspecialchars($_v['button']['href'], ENT_QUOTES);?>
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
@@ -83,10 +81,8 @@
 " aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
-	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
- btn-sm<?php }?><?php if($_v['button']['primary']){?>
- btn-primary<?php }?><?php if($_v['button']['danger']){?>
- btn-danger<?php }?>"<?php if($_v['button']['disabled']){?>
+	<button type="button" class="<?php echo htmlspecialchars($_v['button']['className'], ENT_QUOTES);?>
+"<?php if($_v['button']['disabled']){?>
  disabled<?php if($_v['button']['note']){?>
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>
@@ -171,56 +167,7 @@
 		<div class="form-foot note"><span></span><span class="actions"><?php if($_v['data']['form']['summarize']){?>
 <button class="btn" type="submit" name="summarize" value="1"><i class="ic ic-note" aria-hidden="true"></i>Run and summarize</button><?php }?><button class="btn btn-primary" type="submit"><i class="ic ic-play" aria-hidden="true"></i>Run</button></span></div>
 	</form>
-		<div class="inventory-results" data-inventory-results>
-<?php if($_v['data']['batch']){?>
-			<div class="block-head"<?php if($_v['data']['batch']['live']){?>
- data-batch-live<?php }?>>
-				<h4>Your last run <small><code><?php echo htmlspecialchars($_v['data']['batch']['args'], ENT_QUOTES);?>
-</code> on <?php echo htmlspecialchars($_v['data']['batch']['count'], ENT_QUOTES);?>
- host<?php if($_v['data']['batch']['count'] !== 1){?>
-s<?php }?>, <?php echo htmlspecialchars($_v['data']['batch']['ago'], ENT_QUOTES);?>
-</small></h4><?php if($_v['data']['batch']['id']){?>
-<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
-/runs?batch=<?php echo htmlspecialchars($_v['data']['batch']['id'], ENT_QUOTES);?>
-">In Runs</a><?php }?>
-			</div>
-			<div class="table-wrap">
-			<table class="table run-results">
-				<thead><tr><th>Host</th><th>Result</th><th>Output</th></tr></thead>
-				<tbody>
-<?php if(!empty($_v['data']['batch']['rows']))foreach($_v['data']['batch']['rows'] as $_v['run']){?>					<tr>
-						<td class="nowrap"><a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
-/runs/<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
-"><code><?php echo htmlspecialchars($_v['run']['target'], ENT_QUOTES);?>
-</code></a></td>
-						<td class="nowrap"><?php $_v['data_state'] = $_v['run']['state']; if($_v['data_state']['id']){?>
-<span class="state" data-run-id="<?php echo htmlspecialchars($_v['data_state']['id'], ENT_QUOTES);?>
-"<?php if($_v['data_state']['ended']){?>
- data-finished="true"<?php }?>><i class="dot <?php echo htmlspecialchars($_v['data_state']['state'], ENT_QUOTES);?>
-"></i><?php echo htmlspecialchars($_v['data_state']['state'], ENT_QUOTES); if($_v['data_state']['code'] !== ""){?>
- <span class="faint">(<?php echo htmlspecialchars($_v['data_state']['code'], ENT_QUOTES);?>
-)</span><?php }?></span><?php }else{?>
-<span class="faint">never run</span><?php }?>
- <span class="faint"><?php echo htmlspecialchars($_v['run']['duration'], ENT_QUOTES);?>
-</span> <button type="button" class="btn btn-sm" data-attach="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['run']['attach'], ENT_QUOTES);?>
-</button></td>
-						<td class="run-output"><?php if($_v['run']['queued']){?>
-<span class="faint">Queued: waits for the run on <?php echo htmlspecialchars($_v['run']['target'], ENT_QUOTES);?>
- before it.</span><?php }elseif($_v['run']['running']){?>
-<div class="frame" role="img" aria-label="Terminal of <?php echo htmlspecialchars($_v['run']['target'], ENT_QUOTES);?>
-"><?php echo $_v['run']['frame'];?>
-</div><?php }elseif($_v['run']['cast']){?>
-<pre class="output" data-output="<?php echo htmlspecialchars($_v['run']['id'], ENT_QUOTES);?>
-" data-cols="<?php echo htmlspecialchars($_v['run']['cols'], ENT_QUOTES);?>
-" data-rows="<?php echo htmlspecialchars($_v['run']['rows'], ENT_QUOTES);?>
-"><span class="faint">Reading the recording</span></pre><?php }else{?>
-<span class="faint">No recording.</span><?php }?></td>
-					</tr>
-<?php }?>				</tbody>
-			</table>
-			</div>
-<?php }?>		</div>
+		<div class="inventory-results" data-inventory-results></div>
 <?php if($_v['data']['prompt']){ $_v['data_prompt'] = $_v['data']['prompt'];?>
 <details class="promptbox"<?php if($_v['data_prompt']['open']){?>
  open<?php }?><?php if($_v['data_prompt']['hidden']){?>
@@ -386,22 +333,7 @@ s are down or send<?php }else{?>
 <?php }?>	</div>
 <?php }?></div>
 <?php }?><h3>Hosts</h3>
-<?php if($_v['data']['add']){?>
-<form class="form inline inventory-add" method="post" action="<?php echo htmlspecialchars($_v['data']['add'], ENT_QUOTES);?>
-">
-	<div class="field">
-		<label for="host-address">Address</label>
-		<input type="text" id="host-address" name="address" required spellcheck="false" placeholder="dev1 or 10.0.0.2">
-		<small class="faint">task-ui signs in over ssh before it keeps the host, which takes a moment.</small>
-	</div>
-	<div class="field">
-		<label for="host-name">Name</label>
-		<input type="text" id="host-name" name="name" spellcheck="false" placeholder="the address">
-		<small class="faint">What the pages call it. Empty is the address.</small>
-	</div>
-	<div class="form-foot"><span></span><span class="actions"><button class="btn btn-primary" type="submit"><i class="ic ic-plus" aria-hidden="true"></i>Add the host</button></span></div>
-</form>
-<?php }?><div class="table-wrap">
+<div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th><?php if($_v['data']['logins']){?>
 <th>SSH</th><?php }?><th class="center">Cores</th><th>CPU</th><th colspan="2">Memory <small>GB</small></th><th colspan="2">Disk <small>GB</small></th><th class="actions" aria-label="Actions"></th></tr></thead>

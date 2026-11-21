@@ -93,13 +93,21 @@ func unreported(systems []beszel.System, held map[string]string) []beszel.System
 	return out
 }
 
-// Reach is the ssh login of an address, or "": a page enters a host once a
-// login answers, so the probe is waited out.
+// Reach is the ssh login of an address, waiting out the probe.
 func (h *FrontHost) Reach(ctx context.Context, address string) string {
+	return h.ReachAs(ctx, address, "")
+}
+
+// ReachAs is Reach, trying the user named first, for a page entering user@host.
+func (h *FrontHost) ReachAs(ctx context.Context, address, user string) string {
 	if h.SSH == nil || address == "" {
 		return ""
 	}
-	return h.SSH.Logins(ctx, []string{address}, frontReach)[address]
+	users := h.SSH.Users
+	if user != "" {
+		users = append([]string{user}, users...)
+	}
+	return h.SSH.LoginsAs(ctx, []string{address}, users, frontReach)[address]
 }
 
 // HostFacts is one host of the inventory in full, the expanded row of its

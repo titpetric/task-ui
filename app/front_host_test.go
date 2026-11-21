@@ -202,6 +202,15 @@ func TestFrontHost_Reach(t *testing.T) {
 	assert.Equal(t, "", host.Reach(context.Background(), ""))
 }
 
+// ReachAs needs a prober too, whatever user the page names.
+func TestFrontHost_ReachAs(t *testing.T) {
+	t.Parallel()
+
+	host := &FrontHost{}
+	assert.Equal(t, "", host.ReachAs(context.Background(), "10.0.0.2", "root"))
+	assert.Equal(t, "", host.ReachAs(context.Background(), "", "root"))
+}
+
 // frontUptime words how long a host has run: days past two, else hours past
 // two, else minutes.
 func TestFrontUptime(t *testing.T) {

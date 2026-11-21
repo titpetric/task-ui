@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -47,18 +48,25 @@ type probe struct {
 
 // Logins returns user@host for each host, "" for one no user reaches, waiting at most wait for fresh answers.
 func (p *Prober) Logins(ctx context.Context, hosts []string, wait time.Duration) map[string]string {
+	return p.LoginsAs(ctx, hosts, p.Users, wait)
+}
+
+// LoginsAs is Logins, trying users first; a page adds a host as user@host, and the user given is tried before the instance's own.
+func (p *Prober) LoginsAs(ctx context.Context, hosts, users []string, wait time.Duration) map[string]string {
+	key := func(host string) string { return strings.Join(users, ",") + "\x1f" + host }
+	order := strings.Join(users, ",")
 	var wg sync.WaitGroup
 	for _, host := range hosts {
-		if host == "" || !p.start(host) {
+		if host == "" || !p.start(key(host)) {
 			continue
 		}
 		wg.Add(1)
 		go func(host string) {
 			defer wg.Done()
-			user := p.try(context.WithoutCancel(ctx), host)
+			user := p.try(context.WithoutCancel(ctx), host, users)
 			p.mu.Lock()
-			p.found[host] = probe{user: user, at: time.Now()}
-			delete(p.running, host)
+			p.found[key(host)] = probe{user: user, at: time.Now()}
+			delete(p.running, key(host))
 			p.mu.Unlock()
 		}(host)
 	}
@@ -73,33 +81,32 @@ func (p *Prober) Logins(ctx context.Context, hosts []string, wait time.Duration)
 	defer p.mu.Unlock()
 	logins := map[string]string{}
 	for _, host := range hosts {
-		if found, ok := p.found[host]; ok && found.user != "" {
+		if found, ok := p.found[order+"\x1f"+host]; ok && found.user != "" {
 			logins[host] = found.user + "@" + host
 		}
 	}
 	return logins
 }
 
-// start marks a host to probe, unless its answer is fresh or a probe of
-// it already runs.
-func (p *Prober) start(host string) bool {
+// start marks a host to probe, unless fresh or already running.
+func (p *Prober) start(key string) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.found == nil {
 		p.found, p.running = map[string]probe{}, map[string]bool{}
 	}
-	if found, ok := p.found[host]; ok && time.Since(found.at) < p.TTL {
+	if found, ok := p.found[key]; ok && time.Since(found.at) < p.TTL {
 		return false
 	}
-	if p.running[host] {
+	if p.running[key] {
 		return false
 	}
-	p.running[host] = true
+	p.running[key] = true
 	return true
 }
 
 // try returns the first user that signs in to the host, or "".
-func (p *Prober) try(ctx context.Context, host string) string {
+func (p *Prober) try(ctx context.Context, host string, users []string) string {
 	socket := ""
 	if p.Keys != nil {
 		agent, err := p.Keys.LoginAgent(ctx)
@@ -111,7 +118,7 @@ func (p *Prober) try(ctx context.Context, host string) string {
 			socket = agent.Socket
 		}
 	}
-	for _, user := range p.Users {
+	for _, user := range users {
 		attempt, cancel := context.WithTimeout(ctx, p.Timeout)
 		cmd := p.ssh(attempt, user+"@"+host, "true")
 		if socket != "" {
@@ -126,8 +133,7 @@ func (p *Prober) try(ctx context.Context, host string) string {
 	return ""
 }
 
-// ssh is the ssh command for a login: batch mode, the known hosts file,
-// and the remote command; the keys come from an agent.
+// ssh returns the batch-mode ssh command for a login and its remote command.
 func (p *Prober) ssh(ctx context.Context, login, remote string) *exec.Cmd {
 	args := []string{"-n", "-o", "BatchMode=yes", "-o", "ConnectTimeout=" + seconds(p.Timeout), "-o", "StrictHostKeyChecking=accept-new"}
 	if p.KnownHosts != "" {
@@ -141,19 +147,14 @@ func (p *Prober) ssh(ctx context.Context, login, remote string) *exec.Cmd {
 	return exec.CommandContext(ctx, command, args...)
 }
 
-// terminal is the ssh command of Run in batch mode, -tt when Terminal says
-// so, the pagers off; the run's agent holds the instance keys.
+// terminal returns the ssh command of Run, opening a terminal when Terminal says so.
 func (p *Prober) terminal(ctx context.Context, login, remote string) *exec.Cmd {
 	if !p.Terminal {
 		return p.ssh(ctx, login, remote)
 	}
 	cmd := p.ssh(ctx, login, "export PAGER=cat SYSTEMD_PAGER=cat GIT_PAGER=cat; "+remote)
-	// -tt makes ssh open a terminal even with stdin closed; it goes right
-	// after "ssh".
-	// -q keeps ssh's own "Connection closed" out of the output.
+	// -tt opens a terminal with stdin closed; -q drops ssh's own close notice.
 	cmd.Args = append([]string{cmd.Args[0], "-tt", "-q"}, cmd.Args[1:]...)
-	// ssh sets this TERM on the remote terminal; without one, programs see a
-	// dumb terminal and print no colours.
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 	return cmd
 }

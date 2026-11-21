@@ -49,8 +49,16 @@ func (h *host) Reachable(context.Context) []string {
 
 // Reach signs in to the one address the double knows.
 func (h *host) Reach(_ context.Context, address string) string {
+	return h.ReachAs(context.Background(), address, "")
+}
+
+// ReachAs signs in as the user the page names.
+func (h *host) ReachAs(_ context.Context, address, user string) string {
 	if address != "10.0.0.2" {
 		return ""
+	}
+	if user != "" {
+		return user + "@" + address
 	}
 	return "debian@" + address
 }

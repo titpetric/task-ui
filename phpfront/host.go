@@ -131,6 +131,7 @@ type Host interface {
 	// "" for an address no login of the instance reaches. It waits for the
 	// probe: a page adds a host once this answers.
 	Reach(ctx context.Context, address string) string
+	ReachAs(ctx context.Context, address, user string) string
 
 	// HostFacts is one host of the inventory in full: its containers as
 	// Beszel and docker ps report them together, its durable filesystems,
