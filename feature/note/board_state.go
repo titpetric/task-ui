@@ -116,10 +116,22 @@ func (b *Board) Recover(ctx context.Context) error {
 	}
 	for i := range prompts {
 		if prompts[i].RunID == "" {
+			b.dropAnswers(ctx, &prompts[i])
 			b.reask(ctx, &prompts[i])
 		}
 	}
 	return nil
+}
+
+// dropAnswers removes the empty replies a crash left before a prompt started.
+func (b *Board) dropAnswers(ctx context.Context, thread *model.Note) {
+	replies, err := b.Notes.Replies(ctx, []string{thread.ID})
+	if err != nil {
+		return
+	}
+	for i := range replies[thread.ID] {
+		b.discardAnswer(ctx, &replies[thread.ID][i])
+	}
 }
 
 // pendingResume is a working prompt and the request that continues its session.

@@ -36,6 +36,25 @@ func TestBoard_Recover(t *testing.T) {
 	assert.Equal(t, model.NoteFailed, ended.State, "the board has no root to run in")
 }
 
+// A restart drops the empty answer a crash left before its run started, and
+// asks the open prompt again.
+func TestBoard_RecoverPlaceholder(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	board, notes, people := newBoard(t)
+
+	prompt := &model.Note{UserName: "ops", UserID: people["ops"].ID, Body: "why is the build red", State: model.NoteOpen, WorkspaceID: model.Default, Dir: "infra"}
+	assert.NoError(t, notes.Create(ctx, prompt))
+	left := &model.Note{ParentID: prompt.ID, UserName: "claude", Agent: "claude", State: model.NoteWorking, RunID: model.NewID()}
+	assert.NoError(t, notes.CreateAnswer(ctx, left))
+
+	assert.NoError(t, board.Recover(ctx))
+	replies, err := notes.Replies(ctx, []string{prompt.ID})
+	assert.NoError(t, err)
+	assert.Len(t, replies[prompt.ID], 1, "the crash's empty answer is gone")
+	assert.NotEqual(t, left.ID, replies[prompt.ID][0].ID)
+}
+
 // The restart notice comes from every agent of the thread, a reply each:
 // a thread two agents worked on reads as two cut runs, not one. The note
 // settles once.
