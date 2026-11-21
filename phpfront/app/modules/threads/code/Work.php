@@ -34,6 +34,7 @@ class Work {
 			$runs[$key]["progress"] = self::progress($run["events"]);
 			$runs[$key]["status"] = self::status($run["events"]);
 			$runs[$key]["agents"] = self::agents($run["events"]);
+			$runs[$key]["trace"] = self::trace($run["events"]);
 			$runs[$key]["events"] = self::withoutStatus($run["events"]);
 		}
 
@@ -60,6 +61,7 @@ class Work {
 				"tool" => "",
 			],
 			"agents" => [],
+			"trace" => self::noTrace(),
 		];
 	}
 
@@ -153,6 +155,150 @@ class Work {
 		}
 
 		return $tools;
+	}
+
+	/** noTrace is the trace of a run whose events hold no usable time. */
+	static function noTrace() {
+		return [
+			"ms" => 0,
+			"count" => 0,
+			"states" => [],
+		];
+	}
+
+	/** trace is how a run spent its time: the gap after an event belongs to the state it set. */
+	static function trace($events) {
+		$ms = [
+			"think" => 0,
+			"tools" => 0,
+			"wait" => 0,
+		];
+		$count = [
+			"think" => 0,
+			"tools" => 0,
+			"wait" => 0,
+		];
+		$state = "wait";
+		$last = 0;
+
+		foreach ($events as $event) {
+			$at = $event["at"];
+
+			if ($last > 0 && $at > $last) {
+				$ms[$state] = $ms[$state] + ($at - $last);
+			}
+
+			if ($at > 0) {
+				$last = $at;
+			}
+
+			$kind = self::category($event);
+
+			if ($kind !== "") {
+				$state = $kind;
+				$count[$kind] = $count[$kind] + 1;
+			}
+		}
+
+		$total = array_sum($ms);
+
+		if ($total <= 0) {
+			return self::noTrace();
+		}
+
+		$labels = [
+			"think" => "Thinking",
+			"tools" => "Tools",
+			"wait" => "Waiting",
+		];
+		$states = [];
+		$shares = 0;
+
+		foreach ($labels as $key => $label) {
+			$share = (int)round($ms[$key] * 100 / $total);
+			$shares = $shares + $share;
+			$states[] = [
+				"key" => $key,
+				"label" => $label,
+				"ms" => $ms[$key],
+				"count" => $count[$key],
+				"share" => $share,
+				"span" => self::span($ms[$key]),
+			];
+		}
+
+		$states[count($states) - 1]["share"] = $states[count($states) - 1]["share"] + (100 - $shares);
+
+		return [
+			"ms" => $total,
+			"count" => array_sum($count),
+			"states" => $states,
+		];
+	}
+
+	/** category is the trace a status or an activity event belongs to, "" for one that names none. */
+	static function category($event) {
+		if ($event["kind"] === "status") {
+			switch ($event["state"]) {
+				case "thinking":
+				case "writing":
+					return "think";
+				case "tool":
+				case "result":
+					return "tools";
+				case "starting":
+				case "done":
+					return "wait";
+			}
+
+			return "";
+		}
+
+		if ($event["kind"] === "tool_use" || $event["kind"] === "tool_result") {
+			return "tools";
+		}
+
+		if ($event["kind"] === "text") {
+			return "think";
+		}
+
+		return "";
+	}
+
+	/** span is a duration as a line reads it: milliseconds, seconds, or minutes and seconds. */
+	static function span($ms) {
+		if ($ms >= 60000) {
+			return floor($ms / 60000) . "m " . (int)round(($ms % 60000) / 1000) . "s";
+		}
+
+		if ($ms >= 1000) {
+			return number_format($ms / 1000, 1) . "s";
+		}
+
+		return $ms . "ms";
+	}
+
+	/** stamp is an event's time as milliseconds, 0 where the row holds none. */
+	static function stamp($value) {
+		$text = (string)$value;
+
+		if ($text === "") {
+			return 0;
+		}
+
+		$seconds = strtotime($text);
+
+		if ($seconds === false) {
+			return 0;
+		}
+
+		$ms = 0;
+
+		if (preg_match('/\.(\d+)/', $text, $found)) {
+			$ms = (int)substr(str_pad($found[1], 3, "0"), 0, 3);
+		}
+
+		return $seconds * 1000 + $ms;
 	}
 
 	/** progress is the last text a live run printed, which its answer shows in place. */
@@ -280,6 +426,7 @@ class Work {
 
 		$out = [
 			"seq" => isset($row["seq"]) ? (int)$row["seq"] : 0,
+			"at" => self::stamp(isset($row["created_at"]) ? $row["created_at"] : ""),
 			"kind" => $kind,
 			"body" => $body,
 			"prose" => "",

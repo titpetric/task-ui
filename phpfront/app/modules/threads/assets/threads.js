@@ -622,6 +622,45 @@
       scrollEnd("smooth");
     }
   });
+
+  // The trace under an answer cycles duration, count and time on each click.
+  var TRACE = ["duration", "count", "time"];
+
+  document.addEventListener("click", function (event) {
+    var bar = event.target.closest("[data-trace]");
+    if (!bar) {
+      return;
+    }
+    var mode = bar.dataset.mode || "duration";
+    mode = TRACE[(TRACE.indexOf(mode) + 1) % TRACE.length];
+    bar.dataset.mode = mode;
+    traceBar(bar, mode);
+  });
+
+  function traceBar(bar, mode) {
+    var label = bar.querySelector("[data-trace-mode]");
+    if (label) {
+      label.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+    }
+    var totalMs = Number(bar.dataset.ms || 0);
+    var totalCount = Number(bar.dataset.count || 0);
+    Array.prototype.forEach.call(bar.querySelectorAll(".work-trace-state"), function (state) {
+      var ms = Number(state.dataset.ms || 0);
+      var count = Number(state.dataset.count || 0);
+      var width = mode === "count" ? (totalCount ? count / totalCount : 0) : (totalMs ? ms / totalMs : 0);
+      var text = mode === "count" ? count + (count === 1 ? " call" : " calls") : (mode === "time" ? traceSpan(ms) : Math.round(width * 100) + "%");
+      state.style.width = (width * 100).toFixed(2) + "%";
+      state.title = (state.dataset.label || "") + ": " + text;
+      state.setAttribute("aria-label", state.title);
+    });
+  }
+
+  function traceSpan(ms) {
+    if (ms >= 60000) {
+      return Math.floor(ms / 60000) + "m " + Math.round((ms % 60000) / 1000) + "s";
+    }
+    return ms >= 1000 ? (ms / 1000).toFixed(1) + "s" : ms + "ms";
+  }
   setInterval(tickStatus, 1000);
   latest();
   tickStatus();

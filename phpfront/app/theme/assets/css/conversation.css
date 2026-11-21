@@ -407,7 +407,60 @@ body:has(.chat-shell) aside.rail {
   border-top: 1px dashed var(--line);
 }
 
+/* .work-trace is one line of how a run spent its time, drawn as a stacked bar. */
+.work-trace {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-align: start;
+  cursor: pointer;
+}
+
+.work-trace-mode {
+  min-width: 4.2rem;
+  color: var(--text-dim);
+  letter-spacing: var(--ls-xs);
+  text-transform: uppercase;
+}
+
+.work-trace-bar {
+  display: flex;
+  flex: 1;
+  height: 0.4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ink-2);
+}
+
+.work-trace-state {
+  display: block;
+  height: 100%;
+  color: var(--signal-ink);
+  font-size: 0;
+  transition: width 0.35s ease;
+}
+
+.work-trace-state.think {
+  background: var(--signal);
+}
+
+.work-trace-state.tools {
+  background: var(--ok);
+}
+
+.work-trace-state.wait {
+  background: var(--text-faint);
+}
+
 .work-stats {
+  margin-top: 0.3rem;
   color: var(--text-faint);
   font-size: var(--fs-xs);
 }
