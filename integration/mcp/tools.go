@@ -83,9 +83,9 @@ func tools() []Tool {
 		},
 		{
 			Name: "note_comment",
-			Description: "Reply to a note, and set the state of its instruction: working when you start, done or failed when you end, " +
+			Description: "Reply to a board note, and set the state of its instruction: working when you start, done or failed when you end, " +
 				"with what you did or why it failed. The state is for a user the note names, its author or an admin; anyone may reply. " +
-				"A change the author wants is a new note.",
+				"A change the author wants is a new note. A prompt's run answers with its final message; posting that answer here is deprecated.",
 			InputSchema: object(map[string]Property{
 				"id":    str("The note's ID, from list_notes."),
 				"body":  str("The reply: what you did, what changed, where to look."),

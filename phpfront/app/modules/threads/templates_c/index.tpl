@@ -2,7 +2,7 @@
 <div class="chat-shell">
 	<aside class="chat-list">
 		<div class="chat-list-top">
-			<button type="button" class="btn btn-sm" data-new-thread title="Start a new thread"><svg class="ic"><use href="#i-plus"/></svg> New thread</button>
+			<button type="button" class="btn btn-sm" data-new-thread title="Start a new thread"><i class="ic ic-plus" aria-hidden="true"></i> New thread</button>
 		</div>
 		<form method="get" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /threads" class="chat-filters">
@@ -57,11 +57,11 @@
 		<span class="thread-said"><?php echo htmlspecialchars($_v['data_row']['said'], ENT_QUOTES);?>
 </span>
 		<span class="thread-meta">
-			<svg class="ic thread-kind" aria-label="<?php echo htmlspecialchars($_v['data_row']['kind'], ENT_QUOTES);?>
-"><use href="#i-<?php if($_v['data_row']['kind'] == 'voice'){?>
+			<i class="ic ic-<?php if($_v['data_row']['kind'] == 'voice'){?>
 mic<?php }elseif($_v['data_row']['kind'] == 'prompt'){?>
 prompt<?php }else{?>
-note<?php }?>"/></svg>
+note<?php }?> thread-kind" role="img" aria-label="<?php echo htmlspecialchars($_v['data_row']['kind'], ENT_QUOTES);?>
+"></i>
 			<span class="faint" title="<?php echo htmlspecialchars($_v['data_row']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_row']['ago'], ENT_QUOTES);?>
 </span>
@@ -74,7 +74,7 @@ note<?php }?>"/></svg>
  messages"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
 </span><?php }?>
 			<?php if($_v['data_row']['heard']){?>
-<svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg><?php }?>
+<i class="ic ic-play" role="img" aria-label="Recorded"></i><?php }?>
 			<?php if($_v['data_row']['unread']){?>
 <span class="badge unread"><?php echo htmlspecialchars($_v['data_row']['unread'], ENT_QUOTES);?>
 </span><?php }?>
@@ -85,8 +85,8 @@ note<?php }?>"/></svg>
 		</span>
 	</a>
 <?php if($_v['data_row']['can_end']){?>
-	<button class="btn btn-sm thread-stop" type="button" data-stop="<?php echo htmlspecialchars($_v['data_row']['run'], ENT_QUOTES);?>
-" title="Stop the run behind this thread">Stop</button>
+	<button class="btn-icon thread-stop" type="button" data-stop="<?php echo htmlspecialchars($_v['data_row']['run'], ENT_QUOTES);?>
+" title="Stop the run behind this thread" aria-label="Stop the run behind this thread"><i class="ic ic-stop" aria-hidden="true"></i></button>
 <?php }?>	<span class="thread-who"><?php $_v['data_user'] = $_v['data_row']['person'];?>
 <span class="user-ref"><?php if($_v['data_user']['href']){?>
 <a class="user-link" href="<?php echo htmlspecialchars($_v['data_user']['href'], ENT_QUOTES);?>
@@ -121,11 +121,11 @@ note<?php }?>"/></svg>
 		<span class="thread-said"><?php echo htmlspecialchars($_v['data_row']['said'], ENT_QUOTES);?>
 </span>
 		<span class="thread-meta">
-			<svg class="ic thread-kind" aria-label="<?php echo htmlspecialchars($_v['data_row']['kind'], ENT_QUOTES);?>
-"><use href="#i-<?php if($_v['data_row']['kind'] == 'voice'){?>
+			<i class="ic ic-<?php if($_v['data_row']['kind'] == 'voice'){?>
 mic<?php }elseif($_v['data_row']['kind'] == 'prompt'){?>
 prompt<?php }else{?>
-note<?php }?>"/></svg>
+note<?php }?> thread-kind" role="img" aria-label="<?php echo htmlspecialchars($_v['data_row']['kind'], ENT_QUOTES);?>
+"></i>
 			<span class="faint" title="<?php echo htmlspecialchars($_v['data_row']['stamp'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['data_row']['ago'], ENT_QUOTES);?>
 </span>
@@ -138,7 +138,7 @@ note<?php }?>"/></svg>
  messages"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
 </span><?php }?>
 			<?php if($_v['data_row']['heard']){?>
-<svg class="ic" aria-label="Recorded"><use href="#i-play"/></svg><?php }?>
+<i class="ic ic-play" role="img" aria-label="Recorded"></i><?php }?>
 			<?php if($_v['data_row']['unread']){?>
 <span class="badge unread"><?php echo htmlspecialchars($_v['data_row']['unread'], ENT_QUOTES);?>
 </span><?php }?>
@@ -149,8 +149,8 @@ note<?php }?>"/></svg>
 		</span>
 	</a>
 <?php if($_v['data_row']['can_end']){?>
-	<button class="btn btn-sm thread-stop" type="button" data-stop="<?php echo htmlspecialchars($_v['data_row']['run'], ENT_QUOTES);?>
-" title="Stop the run behind this thread">Stop</button>
+	<button class="btn-icon thread-stop" type="button" data-stop="<?php echo htmlspecialchars($_v['data_row']['run'], ENT_QUOTES);?>
+" title="Stop the run behind this thread" aria-label="Stop the run behind this thread"><i class="ic ic-stop" aria-hidden="true"></i></button>
 <?php }?>	<span class="thread-who"><?php $_v['data_user'] = $_v['data_row']['person'];?>
 <span class="user-ref"><?php if($_v['data_user']['href']){?>
 <a class="user-link" href="<?php echo htmlspecialchars($_v['data_user']['href'], ENT_QUOTES);?>
@@ -181,6 +181,8 @@ note<?php }?>"/></svg>
 	<section class="chat-pane" data-thread-pane>
 		<div class="conversation">
 			<div class="chat-blank">
+				<a class="conversation-back" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/threads"><i class="ic ic-back" aria-hidden="true"></i> All threads</a>
 				<h2>What should we work on?</h2>
 				<p>Ask Claude in a folder, or leave a note for the people here. Every prompt becomes a thread and stays here.</p>
 				<?php $_v['data_composer'] = $_v['data']['composer'];?>
@@ -250,7 +252,7 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php if($_v['data_composer']['mic']){?>
 			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
-" title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
+" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
 <?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>

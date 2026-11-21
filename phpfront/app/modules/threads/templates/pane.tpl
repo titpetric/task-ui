@@ -1,5 +1,5 @@
 <div class="conversation">
-<a class="conversation-back" href="{base}/threads"><svg class="ic"><use href="#i-back"/></svg> All threads</a>
+<a class="conversation-back" href="{base}/threads"><i class="ic ic-back" aria-hidden="true"></i> All threads</a>
 {eval $data_head = $data_pane.head_view}{include components/conversation-head.tpl}
 {eval $data_status = $data_pane.status}{include components/status.tpl}
 
@@ -8,4 +8,4 @@
 {/foreach}	</ol>
 
 {if $data_pane.replies}{eval $data_composer = $data_pane.composer}{include components/composer.tpl}
-{/if}</div>
+{/if}<button type="button" class="scroll-latest" data-scroll-latest title="Scroll to the latest" aria-label="Scroll to the latest" hidden><i class="ic ic-down" aria-hidden="true"></i></button></div>

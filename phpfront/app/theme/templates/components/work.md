@@ -5,12 +5,9 @@ Input scope: `data_work`, one run of a thread, from
 
 | Field | Meaning |
 |-------|---------|
-| `id`, `short` | the run and the short name |
-| `stats` | what the run read and wrote, or empty |
-| `status` | the last state reported: `body`, `state`, `tool` |
-| `events` | the run's cards, each with `seq`, `kind`, `body`, `prose`, `tool`, `input`, `error` |
+| `id`, `short` | the run, and the start of its ID |
+| `stats` | what the run read and wrote, its cost and how many tools it called |
 
-Statuses are collapsed into `status`, and results are dropped because the
-answer says them: the card flow holds `text`, `thinking`, `tool_use`,
-`tool_result`, `system` and `error`. Every item writes `data-seq`, which the
-script matches when the pane is read again.
+The component draws one faint line under a finished answer. The event cards a
+run writes are not drawn as a log; the pinned status of a working thread carries
+the state, and `status.md` carries its subagents.

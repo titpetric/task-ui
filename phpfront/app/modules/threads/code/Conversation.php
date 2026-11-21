@@ -177,6 +177,7 @@ class Conversation {
 				"state" => "",
 				"started" => "",
 				"run" => "",
+				"agents" => [],
 				"can_end" => false,
 			];
 		}
@@ -184,11 +185,13 @@ class Conversation {
 		$label = "Working";
 		$state = "working";
 		$id = "";
+		$agents = [];
 
 		foreach ($work as $runs) {
 			foreach ($runs as $run) {
 				if ($run["id"] !== "") {
 					$id = $run["id"];
+					$agents = $run["agents"];
 				}
 
 				if (($run["status"]["body"] ?? "") !== "") {
@@ -223,6 +226,7 @@ class Conversation {
 			"state" => $state,
 			"started" => $started,
 			"run" => $id,
+			"agents" => $agents,
 			"can_end" => $row !== null && !\Task\Run::ended($row->getState()) && \Task\Run::canEnd($chrome, $row),
 		];
 	}

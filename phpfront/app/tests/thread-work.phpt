@@ -53,6 +53,16 @@ $db->replace("note_event", [
 	"tool_id" => "t1", "body" => "ok", "data" => "{\"is_error\":false}",
 ]);
 $db->replace("note_event", [
+	"id" => "fx-work-e6", "note_id" => "fx-work-n1", "run_id" => "fx-work-r1",
+	"question_id" => "fx-work-n1", "seq" => 4, "kind" => "tool_use",
+	"tool_id" => "t2", "body" => "", "data" => "{\"name\":\"Task\",\"input\":{\"description\":\"check the API\",\"subagent_type\":\"Explore\",\"prompt\":\"look\"}}",
+]);
+$db->replace("note_event", [
+	"id" => "fx-work-e7", "note_id" => "fx-work-n1", "run_id" => "fx-work-r1",
+	"question_id" => "fx-work-n1", "seq" => 5, "kind" => "tool_result",
+	"tool_id" => "t2", "body" => "found it", "data" => "{\"is_error\":false}",
+]);
+$db->replace("note_event", [
 	"id" => "fx-work-e4", "note_id" => "fx-work-n1", "run_id" => "fx-work-r2",
 	"question_id" => "fx-work-n2", "seq" => 1, "kind" => "error",
 	"tool_id" => "", "body" => "it ran out of disk", "data" => "{}",
@@ -73,6 +83,8 @@ echo count($events), "\n";
 echo count($work["fx-work-n1"]), " ", count($work["fx-work-n2"]), "\n";
 echo $work["fx-work-n1"][0]["events"][0]["kind"], " ", var_export(strpos($work["fx-work-n1"][0]["events"][0]["prose"], "on it") !== false, true), "\n";
 echo $work["fx-work-n1"][0]["events"][1]["tool"], " ", var_export(strpos($work["fx-work-n1"][0]["events"][1]["input"], "go test") !== false, true), "\n";
+$agent = $work["fx-work-n1"][0]["agents"][0];
+echo count($work["fx-work-n1"][0]["agents"]), " ", $agent["task"], " ", $agent["kind"], " ", $agent["state"], " ", $agent["result"], "\n";
 echo var_export($work["fx-work-n2"][0]["events"][0]["error"], true), "\n";
 echo $work["fx-work-n2"][0]["status"]["body"], " ", $work["fx-work-n2"][0]["status"]["state"], " ", $work["fx-work-n2"][0]["status"]["tool"], "\n";
 echo count($work["fx-work-n2"][0]["events"]), " ", $work["fx-work-n2"][0]["events"][0]["seq"], "\n";
@@ -162,10 +174,11 @@ echo var_export($done["working"], true), " ", var_export($done["can_end"], true)
 $notes->forget("fx-work-n1");
 echo count($notes->events("fx-work-n1")), "\n";
 ---
-5
+7
 1 1
 text true
 Bash true
+1 check the API Explore done found it
 true
 Running Bash tool Bash
 1 1

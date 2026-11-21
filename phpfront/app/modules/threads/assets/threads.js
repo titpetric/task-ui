@@ -12,88 +12,59 @@
     return el;
   }
 
-  function details(className, summary, text) {
-    var box = node("details", className);
-    box.appendChild(node("summary", "", summary));
-    box.appendChild(node("pre", "", text));
-    return box;
-  }
-
-  // workEvent draws one event the way components/work.tpl draws it. The
-  // fields are the stream's own: a tool card carries tool and input, a result
-  // carries error and its cut body.
-  function workEvent(event) {
-    switch (event.kind) {
-      case "text":
-        return node("div", "work-text prose", event.body || "");
-      case "result":
-        return null;
-      case "thinking":
-        return details("work-thinking", "Thinking", event.body || "");
-      case "tool_use":
-        return details("work-tool", event.tool || "Tool", event.input || "");
-      case "tool_result":
-        return details("work-result" + (event.error ? " error" : ""), event.error ? "Error" : "Result", event.body || "");
-      case "system":
-        return details("work-system", "Session", event.body || "");
-      case "error":
-        return node("div", "work-error", event.body || "The run failed.");
-      default:
-        return null;
+  // scroller is the box the talk scrolls in: the pane where it has its own
+  // scrollbar, the page otherwise.
+  function scroller() {
+    var pane = document.querySelector(".chat-pane");
+    if (pane) {
+      var overflow = getComputedStyle(pane).overflowY;
+      if (overflow === "auto" || overflow === "scroll") {
+        return pane;
+      }
     }
+    return document.scrollingElement || document.documentElement;
   }
 
   function nearBottom() {
-    return document.documentElement.scrollHeight - window.scrollY - window.innerHeight < 240;
+    var box = scroller();
+    return box.scrollHeight - box.scrollTop - box.clientHeight < 240;
   }
 
-  function runOf(work, id) {
-    var runs = work.querySelectorAll(".work-run");
-    for (var i = 0; i < runs.length; i++) {
-      if (runs[i].dataset.run === id) {
-        return runs[i];
-      }
+  function scrollEnd(behavior) {
+    var box = scroller();
+    if (box.scrollTo) {
+      box.scrollTo({ top: box.scrollHeight, behavior: behavior || "auto" });
+    } else {
+      box.scrollTop = box.scrollHeight;
     }
-    var run = node("div", "work-run");
-    run.dataset.run = id;
-    work.appendChild(run);
-    return run;
   }
 
-  // workNode is the work block of the message a run writes in: its answer,
-  // which stands in the thread while the run goes, or the question itself.
-  function workNode(run, question) {
-    var answer = run ? document.querySelector('.talk .said.agent[data-run="' + run + '"]') : null;
-    var message = answer || document.getElementById("note-" + question);
-    if (!message) {
-      return null;
+  // latest shows the button back to the talk while the reader is above it,
+  // centred over the column the talk scrolls in.
+  function latest() {
+    var button = document.querySelector("[data-scroll-latest]");
+    if (!button) {
+      return;
     }
-    var work = message.querySelector(".work");
-    if (!work) {
-      work = node("div", "work");
-      message.insertBefore(work, message.querySelector(".said-audio"));
+    var box = scroller();
+    button.hidden = nearBottom();
+    if (box === document.scrollingElement) {
+      button.style.left = "50%";
+      return;
     }
-    return work;
+    var rect = box.getBoundingClientRect();
+    button.style.left = rect.left + rect.width / 2 + "px";
+    var composer = document.querySelector(".chat-pane .composer-box");
+    if (composer) {
+      button.style.bottom = window.innerHeight - composer.getBoundingClientRect().top + 56 + "px";
+    }
   }
 
-  function addWork(data) {
-    var work = workNode(data.run, data.question);
-    if (!work) {
-      return;
-    }
-    var run = runOf(work, data.run);
-    if (run.querySelector('[data-seq="' + data.seq + '"]')) {
-      return;
-    }
-    var item = workEvent(data);
-    if (!item) {
-      return;
-    }
-    item.dataset.seq = data.seq;
-    run.appendChild(item);
-    if (nearBottom()) {
-      item.scrollIntoView({ block: "nearest" });
-    }
+  function icon(name) {
+    var el = document.createElement("i");
+    el.className = "ic ic-" + name;
+    el.setAttribute("aria-hidden", "true");
+    return el;
   }
 
   function elapsed(started) {
@@ -159,6 +130,77 @@
     var line = document.querySelector("[data-status]");
     if (elapsedText && line) {
       elapsedText.textContent = elapsed(line.dataset.started);
+    }
+  }
+
+  // agentList is the status block's list of subagents, made on the first.
+  function agentList() {
+    var line = statusLine();
+    if (!line) {
+      return null;
+    }
+    var list = line.querySelector("[data-status-agents]");
+    if (!list) {
+      list = node("ul", "status-agents");
+      list.dataset.statusAgents = "";
+      line.insertBefore(list, line.querySelector(".actions"));
+    }
+    return list;
+  }
+
+  // addAgent draws the subagent a Task call starts, with its brief behind it.
+  function addAgent(event) {
+    if (!event.tool_id) {
+      return;
+    }
+    var list = agentList();
+    if (!list || list.querySelector('[data-agent="' + event.tool_id + '"]')) {
+      return;
+    }
+    var input = {};
+    try {
+      input = JSON.parse(event.input || "{}") || {};
+    } catch (err) {
+      input = {};
+    }
+    var item = node("li");
+    var box = node("details", "status-agent working");
+    box.dataset.agent = event.tool_id;
+    var summary = node("summary");
+    summary.appendChild(icon("users"));
+    summary.appendChild(node("span", "", input.description || "A subagent"));
+    if (input.subagent_type) {
+      summary.appendChild(node("small", "faint", input.subagent_type));
+    }
+    var badge = node("span", "badge signal", "working");
+    badge.dataset.statusAgentState = "";
+    summary.appendChild(badge);
+    box.appendChild(summary);
+    if (input.prompt) {
+      box.appendChild(node("pre", "status-agent-prompt", input.prompt));
+    }
+    item.appendChild(box);
+    list.appendChild(item);
+    if (nearBottom()) {
+      list.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  // settleAgent marks the subagent of a finished Task call, with its answer.
+  function settleAgent(event) {
+    var box = event.tool_id ? document.querySelector('.status-agent[data-agent="' + event.tool_id + '"]') : null;
+    if (!box) {
+      return;
+    }
+    box.classList.remove("working");
+    box.classList.add(event.error ? "failed" : "done");
+    var badge = box.querySelector("[data-status-agent-state]");
+    if (badge) {
+      badge.className = "badge " + (event.error ? "bad" : "ok");
+      badge.textContent = event.error ? "failed" : "done";
+    }
+    if (event.body) {
+      box.appendChild(node("pre", "status-agent-result", event.body));
     }
   }
 
@@ -240,7 +282,12 @@
         setStatus(data);
         return;
       }
-      addWork(data);
+      if (data.kind === "tool_use" && (data.tool === "Task" || data.tool === "Agent")) {
+        addAgent(data);
+      }
+      if (data.kind === "tool_result") {
+        settleAgent(data);
+      }
       if (data.kind === "result" || data.kind === "error") {
         queueReload();
       }
@@ -322,6 +369,7 @@
 
   // select paints the row of the thread the pane shows.
   function select(id) {
+    viewing(!!id);
     if (!list) {
       return;
     }
@@ -337,7 +385,6 @@
         }
       }
     });
-    viewing(!!id);
   }
 
   // want counts what the pane was last asked to show: a read that answers
@@ -381,7 +428,8 @@
       pane.innerHTML = html;
       paint(id);
       follow(pane.querySelector(".talk[data-thread]"));
-      window.scrollTo(0, document.documentElement.scrollHeight);
+      scrollEnd();
+      latest();
       if (push) {
         history.pushState({ thread: id }, "", "/threads/" + encodeURIComponent(id));
       }
@@ -397,7 +445,8 @@
     }
     var seq = ++want;
     var bottom = nearBottom();
-    var y = window.scrollY;
+    var box = scroller();
+    var y = box.scrollTop;
     return fetch("/threads/" + encodeURIComponent(id) + "?pane=1", {
       credentials: "same-origin",
       headers: { Accept: "text/html" }
@@ -412,7 +461,12 @@
       }
       pane.innerHTML = html;
       paint(id);
-      window.scrollTo(0, bottom ? document.documentElement.scrollHeight : y);
+      if (bottom) {
+        scrollEnd();
+      } else {
+        scroller().scrollTop = y;
+      }
+      latest();
       if (focus) {
         var area = pane.querySelector("form[data-send] textarea");
         if (area) {
@@ -442,7 +496,9 @@
     }
     pane.innerHTML = blank;
     paint("");
-    window.scrollTo(0, 0);
+    viewing(true);
+    scroller().scrollTop = 0;
+    latest();
     if (push) {
       history.pushState({ thread: "" }, "", "/threads");
     }
@@ -532,12 +588,20 @@
     follow(talk);
     select(current);
     title(current);
-    window.scrollTo(0, document.documentElement.scrollHeight);
+    scrollEnd();
   }
   var form = (pane || document).querySelector("[data-agent-form]");
   if (form) {
     pick(form);
   }
+  document.addEventListener("scroll", latest, true);
+  window.addEventListener("resize", latest);
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-scroll-latest]")) {
+      scrollEnd("smooth");
+    }
+  });
   setInterval(tickStatus, 1000);
+  latest();
   tickStatus();
 })();

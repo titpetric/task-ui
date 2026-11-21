@@ -8,9 +8,7 @@ import (
 	"github.com/titpetric/task-ui/app/model"
 )
 
-// source returns the TASK_UI_PROMPT_SOURCE a prompt's run reads: the thread's
-// note ID, the reply that asks when a reply asks, the place or area, the
-// thread's link, and the note_comment call over the task MCP that answers it.
+// source returns TASK_UI_PROMPT_SOURCE: the thread's note, its question's reply, place and link.
 func (b *Board) source(ctx context.Context, thread *model.Note) string {
 	var text strings.Builder
 	fmt.Fprintf(&text, "## The prompt's source\n\nThe prompt is the thread of the task-ui note %s", thread.ID)
@@ -18,14 +16,11 @@ func (b *Board) source(ctx context.Context, thread *model.Note) string {
 		fmt.Fprintf(&text, ", its question the reply %s", asking)
 	}
 	fmt.Fprintf(&text, ", %s, %s.\n\n", b.place(ctx, thread), b.link(b.threadPath(ctx, thread)))
-	fmt.Fprintf(&text, "When you have the result, post it as a reply in that thread with the task MCP: note_comment with the id %s and the answer as the body, no state, then end. ", thread.ID)
-	text.WriteString("That reply is the answer the asker reads. Your final message is a fallback, which task-ui posts only when you posted no reply.")
+	text.WriteString("Your final message is the answer the asker reads, which task-ui posts under the question.")
 	return text.String()
 }
 
-// asking is the ID of the last reply in a thread that someone other than
-// Claude wrote: the question of a prompt asked again. A thread with no
-// such reply asks with its note.
+// asking returns the ID of the last reply someone other than Claude wrote, or "".
 func (b *Board) asking(ctx context.Context, thread *model.Note) string {
 	replies, err := b.Notes.Replies(ctx, []string{thread.ID})
 	if err != nil {
@@ -41,8 +36,7 @@ func (b *Board) asking(ctx context.Context, thread *model.Note) string {
 	return ""
 }
 
-// place says where a prompt asks: its area, the run or workflow run it
-// is about, or its folder and directory.
+// place says where a prompt asks: its area, the run it is about, or the folder path.
 func (b *Board) place(ctx context.Context, thread *model.Note) string {
 	switch {
 	case thread.Area == model.AreaWorkflows:
@@ -55,8 +49,7 @@ func (b *Board) place(ctx context.Context, thread *model.Note) string {
 	return "in " + model.PlaceLabel(thread.Dir)
 }
 
-// threadPath is the path of the page that shows a prompt's thread, with
-// the thread's anchor.
+// threadPath returns the page path of a prompt's thread, with its anchor.
 func (b *Board) threadPath(ctx context.Context, thread *model.Note) string {
 	anchor := "#note-" + thread.ID
 	switch {
@@ -72,19 +65,23 @@ func (b *Board) threadPath(ctx context.Context, thread *model.Note) string {
 	if thread.Dir == "" || thread.Dir == model.Default {
 		return "/f/" + model.Default + anchor
 	}
-	// A folder of a named workspace has its page by its ID, any other
-	// under the root's.
+	// A named workspace's folder has its page by its ID; any other is under the root's.
 	if thread.WorkspaceID != "" && thread.WorkspaceID != model.Default {
 		return "/f/" + thread.Dir + anchor
 	}
 	return "/f/" + model.Default + "/" + thread.Dir + anchor
 }
 
-// RunReply posts a prompt run's finding to its own thread, as the run's token asks with note_comment.
-// The reply is Claude's, with the thread's run, in the reply a rerun rewrites when there is one.
-// The thread's state follows its run, so RunReply sets none, and the run's final message is no reply after this one.
-// A thread that is no prompt's takes the reply as Comment does.
+// RunReply is AnswerThread under the name the MCP note_comment hook called.
+//
+// Deprecated: a prompt run's final message is its answer, and the hook is being phased out. Use AnswerThread.
 func (b *Board) RunReply(ctx context.Context, user *model.User, id, body, state string) (*model.Note, error) {
+	return b.AnswerThread(ctx, user, id, body, state)
+}
+
+// AnswerThread posts a prompt run's finding to its thread, in the reply a rerun rewrites.
+// The thread's state follows its run, which sets no state there; another thread takes it as Comment does.
+func (b *Board) AnswerThread(ctx context.Context, user *model.User, id, body, state string) (*model.Note, error) {
 	thread, err := b.Notes.Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -114,8 +111,7 @@ func (b *Board) RunReply(ctx context.Context, user *model.User, id, body, state 
 	return reply, nil
 }
 
-// takeReplied reports whether a run of the thread replied with RunReply
-// since the last call, and forgets it.
+// takeReplied reports whether the thread's run replied since the last call, and forgets it.
 func (b *Board) takeReplied(id string) bool {
 	b.repliedMu.Lock()
 	defer b.repliedMu.Unlock()

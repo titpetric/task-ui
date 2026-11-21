@@ -1,7 +1,7 @@
 <?php $_v=&$this->vars;?>
 <div class="conversation">
 <a class="conversation-back" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
-/threads"><svg class="ic"><use href="#i-back"/></svg> All threads</a>
+/threads"><i class="ic ic-back" aria-hidden="true"></i> All threads</a>
 <?php $_v['data_head'] = $_v['data_pane']['head_view'];?>
 <div class="conversation-head">
 	<div class="conversation-title">
@@ -28,7 +28,7 @@
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -48,8 +48,8 @@
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -57,8 +57,8 @@
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>
@@ -76,16 +76,36 @@
 ">
 	<p aria-live="polite"><i class="dot working"></i> <span data-status-text><?php echo htmlspecialchars($_v['data_status']['label'], ENT_QUOTES);?>
 </span> <span class="faint" data-status-elapsed></span></p>
-<?php if($_v['data_status']['can_end']){?>
+<?php if($_v['data_status']['agents']){?>
+	<ul class="status-agents" data-status-agents>
+<?php if(!empty($_v['data_status']['agents']))foreach($_v['data_status']['agents'] as $_v['agent']){?>		<li><details class="status-agent <?php echo htmlspecialchars($_v['agent']['state'], ENT_QUOTES);?>
+" data-agent="<?php echo htmlspecialchars($_v['agent']['id'], ENT_QUOTES);?>
+">
+			<summary><i class="ic ic-users" aria-hidden="true"></i> <span><?php echo htmlspecialchars($_v['agent']['task'], ENT_QUOTES);?>
+</span><?php if($_v['agent']['kind']){?>
+ <small class="faint"><?php echo htmlspecialchars($_v['agent']['kind'], ENT_QUOTES);?>
+</small><?php }?> <span class="badge <?php if($_v['agent']['state'] == 'working'){?>
+signal<?php }elseif($_v['agent']['state'] == 'failed'){?>
+bad<?php }else{?>
+ok<?php }?>" data-status-agent-state><?php echo htmlspecialchars($_v['agent']['state'], ENT_QUOTES);?>
+</span></summary>
+<?php if($_v['agent']['prompt']){?>
+			<pre class="status-agent-prompt"><?php echo htmlspecialchars($_v['agent']['prompt'], ENT_QUOTES);?>
+</pre>
+<?php }?><?php if($_v['agent']['result']){?>
+			<pre class="status-agent-result"><?php echo htmlspecialchars($_v['agent']['result'], ENT_QUOTES);?>
+</pre>
+<?php }?>		</details></li>
+<?php }?>	</ul>
+<?php }?><?php if($_v['data_status']['can_end']){?>
 	<div class="actions">
-		<button class="btn btn-sm" type="button" data-stop="<?php echo htmlspecialchars($_v['data_status']['run'], ENT_QUOTES);?>
-" title="Stop this run and let it settle">Stop</button>
-		<button class="btn btn-sm btn-danger" type="button" data-kill="<?php echo htmlspecialchars($_v['data_status']['run'], ENT_QUOTES);?>
-" title="Kill this run and everything it started">Kill</button>
+		<button class="btn-icon" type="button" data-stop="<?php echo htmlspecialchars($_v['data_status']['run'], ENT_QUOTES);?>
+" title="Stop this run and let it settle" aria-label="Stop this run"><i class="ic ic-stop" aria-hidden="true"></i></button>
+		<button class="btn-icon danger" type="button" data-kill="<?php echo htmlspecialchars($_v['data_status']['run'], ENT_QUOTES);?>
+" title="Kill this run and everything it started" aria-label="Kill this run and everything it started"><i class="ic ic-trash" aria-hidden="true"></i></button>
 	</div>
 <?php }?></div>
 <?php }?>
-
 
 	<ol class="talk" data-talk data-thread="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
 " data-last-event="<?php echo htmlspecialchars($_v['data_pane']['last_event'], ENT_QUOTES);?>
@@ -133,45 +153,12 @@
 <?php if($_v['data_message']['body']){?>
 	<div class="said-body prose"><?php echo $_v['data_message']['body'];?>
 </div>
-<?php }?><?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run'];?>
+<?php }?><?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run']; if($_v['data_work']['stats']){?>
 <div class="work-run" data-run="<?php echo htmlspecialchars($_v['data_work']['id'], ENT_QUOTES);?>
 ">
-<?php if($_v['data_work']['stats']){?>
 	<div class="work-stats"><?php echo htmlspecialchars($_v['data_work']['stats'], ENT_QUOTES);?>
 </div>
-<?php }?><?php if(!empty($_v['data_work']['events']))foreach($_v['data_work']['events'] as $_v['event']){?><?php if($_v['event']['kind'] == 'text' || $_v['event']['kind'] == 'result'){?>
-	<div class="work-text prose" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><?php echo $_v['event']['prose'];?>
-</div>
-<?php }elseif($_v['event']['kind'] == 'thinking'){?>
-	<details class="work-thinking" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary>Thinking</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'tool_use'){?>
-	<details class="work-tool" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary><code><?php echo htmlspecialchars($_v['event']['tool'], ENT_QUOTES);?>
-</code><?php if($_v['event']['body']){?>
- <span class="faint"><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</span><?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['input'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'tool_result'){?>
-	<details class="work-result<?php if($_v['event']['error']){?>
- error<?php }?>" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary><?php if($_v['event']['error']){?>
-Error<?php }else{?>
-Result<?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'system'){?>
-	<details class="work-system" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary>Session</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'error'){?>
-	<div class="work-error" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</div>
-<?php }?><?php }?></div>
-
-<?php }?><?php if($_v['data_message']['audio']){?>
+</div><?php } }?><?php if($_v['data_message']['audio']){?>
 	<audio class="said-audio" controls preload="none" src="<?php echo htmlspecialchars($_v['data_message']['audio'], ENT_QUOTES);?>
 "></audio>
 <?php }?></li>
@@ -245,10 +232,10 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php if($_v['data_composer']['mic']){?>
 			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
-" title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
+" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
 <?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
 </form>
 
-<?php }?></div>
+<?php }?><button type="button" class="scroll-latest" data-scroll-latest title="Scroll to the latest" aria-label="Scroll to the latest" hidden><i class="ic ic-down" aria-hidden="true"></i></button></div>

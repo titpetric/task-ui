@@ -31,6 +31,7 @@ class Work {
 		foreach ($runs as $key => $run) {
 			$runs[$key]["stats"] = self::stats($run["events"]);
 			$runs[$key]["status"] = self::status($run["events"]);
+			$runs[$key]["agents"] = self::agents($run["events"]);
 			$runs[$key]["events"] = self::withoutStatus($run["events"]);
 		}
 
@@ -49,7 +50,43 @@ class Work {
 			"short" => substr($id, 0, 8),
 			"events" => [],
 			"stats" => "",
+			"status" => [
+				"body" => "",
+				"state" => "",
+				"tool" => "",
+			],
+			"agents" => [],
 		];
+	}
+
+	/** agents is the subagents a run started, in order, with their task, kind and result. */
+	static function agents($events) {
+		$out = [];
+		$at = [];
+
+		foreach ($events as $event) {
+			if ($event["kind"] === "tool_use" && $event["agent"] !== "") {
+				$at[$event["tool_id"]] = count($out);
+				$out[] = [
+					"id" => $event["tool_id"],
+					"task" => $event["agent"]["task"],
+					"kind" => $event["agent"]["kind"],
+					"prompt" => $event["agent"]["prompt"],
+					"state" => "working",
+					"result" => "",
+				];
+
+				continue;
+			}
+
+			if ($event["kind"] === "tool_result" && isset($at[$event["tool_id"]])) {
+				$item = $at[$event["tool_id"]];
+				$out[$item]["state"] = $event["error"] ? "failed" : "done";
+				$out[$item]["result"] = $event["body"];
+			}
+		}
+
+		return $out;
 	}
 
 	/**
@@ -158,7 +195,9 @@ class Work {
 			"body" => $body,
 			"prose" => "",
 			"tool" => "",
+			"tool_id" => isset($row["tool_id"]) ? $row["tool_id"] : "",
 			"input" => "",
+			"agent" => "",
 			"error" => false,
 			"state" => "",
 		];
@@ -176,6 +215,12 @@ class Work {
 			case "tool_use":
 				$out["tool"] = isset($data["name"]) ? $data["name"] : "Tool";
 				$out["input"] = self::json(isset($data["input"]) ? $data["input"] : []);
+
+				// Task and Agent start a subagent, whose fields the card shows.
+				if ($out["tool"] === "Task" || $out["tool"] === "Agent") {
+					$out["agent"] = self::agent(isset($data["input"]) ? $data["input"] : []);
+				}
+
 				break;
 			case "tool_result":
 				$out["body"] = self::cut($body);
@@ -196,6 +241,25 @@ class Work {
 		}
 
 		return $out;
+	}
+
+	/** agent is a subagent's task, kind and brief from a Task tool's input. */
+	static function agent($input) {
+		if (!is_array($input)) {
+			return [
+				"task" => "A subagent",
+				"kind" => "",
+				"prompt" => "",
+			];
+		}
+
+		$task = isset($input["description"]) ? $input["description"] : "";
+
+		return [
+			"task" => $task === "" ? "A subagent" : $task,
+			"kind" => isset($input["subagent_type"]) ? $input["subagent_type"] : "",
+			"prompt" => isset($input["prompt"]) ? $input["prompt"] : "",
+		];
 	}
 
 	/** json is a tool's input as the card shows it. */

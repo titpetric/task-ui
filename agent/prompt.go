@@ -31,10 +31,10 @@ func (a *Agent) Prompt(ctx context.Context) error {
 	source := a.getenv("TASK_UI_PROMPT_SOURCE")
 	prompt := ""
 	if a.getenv("TASK_UI_CLAUDE_RESUME") != "" {
-		prompt = "task-ui restarted while you worked. Continue the same task in this conversation and finish it. " + answerLine(source, promptPage(a))
+		prompt = "task-ui restarted while you worked. Continue the same task in this conversation and finish it. " + answerLine(promptPage(a))
 	} else {
 		prompt = "A prompt from a task-ui folder page. The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the last message is the question:\n\n" +
-			thread + "\n\n" + answerLine(source, "the page")
+			thread + "\n\n" + answerLine("the page")
 		if path := a.getenv("TASK_UI_PROMPT_RUN"); path != "" {
 			run, err := os.ReadFile(path)
 			if err != nil {
@@ -82,11 +82,8 @@ func promptAgent(a *Agent) string {
 	return ""
 }
 
-// answerLine closes a prompt. With a source the final message is only the fallback reply.
-func answerLine(source, page string) string {
-	if source != "" {
-		return "Post the answer as a reply in the thread, as the prompt's source in the system prompt says; your final message is the fallback, in markdown, shown under the question on " + page + " only when you posted no reply."
-	}
+// answerLine closes a prompt: its final message is the answer, in markdown.
+func answerLine(page string) string {
 	return "Your final message is the answer, in markdown, shown under the question on " + page + "."
 }
 
@@ -107,7 +104,7 @@ func aboutRun(run, thread, source string) string {
 		strings.TrimSpace(run) + "\n\n" +
 		"The question is about this run. If it asks for a fix to the job or the pipeline, make it in the checkout you are in, commit it to main and push it, and say what changed and where. " +
 		"Otherwise change nothing. The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the last message is the question:\n\n" +
-		thread + "\n\n" + answerLine(source, "the run's page")
+		thread + "\n\n" + answerLine("the run's page")
 }
 
 // aboutWorkflow returns the prompt a workflow step asks: run, then thread, the workflow's prompt first.
@@ -116,7 +113,7 @@ func aboutWorkflow(run, thread, source string) string {
 		strings.TrimSpace(run) + "\n\n" +
 		"Change nothing unless the prompt asks for a change; if it asks for a fix, make it in the checkout you are in, commit it to main and push it, and say what changed and where. " +
 		"The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the first message is the workflow's prompt:\n\n" +
-		thread + "\n\n" + answerLine(source, "the workflow run's page")
+		thread + "\n\n" + answerLine("the workflow run's page")
 }
 
 // toolset lists tools, one a line, with the `<tool> --help` hint. Empty for no tools.

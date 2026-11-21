@@ -1,7 +1,7 @@
 <div class="chat-shell">
 	<aside class="chat-list">
 		<div class="chat-list-top">
-			<button type="button" class="btn btn-sm" data-new-thread title="Start a new thread"><svg class="ic"><use href="#i-plus"/></svg> New thread</button>
+			<button type="button" class="btn btn-sm" data-new-thread title="Start a new thread"><i class="ic ic-plus" aria-hidden="true"></i> New thread</button>
 		</div>
 		<form method="get" action="{base}/threads" class="chat-filters">
 			<input class="chat-search" type="search" name="q" value="{data.form.q}" placeholder="Search threads" aria-label="Words of a thread" aria-keyshortcuts="/" title="Press / to search" spellcheck="false" autocomplete="off">
@@ -44,6 +44,7 @@
 	<section class="chat-pane" data-thread-pane>
 		<div class="conversation">
 			<div class="chat-blank">
+				<a class="conversation-back" href="{base}/threads"><i class="ic ic-back" aria-hidden="true"></i> All threads</a>
 				<h2>What should we work on?</h2>
 				<p>Ask Claude in a folder, or leave a note for the people here. Every prompt becomes a thread and stays here.</p>
 				{eval $data_composer = $data.composer}{include components/composer.tpl}

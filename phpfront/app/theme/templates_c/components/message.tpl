@@ -39,45 +39,12 @@
 <?php if($_v['data_message']['body']){?>
 	<div class="said-body prose"><?php echo $_v['data_message']['body'];?>
 </div>
-<?php }?><?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run'];?>
+<?php }?><?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run']; if($_v['data_work']['stats']){?>
 <div class="work-run" data-run="<?php echo htmlspecialchars($_v['data_work']['id'], ENT_QUOTES);?>
 ">
-<?php if($_v['data_work']['stats']){?>
 	<div class="work-stats"><?php echo htmlspecialchars($_v['data_work']['stats'], ENT_QUOTES);?>
 </div>
-<?php }?><?php if(!empty($_v['data_work']['events']))foreach($_v['data_work']['events'] as $_v['event']){?><?php if($_v['event']['kind'] == 'text' || $_v['event']['kind'] == 'result'){?>
-	<div class="work-text prose" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><?php echo $_v['event']['prose'];?>
-</div>
-<?php }elseif($_v['event']['kind'] == 'thinking'){?>
-	<details class="work-thinking" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary>Thinking</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'tool_use'){?>
-	<details class="work-tool" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary><code><?php echo htmlspecialchars($_v['event']['tool'], ENT_QUOTES);?>
-</code><?php if($_v['event']['body']){?>
- <span class="faint"><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</span><?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['input'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'tool_result'){?>
-	<details class="work-result<?php if($_v['event']['error']){?>
- error<?php }?>" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary><?php if($_v['event']['error']){?>
-Error<?php }else{?>
-Result<?php }?></summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'system'){?>
-	<details class="work-system" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><summary>Session</summary><pre><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</pre></details>
-<?php }elseif($_v['event']['kind'] == 'error'){?>
-	<div class="work-error" data-seq="<?php echo htmlspecialchars($_v['event']['seq'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['event']['body'], ENT_QUOTES);?>
-</div>
-<?php }?><?php }?></div>
-
-<?php }?><?php if($_v['data_message']['audio']){?>
+</div><?php } }?><?php if($_v['data_message']['audio']){?>
 	<audio class="said-audio" controls preload="none" src="<?php echo htmlspecialchars($_v['data_message']['audio'], ENT_QUOTES);?>
 "></audio>
 <?php }?></li>

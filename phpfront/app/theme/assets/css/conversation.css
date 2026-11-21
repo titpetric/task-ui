@@ -1,10 +1,43 @@
 /* .chat-shell is the messenger: the thread list down the leading side and the
-   conversation beside it, scrolling as one page. */
+   conversation beside it, each scrolling in its own column. */
 .chat-shell {
   display: grid;
   grid-template-columns: minmax(13rem, var(--chat-list)) minmax(0, 1fr);
   gap: var(--block-gap);
-  align-items: start;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+/* The page around the messenger stays put: the header, the sidebar and the
+   rail do not scroll, and the threads and the talk scroll inside them. */
+body:has(.chat-shell) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+body:has(.chat-shell) .shell {
+  flex: 1;
+  min-height: 0;
+}
+
+body:has(.chat-shell) main {
+  height: 100%;
+  overflow: hidden;
+}
+
+body:has(.chat-shell) aside.side {
+  height: 100%;
+  overflow-y: auto;
+}
+
+body:has(.chat-shell) aside.rail {
+  height: 100%;
+  min-height: 0;
+
+  & .rail-inner {
+    overflow-y: auto;
+  }
 }
 
 .chat-shell.thread-page {
@@ -12,9 +45,8 @@
 }
 
 .chat-list {
-  position: sticky;
-  top: 0;
-  max-height: calc(100vh - 2rem);
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   padding-inline-end: 0.75rem;
   border-inline-end: 1px solid var(--line);
@@ -110,8 +142,11 @@
 }
 
 .chat-pane {
+  position: relative;
   min-width: 0;
-  min-height: calc(100vh - 9rem);
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .conversation {
@@ -119,8 +154,33 @@
   flex-direction: column;
   width: 100%;
   max-width: var(--chat-w);
-  min-height: inherit;
+  min-height: 0;
   margin-inline: auto;
+}
+
+/* .scroll-latest returns to the end of the talk once the reader is above it. */
+.scroll-latest {
+  position: fixed;
+  z-index: 5;
+  bottom: 7rem;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  transform: translateX(-50%);
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  background: var(--ink-1);
+  color: var(--text);
+  box-shadow: 0 0.5rem 1.2rem rgb(0 0 0 / 30%);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--signal);
+    color: var(--signal);
+  }
 }
 
 .conversation-back {
@@ -173,9 +233,10 @@
   top: 0;
   z-index: 2;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.4rem 1rem;
   margin-top: 0.75rem;
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--line-2);
@@ -193,6 +254,59 @@
   & .actions {
     display: flex;
     gap: 0.35rem;
+  }
+
+  & .status-agents {
+    flex: 1 0 100%;
+    order: 3;
+  }
+}
+
+/* .status-agents lists the subagents a run started, one line each. */
+.status-agents {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-agent {
+  font-size: var(--fs-sm);
+
+  & summary {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+  }
+
+  & summary > span:first-of-type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & summary .badge {
+    margin-inline-start: auto;
+  }
+
+  & pre {
+    max-height: 14rem;
+    margin: 0.3rem 0 0;
+    padding: 0.4rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-radius: var(--radius);
+    background: var(--ink-2);
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+  }
+
+  &.done summary .ic,
+  &.failed summary .ic {
+    color: var(--text-faint);
   }
 }
 
@@ -353,8 +467,8 @@
   background: var(--ink-0);
 }
 
-/* .composer is the one box that sends a message: a field, what it is, where
-   it goes and Send. */
+/* .composer is the one box that sends a message: a rounded prompt holding the
+   field, what it is, where it goes and Send. */
 .composer {
   display: grid;
   gap: 0.5rem;
@@ -362,16 +476,60 @@
 
   & textarea {
     width: 100%;
-    min-height: 3rem;
-    padding: 0.6rem 0.75rem;
-    border: 1px solid var(--line-2);
-    border-radius: var(--radius);
-    background: var(--ink-0);
+    min-height: 2.75rem;
+    padding: 0.5rem 0.6rem;
+    border: 0;
+    border-radius: 0.85rem;
+    background: transparent;
     color: var(--text);
     font: inherit;
     font-size: var(--fs-md);
     line-height: 1.5;
-    resize: vertical;
+    resize: none;
+  }
+}
+
+/* .composer-box draws the rounded prompt around the field and its controls. */
+.composer-box {
+  padding: 0.45rem 0.5rem 0.4rem;
+  border: 1px solid var(--line-2);
+  border-radius: 1.2rem;
+  background: var(--ink-1);
+  box-shadow: 0 0.5rem 1.4rem rgb(0 0 0 / 18%);
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+
+  &:focus-within {
+    border-color: var(--signal);
+    box-shadow: 0 0 0 3px var(--signal-wash);
+  }
+
+  & .mdedit {
+    --mdedit-radius: 0.85rem;
+    --mdedit-paper: transparent;
+    --mdedit-code: transparent;
+    --mdedit-line-strong: transparent;
+    --mdedit-bar: transparent;
+    --mdedit-min-height: 2.75rem;
+  }
+
+  & .mdedit__bar {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  & .mdedit__surface {
+    border: 0;
+    background: transparent;
+    resize: none;
+  }
+
+  & :is(.btn, .btn-icon, button) {
+    border-radius: 0.75rem;
+  }
+
+  & .composer-modes .btn {
+    border-radius: 999px;
   }
 }
 
@@ -498,8 +656,6 @@
 
 .thread-stop {
   flex: 0 0 auto;
-  padding-inline: 0.35rem;
-  font-size: var(--fs-xs);
 
   &:hover {
     color: var(--bad);
@@ -558,5 +714,29 @@
 
   body:has(form[data-send]) .voice-orb {
     display: none;
+  }
+
+  /* One column: the thread list takes the pane, and a picked thread takes it back. */
+  body:has(.chat-shell) .chat-pane {
+    height: auto;
+    overflow: visible;
+  }
+
+  body:has(.chat-shell) .chat-shell.viewing .chat-pane {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  body:has(.chat-shell) .conversation {
+    min-height: 0;
+  }
+
+  .chat-blank .conversation-back {
+    display: flex;
+    margin-bottom: 1rem;
+  }
+
+  .scroll-latest {
+    bottom: 6rem;
   }
 }

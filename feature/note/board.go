@@ -103,7 +103,7 @@ type Board struct {
 	RunTokens *access.RunTokens
 	MCPURL    func() string
 
-	// replied are the prompt threads whose run replied with RunReply
+	// replied are the prompt threads whose run replied with AnswerThread
 	// while it ran, by the thread's note ID: that run's final message is
 	// then no reply.
 	repliedMu sync.Mutex

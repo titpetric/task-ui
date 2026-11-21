@@ -109,7 +109,7 @@ func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
 	}
 	comment := h.opts.Board.Comment
 	if thread != "" {
-		comment = h.opts.Board.RunReply
+		comment = h.opts.Board.AnswerThread
 	}
 	note, err := comment(r.Context(), access.UserFrom(r.Context()), param(r, "id"), req.Body, req.State)
 	if err != nil {
