@@ -172,12 +172,11 @@ class Recent {
 	function ofThread($note, $replies, $roles) {
 		$state = self::threadState($note->getState());
 		$user = $note->getUserName();
-		$said = Threads\Talk::opening($note, $replies);
 
 		return [
 			"at" => self::threadAt($note, $replies),
 			"href" => "/threads/" . rawurlencode($note->getId()),
-			"name" => Note::excerpt($said),
+			"name" => Threads\Conversation::title($note, $replies),
 			"place" => $note->getDir() === "" ? "board" : $note->getDir(),
 			"icon" => Note::isPrompt($note) ? "prompt" : "note",
 			"state" => $state,

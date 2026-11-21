@@ -254,7 +254,7 @@ class mod_run implements Module {
 		return [
 			"id" => $note->getId(),
 			"href" => Task\Route::href("/threads/" . Task\Route::pathEscape($note->getId())),
-			"title" => Task\Note::excerpt(Task\Threads\Talk::opening($note, [])),
+			"title" => Task\Threads\Conversation::title($note, []),
 		];
 	}
 
