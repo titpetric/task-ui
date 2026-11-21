@@ -12,6 +12,7 @@ import (
 
 func TestNewConfig(t *testing.T) {
 	root := t.TempDir()
+	t.Setenv("TASK_UI_RUN_ID", "")
 	t.Setenv("TASK_UI_ADMINS", "admin, root,")
 	t.Setenv("TASK_UI_VIEWERS", "guest")
 	t.Setenv("TASK_UI_WORKSPACE", root)
@@ -86,6 +87,9 @@ func TestNewConfig_URL(t *testing.T) {
 }
 
 func TestNewConfig_Errors(t *testing.T) {
+	// A run's own TASK_UI_RUN_ID leaves serverRoot empty, which no config
+	// test wants: these read the server's configuration, not a run's.
+	t.Setenv("TASK_UI_RUN_ID", "")
 	t.Setenv("TASK_UI_WORKSPACE", filepath.Join(t.TempDir(), "missing"))
 	_, err := app.NewConfig(nil)
 	assert.ErrorContains(t, err, "not a directory")

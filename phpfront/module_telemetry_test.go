@@ -70,7 +70,12 @@ $loader = new Loader();
 $loader->load();
 `
 
-	rt := runner.New(io.Discard, runner.Options{RootFS: os.DirFS(t.TempDir())})
+	// Debug publishes the frames unmarked. The default, info, marks them as
+	// detail, and oida drops a detail span that ran under
+	// Options.DebugSpanMinDuration (a microsecond): a two-statement page is
+	// faster than that, so this test would read whichever spans the machine
+	// happened to be slow enough to keep.
+	rt := runner.New(io.Discard, runner.Options{RootFS: os.DirFS(t.TempDir()), TraceLevel: runner.TraceLevelDebug})
 	stdlib.Register(rt)
 	rt.Observe(phpfront.Observer(tracer(t)))
 
