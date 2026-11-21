@@ -10,8 +10,8 @@
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
 	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
- <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg></button>
+ <?php echo $_v['button']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i></button>
 <?php }elseif($_v['button']['faint']){?>
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
@@ -23,8 +23,8 @@
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
 	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
@@ -35,8 +35,8 @@
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </button>
 <?php }?><?php }?>
 	</div>

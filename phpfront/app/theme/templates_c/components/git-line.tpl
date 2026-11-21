@@ -14,7 +14,7 @@
 </span>
 <?php }?><?php if($_v['data_git']['dirty']){?>
 		<button type="button" class="dirty" data-git-status aria-expanded="false" aria-controls="git-status" title="Show the changed files"><span class="glyph" aria-hidden="true">●</span> <?php echo htmlspecialchars($_v['data_git']['files'], ENT_QUOTES);?>
-<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+<i class="ic ic-chev chev" aria-hidden="true"></i></button>
 <?php }?><?php if($_v['data_git']['clean']){?>
 		<span class="clean">up to date</span>
 <?php }?>		<span class="where">· <?php echo htmlspecialchars($_v['data_git']['where'], ENT_QUOTES);?>

@@ -1,1 +1,1 @@
-<svg class="ic{if $data_icon.dirty} dirty{/if}">{if $data_icon.dirty}<title>{data_icon.changed}</title>{/if}<use href="#i-{data_icon.icon}"/></svg>
+<i class="ic ic-{data_icon.icon}{if $data_icon.dirty} dirty{/if}"{if $data_icon.dirty} title="{data_icon.changed}"{/if}></i>

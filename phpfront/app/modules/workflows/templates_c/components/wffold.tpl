@@ -6,5 +6,5 @@ false<?php }?>" aria-controls="wf-answer-<?php echo htmlspecialchars($_v['data_w
 Hide<?php }else{?>
 Show<?php }?>" aria-label="<?php if($_v['data_wffold']['open']){?>
 Hide<?php }else{?>
-Show<?php }?>"><svg class="ic chev"><use href="#i-chev"/></svg></button><?php }else{?>
+Show<?php }?>"><i class="ic ic-chev chev" aria-hidden="true"></i></button><?php }else{?>
 <span class="wf-fold" aria-hidden="true"></span><?php }?>

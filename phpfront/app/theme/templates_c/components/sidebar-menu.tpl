@@ -3,8 +3,8 @@
 <?php if(!empty($_v['data']))foreach($_v['data'] as $_v['item']){?>
 				<a href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 " class="<?php if($_v['item']['active']){?>
-active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['title'], ENT_QUOTES);?>
+active<?php }?>"><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['title'], ENT_QUOTES);?>
 </span><?php if($_v['item']['pulse']){?>
 <i class="dot<?php if($_v['chrome']['running']){?>
  running<?php }?>" data-any-running></i><?php }?></a>
@@ -24,14 +24,14 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 /workflows/<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 , running" aria-label="Watch <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-eye"/></svg></a>
+"><i class="ic ic-eye" aria-hidden="true"></i></a>
 <?php }elseif($_v['flow']['canRun']){?>
 						<button type="button" class="play" data-workflow-run="<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
 "<?php if($_v['flow']['prompted']){?>
  data-workflow-prompt="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 "<?php }?> title="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 " aria-label="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-play"/></svg></button>
+"><i class="ic ic-play" aria-hidden="true"></i></button>
 <?php }?>
 					</div>
 <?php } }?>

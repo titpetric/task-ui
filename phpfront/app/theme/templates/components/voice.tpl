@@ -1,4 +1,4 @@
-	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
+	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><i class="ic ic-mic" aria-hidden="true"></i></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"{if $chrome.claude} data-claude{/if}{if $chrome.can['note/edit']} data-note-edit{/if}{if $chrome.contacts} data-chat{/if}>
 		<div class="voice-who">
 {if $chrome.agents && $chrome.claude}			<label for="voice-agent">Talking to</label>
@@ -11,7 +11,7 @@
 				<option value="">No one</option>
 {foreach $chrome.contacts as $contact}				<option value="{contact.name}">{contact.name}</option>
 {/foreach}			</select>
-{/if}			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>
+{/if}			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><i class="ic ic-pulse" aria-hidden="true"></i>Wake</button>
 		</div>
 		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
@@ -39,6 +39,6 @@
 			</div>
 		</div>
 		<div class="voice-acts">
-			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
+			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><i class="ic ic-back" aria-hidden="true"></i></button>
 		</div>
 	</dialog>

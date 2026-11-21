@@ -9,11 +9,11 @@
 		<tbody>
 {foreach $data.rows as $row}			<tr data-row data-href="{row.href}">
 				<td class="num">
-{if $data.admin}					<button type="button" class="grip" data-row-grip title="Drag to move the item, or focus it and press the up and down arrows" aria-label="Move {row.title}"><svg class="ic"><use href="#i-grip"/></svg></button>
+{if $data.admin}					<button type="button" class="grip" data-row-grip title="Drag to move the item, or focus it and press the up and down arrows" aria-label="Move {row.title}"><i class="ic ic-grip" aria-hidden="true"></i></button>
 {/if}					<span class="mono" data-row-num>{row.number}</span>
 				</td>
 				<td class="key">
-					<svg class="ic"><use href="#i-{row.icon}"/></svg>
+					<i class="ic ic-{row.icon}" aria-hidden="true"></i>
 					{row.title}
 				</td>
 				<td class="mono"><a href="{row.link}">{row.href}</a></td>

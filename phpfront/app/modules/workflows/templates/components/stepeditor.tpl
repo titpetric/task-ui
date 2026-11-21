@@ -41,17 +41,17 @@
 {foreach $data_editor.steps as $data_step}{include components/wfstep.tpl}
 {/foreach}		</ol>
 		<div class="wf-add">
-			<span class="wf-node wf-node-add" aria-hidden="true"><svg class="ic"><use href="#i-plus"/></svg></span>
+			<span class="wf-node wf-node-add" aria-hidden="true"><i class="ic ic-plus" aria-hidden="true"></i></span>
 			<div class="wf-add-body">
 				<p class="wf-empty faint" data-steps-empty{if $data_editor.emptyHidden} hidden{/if}>No steps yet. Start with a command{if $data_editor.asks}, a prompt for Claude, or a summary{/if}.</p>
 				<details class="wf-add-menu">
-					<summary class="btn" aria-haspopup="menu"><svg class="ic"><use href="#i-plus"/></svg>Add step</summary>
+					<summary class="btn" aria-haspopup="menu"><i class="ic ic-plus" aria-hidden="true"></i>Add step</summary>
 					<div class="wf-add-list" role="menu" aria-label="Kind of step">
-						<button type="button" role="menuitem" data-step-add="job"><svg class="ic"><use href="#i-terminal"/></svg><span><b>Command</b><small>A job of a folder, a command on hosts, or another workflow.</small></span></button>
-{if $data_editor.shell}						<button type="button" role="menuitem" data-step-add="script"><svg class="ic"><use href="#i-script"/></svg><span><b>Script</b><small>A shell command you write, run in a folder, like go get -u ./...</small></span></button>
-{/if}{if $data_editor.asks}						<button type="button" role="menuitem" data-step-add="prompt"><svg class="ic"><use href="#i-prompt"/></svg><span><b>Prompt</b><small>Claude answers a prompt with the output of the steps before it.</small></span></button>
-						<button type="button" role="menuitem" data-step-add="summary"><svg class="ic"><use href="#i-summary"/></svg><span><b>Summary</b><small>Claude summarises the steps before it, after a failure too.</small></span></button>
-{/if}						<button type="button" role="menuitem" data-step-add="check"><svg class="ic"><use href="#i-rotate"/></svg><span><b>Check</b><small>While the step before it writes Next:, the steps run again.</small></span></button>
+						<button type="button" role="menuitem" data-step-add="job"><i class="ic ic-terminal" aria-hidden="true"></i><span><b>Command</b><small>A job of a folder, a command on hosts, or another workflow.</small></span></button>
+{if $data_editor.shell}						<button type="button" role="menuitem" data-step-add="script"><i class="ic ic-script" aria-hidden="true"></i><span><b>Script</b><small>A shell command you write, run in a folder, like go get -u ./...</small></span></button>
+{/if}{if $data_editor.asks}						<button type="button" role="menuitem" data-step-add="prompt"><i class="ic ic-prompt" aria-hidden="true"></i><span><b>Prompt</b><small>Claude answers a prompt with the output of the steps before it.</small></span></button>
+						<button type="button" role="menuitem" data-step-add="summary"><i class="ic ic-summary" aria-hidden="true"></i><span><b>Summary</b><small>Claude summarises the steps before it, after a failure too.</small></span></button>
+{/if}						<button type="button" role="menuitem" data-step-add="check"><i class="ic ic-rotate" aria-hidden="true"></i><span><b>Check</b><small>While the step before it writes Next:, the steps run again.</small></span></button>
 					</div>
 				</details>
 			</div>

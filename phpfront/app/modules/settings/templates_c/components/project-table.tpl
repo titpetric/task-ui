@@ -6,7 +6,7 @@
 	<tbody>
 <?php if(!empty($_v['data_projects']['rows']))foreach($_v['data_projects']['rows'] as $_v['row']){?>		<tr>
 			<td class="key nowrap"><a href="<?php echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-folder"/></svg> <?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
+"><i class="ic ic-folder" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
 </a></td>
 			<td class="nowrap" data-label="Sources"><?php if($_v['row']['bad']){?>
 <span class="badge bad">error</span> <?php }?><?php if($_v['row']['sources']){ echo htmlspecialchars($_v['row']['sources'], ENT_QUOTES);?>
@@ -35,7 +35,7 @@
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -55,8 +55,8 @@
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -64,8 +64,8 @@
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>

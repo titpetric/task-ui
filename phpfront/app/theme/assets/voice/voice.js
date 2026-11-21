@@ -55,6 +55,17 @@
 (function (TAP) {
   "use strict";
 
+  // setIcon swaps the icon host, or the icon inside it, draws.
+  function setIcon(host, name) {
+    if (!host) return;
+    var el = host.classList.contains("ic") ? host : host.querySelector(".ic");
+    if (!el) return;
+    Array.prototype.slice.call(el.classList).forEach(function (cls) {
+      if (cls.indexOf("ic-") === 0) el.classList.remove(cls);
+    });
+    el.classList.add("ic-" + String(name).replace(/^i-/, ""));
+  }
+
   var overlay = document.getElementById("voice-overlay");
   var orb = document.getElementById("voice-orb");
   if (!overlay || !orb || !window.taskUI) return;
@@ -230,8 +241,7 @@
       orb.className = ORB.orb.class || "voice-orb";
       orb.title = waking ? (ORB.orb.listeningTitle || ORB.orb.title) : ORB.orb.title;
       orb.setAttribute("aria-label", orb.title);
-      var use = orb.querySelector("use");
-      if (use) use.setAttribute("href", "#i-" + (ORB.orb.icon || "mic"));
+      setIcon(orb, ORB.orb.icon || "mic");
       orb.classList.toggle(ORB.orb.listeningClass || "listening", waking);
     } else {
       orb.title = orbTitle();
@@ -1196,8 +1206,7 @@
       el.setAttribute("aria-label", action.aria || action.title);
     }
     if (action.icon) {
-      var use = el.querySelector("use");
-      if (use) use.setAttribute("href", "#i-" + action.icon);
+      setIcon(el, action.icon);
     }
     if (action.class) el.className = action.class;
     el.disabled = !!action.disabled;
@@ -1260,8 +1269,7 @@
         stage.setAttribute("aria-pressed", now === "recording" ? "true" : "false");
         stage.disabled = false;
         var discarding = now === "recording" || now === "paused";
-        var use = discardBtn.querySelector("use");
-        if (use) use.setAttribute("href", discarding ? "#i-trash" : "#i-back");
+        setIcon(discardBtn, discarding ? "trash" : "back");
         discardBtn.title = discarding ? "Discard recording" : "Back";
         discardBtn.setAttribute("aria-label", discardBtn.title);
         discardBtn.classList.toggle("shut", !discarding);

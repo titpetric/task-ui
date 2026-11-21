@@ -2,7 +2,7 @@
 <details class="promptbox"<?php if($_v['data_prompt']['open']){?>
  open<?php }?><?php if($_v['data_prompt']['hidden']){?>
  hidden<?php }?>>
-	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg><?php echo htmlspecialchars($_v['data_prompt']['title'], ENT_QUOTES);?>
+	<summary><h3 class="section-title"><i class="ic ic-chev chev" aria-hidden="true"></i><?php echo htmlspecialchars($_v['data_prompt']['title'], ENT_QUOTES);?>
  <small><?php echo htmlspecialchars($_v['data_prompt']['note'], ENT_QUOTES);?>
 </small></h3></summary>
 <?php if(!$_v['data_prompt']['watch']){?>
@@ -73,7 +73,7 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php if($_v['data_composer']['mic']){?>
 			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
-" title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
+" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
 <?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
@@ -82,7 +82,7 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php }?><?php if($_v['data_prompt']['threads']){?>
 	<ul class="thread-links" data-notes>
 <?php if(!empty($_v['data_prompt']['threads']))foreach($_v['data_prompt']['threads'] as $_v['thread']){?>		<li><a href="<?php echo htmlspecialchars($_v['thread']['href'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-note"/></svg> <?php echo htmlspecialchars($_v['thread']['title'], ENT_QUOTES);?>
+"><i class="ic ic-note" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['thread']['title'], ENT_QUOTES);?>
 </a><?php if($_v['thread']['state']){?>
  <span class="badge note-state <?php echo htmlspecialchars($_v['thread']['state'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['thread']['state'], ENT_QUOTES);?>

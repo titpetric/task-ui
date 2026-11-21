@@ -35,8 +35,8 @@
 <span class="faint">never run</span><?php } }?><?php if($_v['row']['link']['href']){?>
 <a href="<?php echo htmlspecialchars($_v['row']['link']['href'], ENT_QUOTES);?>
 "><?php if($_v['row']['link']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['row']['link']['icon'], ENT_QUOTES);?>
-"/></svg> <?php }?><?php echo htmlspecialchars($_v['row']['link']['text'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['row']['link']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i> <?php }?><?php echo htmlspecialchars($_v['row']['link']['text'], ENT_QUOTES);?>
 </a><?php }?><?php if(!empty($_v['row']['code']))foreach($_v['row']['code'] as $_v['value']){?><code><?php echo htmlspecialchars($_v['value'], ENT_QUOTES);?>
 </code> <?php }?><?php echo htmlspecialchars($_v['row']['text'], ENT_QUOTES); if($_v['row']['faint']){?>
 <span class="faint"><?php echo htmlspecialchars($_v['row']['faint'], ENT_QUOTES);?>

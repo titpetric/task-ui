@@ -18,7 +18,7 @@
 <?php }?>	</ul>
 <?php if($_v['data_findings']['rest']){?>
 	<details class="pipeline-more">
-		<summary><svg class="ic chev"><use href="#i-chev"/></svg>Show <?php echo htmlspecialchars($_v['data_findings']['rest'], ENT_QUOTES);?>
+		<summary><i class="ic ic-chev chev" aria-hidden="true"></i>Show <?php echo htmlspecialchars($_v['data_findings']['rest'], ENT_QUOTES);?>
  more</summary>
 		<ul class="pipeline-errors">
 <?php if(!empty($_v['data_findings']['more']))foreach($_v['data_findings']['more'] as $_v['finding']){?><?php $_v['data_finding'] = $_v['finding'];?>

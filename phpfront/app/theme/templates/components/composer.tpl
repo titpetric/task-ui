@@ -20,7 +20,7 @@
 {if $data_composer.places}				<datalist id="composer-places">{foreach $data_composer.places as $place}<option value="{place}">{/foreach}</datalist>
 {/if}			</label>
 {/if}			<span class="composer-space"></span>
-{if $data_composer.mic}			<button class="btn btn-icon" type="button" data-voice-reply data-parent="{data_composer.parent}" data-channel="{data_composer.channel}" title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
+{if $data_composer.mic}			<button class="btn btn-icon" type="button" data-voice-reply data-parent="{data_composer.parent}" data-channel="{data_composer.channel}" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
 {/if}			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>

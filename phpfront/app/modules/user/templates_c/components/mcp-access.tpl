@@ -29,7 +29,7 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
  of <?php echo htmlspecialchars($_v['data_mcp']['name'], ENT_QUOTES);?>
 ? Whatever client holds it stops working right away. The other tokens keep working." data-confirm-ok="Delete" data-next="reload" title="Delete the token <?php echo htmlspecialchars($_v['token']['name'], ENT_QUOTES);?>
 " aria-label="Delete the token <?php echo htmlspecialchars($_v['token']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-trash"/></svg></button><?php }?></td>
+"><i class="ic ic-trash" aria-hidden="true"></i></button><?php }?></td>
 			</tr>
 <?php }?>		</tbody>
 	</table>
@@ -42,7 +42,7 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 <?php }elseif($_v['data_mcp']['manage']){?>
 	<div class="actions" data-before-reveal>
 		<form class="inline" data-api="<?php echo htmlspecialchars($_v['data_mcp']['api'], ENT_QUOTES);?>
-" data-method="POST" data-reveal="#mcp-token"><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>New token</button></form>
+" data-method="POST" data-reveal="#mcp-token"><button class="btn btn-primary" type="submit"><i class="ic ic-plus" aria-hidden="true"></i>New token</button></form>
 	</div>
 	<p class="faint" data-before-reveal>One token per client, so retiring a client is one Delete and the others keep signing in.</p>
 <?php }else{?>
@@ -55,15 +55,15 @@ expired <?php }?><?php echo htmlspecialchars($_v['token']['expiresAt'], ENT_QUOT
 			<dt>Token</dt>
 			<dd><span class="copyable"><code data-fill="<?php echo htmlspecialchars($_v['data_mcp']['fill'], ENT_QUOTES);?>
 "></code><button type="button" class="btn-icon" data-copy="" data-fill="<?php echo htmlspecialchars($_v['data_mcp']['fill'], ENT_QUOTES);?>
-" title="Copy the token" aria-label="Copy the token"><svg class="ic"><use href="#i-copy"/></svg></button></span></dd>
+" title="Copy the token" aria-label="Copy the token"><i class="ic ic-copy" aria-hidden="true"></i></button></span></dd>
 			<dt>Claude Code</dt>
 			<dd><span class="copyable"><code data-fill="<?php echo htmlspecialchars($_v['data_mcp']['add'], ENT_QUOTES);?>
 "></code><button type="button" class="btn-icon" data-copy="" data-fill="<?php echo htmlspecialchars($_v['data_mcp']['add'], ENT_QUOTES);?>
-" title="Copy the claude mcp add command" aria-label="Copy the claude mcp add command"><svg class="ic"><use href="#i-copy"/></svg></button></span></dd>
+" title="Copy the claude mcp add command" aria-label="Copy the claude mcp add command"><i class="ic ic-copy" aria-hidden="true"></i></button></span></dd>
 			<dt>MCP settings</dt>
 			<dd><span class="copyable"><code data-fill="<?php echo htmlspecialchars($_v['data_mcp']['settings'], ENT_QUOTES);?>
 "></code><button type="button" class="btn-icon" data-copy="" data-fill="<?php echo htmlspecialchars($_v['data_mcp']['settings'], ENT_QUOTES);?>
-" title="Copy the MCP settings" aria-label="Copy the MCP settings"><svg class="ic"><use href="#i-copy"/></svg></button></span></dd>
+" title="Copy the MCP settings" aria-label="Copy the MCP settings"><i class="ic ic-copy" aria-hidden="true"></i></button></span></dd>
 		</dl>
 		<a class="btn" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_mcp']['done'], ENT_QUOTES);?>
 ">Done</a>

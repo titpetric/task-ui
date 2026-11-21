@@ -7,7 +7,7 @@
 		<tbody>
 {foreach $data.steps as $step}			<tr>
 				<td class="num dim">{step.number}</td>
-				<td class="key nowrap"><a href="{step.href}"><svg class="ic"><use href="#i-{step.icon}"/></svg> {step.name}</a></td>
+				<td class="key nowrap"><a href="{step.href}"><i class="ic ic-{step.icon}" aria-hidden="true"></i> {step.name}</a></td>
 				<td class="desc">{step.desc}</td>
 				<td class="count dim"><span class="nowrap">{step.count}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="{step.href}">Open</a></td>

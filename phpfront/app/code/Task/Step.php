@@ -259,7 +259,7 @@ class Step {
 		return $kind === self::SCRIPT ? "Script" : "Command";
 	}
 
-	/** icon is the symbol of the step's kind, #i-<icon> of the sprite. */
+	/** icon is the icon name of the step's kind, a file in theme/assets/icons. */
 	static function icon($step) {
 		$kind = self::kind($step);
 

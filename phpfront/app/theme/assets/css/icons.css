@@ -1,10 +1,14 @@
-/* .ic styles the sizes and the tones of the icon sprite. */
+/* .ic draws a themed icon from theme/assets/icons, coloured by currentColor. */
 .ic {
+  --icon: url("../icons/box.svg");
+  display: inline-block;
   width: 1em;
   height: 1em;
   vertical-align: -0.15em;
-  fill: none;
   flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
 }
 
 .ic.lead {
@@ -25,3 +29,51 @@
 :is(details[open] > summary, [aria-expanded="true"]) .ic.chev {
   transform: rotate(90deg);
 }
+
+.ic-back { --icon: url("../icons/back.svg"); }
+.ic-bell { --icon: url("../icons/bell.svg"); }
+.ic-box { --icon: url("../icons/box.svg"); }
+.ic-chev { --icon: url("../icons/chev.svg"); }
+.ic-clock { --icon: url("../icons/clock.svg"); }
+.ic-collapse { --icon: url("../icons/collapse.svg"); }
+.ic-copy { --icon: url("../icons/copy.svg"); }
+.ic-down { --icon: url("../icons/down.svg"); }
+.ic-download { --icon: url("../icons/download.svg"); }
+.ic-edit { --icon: url("../icons/edit.svg"); }
+.ic-expand { --icon: url("../icons/expand.svg"); }
+.ic-eye { --icon: url("../icons/eye.svg"); }
+.ic-file { --icon: url("../icons/file.svg"); }
+.ic-flow { --icon: url("../icons/flow.svg"); }
+.ic-folder { --icon: url("../icons/folder.svg"); }
+.ic-folder-open { --icon: url("../icons/folder-open.svg"); }
+.ic-grid { --icon: url("../icons/grid.svg"); }
+.ic-grip { --icon: url("../icons/grip.svg"); }
+.ic-key { --icon: url("../icons/key.svg"); }
+.ic-list { --icon: url("../icons/list.svg"); }
+.ic-logout { --icon: url("../icons/logout.svg"); }
+.ic-magnifier { --icon: url("../icons/magnifier.svg"); }
+.ic-menu { --icon: url("../icons/menu.svg"); }
+.ic-mic { --icon: url("../icons/mic.svg"); }
+.ic-more { --icon: url("../icons/more.svg"); }
+.ic-note { --icon: url("../icons/note.svg"); }
+.ic-pin { --icon: url("../icons/pin.svg"); }
+.ic-play { --icon: url("../icons/play.svg"); }
+.ic-plug { --icon: url("../icons/plug.svg"); }
+.ic-plus { --icon: url("../icons/plus.svg"); }
+.ic-project { --icon: url("../icons/project.svg"); }
+.ic-prompt { --icon: url("../icons/prompt.svg"); }
+.ic-pulse { --icon: url("../icons/pulse.svg"); }
+.ic-rotate { --icon: url("../icons/rotate.svg"); }
+.ic-script { --icon: url("../icons/script.svg"); }
+.ic-secret { --icon: url("../icons/secret.svg"); }
+.ic-send { --icon: url("../icons/send.svg"); }
+.ic-server { --icon: url("../icons/server.svg"); }
+.ic-settings { --icon: url("../icons/settings.svg"); }
+.ic-stop { --icon: url("../icons/stop.svg"); }
+.ic-summary { --icon: url("../icons/summary.svg"); }
+.ic-terminal { --icon: url("../icons/terminal.svg"); }
+.ic-trash { --icon: url("../icons/trash.svg"); }
+.ic-up { --icon: url("../icons/up.svg"); }
+.ic-upload { --icon: url("../icons/upload.svg"); }
+.ic-users { --icon: url("../icons/users.svg"); }
+.ic-x { --icon: url("../icons/x.svg"); }

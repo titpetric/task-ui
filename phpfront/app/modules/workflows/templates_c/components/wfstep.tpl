@@ -7,23 +7,23 @@
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
 	<div class="wf-card">
 		<div class="wf-card-head">
-			<button type="button" class="wf-grip" data-step-grip title="Drag to move the step, or focus it and press the up and down arrows" aria-label="Move the step"><svg class="ic"><use href="#i-grip"/></svg></button>
+			<button type="button" class="wf-grip" data-step-grip title="Drag to move the step, or focus it and press the up and down arrows" aria-label="Move the step"><i class="ic ic-grip" aria-hidden="true"></i></button>
 			<button type="button" class="wf-toggle" data-step-toggle aria-expanded="<?php if($_v['data_step']['open']){?>
 true<?php }else{?>
 false<?php }?>">
-				<span class="wf-kind"><svg class="ic" data-step-icon><use href="#i-<?php echo htmlspecialchars($_v['data_step']['icon'], ENT_QUOTES);?>
-"/></svg><span data-step-kind><?php echo htmlspecialchars($_v['data_step']['kindLabel'], ENT_QUOTES);?>
+				<span class="wf-kind"><i class="ic ic-<?php echo htmlspecialchars($_v['data_step']['icon'], ENT_QUOTES);?>
+" data-step-icon></i><span data-step-kind><?php echo htmlspecialchars($_v['data_step']['kindLabel'], ENT_QUOTES);?>
 </span></span>
 				<span class="wf-line" data-step-line><?php echo htmlspecialchars($_v['data_step']['line'], ENT_QUOTES);?>
 </span>
 				<span class="badge wf-off" data-step-off-badge>off</span>
-				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+				<i class="ic ic-chev wf-chev" aria-hidden="true"></i>
 			</button>
 <?php $_v['data_menu'] = $_v['data_step']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -43,8 +43,8 @@ false<?php }?>">
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -52,8 +52,8 @@ false<?php }?>">
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>

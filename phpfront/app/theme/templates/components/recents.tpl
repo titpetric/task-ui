@@ -7,9 +7,9 @@
 {foreach $group.entries as $entry}
 					<a href="{base}{entry.href}" class="recent{if $entry.flow} flow{/if}" title="{entry.title}">
 						<i class="dot {entry.state}"></i>
-						<span class="what"><b>{entry.name}</b><small>{if $entry.icon}<svg class="ic lead"><use href="#i-{entry.icon}"/></svg>{/if}{entry.place}</small></span>
+						<span class="what"><b>{entry.name}</b><small>{if $entry.icon}<i class="ic ic-{entry.icon} lead" aria-hidden="true"></i>{/if}{entry.place}</small></span>
 {if $entry.children}						<span class="badge" title="{if $entry.thread}Replies{else}Runs it started{/if}">{entry.children}</span>{/if}
-{if !$entry.ended}						<svg class="ic act"><use href="#i-{entry.act}"/></svg>{/if}
+{if !$entry.ended}						<i class="ic ic-{entry.act} act" aria-hidden="true"></i>{/if}
 						{eval $data_avatar = $entry.avatar}{include components/avatar.tpl}
 					</a>
 {/foreach}
@@ -17,7 +17,7 @@
 {if !$data.groups}
 					<div class="empty">Runs started by anyone show up here.</div>
 {/if}
-					<a href="{base}{data.href}" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>
+					<a href="{base}{data.href}" class="recent more" data-recents-more hidden><i class="ic ic-list" aria-hidden="true"></i><span class="what"><b>All runs</b><small></small></span></a>
 				</nav>
 			</div>
 		</aside>

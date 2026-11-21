@@ -30,7 +30,7 @@
 </section>
 {eval $home = $data.home}
 <section class="block workspace-home" id="home">
-{eval $data_block = $home.block}{include components/block-head.tpl}{if !$home.empty}	<p><a class="mono-break" href="{home.href}"><svg class="ic"><use href="#i-folder-open"/></svg> {home.folder}</a> <span class="faint mono-break">{home.url}</span>{if $home.branch} <span class="badge">{home.branch}</span>{/if}</p>
+{eval $data_block = $home.block}{include components/block-head.tpl}{if !$home.empty}	<p><a class="mono-break" href="{home.href}"><i class="ic ic-folder-open" aria-hidden="true"></i> {home.folder}</a> <span class="faint mono-break">{home.url}</span>{if $home.branch} <span class="badge">{home.branch}</span>{/if}</p>
 {eval $git = $home.checkout}{if $git.found}	<p class="dim">{git.branch} <span class="faint">{git.commit}</span> {git.subject}{if $git.ago} <span class="faint">{git.ago}</span>{/if}; pulled before every run.</p>
 {else}	<p class="dim">The home holds no checkout: the clone failed, or someone replaced the directory by hand. Replace clones it again.</p>
 {/if}{/if}	<p class="dim">Every run in {home.workspace} gets <code>HOME</code> here: <code>bash -l</code> reads its <code>.bash_profile</code>, atkins its <code>.atkins/skills</code> and <code>.atkins/atkins.db</code>, Claude its <code>CLAUDE.md</code> and <code>.claude</code> skills. Registry logins, Claude Code's settings and the build caches stay in the server's home.</p>
@@ -71,7 +71,7 @@
 			<label for="wx-passphrase">Passphrase <span class="faint">at least 12 characters</span></label>
 			<div class="passphrase">
 				<input type="password" id="wx-passphrase" name="passphrase" minlength="12" autocomplete="new-password" spellcheck="false" required>
-				<button type="button" class="btn-icon" data-copy="" data-passphrase-copy title="Copy passphrase" aria-label="Copy passphrase" hidden><svg class="ic"><use href="#i-copy"/></svg></button>
+				<button type="button" class="btn-icon" data-copy="" data-passphrase-copy title="Copy passphrase" aria-label="Copy passphrase" hidden><i class="ic ic-copy" aria-hidden="true"></i></button>
 				<button type="button" class="btn" data-passphrase-generate>Generate</button>
 			</div>
 		</div>
@@ -82,7 +82,7 @@
 		<p class="passphrase-note" data-passphrase-note hidden>Store this passphrase before you export: task-ui keeps no copy, and nothing recovers it.</p>
 		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
-			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-download"/></svg>Export</button>
+			<button class="btn btn-primary" type="submit"><i class="ic ic-download" aria-hidden="true"></i>Export</button>
 		</div>
 	</form>
 </dialog>

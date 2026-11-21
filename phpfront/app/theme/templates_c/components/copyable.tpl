@@ -6,4 +6,4 @@
 </code><button type="button" class="btn-icon" data-copy="<?php echo htmlspecialchars($_v['data_copy']['value'], ENT_QUOTES);?>
 " title="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
 " aria-label="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-copy"/></svg></button></span>
+"><i class="ic ic-copy" aria-hidden="true"></i></button></span>

@@ -3,8 +3,8 @@
 <div class="page-head">
 	<div>
 		<h2><?php if($_v['data_head']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['data_head']['icon'], ENT_QUOTES);?>
-"/></svg> <?php }?><?php echo htmlspecialchars($_v['data_head']['title'], ENT_QUOTES); if($_v['data_head']['badge']){?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['data_head']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i> <?php }?><?php echo htmlspecialchars($_v['data_head']['title'], ENT_QUOTES); if($_v['data_head']['badge']){?>
  <span class="badge<?php if($_v['data_head']['tone']){?>
  <?php echo htmlspecialchars($_v['data_head']['tone'], ENT_QUOTES); }?>"><?php echo htmlspecialchars($_v['data_head']['badge'], ENT_QUOTES);?>
 </span><?php }?><?php if(!empty($_v['data_head']['tags']))foreach($_v['data_head']['tags'] as $_v['tag']){?> <span class="badge"><?php echo htmlspecialchars($_v['tag'], ENT_QUOTES);?>
@@ -33,13 +33,13 @@
 "<?php if($_v['data_run']['args']){?>
  data-args="<?php echo htmlspecialchars($_v['data_run']['args'], ENT_QUOTES);?>
 " title="Run with arguments after <?php echo htmlspecialchars($_v['data_run']['args'], ENT_QUOTES);?>
-"<?php }?>><svg class="ic"><use href="#i-play"/></svg>Run<?php if($_v['data_run']['takesArgs']){?>
+"<?php }?>><i class="ic ic-play" aria-hidden="true"></i>Run<?php if($_v['data_run']['takesArgs']){?>
 ...<?php }?></button>
 <?php if($_v['data_run']['menu']){?>
 	<details class="more-menu run-menu">
 		<summary class="btn btn-primary btn-sm run-caret" aria-haspopup="menu" aria-expanded="false" title="More ways to run <?php echo htmlspecialchars($_v['data_run']['name'], ENT_QUOTES);?>
 " aria-label="More ways to run <?php echo htmlspecialchars($_v['data_run']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-down"/></svg></summary>
+"><i class="ic ic-down" aria-hidden="true"></i></summary>
 		<div class="more-list">
 			<div class="more-items" role="menu" aria-label="Run options">
 <?php if($_v['data_run']['summarize']){?>
@@ -50,14 +50,14 @@
 " data-title="<?php echo htmlspecialchars($_v['data_run']['what'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['args']){?>
  data-args="<?php echo htmlspecialchars($_v['data_run']['args'], ENT_QUOTES);?>
-"<?php }?> title="Run and summarize"><svg class="ic"><use href="#i-summary"/></svg><span>Run and summarize</span></button>
+"<?php }?> title="Run and summarize"><i class="ic ic-summary" aria-hidden="true"></i><span>Run and summarize</span></button>
 <?php }?><?php if($_v['data_run']['force']){?>
 				<button type="button" class="more-item danger" role="menuitem" data-run data-force data-folder="<?php echo htmlspecialchars($_v['data_run']['folder'], ENT_QUOTES);?>
 "<?php if($_v['data_run']['dir']){?>
  data-dir="<?php echo htmlspecialchars($_v['data_run']['dir'], ENT_QUOTES);?>
 "<?php }?> data-job="<?php echo htmlspecialchars($_v['data_run']['job'], ENT_QUOTES);?>
 " data-title="<?php echo htmlspecialchars($_v['data_run']['place'], ENT_QUOTES);?>
-" title="Run out of hours, with a reason"><svg class="ic"><use href="#i-play"/></svg><span>Run force</span></button>
+" title="Run out of hours, with a reason"><i class="ic ic-play" aria-hidden="true"></i><span>Run force</span></button>
 <?php }?>			</div>
 		</div>
 	</details>
@@ -66,8 +66,8 @@
 <?php }?><?php if($_v['data_head']['buttons']['items']){?>
 		<?php $_v['data_buttons'] = $_v['data_head']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
- <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg></button>
+ <?php echo $_v['button']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i></button>
 <?php }elseif($_v['button']['faint']){?>
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
@@ -79,8 +79,8 @@
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
 	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
@@ -91,8 +91,8 @@
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </button>
 <?php }?><?php }}?><?php if($_v['data_head']['actions']){?>
 		<?php $_v['data_menu'] = $_v['data_head']['actions'];?>
@@ -101,7 +101,7 @@
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -121,8 +121,8 @@
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -130,8 +130,8 @@
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>
@@ -162,24 +162,24 @@
 	<table class="table table-kv">
 		<tbody>
 			<tr><th>Folder</th><td><a href="<?php echo htmlspecialchars($_v['data']['job']['folderHref'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-folder"/></svg> <?php echo htmlspecialchars($_v['data']['job']['folder'], ENT_QUOTES);?>
+"><i class="ic ic-folder" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['data']['job']['folder'], ENT_QUOTES);?>
 </a> <span class="dim"><?php echo htmlspecialchars($_v['data']['job']['title'], ENT_QUOTES);?>
 </span></td></tr>
 <?php if($_v['data']['job']['dir']){?>
 			<tr><th>Directory</th><td><a href="<?php echo htmlspecialchars($_v['data']['job']['dirHref'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-folder-open"/></svg> <?php echo htmlspecialchars($_v['data']['job']['dir'], ENT_QUOTES);?>
+"><i class="ic ic-folder-open" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['data']['job']['dir'], ENT_QUOTES);?>
 /</a> <span class="dim">the job runs here</span></td></tr>
-<?php }?>			<tr><th>Source</th><td><svg class="ic"><use href="#i-file"/></svg> <?php echo htmlspecialchars($_v['data']['job']['source'], ENT_QUOTES); if($_v['data']['job']['shows']){ $_v['data_source'] = $_v['data']['job']['shows'];?>
+<?php }?>			<tr><th>Source</th><td><i class="ic ic-file" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['data']['job']['source'], ENT_QUOTES); if($_v['data']['job']['shows']){ $_v['data_source'] = $_v['data']['job']['shows'];?>
 <button type="button" class="btn btn-sm show-source" data-source="<?php echo htmlspecialchars($_v['data_source']['folder'], ENT_QUOTES);?>
 " data-file="<?php echo htmlspecialchars($_v['data_source']['file'], ENT_QUOTES);?>
-" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span><?php echo htmlspecialchars($_v['data_source']['label'], ENT_QUOTES);?>
+" aria-haspopup="dialog"><i class="ic ic-file" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['data_source']['label'], ENT_QUOTES);?>
 </span></button>
 <?php }?></td></tr>
 <?php if($_v['data']['job']['includes']){?>
-			<tr><th>Includes</th><td><?php if(!empty($_v['data']['job']['includes']))foreach($_v['data']['job']['includes'] as $_v['read']){?><div><svg class="ic"><use href="#i-file"/></svg> <?php echo htmlspecialchars($_v['read']['file'], ENT_QUOTES); $_v['data_source'] = $_v['read']['shows'];?>
+			<tr><th>Includes</th><td><?php if(!empty($_v['data']['job']['includes']))foreach($_v['data']['job']['includes'] as $_v['read']){?><div><i class="ic ic-file" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['read']['file'], ENT_QUOTES); $_v['data_source'] = $_v['read']['shows'];?>
 <button type="button" class="btn btn-sm show-source" data-source="<?php echo htmlspecialchars($_v['data_source']['folder'], ENT_QUOTES);?>
 " data-file="<?php echo htmlspecialchars($_v['data_source']['file'], ENT_QUOTES);?>
-" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span><?php echo htmlspecialchars($_v['data_source']['label'], ENT_QUOTES);?>
+" aria-haspopup="dialog"><i class="ic ic-file" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['data_source']['label'], ENT_QUOTES);?>
 </span></button>
 </div><?php }?></td></tr>
 <?php }?>			<tr><th>Command</th><td><code><?php echo htmlspecialchars($_v['data']['job']['command'], ENT_QUOTES);?>
@@ -341,7 +341,7 @@ output only<?php }?></td></tr>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -361,8 +361,8 @@ output only<?php }?></td></tr>
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -370,8 +370,8 @@ output only<?php }?></td></tr>
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>
@@ -415,8 +415,8 @@ output only<?php }?></td></tr>
 <?php }?><?php if($_v['data_block']['buttons']['items']){?>
 	<div class="actions"><?php $_v['data_buttons'] = $_v['data_block']['buttons']; if(!empty($_v['data_buttons']['items']))foreach($_v['data_buttons']['items'] as $_v['button']){?><?php if($_v['button']['bare']){?>
 	<button type="button" class="btn-icon"<?php if($_v['button']['attrs']){?>
- <?php echo $_v['button']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg></button>
+ <?php echo $_v['button']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i></button>
 <?php }elseif($_v['button']['faint']){?>
 	<span class="faint run-denied"><?php echo htmlspecialchars($_v['button']['faint'], ENT_QUOTES);?>
 </span>
@@ -428,8 +428,8 @@ output only<?php }?></td></tr>
 "<?php if($_v['button']['download']){?>
  download<?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </a>
 <?php }else{?>
 	<button type="button" class="btn<?php if($_v['data_buttons']['small'] || $_v['button']['small']){?>
@@ -440,19 +440,21 @@ output only<?php }?></td></tr>
  title="<?php echo htmlspecialchars($_v['button']['note'], ENT_QUOTES);?>
 "<?php }?><?php }?><?php if($_v['button']['attrs']){?>
  <?php echo $_v['button']['attrs']; }?>><?php if($_v['button']['icon']){?>
-<svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['button']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['button']['label'], ENT_QUOTES);?>
 </button>
 <?php }?><?php }?>
 	</div>
 <?php }?></div>
 
 <?php $_v['data_sched'] = $_v['data']['schedules']['table']; if($_v['data_sched']['rows']){?>
+	<div data-flags>
 	<div class="table-wrap fit">
 	<table class="table fit-cards">
-		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
+		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>Enabled</th><th>Triage</th><th></th></tr></thead>
 		<tbody>
-<?php if(!empty($_v['data_sched']['rows']))foreach($_v['data_sched']['rows'] as $_v['row']){?>			<tr>
+<?php if(!empty($_v['data_sched']['rows']))foreach($_v['data_sched']['rows'] as $_v['row']){?>			<tr data-flag-row data-flag-api="/api/schedules/<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
+">
 				<td class="key" data-label="Expression"><code><?php echo htmlspecialchars($_v['row']['expression'], ENT_QUOTES);?>
 </code></td>
 				<td data-label="Next run"><?php if($_v['row']['on']){ if(!empty($_v['row']['next']))foreach($_v['row']['next'] as $_v['part']){?><span class="nowrap"><?php echo htmlspecialchars($_v['part'], ENT_QUOTES);?>
@@ -489,15 +491,21 @@ output only<?php }?></td></tr>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
 </span><?php }?></span>
 <?php }?></td>
-				<td data-label="State"><?php if($_v['row']['on']){?>
-<span class="badge ok">enabled</span><?php }else{?>
-<span class="badge">disabled</span><?php }?><?php if($_v['row']['triage']){?>
- <span class="badge signal" title="Claude triages a failed run">triage</span><?php }?></td>
+				<td class="flags" data-label="Enabled"><input type="checkbox" name="enabled" data-flag="enabled" data-was="<?php if($_v['row']['on']){?>
+1<?php }else{?>
+0<?php }?>"<?php if($_v['row']['on']){?>
+ checked<?php }?><?php if(!$_v['row']['can']){?>
+ disabled<?php }?> aria-label="Enabled"></td>
+				<td class="flags" data-label="Triage"><input type="checkbox" name="triage" data-flag="triage" data-was="<?php if($_v['row']['triage']){?>
+1<?php }else{?>
+0<?php }?>"<?php if($_v['row']['triage']){?>
+ checked<?php }?><?php if(!$_v['row']['can']){?>
+ disabled<?php }?> aria-label="Triage failures with Claude"></td>
 				<td class="actions"><?php if($_v['data_sched']['can']){ $_v['data_menu'] = $_v['row']['menu']; if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -517,8 +525,8 @@ output only<?php }?></td></tr>
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -526,8 +534,8 @@ output only<?php }?></td></tr>
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>
@@ -539,6 +547,9 @@ output only<?php }?></td></tr>
 <?php }?>		</tbody>
 	</table>
 	</div>
+<?php if($_v['data_sched']['can']){?>
+	<div class="table-actions"><button class="btn btn-primary" type="button" data-flag-save data-notice="Schedules saved" disabled>Save</button></div>
+<?php }?>	</div>
 <?php }?>
 </section>
 <?php }?>

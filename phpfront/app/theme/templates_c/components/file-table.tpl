@@ -4,12 +4,12 @@
 	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 	<tbody>
 <?php if($_v['data_files']['up']){?>
-		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="<?php echo htmlspecialchars($_v['data_files']['up'], ENT_QUOTES);?>
+		<tr class="up"><td class="key"><i class="ic ic-folder dir" aria-hidden="true"></i> <a href="<?php echo htmlspecialchars($_v['data_files']['up'], ENT_QUOTES);?>
 " title="Up a level">..</a></td><td></td><td class="hide-sm"></td><td></td></tr>
 <?php }?><?php if(!empty($_v['data_files']['rows']))foreach($_v['data_files']['rows'] as $_v['row']){?><?php if($_v['row']['sealed']){?>
 		<tr class="sealed" aria-disabled="true" title="task-ui lists <?php echo htmlspecialchars($_v['row']['name'], ENT_QUOTES);?>
  but does not open it">
-			<td class="key"><svg class="ic"><use href="#i-secret"/></svg> <span><?php echo htmlspecialchars($_v['row']['name'], ENT_QUOTES);?>
+			<td class="key"><i class="ic ic-secret" aria-hidden="true"></i> <span><?php echo htmlspecialchars($_v['row']['name'], ENT_QUOTES);?>
 </span></td>
 			<td class="num nowrap"><?php echo htmlspecialchars($_v['row']['size'], ENT_QUOTES);?>
 </td>
@@ -24,10 +24,10 @@ dir<?php }else{?>
 file<?php }?>">
 			<td class="key"><?php if($_v['row']['exec']){?>
 <i class="shebang" aria-hidden="true">#!</i><?php }else{?>
-<svg class="ic<?php if($_v['row']['dir']){?>
- dir<?php }?>"><use href="#i-<?php if($_v['row']['dir']){?>
+<i class="ic ic-<?php if($_v['row']['dir']){?>
 folder<?php }else{?>
-file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
+file<?php }?><?php if($_v['row']['dir']){?>
+ dir<?php }?>" aria-hidden="true"></i><?php }?><?php if($_v['row']['href']){?>
  <a href="<?php echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>
 "<?php if(!$_v['row']['dir']){?>
  data-file="<?php echo htmlspecialchars($_v['row']['path'], ENT_QUOTES);?>
@@ -45,7 +45,7 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 <details class="more-menu">
 	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
 " aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-more"/></svg></summary>
+"><i class="ic ic-more" aria-hidden="true"></i></summary>
 	<div class="more-list">
 <?php if($_v['data_menu']['details']){?>
 		<dl class="more-details">
@@ -65,8 +65,8 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
  download<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></a>
@@ -74,8 +74,8 @@ file<?php }?>"/></svg><?php }?><?php if($_v['row']['href']){?>
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
  disabled<?php }?><?php if($_v['item']['attrs']){?>
- <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+ <?php echo $_v['item']['attrs']; }?>><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
 </small><?php }?></button>

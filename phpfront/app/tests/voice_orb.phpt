@@ -7,7 +7,6 @@ require "ext/autoload.php";
 
 $orb = json_decode(file_get_contents("theme/assets/voice/orb.json"), true);
 $tpl = file_get_contents("theme/templates/components/voice.tpl");
-$icons = file_get_contents("theme/templates/components/icons.tpl");
 $js = file_get_contents("theme/assets/voice/voice.js");
 
 // shown is the actions a state puts on screen, as id:action and in order.
@@ -86,7 +85,7 @@ foreach ($orb["states"] as $view) {
 $missing = [];
 
 foreach (array_keys($wanted) as $name) {
-	if (strpos($icons, 'id="i-' . $name . '"') === false) {
+	if (!file_exists("theme/assets/icons/" . $name . ".svg")) {
 		$missing[] = $name;
 	}
 }

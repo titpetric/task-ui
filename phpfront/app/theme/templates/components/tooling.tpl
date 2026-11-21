@@ -22,7 +22,7 @@
 {/foreach}			</ol>
 		</div>
 {/if}{if $scope.commands}		<details class="tooling-details">
-			<summary><svg class="ic chev"><use href="#i-chev"/></svg>{scope.toggle}</summary>
+			<summary><i class="ic ic-chev chev" aria-hidden="true"></i>{scope.toggle}</summary>
 			<div class="table-wrap">
 			<table class="table cards">
 				<thead><tr><th>Command</th><th>Tool</th><th>Runs</th><th>Total</th><th>Average</th><th>Slowest</th><th>Failed</th><th>Last</th></tr></thead>

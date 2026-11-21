@@ -3,9 +3,9 @@
 			<div class="wf-card">
 				<div class="wf-card-head">
 					<button type="button" class="wf-toggle" data-card-toggle aria-expanded="false">
-						<span class="wf-kind"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>Integration</span>
+						<span class="wf-kind"><i class="ic ic-plug" aria-hidden="true"></i>Integration</span>
 						<span class="wf-line">{data_card.title}</span>{if $data_card.configured}<span class="badge ok">set up</span>{else}<span class="badge">not set up</span>{/if}
-						<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+						<i class="ic ic-chev wf-chev" aria-hidden="true"></i>
 					</button>
 					{eval $data_menu = $data_card.menu}{include components/menu.tpl}
 				</div>

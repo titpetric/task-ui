@@ -109,14 +109,14 @@
 "<?php if($_v['data_node']['runId']){?>
  data-run-link="<?php echo htmlspecialchars($_v['data_node']['runId'], ENT_QUOTES);?>
 "<?php }?>><?php if($_v['data_node']['workflow']){?>
-<svg class="ic lead"><use href="#i-flow"/></svg><?php }elseif($_v['data_node']['summary']){?>
-<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_node']['check']){?>
-<svg class="ic lead"><use href="#i-rotate"/></svg><?php }elseif($_v['data_node']['prompt']){?>
-<svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['data_node']['text'], ENT_QUOTES);?>
+<i class="ic ic-flow lead" aria-hidden="true"></i><?php }elseif($_v['data_node']['summary']){?>
+<i class="ic ic-summary lead" aria-hidden="true"></i><?php }elseif($_v['data_node']['check']){?>
+<i class="ic ic-rotate lead" aria-hidden="true"></i><?php }elseif($_v['data_node']['prompt']){?>
+<i class="ic ic-prompt lead" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['data_node']['text'], ENT_QUOTES);?>
 </a>
 <?php if($_v['data_node']['expand']){?>
 			<button type="button" class="btn btn-sm" data-expand="<?php echo htmlspecialchars($_v['data_node']['runId'], ENT_QUOTES);?>
-" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand<?php if($_v['data_node']['lines']){?>
+" aria-expanded="false"><i class="ic ic-expand" aria-hidden="true"></i><span>Expand<?php if($_v['data_node']['lines']){?>
  <?php echo htmlspecialchars($_v['data_node']['lines'], ENT_QUOTES);?>
  lines<?php }?></span></button>
 <?php }?>		</div>
@@ -150,14 +150,14 @@
 "<?php if($_v['data_sub']['runId']){?>
  data-run-link="<?php echo htmlspecialchars($_v['data_sub']['runId'], ENT_QUOTES);?>
 "<?php }?>><?php if($_v['data_sub']['workflow']){?>
-<svg class="ic lead"><use href="#i-flow"/></svg><?php }elseif($_v['data_sub']['summary']){?>
-<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_sub']['check']){?>
-<svg class="ic lead"><use href="#i-rotate"/></svg><?php }elseif($_v['data_sub']['prompt']){?>
-<svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['data_sub']['text'], ENT_QUOTES);?>
+<i class="ic ic-flow lead" aria-hidden="true"></i><?php }elseif($_v['data_sub']['summary']){?>
+<i class="ic ic-summary lead" aria-hidden="true"></i><?php }elseif($_v['data_sub']['check']){?>
+<i class="ic ic-rotate lead" aria-hidden="true"></i><?php }elseif($_v['data_sub']['prompt']){?>
+<i class="ic ic-prompt lead" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['data_sub']['text'], ENT_QUOTES);?>
 </a>
 <?php if($_v['data_sub']['expand']){?>
 			<button type="button" class="btn btn-sm" data-expand="<?php echo htmlspecialchars($_v['data_sub']['runId'], ENT_QUOTES);?>
-" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand<?php if($_v['data_sub']['lines']){?>
+" aria-expanded="false"><i class="ic ic-expand" aria-hidden="true"></i><span>Expand<?php if($_v['data_sub']['lines']){?>
  <?php echo htmlspecialchars($_v['data_sub']['lines'], ENT_QUOTES);?>
  lines<?php }?></span></button>
 <?php }?>		</div>
@@ -191,7 +191,7 @@
 <details class="promptbox"<?php if($_v['data_prompt']['open']){?>
  open<?php }?><?php if($_v['data_prompt']['hidden']){?>
  hidden<?php }?>>
-	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg><?php echo htmlspecialchars($_v['data_prompt']['title'], ENT_QUOTES);?>
+	<summary><h3 class="section-title"><i class="ic ic-chev chev" aria-hidden="true"></i><?php echo htmlspecialchars($_v['data_prompt']['title'], ENT_QUOTES);?>
  <small><?php echo htmlspecialchars($_v['data_prompt']['note'], ENT_QUOTES);?>
 </small></h3></summary>
 <?php if(!$_v['data_prompt']['watch']){?>
@@ -262,7 +262,7 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php if($_v['data_composer']['mic']){?>
 			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
-" title="Record a message" aria-label="Record a message"><svg class="ic"><use href="#i-mic"/></svg></button>
+" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
 <?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
@@ -271,7 +271,7 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php }?><?php if($_v['data_prompt']['threads']){?>
 	<ul class="thread-links" data-notes>
 <?php if(!empty($_v['data_prompt']['threads']))foreach($_v['data_prompt']['threads'] as $_v['thread']){?>		<li><a href="<?php echo htmlspecialchars($_v['thread']['href'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-note"/></svg> <?php echo htmlspecialchars($_v['thread']['title'], ENT_QUOTES);?>
+"><i class="ic ic-note" aria-hidden="true"></i> <?php echo htmlspecialchars($_v['thread']['title'], ENT_QUOTES);?>
 </a><?php if($_v['thread']['state']){?>
  <span class="badge note-state <?php echo htmlspecialchars($_v['thread']['state'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['thread']['state'], ENT_QUOTES);?>

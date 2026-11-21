@@ -16,16 +16,16 @@
 "></i>
 						<span class="what"><b><?php echo htmlspecialchars($_v['entry']['name'], ENT_QUOTES);?>
 </b><small><?php if($_v['entry']['icon']){?>
-<svg class="ic lead"><use href="#i-<?php echo htmlspecialchars($_v['entry']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['entry']['icon'], ENT_QUOTES);?>
+ lead" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
 </small></span>
 <?php if($_v['entry']['children']){?>
 						<span class="badge" title="<?php if($_v['entry']['thread']){?>
 Replies<?php }else{?>
 Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], ENT_QUOTES);?>
 </span><?php } if(!$_v['entry']['ended']){?>
-						<svg class="ic act"><use href="#i-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
-"/></svg><?php }?>
+						<i class="ic ic-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
+ act" aria-hidden="true"></i><?php }?>
 						<?php $_v['data_avatar'] = $_v['entry']['avatar'];?>
 <span class="avatar sm<?php if($_v['data_avatar']['role']){?>
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
@@ -37,7 +37,7 @@ Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], 
 					<div class="empty">Runs started by anyone show up here.</div>
 <?php }?>
 					<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data']['href'], ENT_QUOTES);?>
-" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>
+" class="recent more" data-recents-more hidden><i class="ic ic-list" aria-hidden="true"></i><span class="what"><b>All runs</b><small></small></span></a>
 				</nav>
 			</div>
 		</aside>

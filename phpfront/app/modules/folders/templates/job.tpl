@@ -11,10 +11,10 @@
 	<div class="table-wrap">
 	<table class="table table-kv">
 		<tbody>
-			<tr><th>Folder</th><td><a href="{data.job.folderHref}"><svg class="ic"><use href="#i-folder"/></svg> {data.job.folder}</a> <span class="dim">{data.job.title}</span></td></tr>
-{if $data.job.dir}			<tr><th>Directory</th><td><a href="{data.job.dirHref}"><svg class="ic"><use href="#i-folder-open"/></svg> {data.job.dir}/</a> <span class="dim">the job runs here</span></td></tr>
-{/if}			<tr><th>Source</th><td><svg class="ic"><use href="#i-file"/></svg> {data.job.source}{if $data.job.shows}{eval $data_source = $data.job.shows}{include components/show-source.tpl}{/if}</td></tr>
-{if $data.job.includes}			<tr><th>Includes</th><td>{foreach $data.job.includes as $read}<div><svg class="ic"><use href="#i-file"/></svg> {read.file}{eval $data_source = $read.shows}{include components/show-source.tpl}</div>{/foreach}</td></tr>
+			<tr><th>Folder</th><td><a href="{data.job.folderHref}"><i class="ic ic-folder" aria-hidden="true"></i> {data.job.folder}</a> <span class="dim">{data.job.title}</span></td></tr>
+{if $data.job.dir}			<tr><th>Directory</th><td><a href="{data.job.dirHref}"><i class="ic ic-folder-open" aria-hidden="true"></i> {data.job.dir}/</a> <span class="dim">the job runs here</span></td></tr>
+{/if}			<tr><th>Source</th><td><i class="ic ic-file" aria-hidden="true"></i> {data.job.source}{if $data.job.shows}{eval $data_source = $data.job.shows}{include components/show-source.tpl}{/if}</td></tr>
+{if $data.job.includes}			<tr><th>Includes</th><td>{foreach $data.job.includes as $read}<div><i class="ic ic-file" aria-hidden="true"></i> {read.file}{eval $data_source = $read.shows}{include components/show-source.tpl}</div>{/foreach}</td></tr>
 {/if}			<tr><th>Command</th><td><code>{data.job.command}</code></td></tr>
 {if $data.job.depends}			<tr><th>Depends on</th><td>{foreach $data.job.depends as $dep}{if $dep.href}<a href="{dep.href}">{dep.name}</a>{else}{dep.text}{/if} {/foreach}</td></tr>
 {/if}			<tr><th>Steps</th><td class="steps">{foreach $data.job.steps as $step}<code>{step}</code>{else}<span class="faint">none listed</span>{/foreach}</td></tr>

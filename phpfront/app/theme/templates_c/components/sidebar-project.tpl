@@ -8,11 +8,10 @@
 " title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
 ">
 <?php $_v['data_icon'] = $_v['data_project'];?>
-<svg class="ic<?php if($_v['data_icon']['dirty']){?>
- dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
-<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
-</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES); if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"<?php if($_v['data_icon']['dirty']){?>
+ title="<?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+"<?php }?>></i><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
 </span>
 <?php if($_v['data_project']['bad']){?>
 <small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>

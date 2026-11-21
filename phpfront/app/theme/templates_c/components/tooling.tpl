@@ -67,7 +67,7 @@
 		</div>
 <?php }?><?php if($_v['scope']['commands']){?>
 		<details class="tooling-details">
-			<summary><svg class="ic chev"><use href="#i-chev"/></svg><?php echo htmlspecialchars($_v['scope']['toggle'], ENT_QUOTES);?>
+			<summary><i class="ic ic-chev chev" aria-hidden="true"></i><?php echo htmlspecialchars($_v['scope']['toggle'], ENT_QUOTES);?>
 </summary>
 			<div class="table-wrap">
 			<table class="table cards">

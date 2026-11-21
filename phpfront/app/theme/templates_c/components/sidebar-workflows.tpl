@@ -13,14 +13,14 @@
 /workflows/<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 , running" aria-label="Watch <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-eye"/></svg></a>
+"><i class="ic ic-eye" aria-hidden="true"></i></a>
 <?php }elseif($_v['flow']['canRun']){?>
 						<button type="button" class="play" data-workflow-run="<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
 "<?php if($_v['flow']['prompted']){?>
  data-workflow-prompt="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 "<?php }?> title="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 " aria-label="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-play"/></svg></button>
+"><i class="ic ic-play" aria-hidden="true"></i></button>
 <?php }?>
 					</div>
 <?php } }?>

@@ -3,7 +3,7 @@
 		<span class="branch"><span class="glyph" aria-hidden="true">⎇</span> {if $data_git.branch}{data_git.branch}{else}<span class="faint">detached</span> {data_git.detached}{/if}</span>
 {if $data_git.ahead}		<span class="ahead" title="{data_git.ahead} commits to push">↑{data_git.ahead}</span>
 {/if}{if $data_git.behind}		<span class="behind" title="{data_git.behind} commits to pull">↓{data_git.behind}</span>
-{/if}{if $data_git.dirty}		<button type="button" class="dirty" data-git-status aria-expanded="false" aria-controls="git-status" title="Show the changed files"><span class="glyph" aria-hidden="true">●</span> {data_git.files}<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+{/if}{if $data_git.dirty}		<button type="button" class="dirty" data-git-status aria-expanded="false" aria-controls="git-status" title="Show the changed files"><span class="glyph" aria-hidden="true">●</span> {data_git.files}<i class="ic ic-chev chev" aria-hidden="true"></i></button>
 {/if}{if $data_git.clean}		<span class="clean">up to date</span>
 {/if}		<span class="where">· {data_git.where}</span>
 	</div>

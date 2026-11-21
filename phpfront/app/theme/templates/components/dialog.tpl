@@ -32,7 +32,7 @@
 			<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 			<button type="button" class="btn" id="run-again" hidden>Run again</button>
 			<button type="button" class="btn" id="run-take" aria-pressed="false" title="Send your keystrokes to the run, to answer a prompt it waits on" hidden>Take input</button>
-			<button type="button" class="btn-icon" id="run-mic" aria-haspopup="dialog" title="Dictate into the run" aria-label="Dictate into the run" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
+			<button type="button" class="btn-icon" id="run-mic" aria-haspopup="dialog" title="Dictate into the run" aria-label="Dictate into the run" hidden><i class="ic ic-mic" aria-hidden="true"></i></button>
 			<button type="button" class="btn" id="run-stop" hidden>Stop</button>
 			<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
 			<button type="button" class="btn" id="run-pause" hidden>Pause</button>

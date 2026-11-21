@@ -39,7 +39,7 @@
 				{if $entry.comment.correction}<span class="badge">rule</span>{/if}
 				<form class="refinement-delete" method="post" action="{base}/refinement/threads/{data.thread.id}/comments/{entry.comment.id}/delete"
 					{if $entry.comment.id == $data.design}data-confirm="Delete the design, and the whole thread with it? Its rules and its runs go. The files stay in the artifacts, under {data.thread.id}."{else}data-confirm="Delete this request? The files it produced stay."{/if}>
-					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
+					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><i class="ic ic-trash" aria-hidden="true"></i></button>
 				</form>
 			</div>
 			<div class="refinement-body prose">{entry.comment.html|raw}</div>
@@ -47,14 +47,14 @@
 {/foreach}	</ol>
 
 	<form class="form refinement-apply" method="post" action="{base}/refinement/threads/{data.thread.id}/apply">
-		<button class="btn" type="submit"><svg class="ic"><use href="#i-collapse"/></svg>Apply all</button>
+		<button class="btn" type="submit"><i class="ic ic-collapse" aria-hidden="true"></i>Apply all</button>
 	</form>
 
 	<form class="form refinement-fork" method="post" action="{base}/refinement/threads/{data.thread.id}/fork">
 		<p class="faint">Fork: a thread of its own, from this design.</p>
 		{eval $data_markdown = $data.fork}{include components/editor.tpl}
 		<div class="form-foot">
-			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
+			<button class="btn" type="submit"><i class="ic ic-flow" aria-hidden="true"></i>Fork</button>
 		</div>
 	</form>
 

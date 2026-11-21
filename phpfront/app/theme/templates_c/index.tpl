@@ -40,56 +40,6 @@
  data-file-edit<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
 edit<?php }elseif($_v['chrome']['can']['user/view']){?>
 view<?php }?>">
-<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
-	<symbol id="i-project" viewBox="0 0 16 16"><circle cx="4.5" cy="3.5" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="4.5" cy="12.5" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="5.5" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5.4v5.2M11.5 7.4c0 2.6-2.2 3.1-5.2 3.9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
-	<symbol id="i-folder" viewBox="0 0 16 10"><path d="M.65 1.6A1 1 0 0 1 1.65.6h3.6l1.3 1.3h7.8a1 1 0 0 1 1 1v5.5a1 1 0 0 1-1 1H1.65a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
-	<symbol id="i-folder-open" viewBox="0 0 16 10"><path d="M.65 8.4V1.6A1 1 0 0 1 1.65.6h3.6l1.3 1.3h6.8a1 1 0 0 1 1 1v.7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.6 4.1h12.2a.6.6 0 0 1 .57.8l-1.2 3.9a1 1 0 0 1-.96.7H1.3a.6.6 0 0 1-.57-.8l1-3.9a1 1 0 0 1 .87-.7z" fill="currentColor" opacity=".85"/></symbol>
-	<symbol id="i-grid" viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
-	<symbol id="i-list" viewBox="0 0 16 16"><path d="M5 4h9M5 8h9M5 12h9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="2.5" cy="4" r="1" fill="currentColor"/><circle cx="2.5" cy="8" r="1" fill="currentColor"/><circle cx="2.5" cy="12" r="1" fill="currentColor"/></symbol>
-	<symbol id="i-box" viewBox="0 0 16 16"><path d="M2 5.5 8 2.5l6 3v5l-6 3-6-3zM2 5.5l6 3 6-3M8 8.5v5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
-	<symbol id="i-flow" viewBox="0 0 16 16"><circle cx="3" cy="4" r="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="13" cy="8" r="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="3" cy="12" r="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.6 4h3.4a2 2 0 0 1 2 2v.4M10 9.6v.4a2 2 0 0 1-2 2H4.6M10 6.4 11.4 8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-prompt" viewBox="0 0 16 16"><path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5v-2.5h-.5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5.5 5.5 7 7 5.5 8.5M8.5 8.5h2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-summary" viewBox="0 0 16 16"><path d="M11.5 2.5h-7l4 5.5-4 5.5h7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-grip" viewBox="0 0 16 16"><circle cx="6" cy="3.5" r="1.1" fill="currentColor"/><circle cx="10" cy="3.5" r="1.1" fill="currentColor"/><circle cx="6" cy="8" r="1.1" fill="currentColor"/><circle cx="10" cy="8" r="1.1" fill="currentColor"/><circle cx="6" cy="12.5" r="1.1" fill="currentColor"/><circle cx="10" cy="12.5" r="1.1" fill="currentColor"/></symbol>
-	<symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
-	<symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
-	<symbol id="i-back" viewBox="0 0 16 16"><path d="M13 8H3.5M7 3.5 2.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-server" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="9" width="11" height="4.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="4.75" r=".8" fill="currentColor"/><circle cx="5" cy="11.25" r=".8" fill="currentColor"/></symbol>
-	<symbol id="i-plug" viewBox="0 0 16 16"><path d="M6 1.5v3M10 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0zM8 11.5v3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-note" viewBox="0 0 16 16"><path d="M3 2.5h10v7.5l-3.5 3.5H3zM13 10H9.5v3.5M5.5 5.5h5M5.5 8h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
-	<symbol id="i-bell" viewBox="0 0 16 16"><path d="M8 2a4 4 0 0 0-4 4v2.5L2.5 11h11L12 8.5V6a4 4 0 0 0-4-4zM6.5 12.5a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
-	<symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 4.5V8l2.5 1.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
-	<symbol id="i-pulse" viewBox="0 0 16 16"><path d="M1.5 8h3L6 4.5 8.5 11.5 10.5 8h4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-users" viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4M11 3.5a2.5 2.5 0 0 1 0 4.5M12 9.5c1.5.4 2.5 1.8 2.5 4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
-	<symbol id="i-settings" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
-	<symbol id="i-logout" viewBox="0 0 16 16"><path d="M6 2.5H3.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1H6M10 11l3-3-3-3M13 8H6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
-	<symbol id="i-rotate" viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.7 9.5h6.6L12 4M6.5 6.5v5M9.5 6.5v5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-edit" viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L6 12H4v-2zM10 4l2 2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M2.5 13.5h11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
-	<symbol id="i-key" viewBox="0 0 16 16"><circle cx="5.5" cy="10.5" r="3" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M7.7 8.3 13.5 2.5M11 5l2 2M9.5 6.5l1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
-	<symbol id="i-secret" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
-	<symbol id="i-file" viewBox="0 0 16 16"><path d="M4 1.5h5l3.5 3.5v9.5h-8.5zM9 1.5V5h3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
-	<symbol id="i-script" viewBox="0 0 16 16"><path d="M5 4 1.8 8 5 12M11 4l3.2 4L11 12M9.4 2.5l-2.8 11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-terminal" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 6l2 2-2 2M8 10.5h3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-play" viewBox="0 0 16 16"><path d="M4.5 2.5v11l8-5.5z" fill="currentColor"/></symbol>
-	<symbol id="i-stop" viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></symbol>
-	<symbol id="i-pin" viewBox="0 0 16 16"><path d="M6 1.5h4M7 1.5v4.2L4.5 8.5h7L9 5.7V1.5M8 8.5v6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
-	<symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
-	<symbol id="i-magnifier" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 10.5 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
-	<symbol id="i-expand" viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-collapse" viewBox="0 0 16 16"><path d="M13 7H9V3M9 7l4.5-4.5M3 9h4v4M7 9l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></symbol>
-	<symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-up" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-down" viewBox="0 0 16 16"><path d="M8 2.5v11M3.5 9 8 13.5 12.5 9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-upload" viewBox="0 0 16 16"><path d="M8 10.5v-8M4.5 6 8 2.5 11.5 6M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-	<symbol id="i-mic" viewBox="0 0 16 16"><rect x="6" y="1.6" width="4" height="7.3" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M3.8 7.2v1a4.2 4.2 0 0 0 8.4 0v-1M8 13v1.4M5.6 14.4h4.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
-	<symbol id="i-send" viewBox="0 0 16 16"><path d="M2.5 8h10M8.5 4 12.5 8l-4 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-</svg>
-
 <?php if($_v['chrome']['user']){?>
 
 <a class="skip-link" href="#main">Skip to content</a>
@@ -100,7 +50,7 @@ view<?php }?>">
 " data-prompt-label="<?php echo htmlspecialchars($_v['data']['prompt']['label'], ENT_QUOTES);?>
 " data-prompt-href="<?php echo htmlspecialchars($_v['data']['prompt']['href'], ENT_QUOTES);?>
 ">
-		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
+		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><i class="ic ic-menu" aria-hidden="true"></i></button>
 		<h1><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /"><span>TaskUI</span><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
 </a></h1>
@@ -110,14 +60,14 @@ view<?php }?>">
 		</form>
 <?php }else{?>
 	<header class="top">
-		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
+		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><i class="ic ic-menu" aria-hidden="true"></i></button>
 		<h1><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /"><span>TaskUI</span><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
 </a></h1>
 		<span class="spacer"></span>
 <?php }?>		<?php if($_v['chrome']['can']['note/view']){?>
 <details class="notes-bell" id="notes-bell" data-notes-bell>
-	<summary class="btn-icon bell-icon" aria-label="Chats" aria-haspopup="menu" title="Chats"><svg class="ic"><use href="#i-bell"/></svg><span class="bell-count" id="notes-bell-count" hidden></span></summary>
+	<summary class="btn-icon bell-icon" aria-label="Chats" aria-haspopup="menu" title="Chats"><i class="ic ic-bell" aria-hidden="true"></i><span class="bell-count" id="notes-bell-count" hidden></span></summary>
 	<div class="notes-bell-menu" role="menu">
 		<p class="notes-bell-empty faint">No chat yet. Pick someone in the orb to start one.</p>
 		<div class="notes-bell-items" id="notes-bell-items"></div>
@@ -138,17 +88,17 @@ view<?php }?>">
 </span></div>
 				<a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /users/<?php echo htmlspecialchars($_v['data']['user']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-users"/></svg>Profile</a>
+"><i class="ic ic-users" aria-hidden="true"></i>Profile</a>
 				<a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
-/keys"><svg class="ic"><use href="#i-key"/></svg>SSH keys</a>
+/keys"><i class="ic ic-key" aria-hidden="true"></i>SSH keys</a>
 				<?php if($_v['data']['settings']){?>
 
 				<a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
-/settings"><svg class="ic"><use href="#i-settings"/></svg>Settings</a>
+/settings"><i class="ic ic-settings" aria-hidden="true"></i>Settings</a>
 				<?php }?>
 				<?php if($_v['data']['loginRequired']){?>
 
-				<form method="post" action="/logout"><button type="submit"><svg class="ic"><use href="#i-logout"/></svg>Logout</button></form>
+				<form method="post" action="/logout"><button type="submit"><i class="ic ic-logout" aria-hidden="true"></i>Logout</button></form>
 				<?php }else{?>
 
 				<div class="who"><span>auto login, no logout</span></div>
@@ -166,8 +116,8 @@ view<?php }?>">
 <?php if(!empty($_v['data']))foreach($_v['data'] as $_v['item']){?>
 				<a href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 " class="<?php if($_v['item']['active']){?>
-active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['item']['title'], ENT_QUOTES);?>
+active<?php }?>"><i class="ic ic-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['item']['title'], ENT_QUOTES);?>
 </span><?php if($_v['item']['pulse']){?>
 <i class="dot<?php if($_v['chrome']['running']){?>
  running<?php }?>" data-any-running></i><?php }?></a>
@@ -187,14 +137,14 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 /workflows/<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 , running" aria-label="Watch <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-eye"/></svg></a>
+"><i class="ic ic-eye" aria-hidden="true"></i></a>
 <?php }elseif($_v['flow']['canRun']){?>
 						<button type="button" class="play" data-workflow-run="<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
 "<?php if($_v['flow']['prompted']){?>
  data-workflow-prompt="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 "<?php }?> title="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
 " aria-label="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-play"/></svg></button>
+"><i class="ic ic-play" aria-hidden="true"></i></button>
 <?php }?>
 					</div>
 <?php } }?>
@@ -213,7 +163,7 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 	<summary<?php if($_v['data_workspace']['here']){?>
  class="active"<?php }?> title="<?php echo htmlspecialchars($_v['data_workspace']['title'], ENT_QUOTES);?>
 ">
-		<svg class="ic chev"><use href="#i-chev"/></svg>
+		<i class="ic ic-chev chev" aria-hidden="true"></i>
 		<a class="section<?php if($_v['data_workspace']['here']){?>
  active<?php }?>" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_workspace']['href'], ENT_QUOTES);?>
 " data-folder="<?php echo htmlspecialchars($_v['data_workspace']['id'], ENT_QUOTES);?>
@@ -238,11 +188,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 " title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
 ">
 <?php $_v['data_icon'] = $_v['data_project'];?>
-<svg class="ic<?php if($_v['data_icon']['dirty']){?>
- dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
-<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
-</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES); if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"<?php if($_v['data_icon']['dirty']){?>
+ title="<?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+"<?php }?>></i><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
 </span>
 <?php if($_v['data_project']['bad']){?>
 <small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>
@@ -264,11 +213,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 " title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
 ">
 <?php $_v['data_icon'] = $_v['data_project'];?>
-<svg class="ic<?php if($_v['data_icon']['dirty']){?>
- dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
-<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
-</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES); if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"<?php if($_v['data_icon']['dirty']){?>
+ title="<?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+"<?php }?>></i><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
 </span>
 <?php if($_v['data_project']['bad']){?>
 <small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>
@@ -288,11 +236,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 " title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
 ">
 <?php $_v['data_icon'] = $_v['data_project'];?>
-<svg class="ic<?php if($_v['data_icon']['dirty']){?>
- dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
-<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
-</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES); if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"<?php if($_v['data_icon']['dirty']){?>
+ title="<?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+"<?php }?>></i><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
 </span>
 <?php if($_v['data_project']['bad']){?>
 <small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>
@@ -351,16 +298,16 @@ Add a git repository in Settings<?php }?>. Put a folder with jobs under the root
 "></i>
 						<span class="what"><b><?php echo htmlspecialchars($_v['entry']['name'], ENT_QUOTES);?>
 </b><small><?php if($_v['entry']['icon']){?>
-<svg class="ic lead"><use href="#i-<?php echo htmlspecialchars($_v['entry']['icon'], ENT_QUOTES);?>
-"/></svg><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
+<i class="ic ic-<?php echo htmlspecialchars($_v['entry']['icon'], ENT_QUOTES);?>
+ lead" aria-hidden="true"></i><?php }?><?php echo htmlspecialchars($_v['entry']['place'], ENT_QUOTES);?>
 </small></span>
 <?php if($_v['entry']['children']){?>
 						<span class="badge" title="<?php if($_v['entry']['thread']){?>
 Replies<?php }else{?>
 Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], ENT_QUOTES);?>
 </span><?php } if(!$_v['entry']['ended']){?>
-						<svg class="ic act"><use href="#i-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
-"/></svg><?php }?>
+						<i class="ic ic-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
+ act" aria-hidden="true"></i><?php }?>
 						<?php $_v['data_avatar'] = $_v['entry']['avatar'];?>
 <span class="avatar sm<?php if($_v['data_avatar']['role']){?>
  role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
@@ -372,7 +319,7 @@ Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], 
 					<div class="empty">Runs started by anyone show up here.</div>
 <?php }?>
 					<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data']['href'], ENT_QUOTES);?>
-" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>
+" class="recent more" data-recents-more hidden><i class="ic ic-list" aria-hidden="true"></i><span class="what"><b>All runs</b><small></small></span></a>
 				</nav>
 			</div>
 		</aside>
@@ -413,7 +360,7 @@ Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], 
 			<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 			<button type="button" class="btn" id="run-again" hidden>Run again</button>
 			<button type="button" class="btn" id="run-take" aria-pressed="false" title="Send your keystrokes to the run, to answer a prompt it waits on" hidden>Take input</button>
-			<button type="button" class="btn-icon" id="run-mic" aria-haspopup="dialog" title="Dictate into the run" aria-label="Dictate into the run" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
+			<button type="button" class="btn-icon" id="run-mic" aria-haspopup="dialog" title="Dictate into the run" aria-label="Dictate into the run" hidden><i class="ic ic-mic" aria-hidden="true"></i></button>
 			<button type="button" class="btn" id="run-stop" hidden>Stop</button>
 			<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
 			<button type="button" class="btn" id="run-pause" hidden>Pause</button>
@@ -493,7 +440,7 @@ Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], 
 		</div>
 	</dialog>
 
-	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
+	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><i class="ic ic-mic" aria-hidden="true"></i></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"<?php if($_v['chrome']['claude']){?>
  data-claude<?php }?><?php if($_v['chrome']['can']['note/edit']){?>
  data-note-edit<?php }?><?php if($_v['chrome']['contacts']){?>
@@ -516,7 +463,7 @@ Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], 
 "><?php echo htmlspecialchars($_v['contact']['name'], ENT_QUOTES);?>
 </option>
 <?php }?>			</select>
-<?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>
+<?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><i class="ic ic-pulse" aria-hidden="true"></i>Wake</button>
 		</div>
 		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
@@ -544,7 +491,7 @@ Runs it started<?php }?>"><?php echo htmlspecialchars($_v['entry']['children'], 
 			</div>
 		</div>
 		<div class="voice-acts">
-			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
+			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><i class="ic ic-back" aria-hidden="true"></i></button>
 		</div>
 	</dialog>
 

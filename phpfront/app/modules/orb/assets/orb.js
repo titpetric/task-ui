@@ -196,7 +196,7 @@
     play.setAttribute("data-user", line.user_id);
     play.setAttribute("data-start", line.start_ms);
     play.setAttribute("data-end", line.end_ms);
-    play.innerHTML = '<svg class="ic"><use href="#i-play"/></svg>';
+    play.innerHTML = '<i class="ic ic-play" aria-hidden="true"></i>';
     row.appendChild(play);
 
     return row;
@@ -266,7 +266,7 @@
       var play = document.createElement("button");
       play.type = "button";
       play.className = "btn-icon";
-      play.innerHTML = '<svg class="ic"><use href="#i-play"/></svg>';
+      play.innerHTML = '<i class="ic ic-play" aria-hidden="true"></i>';
       row.appendChild(play);
 
       el.log.appendChild(row);

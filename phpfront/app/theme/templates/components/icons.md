@@ -2,16 +2,15 @@
 
 Input scope: none.
 
-The sprite, once per page. Every icon on the page is a `<use href="#i-NAME"/>`
-into it, and a sidebar row's icon column names one without the `i-` prefix.
+There is no icon component. `theme/assets/css/icons.css` draws an icon from
+`theme/assets/icons/<name>.svg` as a CSS mask, coloured by `currentColor`, and
+the page writes `<i class="ic ic-NAME" aria-hidden="true"></i>`. A name outside
+that list draws nothing, so a value out of the database cannot reach the markup
+as anything else.
 
-The symbols: `project`, `folder`, `folder-open`, `grid`, `list`, `box`, `flow`,
-`prompt`, `summary`, `grip`, `plus`, `server`, `plug`, `note`, `clock`,
-`pulse`, `users`, `settings`, `logout`, `copy`, `rotate`, `trash`, `edit`,
-`key`, `secret`, `file`, `script`, `terminal`, `play`, `stop`, `pin`, `eye`,
-`menu`, `expand`, `collapse`, `more`, `chev`, `up`, `down`, `download`,
-`upload`.
-
-`Task\Sidebar::icon()` falls back to `box` for a name the sprite would not
-accept, so a value out of the database cannot reach the markup as anything
-else.
+The names: `back`, `bell`, `box`, `chev`, `clock`, `collapse`, `copy`, `down`,
+`download`, `edit`, `expand`, `eye`, `file`, `flow`, `folder`, `folder-open`,
+`grid`, `grip`, `key`, `list`, `logout`, `magnifier`, `menu`, `mic`, `more`,
+`note`, `pin`, `play`, `plug`, `plus`, `project`, `prompt`, `pulse`, `rotate`,
+`script`, `secret`, `send`, `server`, `settings`, `stop`, `summary`, `terminal`,
+`trash`, `up`, `upload`, `users`, `x`.

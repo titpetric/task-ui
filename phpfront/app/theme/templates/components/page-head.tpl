@@ -1,6 +1,6 @@
 <div class="page-head">
 	<div>
-		<h2>{if $data_head.icon}<svg class="ic"><use href="#i-{data_head.icon}"/></svg> {/if}{data_head.title}{if $data_head.badge} <span class="badge{if $data_head.tone} {data_head.tone}{/if}">{data_head.badge}</span>{/if}{foreach $data_head.tags as $tag} <span class="badge">{tag}</span>{/foreach}{if $data_head.note} <span class="term-title" title="{data_head.note}">{data_head.note}</span>{/if}</h2>
+		<h2>{if $data_head.icon}<i class="ic ic-{data_head.icon}" aria-hidden="true"></i> {/if}{data_head.title}{if $data_head.badge} <span class="badge{if $data_head.tone} {data_head.tone}{/if}">{data_head.badge}</span>{/if}{foreach $data_head.tags as $tag} <span class="badge">{tag}</span>{/foreach}{if $data_head.note} <span class="term-title" title="{data_head.note}">{data_head.note}</span>{/if}</h2>
 {if $data_head.lead || $data_head.leads}		<p>{data_head.lead|raw}</p>
 {/if}{if $data_head.faint}		<p class="faint">{data_head.faint}</p>
 {/if}	</div>

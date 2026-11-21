@@ -16,9 +16,9 @@
 {/foreach}	</div>
 {if $data.room.open}	<div class="orb-controls">
 		<div class="orb-action">
-{if $data.room.can_edit}			<button class="btn btn-primary btn-lg" type="button" data-orb-join><svg class="ic"><use href="#i-users"/></svg>Join meeting</button>
+{if $data.room.can_edit}			<button class="btn btn-primary btn-lg" type="button" data-orb-join><i class="ic ic-users" aria-hidden="true"></i>Join meeting</button>
 			<div class="orb-speak" data-orb-speak hidden>
-				<button class="orb-mic" type="button" data-orb-mic aria-label="Start speaking" aria-pressed="false" title="Start speaking"><svg class="ic"><use href="#i-mic"/></svg></button>
+				<button class="orb-mic" type="button" data-orb-mic aria-label="Start speaking" aria-pressed="false" title="Start speaking"><i class="ic ic-mic" aria-hidden="true"></i></button>
 				<span class="orb-miclabel faint" data-orb-miclabel>Microphone off</span>
 			</div>
 {else}			<span class="faint">You can read this room but not speak in it.</span>
@@ -53,7 +53,7 @@
 			<span class="orb-who">{line.name}</span>
 			<span class="orb-said">{line.body}</span>
 			<span class="orb-at" data-at="{line.created}" title="{line.at}">{line.at}</span>
-			<button class="btn-icon" type="button" data-play data-user="{line.user}" data-start="{line.start}" data-end="{line.end}" title="Play this line"><svg class="ic"><use href="#i-play"/></svg></button>
+			<button class="btn-icon" type="button" data-play data-user="{line.user}" data-start="{line.start}" data-end="{line.end}" title="Play this line"><i class="ic ic-play" aria-hidden="true"></i></button>
 		</div>
 {else}		<div class="orb-line system" data-line-id="{line.id}"><span>{line.body}</span><span class="orb-at" data-at="{line.created}">{line.at}</span></div>
 {/if}{/foreach}		<p class="faint orb-empty"{if $data.lines} hidden{/if} data-orb-empty>Nothing said yet.</p>

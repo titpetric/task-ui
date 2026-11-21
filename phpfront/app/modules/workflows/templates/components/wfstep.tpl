@@ -2,12 +2,12 @@
 	<span class="wf-node" aria-hidden="true" data-step-num></span>
 	<div class="wf-card">
 		<div class="wf-card-head">
-			<button type="button" class="wf-grip" data-step-grip title="Drag to move the step, or focus it and press the up and down arrows" aria-label="Move the step"><svg class="ic"><use href="#i-grip"/></svg></button>
+			<button type="button" class="wf-grip" data-step-grip title="Drag to move the step, or focus it and press the up and down arrows" aria-label="Move the step"><i class="ic ic-grip" aria-hidden="true"></i></button>
 			<button type="button" class="wf-toggle" data-step-toggle aria-expanded="{if $data_step.open}true{else}false{/if}">
-				<span class="wf-kind"><svg class="ic" data-step-icon><use href="#i-{data_step.icon}"/></svg><span data-step-kind>{data_step.kindLabel}</span></span>
+				<span class="wf-kind"><i class="ic ic-{data_step.icon}" data-step-icon></i><span data-step-kind>{data_step.kindLabel}</span></span>
 				<span class="wf-line" data-step-line>{data_step.line}</span>
 				<span class="badge wf-off" data-step-off-badge>off</span>
-				<svg class="ic wf-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+				<i class="ic ic-chev wf-chev" aria-hidden="true"></i>
 			</button>
 {eval $data_menu = $data_step.menu}{include components/menu.tpl}
 		</div>

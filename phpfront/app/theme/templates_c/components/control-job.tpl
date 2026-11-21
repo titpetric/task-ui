@@ -23,12 +23,12 @@
 /runs/<?php echo htmlspecialchars($_v['data_cc']['run'], ENT_QUOTES);?>
 " data-attach="<?php echo htmlspecialchars($_v['data_cc']['run'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['data_cc']['title'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-eye"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
+"><i class="ic ic-eye" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
 </span></a><?php if($_v['data_cc']['kills']){?>
 <button type="button" class="cc cc-kill" data-kill="<?php echo htmlspecialchars($_v['data_cc']['run'], ENT_QUOTES);?>
 " title="Kill <?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
  and everything it started" aria-label="Kill <?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-trash"/></svg></button><?php }?><?php }elseif($_v['data_cc']['can']){?>
+"><i class="ic ic-trash" aria-hidden="true"></i></button><?php }?><?php }elseif($_v['data_cc']['can']){?>
 <button type="button" class="cc named<?php if($_v['data_cc']['pinned']){?>
  pinned<?php }?> <?php echo htmlspecialchars($_v['data_cc']['last'], ENT_QUOTES);?>
 " data-run data-folder="<?php echo htmlspecialchars($_v['data_cc']['folder'], ENT_QUOTES);?>
@@ -42,9 +42,9 @@
 "<?php }?><?php if($_v['data_cc']['args']){?>
  data-args="<?php echo htmlspecialchars($_v['data_cc']['args'], ENT_QUOTES);?>
 "<?php }?> title="<?php echo htmlspecialchars($_v['data_cc']['title'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-<?php if($_v['data_cc']['terminal']){?>
+"><i class="ic ic-<?php if($_v['data_cc']['terminal']){?>
 terminal<?php }else{?>
-play<?php }?>"/></svg><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
+play<?php }?>" aria-hidden="true"></i><span><?php echo htmlspecialchars($_v['data_cc']['label'], ENT_QUOTES);?>
 </span></button><?php }else{?>
 <a class="cc named<?php if($_v['data_cc']['pinned']){?>
  pinned<?php }?> idle <?php echo htmlspecialchars($_v['data_cc']['last'], ENT_QUOTES);?>

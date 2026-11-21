@@ -144,7 +144,7 @@
       var attrs = Object.keys(item.attrs || {}).map(function (name) {
         return " " + name + '="' + escapeHTML(item.attrs[name]) + '"';
       }).join("");
-      var body = '<svg class="ic"><use href="#i-' + item.icon + '"/></svg><span>' + escapeHTML(item.label) + "</span>";
+      var body = '<i class="ic ic-' + escapeHTML(item.icon) + '" aria-hidden="true"></i><span>' + escapeHTML(item.label) + "</span>";
       var cls = "more-item" + (item.danger ? " danger" : "");
       return item.href ?
         '<a class="' + cls + '" role="menuitem" href="' + escapeHTML(item.href) + '"' + attrs + ">" + body + "</a>" :
@@ -152,7 +152,7 @@
     };
     var who = escapeHTML(label);
     return '<details class="more-menu"><summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="' + who + '" aria-label="' + who + '">' +
-      '<svg class="ic"><use href="#i-more"/></svg></summary><div class="more-list">' +
+      '<i class="ic ic-more" aria-hidden="true"></i></summary><div class="more-list">' +
       (details.length ? '<dl class="more-details">' + details.map(function (d) {
         return "<dt>" + escapeHTML(d[0]) + "</dt><dd" + (d[2] ? ' class="mono"' : "") + ">" + escapeHTML(d[1]) + "</dd>";
       }).join("") + "</dl>" : "") +
@@ -1427,6 +1427,54 @@
     submit(form);
   });
 
+  // A table of flags holds its Save until a box changes, and sending it
+  // PUTs each changed row to its own endpoint before the page reloads.
+  function flagDirty(box) {
+    return box.checked !== (box.dataset.was === "1");
+  }
+
+  function flagButton(box) {
+    var table = box.closest("[data-flags]");
+    return table ? table.querySelector("[data-flag-save]") : null;
+  }
+
+  document.addEventListener("change", function (event) {
+    var box = event.target.closest("[data-flag]");
+    if (!box) return;
+    var button = flagButton(box);
+    if (!button) return;
+    var table = button.closest("[data-flags]");
+    var dirty = Array.prototype.some.call(table.querySelectorAll("[data-flag]"), flagDirty);
+    button.disabled = !dirty;
+  });
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-flag-save]");
+    if (!button || button.disabled) return;
+    var table = button.closest("[data-flags]");
+    var changed = [];
+    table.querySelectorAll("[data-flag-row]").forEach(function (row) {
+      var body = {};
+      row.querySelectorAll("[data-flag]").forEach(function (box) {
+        if (flagDirty(box)) body[box.dataset.flag] = box.checked;
+      });
+      if (Object.keys(body).length) changed.push({ row: row, body: body });
+    });
+    if (!changed.length) return;
+    button.disabled = true;
+    Promise.all(changed.map(function (item) {
+      return api("PUT", item.row.dataset.flagApi, item.body).then(function (res) {
+        if (res.status >= 300) throw new Error((res.data && res.data.error) || "the change was not saved");
+        item.row.querySelectorAll("[data-flag]").forEach(function (box) { box.dataset.was = box.checked ? "1" : "0"; });
+      });
+    })).then(function () {
+      next("reload", button, "PUT");
+    }).catch(function (err) {
+      button.disabled = false;
+      toast(err.message, "bad");
+    });
+  });
+
   // A plain form, one the page or a module posts itself, asks its question
   // in the same dialog; the confirmed form submits once.
   document.addEventListener("submit", function (event) {
@@ -1847,11 +1895,9 @@
     var text = document.createElement("span");
     text.className = "dd-text";
     button.appendChild(text);
-    var chev = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    chev.setAttribute("class", "ic dd-chev");
-    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttribute("href", "#i-chev");
-    chev.appendChild(use);
+    var chev = document.createElement("i");
+    chev.className = "ic ic-chev dd-chev";
+    chev.setAttribute("aria-hidden", "true");
     button.appendChild(chev);
     wrap.appendChild(button);
 
@@ -2430,7 +2476,7 @@
     var named = STEP_KINDS[kind] || STEP_KINDS.job;
     row.className = row.className.replace(/\bkind-\w+/, "kind-" + kind);
     row.querySelector("[data-step-kind]").textContent = named[0];
-    row.querySelector("[data-step-icon] use").setAttribute("href", "#" + named[1]);
+    setIcon(row.querySelector("[data-step-icon]"), named[1]);
     if (kind === "prompt") {
       line = row.querySelector("[data-step-prompt-text]").value.trim().split("\n")[0];
     } else if (kind === "script") {
@@ -2480,7 +2526,7 @@
     row.toggleAttribute("data-off", off);
     var item = row.querySelector("[data-step-off]");
     item.querySelector("span").textContent = off ? "Enable" : "Disable";
-    item.querySelector("use").setAttribute("href", off ? "#i-play" : "#i-stop");
+    setIcon(item, off ? "play" : "stop");
   }
 
   // stepsChanged numbers the cards on the rail, enables the moves that
@@ -3134,15 +3180,23 @@
     return node;
   }
 
-  // icon draws a symbol of the sprite; a class besides ic, lead, sets
-  // the icon off from the text after it.
+  // icon draws an icon of the theme's library; cls, besides ic, sets it off.
   function icon(name, cls) {
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", cls ? "ic " + cls : "ic");
-    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttribute("href", "#" + name);
-    svg.appendChild(use);
-    return svg;
+    var el = document.createElement("i");
+    el.className = "ic ic-" + String(name).replace(/^i-/, "") + (cls ? " " + cls : "");
+    el.setAttribute("aria-hidden", "true");
+    return el;
+  }
+
+  // setIcon swaps the icon host draws, or the icon inside it, keeping its other classes.
+  function setIcon(host, name) {
+    if (!host) return;
+    var el = host.classList.contains("ic") ? host : host.querySelector(".ic");
+    if (!el) return;
+    Array.prototype.slice.call(el.classList).forEach(function (cls) {
+      if (cls.indexOf("ic-") === 0) el.classList.remove(cls);
+    });
+    el.classList.add("ic-" + String(name).replace(/^i-/, ""));
   }
 
   function stateSpan(state, message) {
@@ -4903,7 +4957,7 @@
           play.dataset.play = chat.last_id;
           play.title = "Play";
           play.setAttribute("aria-label", "Play");
-          play.innerHTML = '<svg class="ic"><use href="#i-play"/></svg>';
+          play.innerHTML = '<i class="ic ic-play" aria-hidden="true"></i>';
           row.appendChild(play);
         }
         if (chat.unread) {
@@ -5619,9 +5673,9 @@
     var term = slot.hasAttribute("data-interactive");
     if (run && run.state === "running") {
       return '<a class="cc' + named + ' running" href="' + mount() + "/runs/" + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
-        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>" +
+        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><i class="ic ic-eye" aria-hidden="true"></i>' + label + "</a>" +
         (slot.hasAttribute("data-can") ? '<button type="button" class="cc cc-kill" data-kill="' + escapeHTML(run.id) + '" title="Kill ' + what +
-          ' and everything it started" aria-label="Kill ' + what + '"><svg class="ic"><use href="#i-trash"/></svg></button>' : "");
+          ' and everything it started" aria-label="Kill ' + what + '"><i class="ic ic-trash" aria-hidden="true"></i></button>' : "");
     }
     if (slot.hasAttribute("data-can")) {
       return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(d.folder) + '"' +
@@ -5629,7 +5683,7 @@
         (d.confirm ? ' data-confirm="' + escapeHTML(d.confirm) + '" data-confirm-ok="Run ' + escapeHTML(d.name) + '"' : "") +
         (d.args ? ' data-args="' + escapeHTML(d.args) + '"' : "") +
         ' title="Run ' + what + desc + (d.args ? ", with arguments after " + escapeHTML(d.args) : "") + (term ? ", in a terminal" : "") +
-        '"><svg class="ic"><use href="#i-' + (term ? "terminal" : "play") + '"/></svg>' + label + "</button>";
+        '"><i class="ic ic-' + (term ? "terminal" : "play") + '" aria-hidden="true"></i>' + label + "</button>";
     }
     return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(d.folder)) + "/" + (d.dir ? escapeHTML(d.dir) + "/" : "") + escapeHTML(d.job) + '" title="' + what + desc +
       ': no permission to run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
@@ -5923,7 +5977,7 @@
       '<input type="text" name="args" spellcheck="false" autocomplete="off" placeholder="arguments"></div>' +
       '<div class="argsline-foot"><span class="argsline-preview"></span>' +
       '<button type="button" class="btn btn-sm" data-args-cancel>Cancel</button>' +
-      '<button type="submit" class="btn btn-primary btn-sm"><svg class="ic"><use href="#i-play"/></svg>Run</button></div>';
+      '<button type="submit" class="btn btn-primary btn-sm"><i class="ic ic-play" aria-hidden="true"></i>Run</button></div>';
     form.querySelector(".argsline-cmd").textContent = cmd;
     var input = form.querySelector("input");
     input.setAttribute("aria-label", "Arguments for " + spec.title);
@@ -6224,7 +6278,7 @@
   var known = null;
   // recentsMore is the rail's last slot, as the layout draws it: shown in
   // place of the last entry that fits when some don't.
-  var recentsMore = '<a href="' + mount() + '/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>';
+  var recentsMore = '<a href="' + mount() + '/runs" class="recent more" data-recents-more hidden><i class="ic ic-list" aria-hidden="true"></i><span class="what"><b>All runs</b><small></small></span></a>';
 
   // renderRecents draws the threads, the runs nothing dispatched and the runs
   // of workflows, newest first, each run with the ones it dispatched counted.
@@ -6320,7 +6374,7 @@
         '<span class="what"><b>' + escapeHTML(threadLabel(t)) + '</b><small>' +
         iconHTML(t.workspace_id ? "prompt" : "note") + escapeHTML(t.dir || "board") + '</small></span>' +
         (t.messages ? '<span class="badge" title="Replies">' + t.messages + "</span>" : "") +
-        (t.state === "working" || t.state === "open" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
+        (t.state === "working" || t.state === "open" ? '<i class="ic ic-eye act" aria-hidden="true"></i>' : "") +
         avatarHTML(t.user_name) + "</a>";
     }
     if (e.flow) {
@@ -6328,8 +6382,8 @@
       return '<a href="' + mount() + "/workflows/" + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
         escapeHTML("Workflow " + f.name + ", " + f.user_name + ", " + f.state) + '">' +
         '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
-        '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic lead"><use href="#i-flow"/></svg>workflow</small></span>' +
-        (f.state === "running" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
+        '<span class="what"><b>' + escapeHTML(f.name) + '</b><small>' + iconHTML("flow") + 'workflow</small></span>' +
+        (f.state === "running" ? '<i class="ic ic-eye act" aria-hidden="true"></i>' : "") +
         avatarHTML(f.user_name) + "</a>";
     }
     var r = e.run;
@@ -6339,7 +6393,7 @@
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
       '<span class="what"><b>' + escapeHTML(runLead(r)) + '</b><small>' + iconHTML(runIcon(r)) + escapeHTML(runTrail(r)) + '</small></span>' +
       (e.children ? '<span class="badge" title="Runs it started">' + e.children + "</span>" : "") +
-      (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
+      (running ? '<i class="ic ic-' + (r.can_run ? "play" : "eye") + ' act" aria-hidden="true"></i>' : "") +
       avatarHTML(r.user_name) + "</a>";
   }
 
@@ -6393,9 +6447,9 @@
     return "";
   }
 
-  // iconHTML is a sprite as a line of the rail draws it, nothing for "".
+  // iconHTML is an icon as a line of the rail draws it, nothing for "".
   function iconHTML(name) {
-    return name ? '<svg class="ic lead"><use href="#i-' + name + '"/></svg>' : "";
+    return name ? '<i class="ic ic-' + name + ' lead" aria-hidden="true"></i>' : "";
   }
 
   function poll() {

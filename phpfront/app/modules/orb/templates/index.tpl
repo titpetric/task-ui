@@ -6,7 +6,7 @@
 		<span>New meeting</span>
 		<input type="text" name="title" maxlength="120" placeholder="What it's about" autocomplete="off">
 	</label>
-	<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-mic"/></svg>Start meeting</button>
+	<button class="btn btn-primary" type="submit"><i class="ic ic-mic" aria-hidden="true"></i>Start meeting</button>
 </form>
 {/if}
 <section class="block">

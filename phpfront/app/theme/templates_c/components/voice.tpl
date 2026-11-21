@@ -1,5 +1,5 @@
 <?php $_v=&$this->vars;?>
-	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
+	<button type="button" class="voice-orb" id="voice-orb" aria-haspopup="dialog" title="Dictate" aria-label="Dictate" hidden><i class="ic ic-mic" aria-hidden="true"></i></button>
 	<dialog class="voice on-dark" id="voice-overlay" aria-label="Dictate"<?php if($_v['chrome']['claude']){?>
  data-claude<?php }?><?php if($_v['chrome']['can']['note/edit']){?>
  data-note-edit<?php }?><?php if($_v['chrome']['contacts']){?>
@@ -22,7 +22,7 @@
 "><?php echo htmlspecialchars($_v['contact']['name'], ENT_QUOTES);?>
 </option>
 <?php }?>			</select>
-<?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><svg class="ic"><use href="#i-pulse"/></svg>Wake</button>
+<?php }?>			<button type="button" class="voice-wake" id="voice-wake" aria-pressed="false" title="Start recording when you say a name" aria-label="Start recording when you say a name" hidden><i class="ic ic-pulse" aria-hidden="true"></i>Wake</button>
 		</div>
 		<button type="button" class="voice-stage" id="voice-stage" aria-pressed="false" title="Record" aria-label="Record" autofocus>
 			<span class="voice-well" aria-hidden="true"></span>
@@ -50,6 +50,6 @@
 			</div>
 		</div>
 		<div class="voice-acts">
-			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
+			<button type="button" class="voice-act discard" id="voice-discard" title="Back" aria-label="Back"><i class="ic ic-back" aria-hidden="true"></i></button>
 		</div>
 	</dialog>

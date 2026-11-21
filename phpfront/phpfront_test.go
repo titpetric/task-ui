@@ -130,6 +130,37 @@ func TestStylesheetLinks(t *testing.T) {
 	assert.True(t, found >= 4, "the chrome links the sheets and the scripts of the theme")
 }
 
+// The icon library is the sheet and the files together: a class naming a file
+// that is not there draws nothing, and a file no class names ships for nothing.
+// Neither shows up in a build, so the pairing is a test.
+func TestIconLibrary(t *testing.T) {
+	t.Parallel()
+
+	theme := phpfront.ThemeAssets()
+	data, err := fs.ReadFile(theme, "css/icons.css")
+	assert.NoError(t, err)
+
+	drawn := map[string]bool{}
+	for _, line := range strings.Split(string(data), "\n") {
+		_, rest, found := strings.Cut(line, `--icon: url("../icons/`)
+		if !found {
+			continue
+		}
+		name, _, _ := strings.Cut(rest, `")`)
+		drawn[name] = true
+		_, err := fs.Stat(theme, "icons/"+name)
+		assert.NoError(t, err, "icons.css draws icons/"+name+" and the theme does not ship it")
+	}
+	assert.True(t, len(drawn) > 1, "icons.css draws the library")
+
+	files, err := fs.Glob(theme, "icons/*.svg")
+	assert.NoError(t, err)
+	for _, path := range files {
+		_, name, _ := strings.Cut(path, "/")
+		assert.True(t, drawn[name], path+" is in the theme and no class draws it")
+	}
+}
+
 // themeRefs are the theme's own files a template names, as paths under the
 // assets: {data.assets}/theme/<path>, the ?v= and the query dropped.
 func themeRefs(tpl string) []string {

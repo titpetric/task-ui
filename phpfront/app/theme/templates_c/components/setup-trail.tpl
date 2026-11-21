@@ -2,7 +2,7 @@
 <nav class="setup-trail" aria-label="Setup steps">
 <?php if($_v['data_trail']['previous']){?>
 	<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['data_trail']['previous']['href'], ENT_QUOTES);?>
-" rel="prev"><svg class="ic back"><use href="#i-chev"/></svg>Previous: <?php echo htmlspecialchars($_v['data_trail']['previous']['name'], ENT_QUOTES);?>
+" rel="prev"><i class="ic ic-chev back" aria-hidden="true"></i>Previous: <?php echo htmlspecialchars($_v['data_trail']['previous']['name'], ENT_QUOTES);?>
 </a>
 <?php }?>	<ol class="steps">
 <?php if(!empty($_v['data_trail']['steps']))foreach($_v['data_trail']['steps'] as $_v['step']){?>		<li><?php if($_v['step']['current']){?>
@@ -15,5 +15,5 @@
 <?php if($_v['data_trail']['next']){?>
 	<a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['data_trail']['next']['href'], ENT_QUOTES);?>
 " rel="next">Next: <?php echo htmlspecialchars($_v['data_trail']['next']['name'], ENT_QUOTES);?>
-<svg class="ic"><use href="#i-chev"/></svg></a>
+<i class="ic ic-chev" aria-hidden="true"></i></a>
 <?php }?></nav>

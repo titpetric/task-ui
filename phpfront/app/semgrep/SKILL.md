@@ -62,6 +62,30 @@ Generic, because semgrep's PHP patterns cannot see comments. A comment above a s
 
 One rule, `array-syntax`, with a fix: an array literal is written `[...]`, not `array(...)`. The PHP parser folds the two into one node, so the rule reads the source; the fmt job runs `phpscript fmt` and then this autofix, one nesting level per pass, and hashes each file across the pair.
 
+## icons.yml, at zero
+
+Four rules on what a page body may carry, written the day the sprite under
+`theme/templates/components/` became one file per icon under
+`theme/assets/icons/`.
+
+| Rule                       | What it refuses                                                    |
+|----------------------------|--------------------------------------------------------------------|
+| `front.use-href`           | A `<use href>` into an icon sprite                                 |
+| `front.svg-sprite`         | A `<symbol>` or a hidden `<svg>` a page carries for `<use>` calls  |
+| `front.style-element`      | A `<style>` in a template; the component's rules live in its `.css` |
+| `front.encoded-asset`      | A `data:` URI in a template, a page or a script                    |
+
+An icon is `<i class="ic ic-NAME" aria-hidden="true"></i>`, drawn by
+`theme/assets/css/icons.css` from `theme/assets/icons/NAME.svg` as a mask
+coloured by `currentColor`. The sprite was a hidden SVG parsed with every page
+and cached with it; the sheet and the files cache apart from the page and from
+each other, and one icon changes one file.
+
+The style rule is the same argument: a `<style>` block is a second stylesheet
+in the body, parsed on every request and versioned with the page rather than
+the assets. A dynamic width or an inline `style=""` on one element is not what
+this refuses; a block is.
+
 ## suppression.yml, at zero
 
 Adopted from mobius's `rules/suppression.yml`. One rule, `error-suppression`: no `@`. It hides the failure the author thought of and every other one with it, and this runtime ignores it anyway. Ask the question instead — `file_exists()` before `filemtime()`, `isset()` before a read.

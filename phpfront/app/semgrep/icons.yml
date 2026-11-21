@@ -1,0 +1,80 @@
+# What a template and its script may not carry: an icon the theme's library
+# does not draw, and a stylesheet the page serves as markup.
+#
+# theme/assets/css/icons.css draws every icon from theme/assets/icons/<name>.svg
+# as a mask coloured by currentColor, and the markup is one element:
+# <i class="ic ic-NAME" aria-hidden="true"></i>. A sprite is a hidden SVG in
+# every page body, which the parser reads and the cache never keeps apart from
+# the page it was written into.
+#
+# History:
+#   2026-11-21  Written at zero, after the sprite and its <use href> calls
+#               became files under theme/assets/icons.
+rules:
+  - id: task-ui.front.use-href
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      An icon is drawn from theme/assets/icons by its .ic-NAME class. Write
+      <i class="ic ic-NAME" aria-hidden="true"></i>; no <use href> is left.
+    paths:
+      include:
+        - "**"
+      exclude:
+        - "**/templates_c/**"
+        - "ext/**"
+        - "tests/**"
+    pattern-regex: '<use\s[^>]*href\s*='
+
+  # The sprite itself: symbols a page body carries for the <use> calls above.
+  - id: task-ui.front.svg-sprite
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      The icon sprite is gone. Ship each icon as theme/assets/icons/<name>.svg
+      and draw it through icons.css.
+    paths:
+      include:
+        - "**"
+      exclude:
+        - "**/templates_c/**"
+        - "ext/**"
+        - "tests/**"
+    pattern-either:
+      - pattern-regex: '<symbol\s[^>]*id\s*='
+      - pattern-regex: '<svg[^>]*\shidden(\s|=|>)'
+
+  # Inline CSS is a second stylesheet the browser parses with every page and a
+  # cache that outlives no deploy. A component's rules live in its .css.
+  - id: task-ui.front.style-element
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A template writes no <style>. The component carries its rules in the
+      .css beside it, under theme/assets/css.
+    paths:
+      include:
+        - "**/*.tpl"
+      exclude:
+        - "**/templates_c/**"
+        - "ext/**"
+    pattern-regex: '<style(\s|>)'
+
+  # A data: URI is an asset written into the page body: the parser reads it on
+  # every request, and the browser caches it with the page rather than alone.
+  - id: task-ui.front.encoded-asset
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      An asset is a file the theme serves, not a data: URI in the page. Add it
+      under theme/assets and name it in the .css or the markup.
+    paths:
+      include:
+        - "**/*.tpl"
+        - "**/*.php"
+        - "**/*.js"
+      exclude:
+        - "**/templates_c/**"
+        - "ext/**"
+        - "tests/**"
+    pattern-regex: 'data:(image|font|audio|video|application)/'

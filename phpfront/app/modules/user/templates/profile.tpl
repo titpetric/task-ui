@@ -37,7 +37,7 @@
 		<tbody>
 {foreach $data.flows.rows as $row}			<tr>
 				<td class="nowrap" data-label="Started" title="{row.stamp}">{row.ago}</td>
-				<td class="key"><a href="{base}{row.href}"><svg class="ic lead"><use href="#i-flow"/></svg>{row.name}</a></td>
+				<td class="key"><a href="{base}{row.href}"><i class="ic ic-flow lead" aria-hidden="true"></i>{row.name}</a></td>
 				<td data-label="Result"><span class="state"><i class="dot {row.state}"></i>{row.state}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="{base}{row.view}">View</a></td>
 			</tr>
@@ -49,14 +49,14 @@
 <section class="block" id="notes">
 {eval $data_block = $data.notes.block}{include components/block-head.tpl}
 {if $data.notes.rows}	<ul class="profile-list">
-{foreach $data.notes.rows as $row}		<li><svg class="ic"><use href="#i-note"/></svg><a class="excerpt" href="{row.href}">{row.excerpt}</a>{if $row.state} <span class="badge note-state {row.state}">{row.state}</span>{/if}<span class="faint when" title="{row.stamp}">{row.ago}</span></li>
+{foreach $data.notes.rows as $row}		<li><i class="ic ic-note" aria-hidden="true"></i><a class="excerpt" href="{row.href}">{row.excerpt}</a>{if $row.state} <span class="badge note-state {row.state}">{row.state}</span>{/if}<span class="faint when" title="{row.stamp}">{row.ago}</span></li>
 {/foreach}	</ul>
 {/if}</section>
 
 <section class="block" id="prompts">
 {eval $data_block = $data.prompts.block}{include components/block-head.tpl}
 {if $data.prompts.rows}	<ul class="profile-list">
-{foreach $data.prompts.rows as $row}		<li><svg class="ic"><use href="#i-terminal"/></svg><a class="excerpt" href="{row.href}">{row.excerpt}</a> <span class="faint mono">{row.dir}/</span>{if $row.state} <span class="badge note-state {row.state}">{row.state}</span>{/if}<span class="faint when" title="{row.stamp}">{row.ago}</span></li>
+{foreach $data.prompts.rows as $row}		<li><i class="ic ic-terminal" aria-hidden="true"></i><a class="excerpt" href="{row.href}">{row.excerpt}</a> <span class="faint mono">{row.dir}/</span>{if $row.state} <span class="badge note-state {row.state}">{row.state}</span>{/if}<span class="faint when" title="{row.stamp}">{row.ago}</span></li>
 {/foreach}	</ul>
 {/if}</section>
 {if $data.keys}{eval $data_user_keys = $data.keys}{include components/user-keys.tpl}{/if}

@@ -2,8 +2,8 @@
 	<span class="rail"><i class="dot{if $data_sub.state} {data_sub.state}{/if}"></i></span>
 	<div class="what">
 		<div class="step-head">
-			<a href="{base}{data_sub.href}"{if $data_sub.runId} data-run-link="{data_sub.runId}"{/if}>{if $data_sub.workflow}<svg class="ic lead"><use href="#i-flow"/></svg>{elseif $data_sub.summary}<svg class="ic lead"><use href="#i-summary"/></svg>{elseif $data_sub.check}<svg class="ic lead"><use href="#i-rotate"/></svg>{elseif $data_sub.prompt}<svg class="ic lead"><use href="#i-prompt"/></svg>{/if}{data_sub.text}</a>
-{if $data_sub.expand}			<button type="button" class="btn btn-sm" data-expand="{data_sub.runId}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{if $data_sub.lines} {data_sub.lines} lines{/if}</span></button>
+			<a href="{base}{data_sub.href}"{if $data_sub.runId} data-run-link="{data_sub.runId}"{/if}>{if $data_sub.workflow}<i class="ic ic-flow lead" aria-hidden="true"></i>{elseif $data_sub.summary}<i class="ic ic-summary lead" aria-hidden="true"></i>{elseif $data_sub.check}<i class="ic ic-rotate lead" aria-hidden="true"></i>{elseif $data_sub.prompt}<i class="ic ic-prompt lead" aria-hidden="true"></i>{/if}{data_sub.text}</a>
+{if $data_sub.expand}			<button type="button" class="btn btn-sm" data-expand="{data_sub.runId}" aria-expanded="false"><i class="ic ic-expand" aria-hidden="true"></i><span>Expand{if $data_sub.lines} {data_sub.lines} lines{/if}</span></button>
 {/if}		</div>
 		<small>{data_sub.small}</small>
 {if $data_sub.prompt}		<p class="step-prompt">{data_sub.prompt}</p>

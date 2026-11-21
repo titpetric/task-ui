@@ -4,7 +4,7 @@
 {foreach $data_findings.shown as $finding}{eval $data_finding = $finding}{include components/pipeline-error.tpl}
 {/foreach}	</ul>
 {if $data_findings.rest}	<details class="pipeline-more">
-		<summary><svg class="ic chev"><use href="#i-chev"/></svg>Show {data_findings.rest} more</summary>
+		<summary><i class="ic ic-chev chev" aria-hidden="true"></i>Show {data_findings.rest} more</summary>
 		<ul class="pipeline-errors">
 {foreach $data_findings.more as $finding}{eval $data_finding = $finding}{include components/pipeline-error.tpl}
 {/foreach}		</ul>
