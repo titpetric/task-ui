@@ -404,13 +404,13 @@ class Work {
 		return $seconds * 1000 + $ms;
 	}
 
-	/** progress is the last text a live run printed, which its answer shows in place. */
+	/** progress is the last text a live run printed, as its source, which its answer renders. */
 	static function progress($events) {
 		$out = "";
 
 		foreach ($events as $event) {
-			if ($event["kind"] === "text" && trim($event["prose"]) !== "") {
-				$out = $event["prose"];
+			if ($event["kind"] === "text" && trim($event["body"]) !== "") {
+				$out = $event["body"];
 			}
 		}
 
