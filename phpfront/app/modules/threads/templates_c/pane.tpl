@@ -219,15 +219,7 @@
 "<?php }?> aria-label="<?php echo htmlspecialchars($_v['data_markdown']['label'], ENT_QUOTES);?>
 "></textarea>
 		<div class="composer-foot">
-<?php if($_v['data_composer']['modes']){?>
-			<div class="composer-modes" role="group" aria-label="What to send">
-<?php if(!empty($_v['data_composer']['modes']))foreach($_v['data_composer']['modes'] as $_v['mode']){?>				<button type="button" class="btn btn-sm" data-composer-mode="<?php echo htmlspecialchars($_v['mode']['key'], ENT_QUOTES);?>
-" aria-pressed="<?php if($_v['mode']['key'] == $_v['data_composer']['mode']){?>
-true<?php }else{?>
-false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
-</button>
-<?php }?>			</div>
-<?php }?><?php if($_v['data_composer']['agents']){?>
+<?php if($_v['data_composer']['agents']){?>
 			<label class="composer-field" data-composer-agent>Agent
 				<select name="agent" aria-label="Answers as"><?php if(!empty($_v['data_composer']['agents']))foreach($_v['data_composer']['agents'] as $_v['name']){?><option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
 "<?php if($_v['name'] == $_v['data_composer']['agent']){?>
@@ -244,9 +236,11 @@ false<?php }?>"><?php echo htmlspecialchars($_v['mode']['label'], ENT_QUOTES);?>
 <?php }?>			</label>
 <?php }?>			<span class="composer-space"></span>
 <?php if($_v['data_composer']['mic']){?>
-			<button class="btn btn-icon" type="button" data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
+			<button class="btn btn-icon" type="button"<?php if($_v['data_composer']['parent']){?>
+ data-voice-reply data-parent="<?php echo htmlspecialchars($_v['data_composer']['parent'], ENT_QUOTES);?>
 " data-channel="<?php echo htmlspecialchars($_v['data_composer']['channel'], ENT_QUOTES);?>
-" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
+" title="Record a message" aria-label="Record a message"<?php }else{?>
+ data-voice-draft title="Record a prompt and transcribe it" aria-label="Record a prompt and transcribe it"<?php }?>><i class="ic ic-mic" aria-hidden="true"></i></button>
 <?php }?>			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>

@@ -31,31 +31,38 @@ class Composer {
 		]);
 	}
 
-	/** places is the folders a prompt may name, as the pickers list them. */
+	/** places is the workspaces and projects a prompt may name, as the picker lists them. */
 	static function places($chrome) {
-		$places = [];
+		$seen = [];
 
 		foreach ($chrome->folders() as $folder) {
-			$places[] = Row::text($folder, "id");
+			$seen[Row::text($folder, "id")] = true;
+		}
+
+		$places = [];
+		$workspaces = new Workspace($chrome->db);
+		$projects = new Project($chrome->db);
+
+		foreach (array_merge($workspaces->folders(), $projects->folders()) as $folder) {
+			if (isset($seen[$folder]) && !in_array($folder, $places, true)) {
+				$places[] = $folder;
+			}
 		}
 
 		return $places;
 	}
 
-	/** blank is the Threads box that starts a thread, asking by default. */
+	/** blank is the Threads box that starts a thread: one prompt, an agent, a place and a microphone. */
 	static function blank($chrome, $agent) {
 		$agents = Prompt::agents($chrome);
 
 		return self::scope(self::ASK, Prompt::field("what should we work on?"), [
 			"places" => self::places($chrome),
-			"modes" => [
-				["key" => self::ASK, "label" => "Ask Claude"],
-				["key" => self::NOTE, "label" => "Note"],
-			],
 			"agents" => $agents["names"],
 			"agent" => $agent === "" ? $agents["current"] : $agent,
 			"folder" => Route::INTERNAL,
 			"show_place" => true,
+			"mic" => true,
 			"origin" => "threads",
 		]);
 	}

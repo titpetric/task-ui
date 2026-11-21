@@ -4420,7 +4420,7 @@
   // field, where it offers one, names the folder and the directory in one.
   function composerPayload(form) {
     var out = {};
-    ["parent", "channel", "folder", "dir", "run", "area", "origin", "agent", "user"].forEach(function (name) {
+    ["parent", "channel", "folder", "dir", "run", "area", "origin", "agent", "user", "audio"].forEach(function (name) {
       var field = form.elements[name];
       if (field && field.value) out[name] = field.value;
     });
@@ -4436,29 +4436,6 @@
   function composerMode(form) {
     return form.dataset.send || "note";
   }
-
-  document.addEventListener("click", function (event) {
-    var button = event.target.closest("[data-composer-mode]");
-    if (!button) return;
-    var form = button.closest("form[data-send]");
-    if (!form) return;
-    var mode = button.dataset.composerMode;
-    form.dataset.send = mode;
-    form.querySelectorAll("[data-composer-mode]").forEach(function (el) {
-      el.setAttribute("aria-pressed", el === button ? "true" : "false");
-    });
-    var ask = mode === "ask";
-    form.querySelectorAll("[data-composer-agent], [data-composer-place]").forEach(function (el) {
-      el.hidden = !ask;
-    });
-    var textarea = form.elements.body;
-    if (textarea) {
-      if (ask) textarea.removeAttribute("data-mentions");
-      else textarea.setAttribute("data-mentions", "");
-      textarea.setAttribute("placeholder", ask ? "what should we work on?" : "a note to someone, @name to point at them");
-      textarea.setAttribute("aria-label", ask ? "The prompt" : "The note");
-    }
-  });
 
   // Enter sends a message and Shift+Enter writes a new line, as every chat
   // box does; a composing input keeps its Enter for the candidate list.
@@ -4534,6 +4511,34 @@
     if (!button) return;
     event.preventDefault();
     if (window.taskUI.voice) window.taskUI.voice.reply(button.dataset.parent || "", button.dataset.channel || "");
+  });
+
+  // The new-thread microphone drafts a prompt: the words and the clip come
+  // back together, and the reader edits either before Send.
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-voice-draft]");
+    if (!button) return;
+    event.preventDefault();
+    var form = button.closest("form[data-send]");
+    if (!form || !window.taskUI.voice || !window.taskUI.voice.draft) return;
+    window.taskUI.voice.draft(function (res) {
+      var body = form.elements.body;
+      if (body && res.text) {
+        body.value = res.text;
+        if (body.mdeditor) body.mdeditor.value = res.text;
+        body.dispatchEvent(new Event("input", { bubbles: true }));
+        syncEditors(form);
+      }
+      if (!res.audio) return;
+      var audio = form.querySelector("input[name=audio]");
+      if (!audio) {
+        audio = document.createElement("input");
+        audio.type = "hidden";
+        audio.name = "audio";
+        form.appendChild(audio);
+      }
+      audio.value = res.audio;
+    });
   });
   // ------------------------------------------------------- forms in a note
 

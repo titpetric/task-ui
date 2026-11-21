@@ -87,14 +87,10 @@ class Prompt {
 	 * mentions are the board's, where a note is written to someone.
 	 */
 	static function field($placeholder) {
-		return [
-			"name" => "body",
-			"rows" => 3,
-			"label" => "The prompt",
-			"placeholder" => $placeholder,
-			"mentions" => false,
-			"toolbar" => "inline",
-		];
+		$field = Note::field();
+		$field["placeholder"] = $placeholder;
+
+		return $field;
 	}
 
 	/** agents is the users a box offers to answer as, by name, the first the default. */

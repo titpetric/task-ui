@@ -5,7 +5,6 @@ Input scope: `data_composer`, from `Task\Composer`.
 | Field | Meaning |
 |-------|---------|
 | `mode` | what Send posts: `ask`, `note` or `chat` |
-| `modes` | the modes a reader may switch to, each `key` and `label` |
 | `editor` | the markdown field, as `components/editor.tpl` reads it |
 | `agents`, `agent` | who may answer, and who does |
 | `show_place` | whether the box has a folder to ask in |
@@ -13,7 +12,7 @@ Input scope: `data_composer`, from `Task\Composer`.
 | `parent` | the thread a message replies in |
 | `channel` | a chat's channel |
 | `folder`, `dir`, `run`, `area`, `origin` | where the message belongs |
-| `mic` | whether the box has a record button |
+| `mic` | whether the box has a record button, which replies in a thread and drafts a new one |
 | `pane` | whether the box sits in the Threads pane |
 | `url` | where an `ask` posts, the prompt endpoint unless the page names one |
 | `next` | where a page goes once the message is sent |

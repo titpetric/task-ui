@@ -199,6 +199,7 @@
   var chatWith = "";    // the user a chat session talks to, empty for none
   var replyTo = "";     // the thread the reply box opened the window for
   var replyChannel = ""; // notes or chat, the channel of that reply
+  var draftTo = null;   // a composer waiting for the words of a draft recording
   var stamp = "";       // the clip the session opened on, which names its audio
   var played = 0;       // how many answers of the thread have been played
   var source = null;    // the event stream the thread is followed over
@@ -545,6 +546,19 @@
   // where the transcriber heard none and on a failure, which drops the
   // instance's transcriber for this page: the session is asked to read the
   // recording instead, as it is for a device that cannot.
+  // draftPost sends a whole clip and answers with its words and the path it was kept at.
+  function draftPost(clip) {
+    return fetch("/api/voice/draft", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "audio/wav", Accept: "application/json" },
+      body: clip,
+    }).then(function (res) {
+      if (!res.ok) throw new Error("the recording was not read");
+      return res.json();
+    });
+  }
+
   function post(clip) {
     flight = true;
     return fetch("/api/voice/transcribe", {
@@ -1313,6 +1327,7 @@
     chatWith = "";
     replyTo = "";
     replyChannel = "";
+    draftTo = null;
     stamp = "";
     played = 0;
     holding = "";
@@ -1400,6 +1415,26 @@
     quiet();
     release();
     dress();
+    if (draftTo) {
+      var waiting = draftTo;
+      var clip = wav();
+      draftTo = null;
+      transcribing = false;
+      stopped();
+      if (!clip) {
+        waiting({ text: text || "", audio: "" });
+        trash();
+        return;
+      }
+      draftPost(clip).then(function (res) {
+        waiting({ text: res.text || "", audio: res.audio || "" });
+        trash();
+      }).catch(function () {
+        waiting({ text: text || "", audio: "" });
+        trash();
+      });
+      return;
+    }
     // The counter runs while the recording is being read: on a machine
     // where the model costs more than the clip this is the wait, and a
     // line that does not move reads as stuck.
@@ -1814,6 +1849,15 @@
     record();
   }
 
+  // draft opens the window to record a prompt for a composer, which takes the
+  // words and the clip back once the recording ends.
+  function draft(callback) {
+    if (!canRecord) return;
+    open();
+    draftTo = callback;
+    record();
+  }
+
   // follow watches the thread for as long as the window is open, so a reply
   // Claude writes after the work it started finishes reaches the window on
   // its own. It is one stream for the session.
@@ -2182,6 +2226,7 @@
   window.taskUI.voice = {
     openThread: openThread,
     reply: replyIn,
+    draft: draft,
     activeThread: function () { return thread; },
   };
   stage.addEventListener("click", function () {

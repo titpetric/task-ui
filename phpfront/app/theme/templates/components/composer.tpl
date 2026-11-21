@@ -9,10 +9,7 @@
 {/if}	<div class="composer-box">
 		{eval $data_markdown = $data_composer.editor}{include components/editor.tpl}
 		<div class="composer-foot">
-{if $data_composer.modes}			<div class="composer-modes" role="group" aria-label="What to send">
-{foreach $data_composer.modes as $mode}				<button type="button" class="btn btn-sm" data-composer-mode="{mode.key}" aria-pressed="{if $mode.key == $data_composer.mode}true{else}false{/if}">{mode.label}</button>
-{/foreach}			</div>
-{/if}{if $data_composer.agents}			<label class="composer-field" data-composer-agent>Agent
+{if $data_composer.agents}			<label class="composer-field" data-composer-agent>Agent
 				<select name="agent" aria-label="Answers as">{foreach $data_composer.agents as $name}<option value="{name}"{if $name == $data_composer.agent} selected{/if}>{name}</option>{/foreach}</select>
 			</label>
 {/if}{if $data_composer.show_place}			<label class="composer-field" data-composer-place>In
@@ -20,7 +17,7 @@
 {if $data_composer.places}				<datalist id="composer-places">{foreach $data_composer.places as $place}<option value="{place}">{/foreach}</datalist>
 {/if}			</label>
 {/if}			<span class="composer-space"></span>
-{if $data_composer.mic}			<button class="btn btn-icon" type="button" data-voice-reply data-parent="{data_composer.parent}" data-channel="{data_composer.channel}" title="Record a message" aria-label="Record a message"><i class="ic ic-mic" aria-hidden="true"></i></button>
+{if $data_composer.mic}			<button class="btn btn-icon" type="button"{if $data_composer.parent} data-voice-reply data-parent="{data_composer.parent}" data-channel="{data_composer.channel}" title="Record a message" aria-label="Record a message"{else} data-voice-draft title="Record a prompt and transcribe it" aria-label="Record a prompt and transcribe it"{/if}><i class="ic ic-mic" aria-hidden="true"></i></button>
 {/if}			<button class="btn btn-primary" type="submit" title="Enter sends, Shift+Enter adds a line">Send</button>
 		</div>
 	</div>
