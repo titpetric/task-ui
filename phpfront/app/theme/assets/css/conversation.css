@@ -701,8 +701,14 @@ body:has(.chat-shell) aside.rail {
 
   & .mdedit__surface {
     border: 0;
+    border-radius: 0;
     background: transparent;
+    outline: 0;
     resize: none;
+
+    &:focus {
+      outline: 0;
+    }
   }
 
   & :is(.btn, .btn-icon, button) {
