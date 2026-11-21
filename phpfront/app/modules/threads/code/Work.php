@@ -30,6 +30,8 @@ class Work {
 
 		foreach ($runs as $key => $run) {
 			$runs[$key]["stats"] = self::stats($run["events"]);
+			$runs[$key]["tools"] = self::tools($run["events"]);
+			$runs[$key]["progress"] = self::progress($run["events"]);
 			$runs[$key]["status"] = self::status($run["events"]);
 			$runs[$key]["agents"] = self::agents($run["events"]);
 			$runs[$key]["events"] = self::withoutStatus($run["events"]);
@@ -50,6 +52,8 @@ class Work {
 			"short" => substr($id, 0, 8),
 			"events" => [],
 			"stats" => "",
+			"tools" => 0,
+			"progress" => "",
 			"status" => [
 				"body" => "",
 				"state" => "",
@@ -86,6 +90,11 @@ class Work {
 			}
 		}
 
+		foreach ($out as $index => $agent) {
+			$out[$index]["className"] = "status-agent " . $agent["state"];
+			$out[$index]["badge"] = $agent["state"] === "working" ? "badge signal" : ($agent["state"] === "failed" ? "badge bad" : "badge ok");
+		}
+
 		return $out;
 	}
 
@@ -95,6 +104,7 @@ class Work {
 	 */
 	static function stats($events) {
 		$tools = 0;
+		$final = false;
 		$parts = [];
 
 		foreach ($events as $event) {
@@ -105,6 +115,8 @@ class Work {
 			if ($event["kind"] !== "result") {
 				continue;
 			}
+
+			$final = true;
 
 			if (!empty($event["input"])) {
 				$parts[] = self::size($event["input"]) . " in";
@@ -123,11 +135,88 @@ class Work {
 			}
 		}
 
-		if ($tools > 0) {
+		if ($tools > 0 || !$final) {
 			$parts[] = $tools . ($tools === 1 ? " tool call" : " tool calls");
 		}
 
 		return implode(", ", $parts);
+	}
+
+	/** tools is how many tool calls a run made. */
+	static function tools($events) {
+		$tools = 0;
+
+		foreach ($events as $event) {
+			if ($event["kind"] === "tool_use") {
+				$tools++;
+			}
+		}
+
+		return $tools;
+	}
+
+	/** progress is the last text a live run printed, which its answer shows in place. */
+	static function progress($events) {
+		$out = "";
+
+		foreach ($events as $event) {
+			if ($event["kind"] === "text" && trim($event["prose"]) !== "") {
+				$out = $event["prose"];
+			}
+		}
+
+		return self::cut($out);
+	}
+
+	/** usage is what a thread read and wrote across every run, and how many tools it called. */
+	static function usage($events) {
+		$tools = 0;
+		$input = 0;
+		$cached = 0;
+		$output = 0;
+		$cost = 0;
+
+		foreach ($events as $event) {
+			if ($event["kind"] === "tool_use") {
+				$tools++;
+			}
+
+			if ($event["kind"] !== "result") {
+				continue;
+			}
+
+			$input += (int)$event["input"];
+			$cached += (int)$event["cached"];
+			$output += (int)$event["output"];
+			$cost += (float)$event["cost"];
+		}
+
+		$tokens = $input + $cached;
+		$parts = [];
+
+		if ($tokens > 0) {
+			$parts[] = self::size($tokens) . " context";
+		}
+
+		if ($output > 0) {
+			$parts[] = self::size($output) . " out";
+		}
+
+		if ($tools > 0) {
+			$parts[] = $tools . ($tools === 1 ? " tool call" : " tool calls");
+		}
+
+		if ($cost > 0) {
+			$parts[] = "$" . number_format($cost, 2);
+		}
+
+		return [
+			"tools" => $tools,
+			"tokens" => $tokens,
+			"output" => $output,
+			"cost" => $cost,
+			"label" => implode(", ", $parts),
+		];
 	}
 
 	/** size is a token count as a reader scans it. */

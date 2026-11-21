@@ -38,7 +38,9 @@ class Conversation {
 		$replies = $store->replies([$note->getId()]);
 		$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
 		$title = self::title($note, $under);
-		$work = Work::byQuestion($store->events($note->getId()), $chrome);
+		$events = $store->events($note->getId());
+		$work = Work::byQuestion($events, $chrome);
+		$usage = Work::usage($events);
 		$users = new \Task\User;
 		$agentNames = [];
 
@@ -55,9 +57,9 @@ class Conversation {
 		$menu = self::menu($note, $chrome);
 		$pick = !$chat && count($agentNames) > 0 && $note->getState() !== \Task\Note::WORKING && ($chrome->name() === $note->getUserName() || \Task\User::admin($chrome->user));
 		$head = new \Task\Head($title);
-
 		$head->menu($menu->data());
 		$seen = new \Task\Seen($chrome);
+		$status = self::status($note, $work, $chrome, $under);
 
 		$pane = [
 			"id" => $note->getId(),
@@ -67,18 +69,19 @@ class Conversation {
 				"id" => $note->getId(),
 				"title" => $title,
 				"meta" => self::meta($note, $agent, $chat),
+				"usage" => $usage["label"],
 				"agents" => $agentNames,
 				"agent" => $agent,
 				"can_pick" => $pick,
 				"menu" => $menu->data(),
 			],
-			"status" => self::status($note, $work, $chrome, $under),
+			"status" => $status,
 			"split" => $split,
 			"channel" => $note->getChannel(),
 			"chat_thread" => $chat,
 			"prompt" => $prompt,
 			"last_event" => $store->lastEvent($note->getId()),
-			"messages" => Talk::messages($note, $under, $chrome, $seen, $work, self::answers($note, $under, $work)),
+			"messages" => Talk::messages($note, $under, $chrome, $seen, $work, self::answers($note, $under, $work), $status),
 			"agent" => $agent,
 			"agent_names" => $agentNames,
 			"pick_agent" => $pick,
@@ -234,7 +237,6 @@ class Conversation {
 	/** menu is the thread's own actions: a thread is deleted, never rewritten. */
 	static function menu($note, $chrome) {
 		$menu = new \Task\Menu("Actions on this thread");
-
 		$menu->whenDanger(\Task\Note::deletes($note, $chrome) && $note->getState() !== \Task\Note::WORKING, "trash", "Delete", [
 			"data-delete" => "/api/notes/" . $note->getId(),
 			"data-confirm" => "Delete this thread and every message in it? It leaves every listing; nobody reads it again.",

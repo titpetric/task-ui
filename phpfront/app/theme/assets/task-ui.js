@@ -5153,38 +5153,18 @@
       if (!hosts.length) return;
       var buttons = inventoryRun.querySelectorAll("button[type=submit]");
       buttons.forEach(function (button) { button.disabled = true; });
-      // Each host's run is a run of @host:<host>, under one batch: the page
-      // shows the batch, the user's last, as it loads.
+      // Each host's run is a run of @host:<host>, under one batch, which the
+      // Runs page lists.
       api("POST", "/api/inventory/run", { command: inventoryRun.elements.command.value, hosts: hosts, summarize: summarize }).then(function (res) {
         buttons.forEach(function (button) { button.disabled = false; });
         if (res.status >= 300) {
           results.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
           return;
         }
-        window.location.reload();
+        var batch = res.data && res.data.batch;
+        window.location.assign(mount() + "/runs" + (batch ? "?batch=" + encodeURIComponent(batch) : ""));
       });
     });
-    // While a run of the batch runs, the page fetches itself and puts
-    // the batch back, the outputs of the runs that ended read from
-    // their recordings.
-    var followBatch = function () {
-      if (!results.querySelector("[data-batch-live]")) return;
-      setTimeout(function () {
-        if (document.hidden) return followBatch();
-        fetch(location.pathname, { credentials: "same-origin" })
-          .then(function (res) { return res.ok ? res.text() : null; })
-          .then(function (text) {
-            var fresh = text && new DOMParser().parseFromString(text, "text/html").querySelector("[data-inventory-results]");
-            if (fresh) {
-              results.innerHTML = fresh.innerHTML;
-              readOutputs(results);
-            }
-            followBatch();
-          })
-          .catch(followBatch);
-      }, 2000);
-    };
-    followBatch();
   }
 
   // The inventory's hosts refresh once a minute, the rate task-ui reads
@@ -6313,10 +6293,14 @@
       if (t.run_id) owned[t.run_id] = true;
     });
     var entries = runs.filter(function (r) { return !r.parent_id && !owned[r.id] && !isPromptRun(r) && !isNoteRun(r); })
-      .map(function (r) { return { run: r, at: r.started_at || "", children: children[r.id] || 0 }; })
-      .concat((threads || []).map(function (t) { return { thread: t, at: t.last_at || t.created_at || "" }; }))
-      .concat((flows || []).map(function (f) { return { flow: f, at: f.started_at || "" }; }));
-    entries.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+      .map(function (r) { return { run: r, at: r.updated_at || r.started_at || "", live: r.state === "running", children: children[r.id] || 0 }; })
+      .concat((threads || []).map(function (t) { return { thread: t, at: t.updated_at || t.last_at || t.created_at || "", live: t.state === "working" }; }))
+      .concat((flows || []).map(function (f) { return { flow: f, at: f.updated_at || f.started_at || "", live: f.state === "running" }; }));
+    // What is working now goes first; the rest by the last time any of it moved.
+    entries.sort(function (a, b) {
+      if (!!a.live !== !!b.live) return a.live ? -1 : 1;
+      return a.at < b.at ? 1 : a.at > b.at ? -1 : 0;
+    });
     entries = entries.slice(0, 50);
     if (!entries.length) {
       recents.innerHTML = '<div class="empty">Runs started by anyone show up here.</div>';
@@ -6393,8 +6377,9 @@
         '<i class="dot ' + escapeHTML(dot) + '"></i>' +
         '<span class="what"><b>' + escapeHTML(threadLabel(t)) + '</b><small>' +
         iconHTML(t.workspace_id ? "prompt" : "note") + escapeHTML(t.dir || "board") + '</small></span>' +
-        (t.messages ? '<span class="badge" title="Replies">' + t.messages + "</span>" : "") +
-        (t.state === "working" || t.state === "open" ? '<i class="ic ic-eye act" aria-hidden="true"></i>' : "") +
+        (t.messages ? '<span class="badge" title="' + t.messages + ' replies">' + t.messages + "</span>" : "") +
+        (t.tokens ? '<span class="recent-ctx" title="Context: ' + t.tokens + ' tokens">' + tokenLabel(t.tokens) + "</span>" : "") +
+        (t.state === "working" ? '<i class="ic ic-pulse act live" title="Claude is working" aria-label="Working"></i>' : (t.state === "open" ? '<i class="ic ic-eye act" aria-hidden="true"></i>' : "")) +
         avatarHTML(t.user_name) + "</a>";
     }
     if (e.flow) {
@@ -6415,6 +6400,13 @@
       (e.children ? '<span class="badge" title="Runs it started">' + e.children + "</span>" : "") +
       (running ? '<i class="ic ic-' + (r.can_run ? "play" : "eye") + ' act" aria-hidden="true"></i>' : "") +
       avatarHTML(r.user_name) + "</a>";
+  }
+
+  // tokenLabel is a token count as the rail scans it: 950, 1.2k, 3.4M.
+  function tokenLabel(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "k";
+    return String(n);
   }
 
   // threadLabel is what the rail calls a thread: the first line of what was asked.

@@ -17,18 +17,35 @@ class Timeline {
 	const VOICE = "voice";
 
 	/** row is one thread as components/thread-row.tpl reads it. */
-	static function row($note, $replies, $chrome, $seen = null, $selectedID = "") {
+	static function row($note, $replies, $chrome, $seen = null, $selectedID = "", $usage = null) {
 		$id = $note->getId();
 		$run = $note->getRunId();
+		$selected = $id === $selectedID;
+		$unread = 0;
+		$classes = ["thread-row"];
 
 		if ($seen !== null && !$seen->run($run)) {
 			$run = "";
 		}
 
+		if ($note->getState() !== "") {
+			$classes[] = $note->getState();
+		}
+
+		if ($unread) {
+			$classes[] = "unread";
+		}
+
+		if ($selected) {
+			$classes[] = "selected";
+		}
+
 		$at = self::lastAt($note, $replies);
+		$count = count($replies) - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0);
 
 		return [
 			"id" => $id,
+			"className" => implode(" ", $classes),
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($id)),
 			"kind" => self::kind($note),
 			"person" => $chrome->who()->of($note->getUserName()),
@@ -41,10 +58,15 @@ class Timeline {
 			"can_end" => $run !== "" && $note->getState() === \Task\Note::WORKING && self::ends($chrome, $run),
 			"ago" => \Task\Clock::ago($at),
 			"stamp" => \Task\Clock::read($at),
-			"messages" => count($replies) + 1 - (isset($replies[0]) && Talk::joins($note, $replies[0]) ? 1 : 0),
+			"messages" => $count + 1,
+			"replies" => $count,
+			"tools" => is_array($usage) ? (int)($usage["tools"] ?? 0) : 0,
+			"tokens" => is_array($usage) ? (int)($usage["tokens"] ?? 0) : 0,
+			"cost" => is_array($usage) && (float)($usage["cost"] ?? 0) > 0 ? "$" . number_format((float)$usage["cost"], 2) : "",
+			"context" => self::context($usage),
 			"heard" => self::heard($note, $replies),
-			"unread" => 0,
-			"selected" => $id === $selectedID,
+			"unread" => $unread,
+			"selected" => $selected,
 		];
 	}
 
@@ -60,9 +82,19 @@ class Timeline {
 	/** chat is one chat thread as components/thread-row.tpl reads it. */
 	static function chat($row, $chrome, $selectedID = "") {
 		$said = $row["last_spoken"] !== "" ? $row["last_spoken"] : $row["last_body"];
+		$classes = ["thread-row"];
+
+		if ((int)$row["unread"] > 0) {
+			$classes[] = "unread";
+		}
+
+		if ($row["id"] === $selectedID) {
+			$classes[] = "selected";
+		}
 
 		return [
 			"id" => $row["id"],
+			"className" => implode(" ", $classes),
 			"href" => \Task\Route::href("/threads/" . \Task\Route::pathEscape($row["id"])),
 			"kind" => "chat",
 			"person" => $chrome->who()->of($row["peer"]),
@@ -74,12 +106,20 @@ class Timeline {
 			"short" => "",
 			"can_end" => false,
 			"messages" => 0,
+			"replies" => 0,
 			"ago" => \Task\Clock::ago($row["last_at"]),
 			"stamp" => \Task\Clock::read($row["last_at"]),
 			"heard" => $row["last_audio_path"] !== "",
 			"unread" => (int)$row["unread"],
 			"selected" => $row["id"] === $selectedID,
 		];
+	}
+
+	/** context is the share of the context window a thread used, as a row scans it. */
+	static function context($usage) {
+		$tokens = is_array($usage) ? (int)($usage["tokens"] ?? 0) : 0;
+
+		return $tokens > 0 ? Work::size($tokens) . " ctx" : "";
 	}
 
 	/** ends reports whether the reader may stop the run behind a working thread. */

@@ -26,7 +26,7 @@ class Talk {
 	 * docs/guide/voice.md tells the session to write. The row does not hold
 	 * it, so the folder is listed once and the answers take what is there.
 	 */
-	static function messages($note, $replies, $chrome, $seen = null, $work = [], $answers = []) {
+	static function messages($note, $replies, $chrome, $seen = null, $work = [], $answers = [], $status = []) {
 		$out = [self::message($note, $chrome, $seen)];
 		$spoken = self::spokenFor($note, count($replies));
 		$at = 0;
@@ -35,6 +35,7 @@ class Talk {
 			$at = $at + 1;
 			$said = self::message($reply, $chrome, $seen);
 			$said["agent"] = $said["agent"] || in_array($reply->getId(), $answers, true);
+			$said["className"] = self::className($said["mine"], $said["agent"], $said["working"]);
 
 			if ($said["audio"] === "" && isset($spoken[$at])) {
 				$said["audio"] = $spoken[$at];
@@ -50,7 +51,7 @@ class Talk {
 		}
 
 		self::hand($out, $answers);
-		self::attach($out, $work, $answers);
+		self::attach($out, $work, $answers, $status);
 
 		return $out;
 	}
@@ -65,12 +66,13 @@ class Talk {
 				$out[$index]["working"] = false;
 				$out[$index]["run"] = "";
 				$out[$index]["short"] = "";
+				$out[$index]["className"] = self::className($message["mine"], $message["agent"], false);
 			}
 		}
 	}
 
-	/** attach puts each run's work under the answer it wrote, or the question. */
-	static function attach(&$out, $work, $answers) {
+	/** attach puts each run's work under the answer it wrote, and a live run's state in its bubble. */
+	static function attach(&$out, $work, $answers, $status = []) {
 		$at = [];
 
 		foreach ($out as $index => $message) {
@@ -88,9 +90,30 @@ class Talk {
 
 				if (isset($at[$id])) {
 					$out[$at[$id]]["work"][] = $run;
+					if ($out[$at[$id]]["working"]) {
+						$out[$at[$id]]["working_view"] = self::live($run, $status);
+					}
 				}
 			}
 		}
+	}
+
+	/** live is a working run as its answer draws it: state, latest text, tools and subagents. */
+	static function live($run, $status) {
+		$label = isset($status["label"]) && $status["label"] !== "" ? $status["label"] : "Working";
+
+		return [
+			"label" => $label,
+			"state" => isset($status["state"]) ? $status["state"] : "working",
+			"started" => isset($status["started"]) ? $status["started"] : "",
+			"run" => $run["id"],
+			"canEnd" => !empty($status["can_end"]),
+			"agents" => $run["agents"],
+			"progress" => $run["progress"],
+			"progressClass" => "said-text prose" . ($run["progress"] === "" ? " faint" : ""),
+			"stats" => $run["stats"],
+			"tools" => $run["tools"],
+		];
 	}
 
 	/** joins reports whether a note and the reply after it are one recording. */
@@ -137,10 +160,32 @@ class Talk {
 		return $out;
 	}
 
+	/** className is the class of a message: whose side it is on, and whether it is being written. */
+	static function className($mine, $agent, $working) {
+		$classes = ["said"];
+
+		if ($mine) {
+			$classes[] = "mine";
+		}
+
+		if ($agent) {
+			$classes[] = "agent";
+		}
+
+		if ($working) {
+			$classes[] = "working";
+		}
+
+		return implode(" ", $classes);
+	}
+
 	/** message is one thing somebody said, as the thread template reads it. */
 	static function message($note, $chrome, $seen = null) {
 		$author = $note->getUserName();
 		$run = $note->getRunId();
+		$mine = $author === $chrome->name();
+		$working = $note->getState() === \Task\Note::WORKING;
+		$agent = $note->getParentId() !== "" && $note->getAgent() !== "";
 
 		if ($seen !== null && !$seen->run($run)) {
 			$run = "";
@@ -148,16 +193,18 @@ class Talk {
 
 		return [
 			"id" => $note->getId(),
-			"mine" => $author === $chrome->name(),
+			"className" => self::className($mine, $agent, $working),
+			"mine" => $mine,
 			"author" => $chrome->who()->of($author),
 			"body" => $chrome->message(self::said($note)),
 			"audio" => self::audio($note),
 			"state" => $note->getState(),
-			"working" => $note->getState() === \Task\Note::WORKING,
-			"agent" => $note->getParentId() !== "" && $note->getAgent() !== "",
+			"working" => $working,
+			"agent" => $agent,
 			"run" => $run,
 			"short" => substr($run, 0, 8),
 			"work" => [],
+			"working_view" => [],
 			"ago" => \Task\Clock::ago($note->getCreatedAt()),
 			"stamp" => \Task\Clock::read($note->getCreatedAt()),
 		];

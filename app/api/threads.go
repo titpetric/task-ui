@@ -81,6 +81,22 @@ func (h *Handlers) listThreads(w http.ResponseWriter, r *http.Request) {
 				kept = append(kept, row)
 			}
 		}
+		if h.opts.Board.NoteEvents != nil && len(kept) > 0 {
+			ids := make([]string, len(kept))
+			for i := range kept {
+				ids[i] = kept[i].ID
+			}
+			usage, err := h.opts.Board.NoteEvents.Usage(r.Context(), ids)
+			if err != nil {
+				failErr(w, err)
+				return
+			}
+			for i := range kept {
+				kept[i].Tools = usage[kept[i].ID].Tools
+				kept[i].Tokens = usage[kept[i].ID].Tokens
+				kept[i].Cost = usage[kept[i].ID].Cost
+			}
+		}
 		out["threads"] = kept
 	}
 	if !feed || notes {

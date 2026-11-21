@@ -10,21 +10,22 @@
 	<div class="conversation-title">
 		<h2><?php echo htmlspecialchars($_v['data_head']['title'], ENT_QUOTES);?>
 </h2>
-<?php if($_v['data_head']['meta']){?>
-		<p class="faint"><?php echo htmlspecialchars($_v['data_head']['meta'], ENT_QUOTES);?>
-</p>
+<?php if($_v['data_head']['meta'] || $_v['data_head']['usage']){?>
+		<p class="faint"><?php echo htmlspecialchars($_v['data_head']['meta'], ENT_QUOTES); if($_v['data_head']['usage']){?>
+ · <span title="What this thread read and wrote"><?php echo htmlspecialchars($_v['data_head']['usage'], ENT_QUOTES);?>
+</span><?php }?></p>
 <?php }?>	</div>
 	<div class="actions">
 <?php if($_v['data_head']['can_pick']){?>
 		<form class="agent-pick" data-agent-form data-thread="<?php echo htmlspecialchars($_v['data_head']['id'], ENT_QUOTES);?>
 ">
 			<label class="faint" for="thread-agent">Agent</label>
-			<select id="thread-agent" name="agent">
+			<span class="agent-select"><select id="thread-agent" name="agent">
 <?php if(!empty($_v['data_head']['agents']))foreach($_v['data_head']['agents'] as $_v['name']){?>				<option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
 "<?php if($_v['name'] == $_v['data_head']['agent']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
 </option>
-<?php }?>			</select>
+<?php }?>			</select></span>
 			<button class="btn" type="submit">Save</button>
 		</form>
 <?php }?>		<?php $_v['data_menu'] = $_v['data_head']['menu']; if(!$_v['data_menu']['empty']){?>
@@ -73,42 +74,6 @@
 	</div>
 </div>
 
-<?php $_v['data_status'] = $_v['data_pane']['status']; if($_v['data_status']['working']){?>
-<div class="conversation-status" data-status data-state="<?php echo htmlspecialchars($_v['data_status']['state'], ENT_QUOTES);?>
-" data-started="<?php echo htmlspecialchars($_v['data_status']['started'], ENT_QUOTES);?>
-">
-	<p aria-live="polite"><i class="dot working"></i> <span data-status-text><?php echo htmlspecialchars($_v['data_status']['label'], ENT_QUOTES);?>
-</span> <span class="faint" data-status-elapsed></span></p>
-<?php if($_v['data_status']['agents']){?>
-	<ul class="status-agents" data-status-agents>
-<?php if(!empty($_v['data_status']['agents']))foreach($_v['data_status']['agents'] as $_v['agent']){?>		<li><details class="status-agent <?php echo htmlspecialchars($_v['agent']['state'], ENT_QUOTES);?>
-" data-agent="<?php echo htmlspecialchars($_v['agent']['id'], ENT_QUOTES);?>
-">
-			<summary><i class="ic ic-users" aria-hidden="true"></i> <span><?php echo htmlspecialchars($_v['agent']['task'], ENT_QUOTES);?>
-</span><?php if($_v['agent']['kind']){?>
- <small class="faint"><?php echo htmlspecialchars($_v['agent']['kind'], ENT_QUOTES);?>
-</small><?php }?> <span class="badge <?php if($_v['agent']['state'] == 'working'){?>
-signal<?php }elseif($_v['agent']['state'] == 'failed'){?>
-bad<?php }else{?>
-ok<?php }?>" data-status-agent-state><?php echo htmlspecialchars($_v['agent']['state'], ENT_QUOTES);?>
-</span></summary>
-<?php if($_v['agent']['prompt']){?>
-			<pre class="status-agent-prompt"><?php echo htmlspecialchars($_v['agent']['prompt'], ENT_QUOTES);?>
-</pre>
-<?php }?><?php if($_v['agent']['result']){?>
-			<pre class="status-agent-result"><?php echo htmlspecialchars($_v['agent']['result'], ENT_QUOTES);?>
-</pre>
-<?php }?>		</details></li>
-<?php }?>	</ul>
-<?php }?><?php if($_v['data_status']['can_end']){?>
-	<div class="actions">
-		<button class="btn-icon" type="button" data-stop="<?php echo htmlspecialchars($_v['data_status']['run'], ENT_QUOTES);?>
-" title="Stop this run and let it settle" aria-label="Stop this run"><i class="ic ic-stop" aria-hidden="true"></i></button>
-		<button class="btn-icon danger" type="button" data-kill="<?php echo htmlspecialchars($_v['data_status']['run'], ENT_QUOTES);?>
-" title="Kill this run and everything it started" aria-label="Kill this run and everything it started"><i class="ic ic-trash" aria-hidden="true"></i></button>
-	</div>
-<?php }?></div>
-<?php }?>
 
 	<ol class="talk" data-talk data-thread="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
 " data-last-event="<?php echo htmlspecialchars($_v['data_pane']['last_event'], ENT_QUOTES);?>
@@ -116,11 +81,9 @@ ok<?php }?>" data-status-agent-state><?php echo htmlspecialchars($_v['agent']['s
  data-chat-thread="<?php echo htmlspecialchars($_v['data_pane']['id'], ENT_QUOTES);?>
 "<?php }?>>
 <?php if(!empty($_v['data_pane']['messages']))foreach($_v['data_pane']['messages'] as $_v['message']){?>		<?php $_v['data_message'] = $_v['message'];?>
-<li class="said<?php if($_v['data_message']['mine']){?>
- mine<?php }?><?php if($_v['data_message']['agent']){?>
- agent<?php }?><?php if($_v['data_message']['working']){?>
- working<?php }?>" id="note-<?php echo htmlspecialchars($_v['data_message']['id'], ENT_QUOTES);?>
-" data-run="<?php echo htmlspecialchars($_v['data_message']['run'], ENT_QUOTES);?>
+<li class="<?php echo htmlspecialchars($_v['data_message']['className'], ENT_QUOTES);?>
+" id="note-<?php echo htmlspecialchars($_v['data_message']['id'], ENT_QUOTES);?>
+" data-run-id="<?php echo htmlspecialchars($_v['data_message']['run'], ENT_QUOTES);?>
 ">
 	<header>
 		<span class="author"><?php $_v['data_user'] = $_v['data_message']['author'];?>
@@ -156,12 +119,47 @@ ok<?php }?>" data-status-agent-state><?php echo htmlspecialchars($_v['agent']['s
 <?php if($_v['data_message']['body']){?>
 	<div class="said-body prose"><?php echo $_v['data_message']['body'];?>
 </div>
-<?php }?><?php if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run']; if($_v['data_work']['stats']){?>
-<div class="work-run" data-run="<?php echo htmlspecialchars($_v['data_work']['id'], ENT_QUOTES);?>
+<?php }?><?php if($_v['data_message']['working']){ $_v['data_working'] = $_v['data_message']['working_view'];?>
+<div class="said-live" data-status data-state="<?php echo htmlspecialchars($_v['data_working']['state'], ENT_QUOTES);?>
+" data-started="<?php echo htmlspecialchars($_v['data_working']['started'], ENT_QUOTES);?>
+">
+	<p class="said-state" aria-live="polite"><i class="dot working"></i> <span data-status-text><?php echo htmlspecialchars($_v['data_working']['label'], ENT_QUOTES);?>
+</span> <span class="faint" data-status-elapsed></span><?php if($_v['data_working']['canEnd']){?>
+<span class="actions"><button class="btn-icon" type="button" data-stop="<?php echo htmlspecialchars($_v['data_working']['run'], ENT_QUOTES);?>
+" title="Stop this run and let it settle" aria-label="Stop this run"><i class="ic ic-stop" aria-hidden="true"></i></button><button class="btn-icon danger" type="button" data-kill="<?php echo htmlspecialchars($_v['data_working']['run'], ENT_QUOTES);?>
+" title="Kill this run and everything it started" aria-label="Kill this run and everything it started"><i class="ic ic-trash" aria-hidden="true"></i></button></span><?php }?></p>
+	<div class="<?php echo htmlspecialchars($_v['data_working']['progressClass'], ENT_QUOTES);?>
+" data-work-progress><?php if($_v['data_working']['progress']){ echo $_v['data_working']['progress']; }?></div>
+<?php if($_v['data_working']['agents']){?>
+	<ul class="status-agents" data-status-agents>
+<?php if(!empty($_v['data_working']['agents']))foreach($_v['data_working']['agents'] as $_v['agent']){?>		<li><details class="<?php echo htmlspecialchars($_v['agent']['className'], ENT_QUOTES);?>
+" data-agent="<?php echo htmlspecialchars($_v['agent']['id'], ENT_QUOTES);?>
+">
+			<summary><i class="ic ic-users" aria-hidden="true"></i> <span><?php echo htmlspecialchars($_v['agent']['task'], ENT_QUOTES);?>
+</span><?php if($_v['agent']['kind']){?>
+ <small class="faint"><?php echo htmlspecialchars($_v['agent']['kind'], ENT_QUOTES);?>
+</small><?php }?> <span class="<?php echo htmlspecialchars($_v['agent']['badge'], ENT_QUOTES);?>
+" data-status-agent-state><?php echo htmlspecialchars($_v['agent']['state'], ENT_QUOTES);?>
+</span></summary>
+<?php if($_v['agent']['prompt']){?>
+			<pre class="status-agent-prompt"><?php echo htmlspecialchars($_v['agent']['prompt'], ENT_QUOTES);?>
+</pre>
+<?php }?><?php if($_v['agent']['result']){?>
+			<pre class="status-agent-result"><?php echo htmlspecialchars($_v['agent']['result'], ENT_QUOTES);?>
+</pre>
+<?php }?>		</details></li>
+<?php }?>	</ul>
+<?php }?>	<p class="said-live-foot"><span class="work-stats" data-work-stats data-tools="<?php echo htmlspecialchars($_v['data_working']['tools'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_working']['stats'], ENT_QUOTES);?>
+</span></p>
+</div>
+
+<?php }else{ if(!empty($_v['data_message']['work']))foreach($_v['data_message']['work'] as $_v['run']){?><?php $_v['data_work'] = $_v['run']; if($_v['data_work']['stats']){?>
+<div class="work-run" data-run-id="<?php echo htmlspecialchars($_v['data_work']['id'], ENT_QUOTES);?>
 ">
 	<div class="work-stats"><?php echo htmlspecialchars($_v['data_work']['stats'], ENT_QUOTES);?>
 </div>
-</div><?php } }?><?php if($_v['data_message']['audio']){?>
+</div><?php } }?><?php }?><?php if($_v['data_message']['audio']){?>
 	<audio class="said-audio" controls preload="none" src="<?php echo htmlspecialchars($_v['data_message']['audio'], ENT_QUOTES);?>
 "></audio>
 <?php }?></li>

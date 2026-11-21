@@ -192,3 +192,13 @@
   height: 0.8rem;
   color: var(--signal);
 }
+
+.recents .act.live {
+  animation: blink 1.6s ease-in-out infinite;
+}
+
+.recents .recent-ctx {
+  color: var(--text-faint);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}

@@ -82,31 +82,9 @@
     return Math.floor(seconds / 3600) + "h" + String(Math.floor(seconds / 60) % 60).padStart(2, "0") + "m";
   }
 
-  // statusLine is the pinned line above the conversation, made where the page
-  // opened on a run that had not reported one yet.
+  // statusLine is the state block of the answer that is still being written.
   function statusLine() {
-    var found = document.querySelector("[data-status]");
-    if (found) {
-      return found;
-    }
-    var talk = document.querySelector(".talk[data-thread]");
-    var head = document.querySelector(".conversation-head");
-    if (!talk || !head) {
-      return null;
-    }
-    var line = node("div", "conversation-status");
-    line.dataset.status = "";
-    var said = node("p");
-    said.setAttribute("aria-live", "polite");
-    said.appendChild(node("i", "dot working"));
-    said.appendChild(node("span", "", "Working"));
-    said.lastChild.dataset.statusText = "";
-    var clock = node("span", "faint");
-    clock.dataset.statusElapsed = "";
-    said.appendChild(clock);
-    line.appendChild(said);
-    head.parentNode.insertBefore(line, head.nextSibling);
-    return line;
+    return document.querySelector(".said-live[data-status]");
   }
 
   function setStatus(event) {
@@ -126,9 +104,9 @@
   }
 
   function tickStatus() {
-    var elapsedText = document.querySelector("[data-status-elapsed]");
-    var line = document.querySelector("[data-status]");
-    if (elapsedText && line) {
+    var line = statusLine();
+    var elapsedText = line && line.querySelector("[data-status-elapsed]");
+    if (elapsedText) {
       elapsedText.textContent = elapsed(line.dataset.started);
     }
   }
@@ -143,7 +121,7 @@
     if (!list) {
       list = node("ul", "status-agents");
       list.dataset.statusAgents = "";
-      line.insertBefore(list, line.querySelector(".actions"));
+      line.insertBefore(list, line.querySelector(".said-live-foot"));
     }
     return list;
   }
@@ -202,6 +180,38 @@
     if (event.body) {
       box.appendChild(node("pre", "status-agent-result", event.body));
     }
+  }
+
+  // liveBox is the answer of the thread that is still being written.
+  function liveBox() {
+    var text = document.querySelector("[data-work-progress]");
+    return text ? text.closest(".said") : null;
+  }
+
+  // addProgress puts the text a live run last printed in its answer, in place of the one before.
+  function addProgress(event) {
+    var box = liveBox();
+    var text = box && box.querySelector("[data-work-progress]");
+    if (!text || !event.body) {
+      return;
+    }
+    text.classList.remove("faint");
+    text.textContent = event.body;
+    if (nearBottom()) {
+      scrollEnd();
+    }
+  }
+
+  // addTool counts a tool call into the live answer's stats.
+  function addTool() {
+    var box = liveBox();
+    var stats = box && box.querySelector("[data-work-stats]");
+    if (!stats) {
+      return;
+    }
+    var count = Number(stats.dataset.tools || 0) + 1;
+    stats.dataset.tools = String(count);
+    stats.textContent = count + (count === 1 ? " tool call" : " tool calls");
   }
 
   function mark(note) {
@@ -282,8 +292,15 @@
         setStatus(data);
         return;
       }
-      if (data.kind === "tool_use" && (data.tool === "Task" || data.tool === "Agent")) {
-        addAgent(data);
+      if (data.kind === "text") {
+        addProgress(data);
+        return;
+      }
+      if (data.kind === "tool_use") {
+        addTool();
+        if (data.tool === "Task" || data.tool === "Agent") {
+          addAgent(data);
+        }
       }
       if (data.kind === "tool_result") {
         settleAgent(data);
@@ -304,7 +321,7 @@
         queueReload();
       }
       // A run that started after the page drew its line gives the line its actions.
-      if (note.id === current && note.state === "working" && !document.querySelector(".conversation-status .actions")) {
+      if (note.id === current && note.state === "working" && !document.querySelector(".said-live .actions")) {
         queueReload();
       }
       if (note.state === "done" || note.state === "failed" || note.state === "killed" || note.state === "stopped") {
@@ -360,7 +377,7 @@
       return;
     }
     var head = pane && pane.querySelector(".conversation-title h2");
-    var working = pane && pane.querySelector(".conversation-status") ? "Working · " : "";
+    var working = pane && pane.querySelector(".said-live") ? "Working · " : "";
     var at = pageTitle.indexOf(" | ");
     if (head) {
       document.title = working + head.textContent.trim() + (at < 0 ? "" : pageTitle.slice(at));

@@ -1,8 +1,6 @@
 <?php $_v=&$this->vars;?>
-<li class="thread-row<?php if($_v['data_row']['state']){?>
- <?php echo htmlspecialchars($_v['data_row']['state'], ENT_QUOTES); }?><?php if($_v['data_row']['unread']){?>
- unread<?php }?><?php if($_v['data_row']['selected']){?>
- selected<?php }?>">
+<li class="<?php echo htmlspecialchars($_v['data_row']['className'], ENT_QUOTES);?>
+">
 	<a class="thread-open" href="<?php echo htmlspecialchars($_v['data_row']['href'], ENT_QUOTES);?>
 " data-thread-id="<?php echo htmlspecialchars($_v['data_row']['id'], ENT_QUOTES);?>
 "<?php if($_v['data_row']['selected']){?>
@@ -21,10 +19,13 @@ note<?php }?> thread-kind" role="img" aria-label="<?php echo htmlspecialchars($_
 			<?php if($_v['data_row']['place']){?>
 <span class="faint mono thread-place"><?php echo htmlspecialchars($_v['data_row']['place'], ENT_QUOTES);?>
 </span><?php }?>
-			<?php if($_v['data_row']['messages'] > 1 && !$_v['data_row']['can_end']){?>
-<span class="faint thread-count" title="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
- messages" aria-label="<?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
- messages"><?php echo htmlspecialchars($_v['data_row']['messages'], ENT_QUOTES);?>
+			<?php if($_v['data_row']['replies'] > 0){?>
+<span class="faint thread-count" title="<?php echo htmlspecialchars($_v['data_row']['replies'], ENT_QUOTES);?>
+ replies" aria-label="<?php echo htmlspecialchars($_v['data_row']['replies'], ENT_QUOTES);?>
+ replies"><?php echo htmlspecialchars($_v['data_row']['replies'], ENT_QUOTES);?>
+</span><?php }?>
+			<?php if($_v['data_row']['context']){?>
+<span class="faint thread-context" title="Context read across this thread"><?php echo htmlspecialchars($_v['data_row']['context'], ENT_QUOTES);?>
 </span><?php }?>
 			<?php if($_v['data_row']['heard']){?>
 <i class="ic ic-play" role="img" aria-label="Recorded"></i><?php }?>

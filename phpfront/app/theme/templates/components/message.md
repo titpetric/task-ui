@@ -14,8 +14,10 @@ Input scope: `data_message`, one message of a thread, from
 | `state`, `working` | the note's state as a badge, and whether it is still being worked |
 | `run`, `short` | the run behind it and the short name to show |
 | `work` | the run's stats line under the message, a `data_work` |
+| `working_view` | a live run's state, text, tools and subagents, a `working` scope |
 | `ago`, `stamp` | the message's time, relative and full |
 
-A run's stats sit under the reply it filled, or under the question until one
-exists. The component draws one message and nothing about the list it sits in;
+A working answer draws `working.tpl` inside its own bubble, so the state and
+the text arrive where the answer will be. A run's stats sit under the reply it
+filled, or under the question until one exists. The component draws one message and nothing about the list it sits in;
 the owner supplies the `ol.talk` and the `data-talk` marker.

@@ -90,6 +90,15 @@ echo $work["fx-work-n2"][0]["status"]["body"], " ", $work["fx-work-n2"][0]["stat
 echo count($work["fx-work-n2"][0]["events"]), " ", $work["fx-work-n2"][0]["events"][0]["seq"], "\n";
 echo count($messages[0]["work"]), " ", count($messages[1]["work"]), "\n";
 
+// A live run carries the text it printed and the tools it called; a thread
+// sums both over every run.
+echo $work["fx-work-n1"][0]["tools"], " ", var_export(strpos($work["fx-work-n1"][0]["progress"], "on it") !== false, true), " ", var_export(strpos($work["fx-work-n1"][0]["stats"], "2 tool calls") !== false, true), "\n";
+
+// The working answer draws the run's state, text and tools inside its bubble.
+echo $messages[0]["working_view"]["label"], " ", $messages[0]["working_view"]["tools"], " ", count($messages[0]["working_view"]["agents"]), " ", var_export(strpos($messages[0]["working_view"]["progress"], "on it") !== false, true), "\n";
+$usage = Task\Threads\Work::usage($events);
+echo $usage["tools"], " ", $usage["tokens"], " ", $usage["output"], "\n";
+
 // The reply a run wrote is the agent's, not the question that started the run.
 $db->replace("note", [
 	"id" => "fx-work-n4",
@@ -110,6 +119,7 @@ $talk = Task\Threads\Talk::messages($notes->get("fx-work-n1"), $replies, $chrome
 
 echo count($answers), " ", var_export($talk[0]["agent"], true), " ", var_export($talk[1]["agent"], true), " ", var_export($talk[2]["agent"], true), "\n";
 echo count($talk[0]["work"]), " ", count($talk[1]["work"]), " ", count($talk[2]["work"]), "\n";
+echo $talk[0]["className"], " | ", $talk[2]["className"], "\n";
 
 // The answer carries the run, so the question no longer shows it working.
 echo var_export($talk[0]["working"], true), " ", var_export($talk[0]["run"], true), " ", $talk[2]["run"], "\n";
@@ -134,8 +144,7 @@ $said = Task\Threads\Talk::messages($notes->get("fx-work-n5"), [$notes->get("fx-
 
 echo count($quiet), " ", var_export($said[1]["agent"], true), " ", var_export($said[0]["run"], true), "\n";
 
-// A working thread carries the run it may end, and the last status as its
-// pinned line.
+// A working thread carries the run it may end, and the last status as its state.
 $db->query("DELETE FROM run WHERE id LIKE 'fx-work-%'");
 $db->replace("run", [
 	"id" => "fx-work-r9", "folder" => "fx-work/app", "job" => "@claude-prompt",
@@ -183,8 +192,12 @@ true
 Running Bash tool Bash
 1 1
 1 1
+2 true true
+Working 2 1 true
+2 0 0
 1 false false true
 0 1 1
+said | said agent
 false '' fx-work-r1
 1 true ''
 true fx-work-r9 1794823320000 false

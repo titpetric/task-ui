@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"github.com/titpetric/task-ui/app/model"
 )
@@ -58,4 +60,40 @@ func (s *NoteEventStorage) DeleteByRun(ctx context.Context, runID string) error 
 // DeleteByNote removes a thread's events, for retention.
 func (s *NoteEventStorage) DeleteByNote(ctx context.Context, noteID string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM note_event WHERE note_id = ?", noteID)
+}
+
+// Usage returns what each thread read and wrote, by thread ID.
+func (s *NoteEventStorage) Usage(ctx context.Context, noteIDs []string) (map[string]ThreadUsage, error) {
+	out := map[string]ThreadUsage{}
+	if len(noteIDs) == 0 {
+		return out, nil
+	}
+	marks := strings.TrimSuffix(strings.Repeat("?,", len(noteIDs)), ",")
+	args := make([]any, len(noteIDs))
+	for i, id := range noteIDs {
+		args[i] = id
+	}
+	rows, err := client(s.db).Select[model.NoteEvent](ctx, "SELECT * FROM note_event WHERE note_id IN ("+marks+") AND kind IN ('tool_use', 'result')", args...)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		usage := out[row.NoteID]
+		if row.Kind == "tool_use" {
+			usage.Tools++
+			out[row.NoteID] = usage
+			continue
+		}
+		var data struct {
+			InputTokens int     `json:"input_tokens"`
+			Cached      int     `json:"cache_read_input_tokens"`
+			Cost        float64 `json:"cost_usd"`
+		}
+		if json.Unmarshal([]byte(row.Data), &data) == nil {
+			usage.Tokens += data.InputTokens + data.Cached
+			usage.Cost += data.Cost
+		}
+		out[row.NoteID] = usage
+	}
+	return out, nil
 }

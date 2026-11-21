@@ -27,6 +27,9 @@ class mod_threads implements Module {
 	/** AGENT is what the sentence says further where an agent answers notes. */
 	const AGENT = ' Name <span class="mention">@%s</span> to start the agent on a thread, and reply to follow up: a reply goes to it without naming it again.';
 
+	/** USAGE is the sentence of the usage table. */
+	const USAGE = 'What every thread asked for: its replies, tool calls, the context it read and what it cost.';
+
 	function name() {
 		return "threads";
 	}
@@ -85,6 +88,7 @@ class mod_threads implements Module {
 		}
 
 		$replies = $store->replies(Task\Note::ids($roots));
+		$usage = $store->usage(Task\Note::ids($roots));
 		$agents = $users->agents();
 		$seen = new Task\Seen($chrome);
 		$rows = [];
@@ -93,7 +97,37 @@ class mod_threads implements Module {
 
 		foreach ($roots as $note) {
 			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : [];
-			$rows[] = Task\Threads\Timeline::row($note, $under, $chrome, $seen);
+			$rows[] = Task\Threads\Timeline::row($note, $under, $chrome, $seen, "", $usage[$note->getId()] ?? null);
+		}
+
+		if (Task\Route::input("view") === "usage") {
+			$replies = 0;
+			$tools = 0;
+			$tokens = 0;
+			$cost = 0;
+
+			foreach ($rows as $row) {
+				$replies += $row["replies"];
+				$tools += $row["tools"];
+				$tokens += $row["tokens"];
+				$cost += (float)str_replace("$", "", $row["cost"]);
+			}
+
+			$usageHead = new Task\Head("Prompt usage", self::USAGE);
+			$back = new Task\Buttons;
+			$back->item("note", "Threads", ["href" => Task\Route::href("/threads")]);
+			$usageHead->buttons($back->data());
+			$view->page([
+				"head" => $usageHead->data(),
+				"rows" => $rows,
+				"count" => count($rows),
+				"replies" => $replies,
+				"tools" => $tools,
+				"tokens" => Task\Threads\Work::size($tokens),
+				"cost" => "$" . number_format($cost, 2),
+			], "usage.tpl");
+
+			return;
 		}
 
 		if ($chrome->allowed("note/view")) {
@@ -104,6 +138,9 @@ class mod_threads implements Module {
 
 		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
 		$head = new Task\Head("Threads", self::lead($agent));
+		$buttons = new Task\Buttons;
+		$buttons->item("pulse", "Prompt usage", ["href" => Task\Route::href("/threads?view=usage")]);
+		$head->buttons($buttons->data());
 		$detailed = $form["place"] !== "" || $form["state"] !== "" || $form["user"] !== "";
 		$filtered = $detailed || $form["q"] !== "";
 		$empty = $filtered ? [
@@ -112,7 +149,6 @@ class mod_threads implements Module {
 			"href" => Task\Route::href("/threads"),
 			"label" => "Clear",
 		] : ["tag" => "li", "text" => "No threads yet: ask Claude in the box beside this list."];
-
 		$view->page([
 			"head" => $head->data(),
 			"agent" => $agent,
@@ -168,6 +204,5 @@ class mod_threads implements Module {
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
 	$mod = new mod_threads;
-
 	$mod->serve();
 }

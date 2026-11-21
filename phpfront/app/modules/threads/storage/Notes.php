@@ -143,7 +143,6 @@ class Notes {
 	/** drop marks a thread and its replies deleted, which hides them from every listing. */
 	function drop($id) {
 		$now = \Task\Clock::stamp();
-
 		$this->db->query("UPDATE note SET deleted_at = ?, updated_at = ? WHERE (id = ? OR parent_id = ?) AND " . self::LIVE, $now, $now, $id, $id);
 
 		return true;
@@ -229,6 +228,45 @@ class Notes {
 		return $this->db->get_all("SELECT * FROM note_event WHERE note_id = ? ORDER BY question_id, run_id, seq", $id);
 	}
 
+	/** usage is what each thread read and wrote, and how many tools it called, by thread ID. */
+	function usage($ids) {
+		$out = [];
+
+		if (count($ids) === 0) {
+			return $out;
+		}
+
+		$rows = \Task\DB::all($this->db, "SELECT note_id, kind, data FROM note_event WHERE note_id IN (" . \Task\Row::placeholders($ids) . ") AND kind IN ('tool_use', 'result')", $ids);
+
+		foreach ($rows as $row) {
+			$id = $row["note_id"];
+
+			if (!isset($out[$id])) {
+				$out[$id] = [
+					"tools" => 0,
+					"tokens" => 0,
+					"cost" => 0,
+				];
+			}
+
+			if ($row["kind"] === "tool_use") {
+				$out[$id]["tools"] = $out[$id]["tools"] + 1;
+				continue;
+			}
+
+			$data = json_decode((string)$row["data"], true);
+
+			if (!is_array($data)) {
+				continue;
+			}
+
+			$out[$id]["tokens"] = $out[$id]["tokens"] + (int)($data["input_tokens"] ?? 0) + (int)($data["cache_read_input_tokens"] ?? 0);
+			$out[$id]["cost"] = $out[$id]["cost"] + (float)($data["cost_usd"] ?? 0);
+		}
+
+		return $out;
+	}
+
 	/** lastEvent is a thread's newest event ID, the stream's replay cursor. */
 	function lastEvent($id) {
 		$row = $this->db->get("SELECT id FROM note_event WHERE note_id = ? ORDER BY rowid DESC LIMIT 1", $id);
@@ -275,7 +313,6 @@ class Notes {
 	 */
 	function post($user, $body, $parent = "") {
 		$note = new \Task\Model\Note;
-
 		$note->setId(\Task\Id::make());
 		$note->setParentId($parent);
 		$note->setChannel(self::NOTES);

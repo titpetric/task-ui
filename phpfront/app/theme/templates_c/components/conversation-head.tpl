@@ -3,21 +3,22 @@
 	<div class="conversation-title">
 		<h2><?php echo htmlspecialchars($_v['data_head']['title'], ENT_QUOTES);?>
 </h2>
-<?php if($_v['data_head']['meta']){?>
-		<p class="faint"><?php echo htmlspecialchars($_v['data_head']['meta'], ENT_QUOTES);?>
-</p>
+<?php if($_v['data_head']['meta'] || $_v['data_head']['usage']){?>
+		<p class="faint"><?php echo htmlspecialchars($_v['data_head']['meta'], ENT_QUOTES); if($_v['data_head']['usage']){?>
+ · <span title="What this thread read and wrote"><?php echo htmlspecialchars($_v['data_head']['usage'], ENT_QUOTES);?>
+</span><?php }?></p>
 <?php }?>	</div>
 	<div class="actions">
 <?php if($_v['data_head']['can_pick']){?>
 		<form class="agent-pick" data-agent-form data-thread="<?php echo htmlspecialchars($_v['data_head']['id'], ENT_QUOTES);?>
 ">
 			<label class="faint" for="thread-agent">Agent</label>
-			<select id="thread-agent" name="agent">
+			<span class="agent-select"><select id="thread-agent" name="agent">
 <?php if(!empty($_v['data_head']['agents']))foreach($_v['data_head']['agents'] as $_v['name']){?>				<option value="<?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
 "<?php if($_v['name'] == $_v['data_head']['agent']){?>
  selected<?php }?>><?php echo htmlspecialchars($_v['name'], ENT_QUOTES);?>
 </option>
-<?php }?>			</select>
+<?php }?>			</select></span>
 			<button class="btn" type="submit">Save</button>
 		</form>
 <?php }?>		<?php $_v['data_menu'] = $_v['data_head']['menu']; if(!$_v['data_menu']['empty']){?>
