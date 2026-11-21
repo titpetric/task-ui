@@ -552,6 +552,16 @@
       window.taskUI.unmount(pane);
     }
     pane.innerHTML = blank;
+    // The box was saved once the page had mounted its editor, so the markup
+    // can carry that shell: put its field back and drop the shell.
+    pane.querySelectorAll(".mdedit").forEach(function (root) {
+      var area = root.querySelector("textarea[data-markdown]");
+      if (area) {
+        area.hidden = false;
+        root.parentNode.insertBefore(area, root);
+      }
+      root.remove();
+    });
     paint("");
     viewing(true);
     scroller().scrollTop = 0;
