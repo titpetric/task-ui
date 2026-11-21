@@ -217,29 +217,31 @@ class Work {
 			"ms" => 0,
 			"count" => 0,
 			"states" => [],
+			"segments" => [],
 		];
 	}
 
-	/** trace is how a run spent its time: the gap after an event belongs to the state it set. */
+	/**
+	 * trace is how a run spent its time: each gap between two events is a
+	 * segment with the state and label the event before it set, and the states
+	 * add those segments up.
+	 */
 	static function trace($events) {
-		$ms = [
-			"think" => 0,
-			"tools" => 0,
-			"wait" => 0,
-		];
-		$count = [
-			"think" => 0,
-			"tools" => 0,
-			"wait" => 0,
-		];
+		$segments = [];
 		$state = "wait";
+		$label = "Waiting";
 		$last = 0;
 
 		foreach ($events as $event) {
 			$at = $event["at"];
 
 			if ($last > 0 && $at > $last) {
-				$ms[$state] = $ms[$state] + ($at - $last);
+				$segments[] = [
+					"key" => $state,
+					"label" => $label,
+					"ms" => $at - $last,
+					"span" => self::span($at - $last),
+				];
 			}
 
 			if ($at > 0) {
@@ -250,8 +252,24 @@ class Work {
 
 			if ($kind !== "") {
 				$state = $kind;
-				$count[$kind] = $count[$kind] + 1;
+				$label = self::traceLabel($event);
 			}
+		}
+
+		$ms = [
+			"think" => 0,
+			"tools" => 0,
+			"wait" => 0,
+		];
+		$count = [
+			"think" => 0,
+			"tools" => 0,
+			"wait" => 0,
+		];
+
+		foreach ($segments as $segment) {
+			$ms[$segment["key"]] = $ms[$segment["key"]] + $segment["ms"];
+			$count[$segment["key"]] = $count[$segment["key"]] + 1;
 		}
 
 		$total = array_sum($ms);
@@ -285,9 +303,40 @@ class Work {
 
 		return [
 			"ms" => $total,
-			"count" => array_sum($count),
+			"count" => count($segments),
 			"states" => $states,
+			"segments" => $segments,
 		];
+	}
+
+	/** traceLabel is the line a segment's tooltip names the work with. */
+	static function traceLabel($event) {
+		if ($event["kind"] === "status") {
+			$body = trim($event["body"]);
+
+			return $body === "" ? "Waiting" : $body;
+		}
+
+		if ($event["kind"] === "tool_use") {
+			return $event["tool"] === "" ? "Tool" : $event["tool"];
+		}
+
+		if ($event["kind"] === "tool_result") {
+			return "Tool result";
+		}
+
+		if ($event["kind"] === "text") {
+			$parts = explode("\n", $event["body"]);
+			$line = trim($parts[0]);
+
+			if ($line === "") {
+				return "Writing";
+			}
+
+			return strlen($line) > 64 ? substr($line, 0, 61) . "..." : $line;
+		}
+
+		return "Waiting";
 	}
 
 	/** category is the trace a status or an activity event belongs to, "" for one that names none. */

@@ -453,32 +453,81 @@ body:has(.chat-shell) aside.rail {
 }
 
 .work-trace-bar {
+  position: relative;
   display: flex;
   flex: 1;
   height: 0.4rem;
-  overflow: hidden;
   border-radius: 999px;
   background: var(--ink-2);
 }
 
-.work-trace-state {
+.work-trace-group,
+.work-trace-event {
+  position: relative;
   display: block;
   height: 100%;
-  color: var(--signal-ink);
-  font-size: 0;
   transition: width 0.35s ease;
 }
 
-.work-trace-state.think {
+.work-trace-event {
+  display: none;
+}
+
+.work-trace[data-mode="time"] .work-trace-group {
+  display: none;
+}
+
+.work-trace[data-mode="time"] .work-trace-event {
+  display: block;
+}
+
+.work-trace[data-mode="time"] .work-trace-event + .work-trace-event {
+  box-shadow: inset 1px 0 0 var(--ink-1);
+}
+
+.work-trace-group.think,
+.work-trace-event.think {
   background: var(--signal);
 }
 
-.work-trace-state.tools {
+.work-trace-group.tools,
+.work-trace-event.tools {
   background: var(--ok);
 }
 
-.work-trace-state.wait {
+.work-trace-group.wait,
+.work-trace-event.wait {
   background: var(--text-faint);
+}
+
+/* The bar's segments name what they hold on hover, above the bar. */
+.work-trace-group::after,
+.work-trace-event::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 0.45rem);
+  left: 50%;
+  z-index: 4;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-3);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0.2rem);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.work-trace-group:hover::after,
+.work-trace-event:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .work-stats {

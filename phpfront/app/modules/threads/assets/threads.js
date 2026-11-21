@@ -680,14 +680,17 @@
     }
     var totalMs = Number(bar.dataset.ms || 0);
     var totalCount = Number(bar.dataset.count || 0);
-    Array.prototype.forEach.call(bar.querySelectorAll(".work-trace-state"), function (state) {
-      var ms = Number(state.dataset.ms || 0);
-      var count = Number(state.dataset.count || 0);
-      var width = mode === "count" ? (totalCount ? count / totalCount : 0) : (totalMs ? ms / totalMs : 0);
-      var text = mode === "count" ? count + (count === 1 ? " call" : " calls") : (mode === "time" ? traceSpan(ms) : Math.round(width * 100) + "%");
-      state.style.width = (width * 100).toFixed(2) + "%";
-      state.title = (state.dataset.label || "") + ": " + text;
-      state.setAttribute("aria-label", state.title);
+    Array.prototype.forEach.call(bar.querySelectorAll(".work-trace-group"), function (group) {
+      var share = Number(group.dataset.share || 0);
+      var count = Number(group.dataset.count || 0);
+      var width = mode === "count" ? (totalCount ? (count * 100) / totalCount : 0) : share;
+      group.style.width = width.toFixed(2) + "%";
+      group.dataset.tip = (group.dataset.label || "") + ": " + (mode === "count" ? count : Math.round(width) + "%");
+    });
+    Array.prototype.forEach.call(bar.querySelectorAll(".work-trace-event"), function (event) {
+      var ms = Number(event.dataset.ms || 0);
+      event.style.width = (totalMs ? (ms * 100) / totalMs : 0).toFixed(2) + "%";
+      event.dataset.tip = (event.dataset.label || "") + ": " + traceSpan(ms);
     });
   }
 
